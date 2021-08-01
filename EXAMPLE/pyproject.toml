@@ -1,0 +1,20 @@
+[tool.napari]
+name = 'my_plugin'
+entry_point = 'main.py'
+license = 'BSD-3-Clause'
+
+[tool.napari.contributes]
+commands = [
+    { command = 'identifier.hello_world', title = "Hello World" },
+    { command = 'identifier.other_command', title = "Other Command", icon = 'some_icon.svg' },
+    { command = 'identifier.third', title = "Third Command", icon = { light = 'light_icon.svg', dark = 'dark.svg' } },
+]
+submenus = [{ id = 'mysubmenu', label = "My SubMenu" }]
+keybindings = [{ command = 'identifier.hello_world', "key" = "ctrl+f1" }]
+
+[tool.napari.contributes.menus]
+mysubmenu = [{ command = 'identifier.hello_world' }]
+layers__context = [
+    { submenu = 'mysubmenu' },
+    { command = 'identifier.other_command' },
+]

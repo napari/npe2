@@ -1,0 +1,2 @@
+def activate():
+    print("hi")
