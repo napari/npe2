@@ -88,6 +88,8 @@ class PluginManifest(BaseModel):
 
         ep = self._root / self.entry_point
         spec = util.spec_from_file_location(mod_name, str(ep.absolute()))
+        if not spec:
+            raise ImportError(f"No ModuleSpec for module {mod_name}")
         module = util.module_from_spec(spec)
         sys.modules[mod_name] = module
         spec.loader.exec_module(module)
