@@ -7,3 +7,5 @@
 [![codecov](https://codecov.io/gh/tlambert03/npe2/branch/master/graph/badge.svg)](https://codecov.io/gh/tlambert03/npe2)
 
 proposal for napari plugin refactor
+
+see also https://github.com/napari/napari/issues/3115
