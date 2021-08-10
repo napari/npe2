@@ -9,3 +9,5 @@
 proposal for napari plugin refactor
 
 see also https://github.com/napari/napari/issues/3115
+
+aug 10th meeting: https://hackmd.io/eA5_4I8kRd2mz-HB1HyPWQ?both
