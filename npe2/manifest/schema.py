@@ -136,11 +136,11 @@ class PluginManifest(BaseModel):
         manifests = []
         for ep in entry_points().get("napari.manifest", []):
             for finder in sys.meta_path:
-                spec = finder.find_spec(ep.module, None)
+                spec = finder.find_spec(ep.module, None)  # type: ignore
                 if not (spec and spec.submodule_search_locations):
                     continue
                 for loc in spec.submodule_search_locations:
-                    manifest = Path(loc) / ep.attr
+                    manifest = Path(loc) / ep.attr  # type: ignore
                     if manifest.exists():
                         manifests.append(PluginManifest.from_file(manifest))
                         break
@@ -148,8 +148,8 @@ class PluginManifest(BaseModel):
                 import warnings
 
                 warnings.warn(
-                    "A napari.manifest entry_point was declared, "
-                    f"but the target could not be imported: {ep}"
+                    f"A napari.manifest entry_point {ep.value!r} was declared, "
+                    "but the target could not be imported."
                 )
         return manifests
 
