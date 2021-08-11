@@ -129,6 +129,7 @@ class PluginManifest(BaseModel):
 
     @classmethod
     def discover(cls) -> List["PluginManifest"]:
+        """Discover manifests in the environment."""
         from importlib.metadata import entry_points
         import sys
 
@@ -147,8 +148,8 @@ class PluginManifest(BaseModel):
                 import warnings
 
                 warnings.warn(
-                    f"A napari.manifest entry_point was declared, "
-                    "but the target could not be imported: {ep}"
+                    "A napari.manifest entry_point was declared, "
+                    f"but the target could not be imported: {ep}"
                 )
         return manifests
 
