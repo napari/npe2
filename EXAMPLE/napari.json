@@ -1,0 +1,29 @@
+{
+  "name": "my_plugin",
+  "entry_point": "main.py",
+  "contributes": {
+    "commands": [
+      { "command": "identifier.hello_world", "title": "Hello World" },
+      {
+        "command": "identifier.other_command",
+        "title": "Other Command",
+        "icon": "some_icon.svg"
+      },
+      {
+        "command": "identifier.third",
+        "title": "Third Command",
+        "icon": { "light": "light_icon.svg", "dark": "dark.svg" }
+      }
+    ],
+    "menus": {
+      "layers__context": [
+        { "submenu": "mysubmenu" },
+        { "command": "identifier.other_command" }
+      ]
+    },
+    "keybindings": [{ "command": "identifier.hello_world", "key": "ctrl+f1" }],
+    "submenus": [{ "id": "mysubmenu", "label": "My SubMenu" }]
+  },
+  "license": "BSD-3-Clause",
+  "manifest_file": "EXAMPLE/pyproject.toml"
+}

@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -67,6 +67,33 @@ class PluginManifest(BaseModel):
 
         return toml.dumps({"tool": {"napari": self.dict(exclude_unset=True)}})
 
+    def yaml(self):
+        import yaml
+        import json
+
+        return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
+
+    @classmethod
+    def from_file(cls, path) -> "PluginManifest":
+        loader: Callable
+        if str(path).lower().endswith(".json"):
+            import json
+
+            loader = json.load
+        elif str(path).lower().endswith(".toml"):
+            import toml
+
+            loader = toml.load
+        elif str(path).lower().endswith((".yaml", ".yml")):
+            import yaml
+
+            loader = yaml.safe_load
+        else:
+            raise ValueError(f"unrecognized file extension: {path}")
+        with open(path) as f:
+            data = loader(f) or {}
+            return cls(**data)
+
     class Config:
         use_enum_values = True  # only needed for SPDX
 
@@ -99,6 +126,31 @@ class PluginManifest(BaseModel):
         mod = self.import_entry_point()
         activate = getattr(mod, "activate")
         activate()
+
+    @classmethod
+    def discover(cls) -> List["PluginManifest"]:
+        from importlib.metadata import entry_points
+        import sys
+
+        manifests = []
+        for ep in entry_points().get("napari.manifest", []):
+            for finder in sys.meta_path:
+                spec = finder.find_spec(ep.module, None)
+                if not (spec and spec.submodule_search_locations):
+                    continue
+                for loc in spec.submodule_search_locations:
+                    manifest = Path(loc) / ep.attr
+                    if manifest.exists():
+                        manifests.append(PluginManifest.from_file(manifest))
+                        break
+            else:
+                import warnings
+
+                warnings.warn(
+                    f"A napari.manifest entry_point was declared, "
+                    "but the target could not be imported: {ep}"
+                )
+        return manifests
 
 
 if __name__ == "__main__":

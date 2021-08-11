@@ -9,7 +9,8 @@ pyproj = path / "pyproject.toml"
 pm = PluginManifest.from_pyproject(pyproj)
 
 if 'json' in sys.argv:
-    from pprint import pprint
-    pprint(pm.dict(exclude_unset=True), indent=2)
+    print(pm.json(exclude_unset=True))
+elif 'yaml' in sys.argv:
+    print(pm.yaml())
 else:
     print(pm.toml())

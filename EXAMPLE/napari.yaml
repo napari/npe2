@@ -1,0 +1,26 @@
+entry_point: main.py
+license: BSD-3-Clause
+manifest_file: EXAMPLE/pyproject.toml
+name: my_plugin
+contributes:
+  commands:
+  - command: identifier.hello_world
+    title: Hello World
+  - command: identifier.other_command
+    icon: some_icon.svg
+    title: Other Command
+  - command: identifier.third
+    icon:
+      dark: dark.svg
+      light: light_icon.svg
+    title: Third Command
+  keybindings:
+  - command: identifier.hello_world
+    key: ctrl+f1
+  menus:
+    layers__context:
+    - submenu: mysubmenu
+    - command: identifier.other_command
+  submenus:
+  - id: mysubmenu
+    label: My SubMenu
