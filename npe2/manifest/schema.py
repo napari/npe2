@@ -12,35 +12,66 @@ SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
 
 class PluginManifest(BaseModel):
     # VS Code uses <publisher>.<name> as a unique ID for the extension
+    # should this just be the package name ... not the module name? (probably yes)
+    # do we normalize this? (i.e. underscores / dashes ?)
     name: str = Field(
         ...,
         description="The name of the plugin - should be all lowercase with no spaces.",
     )
+    # this is not something that has an equivalent on PyPI ...
+    # it might be a good field with which we can identify trusted source
+    # but... it's not entire clear how that "trust" gets validated at the moment
     publisher: str = Field(
         "unidentified_publisher",
         description="The publisher name - can be an individual or an organization",
     )
-    entry_point: Path = Field(..., description="The extension entry point.")
-    version: Optional[str] = Field(None, description="SemVer compatible version.")
-    contributes: Optional[ContributionPoints]
-    license: Optional[SPDX] = None
-    description: Optional[str] = Field(
-        description="A short description of what your extension is and does."
-    )
-    manifest_file: Optional[Path]
+    # easy one... we need this.  character limit?  256 char?
     display_name: str = Field(
         "",
         description="The display name for the extension used in the Marketplace.",
     )
-    keywords: List[str] = Field(
-        default_factory=list,
-        description="An array of keywords to make it easier to find the "
-        "extension. These are included with other extension Tags on the "
-        "Marketplace. This list is currently limited to 5 keywords",
+    # take this from setup.cfg
+    description: Optional[str] = Field(
+        description="A short description of what your extension is and does."
     )
+
+    # TODO:
+    # Perhaps we should version the plugin interface (not so the manifest, but
+    # the actual mechanism/consumption of plugin information) independently
+    # of napari itself
+
+    # mechanistic things:
+    # this is the file that has the activate() function
+    entry_point: Path = Field(..., description="The extension entry point.")
+    _manifest_file: Optional[Path]
+
+    # this comes from setup.cfg
+    version: Optional[str] = Field(None, description="SemVer compatible version.")
+    # this should come from setup.cfg ... but they don't requireq SPDX
+    license: Optional[SPDX] = None
+
+    contributes: Optional[ContributionPoints]
+    # # this would be there only for the hub.  which is not immediately planning
+    # # to support open ended keywords
+    # keywords: List[str] = Field(
+    #     default_factory=list,
+    #     description="An array of keywords to make it easier to find the "
+    #     "extension. These are included with other extension Tags on the "
+    #     "Marketplace. This list is currently limited to 5 keywords",
+    # )
+    # the hub *is* planning on supporting categories
+    categories: List[str] = Field(
+        default_factory=list,
+        description="specifically defined classifiers",
+    )
+    # in the absense of input. should be inferred from version (require using rc ...)
+    # or use `classifiers = Status`
     preview: bool = Field(
         False,
         description="Sets the extension to be flagged as a Preview in napari-hub.",
+    )
+    private: bool = Field(
+        description='Whether this'
     )
 
     # activationEvents: Optional[List[ActivationEvent]] = Field(
