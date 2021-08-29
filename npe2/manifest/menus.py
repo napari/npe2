@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, root_validator, ValidationError
+from pydantic.utils import sequence_like
 
 # # napari provides these
 # class Menu(BaseModel):
@@ -66,3 +66,25 @@ class MenusContribution(BaseModel):
     command_pallete: Optional[List[MenuItem]]
     layers__context: Optional[List[MenuItem]]
     plugins__widgets: Optional[List[MenuItem]]
+    test_menu: Optional[List[MenuItem]]
+
+    class Config:
+        extra = "allow"
+
+    @root_validator
+    def _validate_extra(cls, values):
+        """Plugins may declare custom menu IDs... we make sure they are valid here.
+
+        They become accessible as attributes on the MenusContribution instance.
+        """
+
+        # get validator... all of these fields have the same type (Optional[List[MenuItem]])
+        validate = list(MenusContribution.__fields__.values())[0].validate
+
+        for i, (key, val) in enumerate(values.items()):
+            if key not in cls.__fields__:
+                val, err = validate(val, {}, loc=str(i))
+                if err:
+                    raise ValidationError([err], cls)  # type: ignore
+                values[key] = val
+        return values
