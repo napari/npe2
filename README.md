@@ -14,4 +14,5 @@ aug 10th meeting: https://hackmd.io/eA5_4I8kRd2mz-HB1HyPWQ?both
 
 
 for an example plugin to test this out, see https://github.com/tlambert03/npe2-tester
+
 for a branch of napari experimenting with this, see https://github.com/tlambert03/napari/tree/npe2-support
