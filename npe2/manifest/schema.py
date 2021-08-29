@@ -141,6 +141,7 @@ class PluginManifest(BaseModel):
 
         if path.name == "pyproject.toml":
             data = data["tool"]["napari"]
+
         mf = cls(**data)
         mf._manifest_file = path
         return mf
