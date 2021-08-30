@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .manifest.menus import MenuItem
     from .manifest.commands import CommandContribution
     from .manifest.submenu import SubmenuContribution
+    from .manifest.themes import ThemeContribution
 
 
 PluginKey = str
@@ -16,6 +17,7 @@ class PluginManager:
     _manifests: Dict[PluginKey, PluginManifest] = {}
     _commands: Dict[str, Tuple[CommandContribution, PluginKey]] = {}
     _submenus: Dict[str, SubmenuContribution] = {}
+    _themes: Dict[str, ThemeContribution] = {}
 
     def __init__(self) -> None:
         self.discover()  # TODO: should we be immediately discovering?
@@ -24,6 +26,7 @@ class PluginManager:
         self._manifests.clear()
         self._commands.clear()
         self._submenus.clear()
+        self._themes.clear()
 
         for mf in PluginManifest.discover():
             self._manifests[mf.key] = mf
@@ -32,6 +35,8 @@ class PluginManager:
                     self._commands[cmd.command] = (cmd, mf.key)
                 for subm in mf.contributes.submenus or []:
                     self._submenus[subm.id] = subm
+                for theme in mf.contributes.themes or []:
+                    self._themes[theme.id] = theme
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():

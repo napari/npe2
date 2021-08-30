@@ -202,7 +202,7 @@ class PluginManifest(BaseModel):
 
 
 def entry_points(group) -> Iterator[Tuple[EntryPoint, Message]]:
-    """Return EntryPoint objects for all installed packages.
+    """Return EntryPoint and metadata for all packages with entrypoint `group`.
 
     :return: EntryPoint objects for all installed packages.
     """
