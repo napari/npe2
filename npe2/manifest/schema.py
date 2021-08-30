@@ -171,7 +171,12 @@ class PluginManifest(BaseModel):
         if not self.license:
             self.license = metadata["License"]
         if self.preview is None:
-            self.preview = _get_dev_status(metadata) < 3
+            for k, v in getattr(metadata, "_headers"):
+                if k.lower() == "classifier" and v.lower().startswith(
+                    "development status"
+                ):
+                    self.preview = int(v.split(":: ")[-1][0]) < 3
+                    break
 
     @classmethod
     def discover(cls, entry_point=ENTRY_POINT) -> Iterator["PluginManifest"]:
@@ -212,13 +217,6 @@ def entry_points(group) -> Iterator[Tuple[EntryPoint, Message]]:
         for ep in dist.entry_points:
             if ep.group == group:
                 yield ep, dist.metadata
-
-
-def _get_dev_status(meta) -> int:
-    for k, v in meta._headers:
-        if k.lower() == "classifier" and v.lower().startswith("development status"):
-            return int(v.split(":: ")[-1][0])
-    return 0
 
 
 if __name__ == "__main__":

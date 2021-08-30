@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterator, List, Tuple
+from typing import TYPE_CHECKING, Dict, Iterator, Tuple
 from .manifest import PluginManifest
 
 if TYPE_CHECKING:
