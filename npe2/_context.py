@@ -1,3 +1,8 @@
+"""
+just exploring for a moment...
+this is an ugly straight conversion of the javascript code.
+"""
+
 from __future__ import annotations
 
 from abc import abstractmethod
