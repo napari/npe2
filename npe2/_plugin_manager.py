@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ['plugin_manager', 'PluginContext', 'PluginManager']
+import sys
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -24,6 +26,24 @@ if TYPE_CHECKING:
 
 
 PluginKey = str  # this is defined on PluginManifest as `publisher.name`
+
+
+class PluginContext:
+    """An object that can contain information for a plugin over its lifetime."""
+
+    # stores all created contexts (currently cleared by `PluginManager.deactivate`)
+    _contexts: Dict[PluginKey, PluginContext] = {}
+
+    def __init__(self, plugin_key: PluginKey) -> None:
+        self._plugin_key = plugin_key
+        self._imports: Set[str] = set()  # modules that were imported by this plugin
+        PluginContext._contexts[plugin_key] = self
+
+    @classmethod
+    def get_or_create(cls, plugin_key: PluginKey) -> PluginContext:
+        if plugin_key not in cls._contexts:
+            PluginContext(plugin_key)
+        return cls._contexts[plugin_key]
 
 
 class PluginManager:
@@ -69,16 +89,34 @@ class PluginManager:
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
         return self._submenus[submenu_id]
 
-    def activate(self, key: PluginKey):
+    def activate(self, key: PluginKey) -> PluginContext:
+        # TODO: this is an important function... should be carefully considered
         try:
             plugin = self._manifests[key]
         except KeyError:
             raise KeyError(f"Cannot activate unrecognized plugin key {key!r}")
 
+        # TODO: prevent "reactivation"
+
+        # create the context that will be with this plugin for its lifetime.
+        ctx = PluginContext.get_or_create(key)
         try:
-            plugin.activate()
+            modules_pre = set(sys.modules)
+            plugin.activate(ctx)
+            # store the modules imported by plugin activation
+            # (not sure if useful yet... but could be?)
+            ctx._imports = set(sys.modules).difference(modules_pre)
         except Exception as e:
+            PluginContext._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}")
+        return ctx
+
+    def deactivate(self, key: PluginKey) -> None:
+        if key not in PluginContext._contexts:
+            return
+        plugin = self._manifests[key]
+        plugin.deactivate()
+        del PluginContext._contexts[key]  # TODO: probably want to do more here
 
     def iter_compatible_readers(
         self, path: Union[str, Path]
@@ -98,4 +136,13 @@ class PluginManager:
                         yield r
 
 
-plugin_manager = PluginManager()
+_GLOBAL_PM = None
+
+
+def __getattr__(name):
+    if name == "plugin_manager":
+        global _GLOBAL_PM
+        if _GLOBAL_PM is None:
+            _GLOBAL_PM = PluginManager()
+        return _GLOBAL_PM
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

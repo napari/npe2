@@ -11,7 +11,6 @@ from ._command_registry import (
     unregister_command,
     execute_command,
 )
-from ._plugin_manager import plugin_manager
 
 __all__ = [
     "execute_command",
@@ -20,3 +19,11 @@ __all__ = [
     "register_command",
     "unregister_command",
 ]
+
+
+def __getattr__(name):
+    if name == "plugin_manager":
+        from ._plugin_manager import plugin_manager
+
+        return plugin_manager
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

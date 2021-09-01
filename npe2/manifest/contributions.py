@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
 from pydantic import BaseModel
 
 from .commands import CommandContribution
@@ -9,6 +8,7 @@ from .menus import MenusContribution
 from .submenu import SubmenuContribution
 from .themes import ThemeContribution
 from .io import ReaderContribution
+from .configuration import JsonSchemaObject
 
 
 class ContributionPoints(BaseModel):

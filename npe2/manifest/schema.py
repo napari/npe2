@@ -8,7 +8,7 @@ from textwrap import indent
 from typing import TYPE_CHECKING, Iterator, List, Optional, Tuple, Union
 import types
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, root_validator, ValidationError
 
 from .contributions import ContributionPoints
 
@@ -125,8 +125,22 @@ class PluginManifest(BaseModel):
         return f"{self.publisher}.{self.name}"
 
     @classmethod
-    def from_file(cls, path: Union[Path, str]) -> "PluginManifest":
-        path = Path(path)
+    def from_distribution(cls, name: str) -> PluginManifest:
+        from importlib.metadata import distribution
+
+        dist = distribution(name)
+        for ep in dist.entry_points:
+            if ep.group == ENTRY_POINT:
+                pm = PluginManifest._from_entrypoint(ep)
+                pm._populate_missing_meta(dist.metadata)
+                return pm
+        raise ValueError(
+            "Distribution {name!r} exists but does not provide a napari manifest"
+        )
+
+    @classmethod
+    def from_file(cls, path: Union[Path, str]) -> PluginManifest:
+        path = Path(path).expanduser().absolute().resolve()
         if path.suffix.lower() == ".json":
             loader = import_module("json").load  # type: ignore
         elif path.suffix.lower() == ".toml":
@@ -160,6 +174,11 @@ class PluginManifest(BaseModel):
         mod = self.import_entry_point()
         return getattr(mod, "activate")(context)
 
+    def deactivate(self, context=None):
+        mod = self.import_entry_point()
+        if callable(getattr(mod, "deactivate", None)):
+            return mod.deactivate(context)
+
     def _populate_missing_meta(self, metadata: Message):
         """add missing items from an importlib metadata object"""
         if not self.name:
@@ -179,44 +198,41 @@ class PluginManifest(BaseModel):
                     break
 
     @classmethod
-    def discover(cls, entry_point=ENTRY_POINT) -> Iterator["PluginManifest"]:
+    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator["PluginManifest"]:
         """Discover manifests in the environment."""
+        from importlib.metadata import distributions
 
-        for ep, meta in entry_points(entry_point):
-            spec = util.find_spec(ep.module or "")  # type: ignore
-            if not spec:
-                continue
-            _errs = []
-            for loc in spec.submodule_search_locations or []:
-                mf = Path(loc) / ep.attr  # type: ignore
-                if mf.exists():
-                    try:
-                        pm = PluginManifest.from_file(mf)
-                        pm._populate_missing_meta(meta)
-                        yield pm
-                        break
-                    except Exception as e:
-                        _errs.append(e)
-            else:
-                msg = f"{entry_point} {ep.value!r} could not be imported"
-                if _errs:
-                    errs = indent("\n".join(str(e) for e in _errs), " ")
-                    logger.error(msg + "\n" + errs)
-                else:
-                    logger.warn(msg)
+        for dist in distributions():
+            for ep in dist.entry_points:
+                if ep.group != entry_point_group:
+                    continue
+                try:
+                    pm = cls._from_entrypoint(ep)
+                    pm._populate_missing_meta(dist.metadata)
+                    yield pm
+                except ValidationError as e:
+                    logger.warn(msg=f"Invalid schema {ep.value!r}")
+                except Exception as e:
+                    logger.warn(
+                        msg=f"{entry_point_group} -> {ep.value!r} could not be imported"
+                    )
 
+    @classmethod
+    def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
+        module = getattr(entry_point, "module", None)
+        spec = util.find_spec(module or "")
+        if not spec:
+            raise ValueError(
+                f"Cannot find module {module!r} declared in "
+                f"entrypoint: {entry_point.value!r}"
+            )
 
-def entry_points(group) -> Iterator[Tuple[EntryPoint, Message]]:
-    """Return EntryPoint and metadata for all packages with entrypoint `group`.
-
-    :return: EntryPoint objects for all installed packages.
-    """
-    from importlib.metadata import distributions
-
-    for dist in distributions():
-        for ep in dist.entry_points:
-            if ep.group == group:
-                yield ep, dist.metadata
+        fname = getattr(entry_point, "attr", "")
+        for loc in spec.submodule_search_locations or []:
+            mf = Path(loc) / fname
+            if mf.exists():
+                return PluginManifest.from_file(mf)
+        raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
 
 
 if __name__ == "__main__":
