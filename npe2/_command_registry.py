@@ -33,6 +33,7 @@ class CommandRegistry:
         self._commands.pop(id, None)
 
     def get_command(self, id) -> Callable:
+        # FIXME: who should control activation?
         if id not in self._commands:
             from ._plugin_manager import plugin_manager
 
@@ -52,6 +53,7 @@ class CommandRegistry:
 
 command_registry = CommandRegistry()
 unregister_command = command_registry.unregister_command
+get_command = command_registry.get_command
 execute_command = command_registry.execute_command
 # register_command_alias = command_registry.register_command_alias
 

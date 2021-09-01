@@ -101,15 +101,15 @@ class RawContextKey(Generic[T]):
     def __init__(
         self,
         key: str,
-        default: Optional[T] = None,
+        default_value: Optional[T] = None,
         description: Optional[str] = None,
         *,
         hide: bool = False,
     ) -> None:
         self.key = key
-        self._default_value = default
+        self._default_value = default_value
         if not hide:
-            type_ = type(default) if default is not None else None
+            type_ = type(default_value) if default_value is not None else None
             self._info.append(ContextKeyInfo(key, type_, description))
 
     @classmethod

@@ -8,6 +8,8 @@ from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
 from .submenu import SubmenuContribution
 from .themes import ThemeContribution
+from .io import ReaderContribution
+
 
 class ContributionPoints(BaseModel):
     commands: Optional[List[CommandContribution]]
@@ -16,3 +18,4 @@ class ContributionPoints(BaseModel):
     menus: Optional[MenusContribution]
     submenus: Optional[List[SubmenuContribution]]
     themes: Optional[List[ThemeContribution]]
+    readers: Optional[List[ReaderContribution]]
