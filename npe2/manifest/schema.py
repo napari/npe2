@@ -5,10 +5,11 @@ from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import indent
-from typing import TYPE_CHECKING, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple, Union
 import types
 
 from pydantic import BaseModel, Field, root_validator, ValidationError
+import pydantic
 
 from .contributions import ContributionPoints
 
@@ -29,6 +30,7 @@ class PluginManifest(BaseModel):
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (probably yes)
     # do we normalize this? (i.e. underscores / dashes ?)
+    # TODO: enforce that this matches the package name
     name: str = Field(
         ...,
         description="The name of the plugin - should be all lowercase with no spaces.",
@@ -126,9 +128,32 @@ class PluginManifest(BaseModel):
 
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
+        """Return PluginManifest given a distribution (package) name.
+
+        Parameters
+        ----------
+        name : str
+            Name of a python distribution installed in the environment.
+            Note: this is the package name, not the top level module name,
+            (e.g. "scikit-image", not "skimage").
+
+        Returns
+        -------
+        PluginManifest
+            The parsed manifest.
+
+        Raises
+        ------
+        ValueError
+            If the distribution exists, but does not provide a manifest
+        PackageNotFoundError
+            If there is no distribution found for `name`
+        ValidationError
+            If the manifest is not valid
+        """
         from importlib.metadata import distribution
 
-        dist = distribution(name)
+        dist = distribution(name)  # may raise PackageNotFoundError
         for ep in dist.entry_points:
             if ep.group == ENTRY_POINT:
                 pm = PluginManifest._from_entrypoint(ep)
@@ -140,7 +165,29 @@ class PluginManifest(BaseModel):
 
     @classmethod
     def from_file(cls, path: Union[Path, str]) -> PluginManifest:
+        """Parse PluginManifest from a specific file.
+
+        Parameters
+        ----------
+        path : Path or str
+            Path to a manifest.  Must have extension {'.json', '.yaml', '.yml', '.toml'}
+
+        Returns
+        -------
+        PluginManifest
+            The parsed manifest.
+
+        Raises
+        ------
+        FileNotFoundError
+            If `path` does not exist.
+        ValueError
+            If the file extension is not in {'.json', '.yaml', '.yml', '.toml'}
+        """
         path = Path(path).expanduser().absolute().resolve()
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {path}")
+
         if path.suffix.lower() == ".json":
             loader = import_module("json").load  # type: ignore
         elif path.suffix.lower() == ".toml":
@@ -169,15 +216,23 @@ class PluginManifest(BaseModel):
     def import_entry_point(self) -> types.ModuleType:
         return import_module(self.entry_point)
 
-    def activate(self, context=None):
+    def activate(self, context=None) -> Any:
         # TODO: work on context object
-        mod = self.import_entry_point()
-        return getattr(mod, "activate")(context)
+        try:
+            mod = self.import_entry_point()
+        except ModuleNotFoundError:
+            # currently, we're playing with the idea that a command could register
+            # itself with a qualified python name.  In some cases, this obviates the
+            # need for the activate function... so it should be acceptable to omit it.
+            return None
+
+        if callable(getattr(mod, "activate", None)):
+            return mod.activate(context)  # type: ignore
 
     def deactivate(self, context=None):
         mod = self.import_entry_point()
         if callable(getattr(mod, "deactivate", None)):
-            return mod.deactivate(context)
+            return mod.deactivate(context)  # type: ignore
 
     def _populate_missing_meta(self, metadata: Message):
         """add missing items from an importlib metadata object"""
@@ -233,6 +288,52 @@ class PluginManifest(BaseModel):
             if mf.exists():
                 return PluginManifest.from_file(mf)
         raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
+
+    @classmethod
+    def _from_package_or_name(
+        cls, package_or_filename: Union[Path, str]
+    ) -> PluginManifest:
+        """Internal convenience function, calls both `from_file` and `from_distribution`
+
+        Parameters
+        ----------
+        package_or_filename : Union[Path, str]
+            Either a filename or a package name.  Will be tried first as a filename, and
+            then as a distribution name.
+
+        Returns
+        -------
+        PluginManifest
+            [description]
+
+        Raises
+        ------
+        ValidationError
+            If the name can be resolved as either a distribution name or a file,
+            but the manifest is not valid.
+        ValueError
+            If the name does not resolve to either a distribution name or a filename.
+
+        """
+        from npe2 import PluginManifest
+        from pydantic import ValidationError
+
+        try:
+            return PluginManifest.from_file(package_or_filename)
+        except ValidationError as e:
+            raise
+        except (FileNotFoundError, ValueError):
+            try:
+                return PluginManifest.from_distribution(str(package_or_filename))
+            except ValidationError as e:
+                raise
+            except Exception:
+                raise ValueError(
+                    f"Could not find manifest for {package_or_filename!r} as either a "
+                    "package name or a file.."
+                )
+
+    ValidationError = ValidationError  # for convenience of access
 
 
 if __name__ == "__main__":

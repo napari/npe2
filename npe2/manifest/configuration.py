@@ -59,6 +59,20 @@ class JSONReference(Enum):
     URL = "URL"
 
 
+_CONSTRAINED_FIELDS = {
+    "exclusiveMinimum",
+    "minimum",
+    "exclusiveMaximum",
+    "maximum",
+    "multipleOf",
+    "minItems",
+    "maxItems",
+    "minLength",
+    "maxLength",
+    "pattern",
+}
+
+
 class JsonSchemaObject(BaseModel):
     items: Union[List["JsonSchemaObject"], "JsonSchemaObject", None]
     uniqueItem: Optional[bool]
@@ -123,19 +137,6 @@ class JsonSchemaObject(BaseModel):
     custom_type_path: Optional[str] = Field(default=None, alias="customTypePath")
     _raw: Dict[str, Any]
 
-    __constraint_fields__: Set[str] = {
-        "exclusiveMinimum",
-        "minimum",
-        "exclusiveMaximum",
-        "maximum",
-        "multipleOf",
-        "minItems",
-        "maxItems",
-        "minLength",
-        "maxLength",
-        "pattern",
-    }
-
     @root_validator(pre=True)
     def validate_exclusive_maximum_and_exclusive_minimum(
         cls, values: Dict[str, Any]
@@ -157,9 +158,9 @@ class JsonSchemaObject(BaseModel):
             del values["minimum"]
         elif exclusive_minimum is False:
             del values["exclusiveMinimum"]
-        
-        if 'type' not in values and 'properties' in values:
-            values['type'] = 'object'
+
+        if "type" not in values and "properties" in values:
+            values["type"] = "object"
         return values
 
     class Config:
@@ -208,7 +209,7 @@ class JsonSchemaObject(BaseModel):
 
     @property
     def has_constraint(self) -> bool:
-        return bool(self.__constraint_fields__ & self.__fields_set__)
+        return bool(_CONSTRAINED_FIELDS & self.__fields_set__)
 
     # refs not supported
     # ref: Optional[str] = Field(default=None, alias="$ref")

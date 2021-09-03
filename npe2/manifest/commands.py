@@ -53,3 +53,11 @@ class CommandContribution(BaseModel):
             "by other means, like the `executeCommand` api."
         ),
     )
+    python_name: Optional[str] = Field(
+        None,
+        description="(Optional) Fully qualified name to callable python object "
+        "implementing this command. This usually takes the form of "
+        "`{obj.__module__}.{obj.__qualname__} (e.g. `my_package.a_module.some_function`). "
+        "If provided, using `register_command` in the plugin activate function is optional "
+        "(but takes precedence).",
+    )

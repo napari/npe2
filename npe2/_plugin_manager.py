@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ['plugin_manager', 'PluginContext', 'PluginManager']
+__all__ = ["plugin_manager", "PluginContext", "PluginManager"]
 import sys
 from typing import (
     TYPE_CHECKING,
@@ -92,7 +92,7 @@ class PluginManager:
     def activate(self, key: PluginKey) -> PluginContext:
         # TODO: this is an important function... should be carefully considered
         try:
-            plugin = self._manifests[key]
+            pm = self._manifests[key]
         except KeyError:
             raise KeyError(f"Cannot activate unrecognized plugin key {key!r}")
 
@@ -102,13 +102,21 @@ class PluginManager:
         ctx = PluginContext.get_or_create(key)
         try:
             modules_pre = set(sys.modules)
-            plugin.activate(ctx)
+            pm.activate(ctx)
             # store the modules imported by plugin activation
             # (not sure if useful yet... but could be?)
             ctx._imports = set(sys.modules).difference(modules_pre)
         except Exception as e:
             PluginContext._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}")
+
+        if pm.contributes and pm.contributes.commands:
+            for cmd in pm.contributes.commands:
+                from ._command_registry import command_registry
+
+                if cmd.python_name and cmd.command not in command_registry:
+                    command_registry._register_python_name(cmd.command, cmd.python_name)
+
         return ctx
 
     def deactivate(self, key: PluginKey) -> None:
