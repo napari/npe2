@@ -5,12 +5,8 @@ except ImportError:
 __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
 
+from ._command_registry import execute_command, register_command, unregister_command
 from .manifest import PluginManifest
-from ._command_registry import (
-    register_command,
-    unregister_command,
-    execute_command,
-)
 
 __all__ = [
     "execute_command",

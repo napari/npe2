@@ -1,6 +1,8 @@
 from typing import Optional
+
 from pydantic import BaseModel
 from pydantic.fields import Field
+
 
 # the existence of the command is not validated at registration-time,
 # but rather at call time... (since commands from other extensions can be called)

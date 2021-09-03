@@ -1,15 +1,13 @@
 from __future__ import annotations
 
+import types
 from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
-from textwrap import indent
-from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple, Union
-import types
+from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Union
 
-from pydantic import BaseModel, Field, root_validator, ValidationError
-import pydantic
+from pydantic import BaseModel, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
 
@@ -253,7 +251,7 @@ class PluginManifest(BaseModel):
                     break
 
     @classmethod
-    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator["PluginManifest"]:
+    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
         """Discover manifests in the environment."""
         from importlib.metadata import distributions
 
@@ -265,9 +263,9 @@ class PluginManifest(BaseModel):
                     pm = cls._from_entrypoint(ep)
                     pm._populate_missing_meta(dist.metadata)
                     yield pm
-                except ValidationError as e:
+                except ValidationError:
                     logger.warn(msg=f"Invalid schema {ep.value!r}")
-                except Exception as e:
+                except Exception:
                     logger.warn(
                         msg=f"{entry_point_group} -> {ep.value!r} could not be imported"
                     )
@@ -315,17 +313,18 @@ class PluginManifest(BaseModel):
             If the name does not resolve to either a distribution name or a filename.
 
         """
-        from npe2 import PluginManifest
         from pydantic import ValidationError
+
+        from npe2 import PluginManifest
 
         try:
             return PluginManifest.from_file(package_or_filename)
-        except ValidationError as e:
+        except ValidationError:
             raise
         except (FileNotFoundError, ValueError):
             try:
                 return PluginManifest.from_distribution(str(package_or_filename))
-            except ValidationError as e:
+            except ValidationError:
                 raise
             except Exception:
                 raise ValueError(

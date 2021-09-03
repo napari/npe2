@@ -1,7 +1,6 @@
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field, root_validator, ValidationError
-from pydantic.utils import sequence_like
+from pydantic import BaseModel, Field, ValidationError, root_validator
 
 # # napari provides these
 # class Menu(BaseModel):

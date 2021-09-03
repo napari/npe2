@@ -1,8 +1,8 @@
 # flake8: noqa
 from __future__ import annotations
-from functools import partial
 
-from typing import Callable, Dict, List, NewType, Any, Optional, Type
+from functools import partial
+from typing import Callable, Dict, Optional
 
 PDisposable = Callable[[], None]
 

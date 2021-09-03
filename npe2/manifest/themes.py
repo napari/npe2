@@ -1,8 +1,8 @@
-from pydantic import BaseModel
-from pydantic.fields import Field
-from pydantic.color import Color
-
 from typing import Optional, Union
+
+from pydantic import BaseModel
+from pydantic.color import Color
+from pydantic.fields import Field
 from typing_extensions import Literal
 
 

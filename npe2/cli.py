@@ -1,5 +1,6 @@
-from npe2 import PluginManifest
 import typer
+
+from npe2 import PluginManifest
 
 app = typer.Typer()
 

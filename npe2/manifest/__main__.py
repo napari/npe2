@@ -1,8 +1,6 @@
 import sys
-from pathlib import Path
 
 from npe2 import PluginManifest
-
 
 pm = list(PluginManifest.discover())[0]
 

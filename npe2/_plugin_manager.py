@@ -2,27 +2,17 @@ from __future__ import annotations
 
 __all__ = ["plugin_manager", "PluginContext", "PluginManager"]
 import sys
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    DefaultDict,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
-from .manifest import PluginManifest
 from pathlib import Path
+from typing import TYPE_CHECKING, DefaultDict, Dict, Iterator, List, Set, Tuple, Union
+
+from .manifest import PluginManifest
 
 if TYPE_CHECKING:
-    from .manifest.menus import MenuItem
     from .manifest.commands import CommandContribution
+    from .manifest.io import ReaderContribution
+    from .manifest.menus import MenuItem
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
-    from .manifest.io import ReaderContribution
 
 
 PluginKey = str  # this is defined on PluginManifest as `publisher.name`
