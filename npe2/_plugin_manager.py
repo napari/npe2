@@ -1,4 +1,5 @@
 from __future__ import annotations
+from npe2.manifest.io import WriterContribution, LayerTypes
 
 __all__ = ["plugin_manager", "PluginContext", "PluginManager"]
 import sys
@@ -43,6 +44,11 @@ class PluginManager:
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
 
+    _writers_by_extension: DefaultDict[str, List[ReaderContribution]] = DefaultDict(
+        list
+    )
+    _writers_by_type: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
+
     def __init__(self) -> None:
         self.discover()  # TODO: should we be immediately discovering?
 
@@ -52,6 +58,8 @@ class PluginManager:
         self._submenus.clear()
         self._themes.clear()
         self._readers.clear()
+        self._writers_by_extension.clear()
+        self._writers_by_type.clear()
 
         for mf in PluginManifest.discover():
             self._manifests[mf.key] = mf
@@ -67,6 +75,18 @@ class PluginManager:
                         self._readers[pattern].append(reader)
                     if reader.accepts_directories:
                         self._readers[""].append(reader)
+                for writer in mf.contributes.writers or []:
+                    # Index the writer by compatible file extension.
+                    # Note: this relys on normalization rules applied during
+                    #       validation. Want forms like: .ext
+                    for ext in writer.filename_extensions:
+                        self._writers_by_extension[ext].append(writer.command)
+                    # Index the writer by compatible layer type.
+                    # Note: this depends on a LayerType.all values being coerced
+                    #       during WriterContribution construction. The `all`
+                    #       layer_type shouldn't appear here.
+                    for kind in writer.layer_types:
+                        self._writers_by_type[kind].append(writer.command)
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
@@ -133,6 +153,19 @@ class PluginManager:
                         seen.add(r.command)
                         yield r
 
+    def iter_compatible_writers(
+        self, layer_types: List[str], file_extension: str
+    ) -> Iterator[WriterContribution]:
+        candidates = set(self._writers_by_extension[file_extension])
+        for kind in layer_types:
+            candidates &= set(self._writers_by_type[kind])
+        yield from (
+            WriterContribution(
+                command=cmd, layer_types=layer_types, file_extensions=[file_extension]
+            )
+            for cmd in candidates
+        )
+
 
 _GLOBAL_PM = None
 
@@ -141,6 +174,10 @@ def __getattr__(name):
     if name == "plugin_manager":
         global _GLOBAL_PM
         if _GLOBAL_PM is None:
-            _GLOBAL_PM = PluginManager()
+            try:
+                _GLOBAL_PM = PluginManager()
+            except Exception as e:
+                print(f"Failed to initialize plugin manager: {e}")
+                raise
         return _GLOBAL_PM
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

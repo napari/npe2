@@ -42,8 +42,7 @@ class PluginManifest(BaseModel):
     )
     # easy one... we need this.  character limit?  256 char?
     display_name: str = Field(
-        "",
-        description="The display name for the extension used in the Marketplace.",
+        "", description="The display name for the extension used in the Marketplace.",
     )
     # take this from setup.cfg
     description: Optional[str] = Field(
@@ -79,8 +78,7 @@ class PluginManifest(BaseModel):
     # )
     # the hub *is* planning on supporting categories
     categories: List[str] = Field(
-        default_factory=list,
-        description="specifically defined classifiers",
+        default_factory=list, description="specifically defined classifiers",
     )
     # in the absense of input. should be inferred from version (require using rc ...)
     # or use `classifiers = Status`
@@ -252,9 +250,31 @@ class PluginManifest(BaseModel):
 
     @classmethod
     def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
-        """Discover manifests in the environment."""
+        """Discover manifests in the environment.
+        
+        This function searches for installed python packages with a matching
+        entry point group and then attempts to resolve the manifest file.
+
+        The manifest file should be specified in the plugin's `setup.cfg` file
+        using the [entry point group][1]: "napari.manifest". For example, this
+        would be the section for a plugin "npe-tester" with "napari.yaml" as the 
+        manifest file:
+
+        ```cfg
+        [options.entry_points]
+        napari.manifest =
+            npe2-tester = npe2_tester:napari.yaml
+        ```
+        
+        The manifest file is specified relative to the submodule root path.
+        So for the example it will be loaded from: 
+        `<path/to/npe2-tester>/napari.yaml`.
+
+        [1]: https://packaging.python.org/specifications/entry-points/
+        """
         from importlib.metadata import distributions
 
+        logger.debug("Discovering npe2 plugin manifests.")
         for dist in distributions():
             for ep in dist.entry_points:
                 if ep.group != entry_point_group:

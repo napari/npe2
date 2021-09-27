@@ -45,7 +45,7 @@ class CommandRegistry:
         """
         from importlib import import_module
 
-        module_name, class_name = python_name.rsplit(".", 1)
+        module_name, class_name = python_name.rsplit(":", 1)
         module = import_module(module_name)
         function = getattr(module, class_name)
         return self.register_command(id, function)
