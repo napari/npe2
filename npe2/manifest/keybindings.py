@@ -11,8 +11,8 @@ class KeyBindingContribution(BaseModel):
         description="Identifier of the command to run when keybinding is triggered."
     )
     key: str = Field(
-        description="Key or key sequence (separate keys with plus-sign and sequences with "
-        "space, e.g. Ctrl+O and Ctrl+L L for a chord)."
+        description="Key or key sequence (separate keys with plus-sign and sequences "
+        "with space, e.g. Ctrl+O and Ctrl+L L for a chord)."
     )
     mac: Optional[str] = Field(description="Mac specific key or key sequence.")
     linux: Optional[str] = Field(description="Linux specific key or key sequence.")

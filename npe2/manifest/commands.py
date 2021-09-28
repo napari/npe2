@@ -10,7 +10,8 @@ _identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
 # do we try to validate ? Or do we just
 # assume users won't try to create a command named
 # `npe2_tester.False.if.for.in` ?
-_dotted_name=f'(({_identifier}\\.)*{_identifier})'
+_dotted_name = f"(({_identifier}\\.)*{_identifier})"
+
 
 class CommandContribution(BaseModel):
     """Contribute a command.
@@ -31,7 +32,11 @@ class CommandContribution(BaseModel):
     activationEvent onCommand:${command}.
     """
 
-    command: str = Field(..., description="Identifier of the command to execute", regex='^'+_dotted_name+'$')
+    command: str = Field(
+        ...,
+        description="Identifier of the command to execute",
+        regex="^" + _dotted_name + "$",
+    )
     title: str = Field(
         ..., description="Title by which the command is represented in the UI"
     )
@@ -64,8 +69,8 @@ class CommandContribution(BaseModel):
         None,
         description="(Optional) Fully qualified name to callable python object "
         "implementing this command. This usually takes the form of "
-        "`{obj.__module__}:{obj.__qualname__} (e.g. `my_package.a_module:some_function`). "
-        "If provided, using `register_command` in the plugin activate function is optional "
-        "(but takes precedence).",
-        regex=f'^{_dotted_name}:{_dotted_name}$'
+        "`{obj.__module__}:{obj.__qualname__} (e.g. "
+        "`my_package.a_module:some_function`). If provided, using `register_command` "
+        "in the plugin activate function is optional (but takes precedence).",
+        regex=f"^{_dotted_name}:{_dotted_name}$",
     )

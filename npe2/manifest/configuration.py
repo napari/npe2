@@ -40,7 +40,7 @@ JsonType = Union[
     Literal["null"],
 ]
 
-_python_equivalent: Dict[str, Type] = {
+_python_equivalent: Dict[Optional[str], Type] = {
     "string": str,
     "number": float,
     "integer": int,
@@ -48,6 +48,7 @@ _python_equivalent: Dict[str, Type] = {
     "array": list,
     "boolean": bool,
     "null": type(None),
+    None: object,
 }
 
 
@@ -96,8 +97,8 @@ class JsonSchemaObject(BaseModel):
     )
     markdown_enum_descriptions: Optional[str] = Field(
         default_factory=list,
-        description="If you use markdown_enum_descriptions instead of enum_descriptions, "
-        "your descriptions will be rendered as Markdown",
+        description="If you use markdown_enum_descriptions instead of "
+        "enum_descriptions, your descriptions will be rendered as Markdown",
     )
     writeOnly: Optional[bool]
     properties: Optional[Dict[str, "JsonSchemaObject"]]
@@ -107,8 +108,8 @@ class JsonSchemaObject(BaseModel):
     description: Optional[str]
     markdown_description: Optional[str] = Field(
         None,
-        description="If you use markdown_description instead of description, your setting "
-        "description will be rendered as Markdown in the settings UI.",
+        description="If you use markdown_description instead of description, your "
+        "setting description will be rendered as Markdown in the settings UI.",
     )
 
     deprecation_message: Optional[str] = Field(
@@ -120,13 +121,13 @@ class JsonSchemaObject(BaseModel):
     markdown_deprecation_message: Optional[str] = Field(
         None,
         description="If you set markdown_deprecation_message, the setting will get a "
-        "warning underline with your specified message. It won't show up in the settings "
-        "UI unless it is configured by the user.",
+        "warning underline with your specified message. It won't show up in the "
+        "settings UI unless it is configured by the user.",
     )
     # NOTE:
-    # If you set both properties, deprecation_message will be shown in the hover and the
-    # problems view, and markdown_deprecation_message will be rendered as markdown in
-    # the settings UI.
+    # If you set both properties, deprecation_message will be shown in the hover and
+    # the problems view, and markdown_deprecation_message will be rendered as markdown
+    # in the settings UI.
     title: Optional[str]
     example: Any
     examples: Any
@@ -188,9 +189,9 @@ class JsonSchemaObject(BaseModel):
     @property
     def python_type(self) -> Union[Type, List[Type]]:
         if isinstance(self.type, list):
-            return [_python_equivalent.get(t) for t in self.type]
+            return [_python_equivalent[t] for t in self.type]
         else:
-            return _python_equivalent.get(self.type) if self.type else Any
+            return _python_equivalent[self.type]
 
     @property
     def is_array(self) -> bool:

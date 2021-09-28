@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ["plugin_manager", "PluginContext", "PluginManager"]
+__all__ = ["plugin_manager", "PluginContext", "PluginManager"]  # noqa: F822
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, DefaultDict, Dict, Iterator, List, Set, Tuple, Union
