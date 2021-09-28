@@ -45,7 +45,7 @@ class CommandRegistry:
         """
         from importlib import import_module
 
-        module_name, class_name = python_name.rsplit(".", 1)
+        module_name, class_name = python_name.rsplit(":", 1)
         module = import_module(module_name)
         function = getattr(module, class_name)
         return self.register_command(id, function)
@@ -75,6 +75,7 @@ class CommandRegistry:
         return id in self._commands
 
 
+# TODO: this should be an attribute of the plugin manager probably
 command_registry = CommandRegistry()
 unregister_command = command_registry.unregister_command
 get_command = command_registry.get_command

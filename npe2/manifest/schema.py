@@ -253,7 +253,10 @@ class PluginManifest(BaseModel):
     @classmethod
     def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
         """Discover manifests in the environment."""
-        from importlib.metadata import distributions
+        try:
+            from importlib.metadata import distributions
+        except ImportError:
+            from importlib_metadata import distributions  # type: ignore
 
         for dist in distributions():
             for ep in dist.entry_points:
@@ -264,15 +267,19 @@ class PluginManifest(BaseModel):
                     pm._populate_missing_meta(dist.metadata)
                     yield pm
                 except ValidationError:
-                    logger.warn(msg=f"Invalid schema {ep.value!r}")
-                except Exception:
-                    logger.warn(
-                        msg=f"{entry_point_group} -> {ep.value!r} could not be imported"
+                    logger.warning(msg=f"Invalid schema {ep.value!r}")
+                except Exception as e:
+                    logger.warning(
+                        "%s -> %r could not be imported: %s"
+                        % (entry_point_group, ep.value, e)
                     )
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
-        module = getattr(entry_point, "module", None)
+
+        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        module = match.group("module")
+
         spec = util.find_spec(module or "")
         if not spec:
             raise ValueError(
@@ -280,7 +287,9 @@ class PluginManifest(BaseModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        fname = getattr(entry_point, "attr", "")
+        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        fname = match.group("attr")
+
         for loc in spec.submodule_search_locations or []:
             mf = Path(loc) / fname
             if mf.exists():
