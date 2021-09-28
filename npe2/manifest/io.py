@@ -66,7 +66,7 @@ class WriterContribution(BaseModel):
         exts = [e if e[0] != "*" else e[1:] for e in exts if len(e) > 1]
         exts = [e if e[0] == "." else f".{e}" for e in exts]
 
-        if any(True if len(e) < 1 else e[0] != "." for e in exts):
+        if not all(e.startswith('.') for e in exts):
             raise ValueError("Invalid file extension: Must start with a period.")
 
         if any(len(e) < 2 for e in exts):
