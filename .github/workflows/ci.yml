@@ -34,7 +34,7 @@ jobs:
           pip install -e .[testing]
 
       - name: Test with tox
-        run: pytest --cov npe2 --cov-report xml
+        run: pytest -v --cov npe2 --cov-report xml
 
       - name: Coverage
         uses: codecov/codecov-action@v2
@@ -57,8 +57,8 @@ jobs:
         run: |
           git tag
           pip install --upgrade pip
-          pip install -U setuptools setuptools_scm wheel twine
-          python setup.py sdist bdist_wheel
+          pip install -U setuptools setuptools_scm wheel twine build
+          python -m build
 
       - name: twine check
         run: |
