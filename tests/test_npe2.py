@@ -24,8 +24,16 @@ def test_schema():
     assert "name" in dschema["properties"]
 
 
+def test_discover_empty():
+    # sanity check to make sure sample_plugin must be in path
+    manifests = list(PluginManifest.discover())
+    assert len(manifests) == 0
+
+
 def test_discover(uses_sample_plugin):
-    assert len(list(PluginManifest.discover())) == 1
+    manifests = list(PluginManifest.discover())
+    assert len(manifests) == 1
+    assert manifests[0].name == "my_plugin"
 
 
 def test_plugin_manager(uses_sample_plugin):
