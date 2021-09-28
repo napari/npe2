@@ -269,6 +269,7 @@ class PluginManifest(BaseModel):
                 except ValidationError:
                     logger.warning(msg=f"Invalid schema {ep.value!r}")
                 except Exception as e:
+                    raise
                     logger.warning(
                         "%s -> %r could not be imported: %s"
                         % (entry_point_group, ep.value, e)
@@ -276,7 +277,10 @@ class PluginManifest(BaseModel):
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
-        module = getattr(entry_point, "module", None)
+
+        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        module = match.group("module")
+
         spec = util.find_spec(module or "")
         if not spec:
             raise ValueError(
@@ -284,7 +288,9 @@ class PluginManifest(BaseModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        fname = getattr(entry_point, "attr", "")
+        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        fname = match.group("attr")
+
         for loc in spec.submodule_search_locations or []:
             mf = Path(loc) / fname
             if mf.exists():
