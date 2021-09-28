@@ -269,7 +269,6 @@ class PluginManifest(BaseModel):
                 except ValidationError:
                     logger.warning(msg=f"Invalid schema {ep.value!r}")
                 except Exception as e:
-                    raise
                     logger.warning(
                         "%s -> %r could not be imported: %s"
                         % (entry_point_group, ep.value, e)
