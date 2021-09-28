@@ -264,10 +264,11 @@ class PluginManifest(BaseModel):
                     pm._populate_missing_meta(dist.metadata)
                     yield pm
                 except ValidationError:
-                    logger.warn(msg=f"Invalid schema {ep.value!r}")
-                except Exception:
-                    logger.warn(
-                        msg=f"{entry_point_group} -> {ep.value!r} could not be imported"
+                    logger.warning(msg=f"Invalid schema {ep.value!r}")
+                except Exception as e:
+                    logger.warning(
+                        "%s -> %r could not be imported: %s"
+                        % (entry_point_group, ep.value, e)
                     )
 
     @classmethod
