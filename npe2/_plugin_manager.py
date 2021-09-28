@@ -121,6 +121,8 @@ class PluginManager:
     ) -> Iterator[ReaderContribution]:
         from fnmatch import fnmatch
 
+        if isinstance(path, list):
+            return NotImplemented
         if Path(path).is_dir():
             yield from self._readers[""]
         else:
