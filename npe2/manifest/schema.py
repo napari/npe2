@@ -253,7 +253,10 @@ class PluginManifest(BaseModel):
     @classmethod
     def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
         """Discover manifests in the environment."""
-        from importlib.metadata import distributions
+        try:
+            from importlib.metadata import distributions
+        except ImportError:
+            from importlib_metadata import distributions  # type: ignore
 
         for dist in distributions():
             for ep in dist.entry_points:
