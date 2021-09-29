@@ -4,12 +4,12 @@ manifest_file: EXAMPLE/pyproject.toml
 name: my_plugin
 contributes:
   commands:
-  - command: identifier.hello_world
+  - id: identifier.hello_world
     title: Hello World
-  - command: identifier.other_command
+  - id: identifier.other_command
     icon: some_icon.svg
     title: Other Command
-  - command: identifier.third
+  - id: identifier.third
     icon:
       dark: dark.svg
       light: light_icon.svg

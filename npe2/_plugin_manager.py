@@ -57,7 +57,7 @@ class PluginManager:
             self._manifests[mf.key] = mf
             if mf.contributes:
                 for cmd in mf.contributes.commands or []:
-                    self._commands[cmd.command] = (cmd, mf.key)
+                    self._commands[cmd.id] = (cmd, mf.key)
                 for subm in mf.contributes.submenus or []:
                     self._submenus[subm.id] = subm
                 for theme in mf.contributes.themes or []:
@@ -104,8 +104,8 @@ class PluginManager:
             for cmd in pm.contributes.commands:
                 from ._command_registry import command_registry
 
-                if cmd.python_name and cmd.command not in command_registry:
-                    command_registry._register_python_name(cmd.command, cmd.python_name)
+                if cmd.python_name and cmd.id not in command_registry:
+                    command_registry._register_python_name(cmd.id, cmd.python_name)
 
         return ctx
 
