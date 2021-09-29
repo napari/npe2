@@ -65,17 +65,17 @@ def _mutator_2(data):
 
 
 def _mutator_3(data):
-    assert "contributes" in data
-    c = data["contributes"]["commands"][0]["id"]
-    data["contributes"]["commands"][0]["id"] = ".".join(
+    assert "contributions" in data
+    c = data["contributions"]["commands"][0]["id"]
+    data["contributions"]["commands"][0]["id"] = ".".join(
         ["not_packagename", *c.split(".")[1:]]
     )
     return data
 
 
 def _mutator_4(data):
-    assert "contributes" in data
-    data["contributes"]["commands"][0]["python_name"] = "this.has.no.colon"
+    assert "contributions" in data
+    data["contributions"]["commands"][0]["python_name"] = "this.has.no.colon"
     return data
 
 

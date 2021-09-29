@@ -69,7 +69,7 @@ class PluginManifest(BaseModel):
     # this should come from setup.cfg ... but they don't requireq SPDX
     license: Optional[SPDX] = None
 
-    contributes: Optional[ContributionPoints]
+    contributions: Optional[ContributionPoints]
     # # this would be there only for the hub.  which is not immediately planning
     # # to support open ended keywords
     # keywords: List[str] = Field(
@@ -108,8 +108,8 @@ class PluginManifest(BaseModel):
     @root_validator
     def _validate_root(cls, values):
         invalid_commands = []
-        if "contributes" in values:
-            for command in values["contributes"].commands:
+        if "contributions" in values:
+            for command in values["contributions"].commands:
                 if not command.id.startswith(values["name"]):
                     invalid_commands.append(command.id)
 
