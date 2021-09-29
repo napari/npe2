@@ -5,11 +5,11 @@ license: BSD-3-Clause
 entry_point: my_plugin
 contributes:
   commands:
-    - command: my_plugin.hello_world
+    - id: my_plugin.hello_world
       title: Hello World
-    - command: my_plugin.another_command
+    - id: my_plugin.another_command
       title: Another Command
-    - command: my_plugin.tiff_reader
+    - id: my_plugin.tiff_reader
       title: My Tiff Reader
       python_name: my_plugin:get_reader
   configuration: # call it settings?

@@ -66,8 +66,8 @@ def _mutator_2(data):
 
 def _mutator_3(data):
     assert "contributes" in data
-    c = data["contributes"]["commands"][0]["command"]
-    data["contributes"]["commands"][0]["command"] = ".".join(
+    c = data["contributes"]["commands"][0]["id"]
+    data["contributes"]["commands"][0]["id"] = ".".join(
         ["not_packagename", *c.split(".")[1:]]
     )
     return data

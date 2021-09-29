@@ -33,7 +33,7 @@ class CommandContribution(BaseModel):
     activationEvent onCommand:${command}.
     """
 
-    command: str = Field(
+    id: str = Field(
         ...,
         description=dedent(
             """

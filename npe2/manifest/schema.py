@@ -110,8 +110,8 @@ class PluginManifest(BaseModel):
         invalid_commands = []
         if "contributes" in values:
             for command in values["contributes"].commands:
-                if not command.command.startswith(values["name"]):
-                    invalid_commands.append(command.command)
+                if not command.id.startswith(values["name"]):
+                    invalid_commands.append(command.id)
 
         if invalid_commands:
             raise ValueError(
