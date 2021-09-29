@@ -55,14 +55,14 @@ class PluginManager:
 
         for mf in PluginManifest.discover():
             self._manifests[mf.key] = mf
-            if mf.contributes:
-                for cmd in mf.contributes.commands or []:
+            if mf.contributions:
+                for cmd in mf.contributions.commands or []:
                     self._commands[cmd.id] = (cmd, mf.key)
-                for subm in mf.contributes.submenus or []:
+                for subm in mf.contributions.submenus or []:
                     self._submenus[subm.id] = subm
-                for theme in mf.contributes.themes or []:
+                for theme in mf.contributions.themes or []:
                     self._themes[theme.id] = theme
-                for reader in mf.contributes.readers or []:
+                for reader in mf.contributions.readers or []:
                     for pattern in reader.filename_patterns:
                         self._readers[pattern].append(reader)
                     if reader.accepts_directories:
@@ -70,8 +70,8 @@ class PluginManager:
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
-            if mf.contributes:
-                yield from getattr(mf.contributes.menus, menu_key, [])
+            if mf.contributions:
+                yield from getattr(mf.contributions.menus, menu_key, [])
 
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
@@ -100,8 +100,8 @@ class PluginManager:
             PluginContext._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}")
 
-        if pm.contributes and pm.contributes.commands:
-            for cmd in pm.contributes.commands:
+        if pm.contributions and pm.contributions.commands:
+            for cmd in pm.contributions.commands:
                 from ._command_registry import command_registry
 
                 if cmd.python_name and cmd.id not in command_registry:

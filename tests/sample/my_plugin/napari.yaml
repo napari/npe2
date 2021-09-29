@@ -3,7 +3,7 @@ publisher: publisher
 display_name: My Plugin
 license: BSD-3-Clause
 entry_point: my_plugin
-contributes:
+contributions:
   commands:
     - id: my_plugin.hello_world
       title: Hello World

@@ -2,7 +2,7 @@ entry_point: main.py
 license: BSD-3-Clause
 manifest_file: EXAMPLE/pyproject.toml
 name: my_plugin
-contributes:
+contributions:
   commands:
   - id: identifier.hello_world
     title: Hello World
