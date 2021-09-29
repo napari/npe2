@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Optional, Union
 
 from pydantic import BaseModel, Field
@@ -34,7 +35,16 @@ class CommandContribution(BaseModel):
 
     command: str = Field(
         ...,
-        description="Identifier of the command to execute",
+        description=dedent(
+            """
+        Identifier of the command to execute
+
+        While this may looks a python fully qualified name this does not refer
+        to a python object.
+        This identifier is specific to Napari, and will be considered unique.
+        It follow the same rule as Python fully qualified name, with the extra
+        restriction as being limited to ascii"""
+        ),
         regex="^" + _dotted_name + "$",
     )
     title: str = Field(

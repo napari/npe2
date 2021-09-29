@@ -5,6 +5,7 @@ from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
@@ -106,6 +107,22 @@ class PluginManifest(BaseModel):
 
     @root_validator
     def _validate_root(cls, values):
+        invalid_commands = []
+        if "contributes" in values:
+            for command in values["contributes"].commands:
+                if not command.command.startswith(values["name"]):
+                    invalid_commands.append(command.command)
+
+        if invalid_commands:
+            raise ValueError(
+                dedent(
+                    f"""Commands identifiers must start with the current package name {values['name']!r}
+            the following commands where found to break this assumption:
+                {invalid_commands}
+            """
+                )
+            )
+
         return values
 
     def toml(self):
