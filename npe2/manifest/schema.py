@@ -6,7 +6,7 @@ from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
@@ -23,6 +23,12 @@ SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
 logger = getLogger(__name__)
 
 ENTRY_POINT = "napari.manifest"
+
+
+class DiscoverResults(NamedTuple):
+    manifest: Optional[PluginManifest]
+    entrypoint: Optional[Any]
+    error: Optional[Exception]
 
 
 class PluginManifest(BaseModel):
@@ -268,8 +274,14 @@ class PluginManifest(BaseModel):
                     break
 
     @classmethod
-    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
-        """Discover manifests in the environment."""
+    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[DiscoverResults]:
+        """Discover manifests in the environment.
+
+        Yields
+        ------
+        DiscoverResults: (3 namedtuples: manifest, entrypoint, error)
+            3-tuples with either manifest or (entrypoint and error) being None.
+        """
         try:
             from importlib.metadata import distributions
         except ImportError:
@@ -282,14 +294,16 @@ class PluginManifest(BaseModel):
                 try:
                     pm = cls._from_entrypoint(ep)
                     pm._populate_missing_meta(dist.metadata)
-                    yield pm
-                except ValidationError:
+                    yield DiscoverResults(pm, None, None)
+                except ValidationError as e:
                     logger.warning(msg=f"Invalid schema {ep.value!r}")
+                    yield DiscoverResults(None, ep, e)
                 except Exception as e:
                     logger.warning(
                         "%s -> %r could not be imported: %s"
                         % (entry_point_group, ep.value, e)
                     )
+                    yield DiscoverResults(None, ep, e)
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:

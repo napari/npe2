@@ -53,7 +53,10 @@ class PluginManager:
         self._themes.clear()
         self._readers.clear()
 
-        for mf in PluginManifest.discover():
+        for result in PluginManifest.discover():
+            if result.manifest is None:
+                continue
+            mf = result.manifest
             self._manifests[mf.key] = mf
             if mf.contributes:
                 for cmd in mf.contributes.commands or []:
