@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from .commands import CommandContribution
 from .configuration import JsonSchemaObject
-from .io import ReaderContribution,WriterContribution
+from .io import ReaderContribution, WriterContribution
 from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
 from .submenu import SubmenuContribution
