@@ -27,20 +27,19 @@ def test_schema():
 
 def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path
-    manifests = list(PluginManifest.discover())
-    assert len(manifests) == 0
+    manifests = [mn.name for mn in PluginManifest.discover()]
+    assert "my_plugin" not in manifests
 
 
 def test_discover(uses_sample_plugin):
-    manifests = list(PluginManifest.discover())
-    assert len(manifests) == 1
-    assert manifests[0].name == "my_plugin"
+    manifests = [mn.name for mn in PluginManifest.discover()]
+    assert "my_plugin" in manifests
 
 
 def test_plugin_manager(uses_sample_plugin):
     pm = PluginManager()
     pm.discover()
-    assert len(pm._manifests) == 1
+    assert len(pm._manifests) > 0
     pm.activate("publisher.my_plugin")
 
 

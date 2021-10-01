@@ -274,10 +274,10 @@ class PluginManifest(BaseModel):
         This function searches for installed python packages with a matching
         entry point group and then attempts to resolve the manifest file.
 
-        The manifest file should be specified in the plugin's `setup.cfg` file
-        using the [entry point group][1]: "napari.manifest". For example, this
-        would be the section for a plugin "npe-tester" with "napari.yaml" as the
-        manifest file:
+        The manifest file should be specified in the plugin's `setup.cfg` or
+        `setup.py` file using the [entry point group][1]: "napari.manifest".
+        For example, this would be the section for a plugin "npe-tester" with
+        "napari.yaml" as the manifest file:
 
         ```cfg
         [options.entry_points]

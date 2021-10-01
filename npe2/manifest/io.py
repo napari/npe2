@@ -19,11 +19,12 @@ class ReaderContribution(BaseModel):
 
 
 class LayerTypes(str, Enum):
-    all = "all"
     image = "image"
     labels = "labels"
     points = "points"
     shapes = "shapes"
+    surface = "surface"
+    tracks = "tracks"
     vector = "vector"
 
 
@@ -32,7 +33,7 @@ class WriterContribution(BaseModel):
         ..., description="Identifier of the command providing `napari_get_writer`."
     )
     layer_types: List[LayerTypes] = Field(
-        default_factory=lambda: [LayerTypes.all],
+        ...,
         description="List of layer types that this writer can write.",
     )
 
@@ -42,13 +43,11 @@ class WriterContribution(BaseModel):
     )
 
     @validator("layer_types")
-    def _coerce_layer_type_all(cls, vs: List[str]) -> List[str]:
-        """If any of the listed layer types are LayerType.all, replace the
-        list with one of all layer types.
-        """
-        if LayerTypes.all in vs:
-            return list(set(LayerTypes) - {LayerTypes.all})
-        return vs
+    def _nonempty_layer_types(cls, layer_types: List[str]) -> List[str]:
+        """If layer_types is empty, raise a ValueError."""
+        if not layer_types:
+            raise ValueError("layer_types must not be empty")
+        return layer_types
 
     @validator("filename_extensions")
     def _coerce_common_glob_patterns(cls, exts: List[str]) -> List[str]:

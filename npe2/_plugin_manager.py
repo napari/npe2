@@ -45,10 +45,8 @@ class PluginManager:
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
 
-    _writers_by_extension: DefaultDict[str, List[ReaderContribution]] = DefaultDict(
-        list
-    )
-    _writers_by_type: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
+    _writers_by_extension: DefaultDict[str, List[str]] = DefaultDict(list)
+    _writers_by_type: DefaultDict[str, List[str]] = DefaultDict(list)
 
     def __init__(self) -> None:
         self.discover()  # TODO: should we be immediately discovering?
@@ -76,7 +74,7 @@ class PluginManager:
                         self._readers[pattern].append(reader)
                     if reader.accepts_directories:
                         self._readers[""].append(reader)
-                for writer in mf.contributes.writers or []:
+                for writer in mf.contributions.writers or []:
                     # Index the writer by compatible file extension.
                     # Note: this relys on normalization rules applied during
                     #       validation. Want forms like: .ext
