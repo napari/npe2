@@ -1,5 +1,6 @@
-from typing import List
 from enum import Enum
+from typing import List
+
 from pydantic import BaseModel, Field, validator
 
 
@@ -9,8 +10,8 @@ class ReaderContribution(BaseModel):
     )
     filename_patterns: List[str] = Field(
         default_factory=list,
-        description="List of filename patterns (for fnmatch) that this reader can accept."
-        "Reader will be tried only if `fnmatch(filename, pattern) == True`",
+        description="List of filename patterns (for fnmatch) that this reader can "
+        "accept. Reader will be tried only if `fnmatch(filename, pattern) == True`",
     )
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
@@ -42,16 +43,16 @@ class WriterContribution(BaseModel):
 
     @validator("layer_types")
     def _coerce_layer_type_all(cls, vs: List[str]) -> List[str]:
-        """If any of the listed layer types are LayerType.all, replace the 
+        """If any of the listed layer types are LayerType.all, replace the
         list with one of all layer types.
         """
         if LayerTypes.all in vs:
-            return list(set(LayerTypes) - set([LayerTypes.all]))
+            return list(set(LayerTypes) - {LayerTypes.all})
         return vs
 
     @validator("filename_extensions")
     def _coerce_common_glob_patterns(cls, exts: List[str]) -> List[str]:
-        """If any of the listed extensions are common glob patterns, replace the 
+        """If any of the listed extensions are common glob patterns, replace the
         list with one of all extensions.
 
         Coercions:
@@ -66,7 +67,7 @@ class WriterContribution(BaseModel):
         exts = [e if e[0] != "*" else e[1:] for e in exts if len(e) > 1]
         exts = [e if e[0] == "." else f".{e}" for e in exts]
 
-        if not all(e.startswith('.') for e in exts):
+        if not all(e.startswith(".") for e in exts):
             raise ValueError("Invalid file extension: Must start with a period.")
 
         if any(len(e) < 2 for e in exts):
@@ -74,4 +75,3 @@ class WriterContribution(BaseModel):
                 "Invalid file extension: Must have one character past the '.'"
             )
         return exts
-

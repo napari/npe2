@@ -75,6 +75,7 @@ class CommandRegistry:
         return id in self._commands
 
 
+# TODO: this should be an attribute of the plugin manager probably
 command_registry = CommandRegistry()
 unregister_command = command_registry.unregister_command
 get_command = command_registry.get_command

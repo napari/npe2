@@ -37,7 +37,7 @@ class Submenu(_MenuItem):
         "The submenu must be declared in the 'submenus' -section",
     )
     # if submenu doesn't exist, you get:
-    # Menu item references a submenu ...` which is not defined in the 'submenus' section.
+    # Menu item references a submenu ...` which is not defined in the 'submenus' section
 
 
 class MenuCommand(_MenuItem):
@@ -47,14 +47,16 @@ class MenuCommand(_MenuItem):
         "The command must be declared in the 'commands' section",
     )
     # if command doesn't exist, you get:
-    # "Menu item references a command `...` which is not defined in the 'commands' section."
+    # "Menu item references a command `...` which is not defined in the
+    # 'commands' section."
     alt: Optional[str] = Field(
         description="Identifier of an alternative command to execute. "
         "It will be shown and invoked when pressing Alt while opening a menu."
         "The command must be declared in the 'commands' section"
     )
     # if command doesn't exist, you get:
-    # "Menu item references an alt-command  `...` which is not defined in the 'commands' section."
+    # "Menu item references an alt-command  `...` which is not defined in
+    # the 'commands' section."
 
 
 MenuItem = Union[MenuCommand, Submenu]
@@ -77,13 +79,14 @@ class MenusContribution(BaseModel):
         They become accessible as attributes on the MenusContribution instance.
         """
 
-        # get validator... all of these fields have the same type (Optional[List[MenuItem]])
+        # get validator... all of these fields have the same type
+        # (Optional[List[MenuItem]])
         validate = list(MenusContribution.__fields__.values())[0].validate
 
         for i, (key, val) in enumerate(values.items()):
             if key not in cls.__fields__:
                 val, err = validate(val, {}, loc=str(i))
                 if err:
-                    raise ValidationError([err], cls)  # type: ignore
+                    raise ValidationError([err], cls)
                 values[key] = val
         return values

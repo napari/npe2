@@ -1,0 +1,52 @@
+name: my_plugin
+publisher: publisher
+display_name: My Plugin
+license: BSD-3-Clause
+entry_point: my_plugin
+contributions:
+  commands:
+    - id: my_plugin.hello_world
+      title: Hello World
+    - id: my_plugin.another_command
+      title: Another Command
+    - id: my_plugin.tiff_reader
+      title: My Tiff Reader
+      python_name: my_plugin:get_reader
+  configuration: # call it settings?
+    properties:
+      my_plugin.reader.lazy:
+        type: boolean
+        default: false
+        title: Load lazily
+        description: Whether to load images lazily with dask
+  readers:
+    - command: my_plugin.tiff_reader
+      filename_patterns: ["*.tif", "*.tiff"]
+      accepts_directories: false
+  widgets:
+    - command: my_plugin.affinder
+  menus:
+    /napari/layer_context:
+      - submenu: mysubmenu
+      - command: my_plugin.hello_world
+    mysubmenu:
+      - command: my_plugin.another_command
+      - command: my_plugin.affinder
+  submenus:
+    - id: mysubmenu
+      label: My SubMenu
+  themes:
+    - label: "Monokai"
+      id: "monokai"
+      type: "dark"
+      colors:
+        canvas: "#000000"
+        console: "#000000"
+        background: "#272822"
+        foreground: "#75715e"
+        primary: "#cfcfc2"
+        secondary: "#f8f8f2"
+        highlight: "#e6db74"
+        text: "#a1ef34"
+        warning: "#f92672"
+        current: "#66d9ef"

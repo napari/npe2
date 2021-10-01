@@ -1,7 +1,7 @@
 {
   "name": "my_plugin",
   "entry_point": "main.py",
-  "contributes": {
+  "contributions": {
     "commands": [
       { "command": "identifier.hello_world", "title": "Hello World" },
       {

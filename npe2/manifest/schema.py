@@ -5,6 +5,7 @@ from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
@@ -42,7 +43,8 @@ class PluginManifest(BaseModel):
     )
     # easy one... we need this.  character limit?  256 char?
     display_name: str = Field(
-        "", description="The display name for the extension used in the Marketplace.",
+        "",
+        description="The display name for the extension used in the Marketplace.",
     )
     # take this from setup.cfg
     description: Optional[str] = Field(
@@ -67,7 +69,7 @@ class PluginManifest(BaseModel):
     # this should come from setup.cfg ... but they don't requireq SPDX
     license: Optional[SPDX] = None
 
-    contributes: Optional[ContributionPoints]
+    contributions: Optional[ContributionPoints]
     # # this would be there only for the hub.  which is not immediately planning
     # # to support open ended keywords
     # keywords: List[str] = Field(
@@ -78,7 +80,8 @@ class PluginManifest(BaseModel):
     # )
     # the hub *is* planning on supporting categories
     categories: List[str] = Field(
-        default_factory=list, description="specifically defined classifiers",
+        default_factory=list,
+        description="specifically defined classifiers",
     )
     # in the absense of input. should be inferred from version (require using rc ...)
     # or use `classifiers = Status`
@@ -104,6 +107,22 @@ class PluginManifest(BaseModel):
 
     @root_validator
     def _validate_root(cls, values):
+        invalid_commands = []
+        if "contributions" in values:
+            for command in values["contributions"].commands:
+                if not command.id.startswith(values["name"]):
+                    invalid_commands.append(command.id)
+
+        if invalid_commands:
+            raise ValueError(
+                dedent(
+                    f"""Commands identifiers must start with the current package name {values['name']!r}
+            the following commands where found to break this assumption:
+                {invalid_commands}
+            """
+                )
+            )
+
         return values
 
     def toml(self):
@@ -251,13 +270,13 @@ class PluginManifest(BaseModel):
     @classmethod
     def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
         """Discover manifests in the environment.
-        
+
         This function searches for installed python packages with a matching
         entry point group and then attempts to resolve the manifest file.
 
         The manifest file should be specified in the plugin's `setup.cfg` file
         using the [entry point group][1]: "napari.manifest". For example, this
-        would be the section for a plugin "npe-tester" with "napari.yaml" as the 
+        would be the section for a plugin "npe-tester" with "napari.yaml" as the
         manifest file:
 
         ```cfg
@@ -265,14 +284,17 @@ class PluginManifest(BaseModel):
         napari.manifest =
             npe2-tester = npe2_tester:napari.yaml
         ```
-        
+
         The manifest file is specified relative to the submodule root path.
-        So for the example it will be loaded from: 
+        So for the example it will be loaded from:
         `<path/to/npe2-tester>/napari.yaml`.
 
         [1]: https://packaging.python.org/specifications/entry-points/
         """
-        from importlib.metadata import distributions
+        try:
+            from importlib.metadata import distributions
+        except ImportError:
+            from importlib_metadata import distributions  # type: ignore
 
         logger.debug("Discovering npe2 plugin manifests.")
         for dist in distributions():
@@ -284,15 +306,19 @@ class PluginManifest(BaseModel):
                     pm._populate_missing_meta(dist.metadata)
                     yield pm
                 except ValidationError:
-                    logger.warn(msg=f"Invalid schema {ep.value!r}")
-                except Exception:
-                    logger.warn(
-                        msg=f"{entry_point_group} -> {ep.value!r} could not be imported"
+                    logger.warning(msg=f"Invalid schema {ep.value!r}")
+                except Exception as e:
+                    logger.warning(
+                        "%s -> %r could not be imported: %s"
+                        % (entry_point_group, ep.value, e)
                     )
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
-        module = getattr(entry_point, "module", None)
+
+        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        module = match.group("module")
+
         spec = util.find_spec(module or "")
         if not spec:
             raise ValueError(
@@ -300,7 +326,9 @@ class PluginManifest(BaseModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        fname = getattr(entry_point, "attr", "")
+        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        fname = match.group("attr")
+
         for loc in spec.submodule_search_locations or []:
             mf = Path(loc) / fname
             if mf.exists():

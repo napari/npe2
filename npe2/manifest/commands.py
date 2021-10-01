@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Optional, Union
 
 from pydantic import BaseModel, Field
@@ -32,9 +33,18 @@ class CommandContribution(BaseModel):
     activationEvent onCommand:${command}.
     """
 
-    command: str = Field(
+    id: str = Field(
         ...,
-        description="Identifier of the command to execute",
+        description=dedent(
+            """
+        Identifier of the command to execute
+
+        While this may looks a python fully qualified name this does not refer
+        to a python object.
+        This identifier is specific to Napari, and will be considered unique.
+        It follow the same rule as Python fully qualified name, with the extra
+        restriction as being limited to ascii"""
+        ),
         regex="^" + _dotted_name + "$",
     )
     title: str = Field(
@@ -69,8 +79,8 @@ class CommandContribution(BaseModel):
         None,
         description="(Optional) Fully qualified name to callable python object "
         "implementing this command. This usually takes the form of "
-        "`{obj.__module__}:{obj.__qualname__} (e.g. `my_package.a_module:some_function`). "
-        "If provided, using `register_command` in the plugin activate function is optional "
-        "(but takes precedence).",
+        "`{obj.__module__}:{obj.__qualname__} (e.g. "
+        "`my_package.a_module:some_function`). If provided, using `register_command` "
+        "in the plugin activate function is optional (but takes precedence).",
         regex=f"^{_dotted_name}:{_dotted_name}$",
     )

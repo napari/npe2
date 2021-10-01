@@ -3,7 +3,7 @@ name = 'my_plugin'
 entry_point = 'main.py'
 license = 'BSD-3-Clause'
 
-[tool.napari.contributes]
+[tool.napari.contributions]
 commands = [
     { command = 'identifier.hello_world', title = "Hello World" },
     { command = 'identifier.other_command', title = "Other Command", icon = 'some_icon.svg' },
@@ -12,7 +12,7 @@ commands = [
 submenus = [{ id = 'mysubmenu', label = "My SubMenu" }]
 keybindings = [{ command = 'identifier.hello_world', "key" = "ctrl+f1" }]
 
-[tool.napari.contributes.menus]
+[tool.napari.contributions.menus]
 mysubmenu = [{ command = 'identifier.hello_world' }]
 layers__context = [
     { submenu = 'mysubmenu' },
