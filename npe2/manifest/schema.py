@@ -352,11 +352,11 @@ class PluginManifest(BaseModel):
                 return PluginManifest.from_distribution(str(package_or_filename))
             except ValidationError:
                 raise
-            except Exception:
+            except Exception as e:
                 raise ValueError(
                     f"Could not find manifest for {package_or_filename!r} as either a "
                     "package name or a file.."
-                )
+                ) from e
 
     ValidationError = ValidationError  # for convenience of access
 
