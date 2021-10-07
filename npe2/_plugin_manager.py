@@ -1,12 +1,27 @@
 from __future__ import annotations
 
-from npe2.manifest.io import WriterContribution
+from npe2.manifest.io import LayerType, WriterContribution
 
 __all__ = ["plugin_manager", "PluginContext", "PluginManager"]  # noqa: F822
 import sys
+from collections import Counter
 from pathlib import Path
-from typing import TYPE_CHECKING, DefaultDict, Dict, Iterator, List, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    DefaultDict,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
+from intervaltree import IntervalTree
+
+from ._command_registry import execute_command
 from .manifest import PluginManifest
 
 if TYPE_CHECKING:
@@ -44,20 +59,21 @@ class PluginManager:
     _submenus: Dict[str, SubmenuContribution] = {}
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
-
-    _writers_by_extension: DefaultDict[str, List[str]] = DefaultDict(list)
-    _writers_by_type: DefaultDict[str, List[str]] = DefaultDict(list)
+    _writers_by_type: DefaultDict[
+        LayerType, IntervalTree[WriterContribution]
+    ] = DefaultDict(IntervalTree)
 
     def __init__(self) -> None:
         self.discover()  # TODO: should we be immediately discovering?
 
     def discover(self):
+        """Finds and indexes npe2-based napari plugins installed in the python
+        environment."""
         self._manifests.clear()
         self._commands.clear()
         self._submenus.clear()
         self._themes.clear()
         self._readers.clear()
-        self._writers_by_extension.clear()
         self._writers_by_type.clear()
 
         for mf in PluginManifest.discover():
@@ -75,17 +91,10 @@ class PluginManager:
                     if reader.accepts_directories:
                         self._readers[""].append(reader)
                 for writer in mf.contributions.writers or []:
-                    # Index the writer by compatible file extension.
-                    # Note: this relys on normalization rules applied during
-                    #       validation. Want forms like: .ext
-                    for ext in writer.filename_extensions:
-                        self._writers_by_extension[ext].append(writer.command)
-                    # Index the writer by compatible layer type.
-                    # Note: this depends on a LayerType.all values being coerced
-                    #       during WriterContribution construction. The `all`
-                    #       layer_type shouldn't appear here.
-                    for kind in writer.layer_types:
-                        self._writers_by_type[kind].append(writer.command)
+                    for constraint in writer.layer_type_constraints():
+                        self._writers_by_type.setdefault(
+                            constraint.layer_type, IntervalTree()
+                        ).addi(constraint.bounds[0], constraint.bounds[1], writer)
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
@@ -155,17 +164,61 @@ class PluginManager:
                         yield r
 
     def iter_compatible_writers(
-        self, layer_types: List[str], file_extension: str
+        self, layer_types: List[str]
     ) -> Iterator[WriterContribution]:
-        candidates = set(self._writers_by_extension[file_extension])
-        for kind in layer_types:
-            candidates &= set(self._writers_by_type[kind])
-        yield from (
-            WriterContribution(
-                command=cmd, layer_types=layer_types, file_extensions=[file_extension]
+        """Attempt to match writers that consume all layers."""
+
+        # First count how many of each distinct type are requested. We'll use
+        # this to get candidate writers compatible with the requested count.
+        counts = Counter(layer_types)
+
+        def get_candidates(layer_type: Optional[LayerType]) -> Set[WriterContribution]:
+            # WriterContributions are hashed based on their command id.
+            if not layer_type:
+                return set()
+            return set(
+                map(
+                    lambda v: v.data,  # unbox the Interval object
+                    self._writers_by_type.get(layer_type, IntervalTree())[
+                        counts[layer_type]
+                    ],
+                )
             )
-            for cmd in candidates
-        )
+
+        types = iter(LayerType)
+        candidates = get_candidates(next(types, None))
+        for lt in types:
+            if candidates:
+                candidates &= get_candidates(lt)
+            else:
+                break
+
+        yield from candidates
+
+
+def write(
+    writer: WriterContribution,
+    path: str,
+    layer_data: List[Tuple[Any, Dict, str]],
+) -> List[str]:
+    """Write layer data to an svg.
+
+    Parameters
+    ----------
+    writer : WriterContribution
+        Description of the writer to use.
+    path : str
+        path to file/directory
+    layer_data : list of napari.types.LayerData
+        List of layer_data, where layer_data is ``(data, meta, layer_type)``.
+
+    Returns
+    -------
+    path : str or None
+        If data is successfully written, return the ``path`` that was written.
+        Otherwise, if nothing was done, return ``None``.
+    """
+    return execute_command(writer.command, args=[path, layer_data])
 
 
 _GLOBAL_PM = None
