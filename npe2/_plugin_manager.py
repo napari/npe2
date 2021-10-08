@@ -18,6 +18,7 @@ from typing import (
     Tuple,
     Union,
 )
+from warnings import warn
 
 from intervaltree import IntervalTree
 
@@ -196,11 +197,11 @@ class PluginManager:
         yield from candidates
 
 
-def write(
+def write_layers(
     writer: WriterContribution,
     path: str,
     layer_data: List[Tuple[Any, Dict, str]],
-) -> List[str]:
+) -> List[Optional[str]]:
     """Write layer data to an svg.
 
     Parameters
@@ -214,11 +215,18 @@ def write(
 
     Returns
     -------
-    path : str or None
+    path : List of str or None
         If data is successfully written, return the ``path`` that was written.
         Otherwise, if nothing was done, return ``None``.
     """
-    return execute_command(writer.command, args=[path, layer_data])
+    if not layer_data:
+        return []
+
+    if writer.uses_single_layer_api:
+        data, meta, _ = layer_data[0]
+        return list(execute_command(writer.command, args=[path, data, meta]))
+    else:
+        return execute_command(writer.command, args=[path, layer_data])
 
 
 _GLOBAL_PM = None
@@ -231,7 +239,7 @@ def __getattr__(name):
             try:
                 _GLOBAL_PM = PluginManager()
             except Exception as e:
-                print(f"Failed to initialize plugin manager: {e}")
+                warn(f"Failed to initialize plugin manager: {e}")
                 raise
         return _GLOBAL_PM
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

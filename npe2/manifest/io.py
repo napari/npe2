@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional, Tuple
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Extra, Field, validator
 
 
 class ReaderContribution(BaseModel):
@@ -16,6 +16,9 @@ class ReaderContribution(BaseModel):
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
     )
+
+    class Config:
+        extra = Extra.forbid
 
 
 class LayerType(str, Enum):
@@ -127,10 +130,14 @@ class WriterContribution(BaseModel):
         ...,
         description="List of layer type constraints.",
     )
-
     filename_extensions: List[str] = Field(
         default_factory=list,
         description="List of filename extensions compatible with this writer.",
+    )
+    uses_single_layer_api: bool = Field(
+        default=False,
+        description="Whether this writer command uses the "
+        "'Single Layers IO'-style callback from the original plugin engine.",
     )
 
     def layer_type_constraints(self) -> List[LayerTypeConstraint]:
@@ -143,6 +150,9 @@ class WriterContribution(BaseModel):
 
     def __eq__(self, other):
         return self.command == other.command
+
+    class Config:
+        extra = Extra.forbid
 
     @validator("layer_types")
     def _parsable_layer_type_expr(cls, layer_types: List[str]) -> List[str]:
