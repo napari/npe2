@@ -28,14 +28,16 @@ def test_schema():
 
 def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path
-    manifests = list(PluginManifest.discover())
-    assert len(manifests) == 0
+    manifests_and_errors = list(PluginManifest.discover())
+    assert len(manifests_and_errors) == 0
 
 
 def test_discover(uses_sample_plugin):
-    manifests = list(PluginManifest.discover())
-    assert len(manifests) == 1
-    assert manifests[0].name == "my_plugin"
+    manifests_errors = list(PluginManifest.discover())
+    assert len(manifests_errors) == 1
+    [(manifest, entrypoint, error)] = manifests_errors
+    assert manifest is not None
+    assert manifest.name == "my_plugin"
 
 
 def test_plugin_manager(uses_sample_plugin):
@@ -121,7 +123,10 @@ def _mutator_no_contributes_extra_field(data):
 )
 def test_invalid(mutator, uses_sample_plugin):
 
-    pm = list(PluginManifest.discover())[0]
+    result = list(PluginManifest.discover())[0]
+    assert result.error is None
+    assert result.manifest is not None
+    pm = result.manifest
     data = json.loads(pm.json(exclude_unset=True))
     mutator(data)
     with pytest.raises(ValidationError):
