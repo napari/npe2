@@ -8,7 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError, root_validator
+from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
 
@@ -26,6 +26,7 @@ ENTRY_POINT = "napari.manifest"
 
 
 class PluginManifest(BaseModel):
+
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (probably yes)
     # do we normalize this? (i.e. underscores / dashes ?)
@@ -108,7 +109,7 @@ class PluginManifest(BaseModel):
     @root_validator
     def _validate_root(cls, values):
         invalid_commands = []
-        if "contributions" in values:
+        if values.get("contributions") is not None:
             for command in values["contributions"].commands:
                 if not command.id.startswith(values["name"]):
                     invalid_commands.append(command.id)
@@ -225,6 +226,7 @@ class PluginManifest(BaseModel):
     class Config:
         use_enum_values = True  # only needed for SPDX
         underscore_attrs_are_private = True
+        extra = Extra.forbid
 
     # should these be on this model itself? or helper functions elsewhere
 
