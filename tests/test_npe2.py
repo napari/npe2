@@ -102,7 +102,7 @@ def _mutator_no_contributes_extra_field(data):
     """
     Contributions used to be called contributes.
 
-    Check that an extra filed fails.
+    Check that an extra field fails.
     """
     data["invalid_extra_name"] = data["contributions"]
     del data["contributions"]
