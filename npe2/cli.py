@@ -6,7 +6,7 @@ app = typer.Typer()
 
 
 @app.command()
-def validate(name: str):
+def validate(name: str, debug: bool = False):
     """Validate manifest for a distribution name or manifest filepath."""
 
     valid = False
@@ -18,6 +18,8 @@ def validate(name: str):
         msg = f"🅇 Invalid! {err}"
     except Exception as err:
         msg = f"🅇 Failed to load {name!r}. {type(err).__name__}: {err}"
+        if debug:
+            raise
 
     typer.secho(msg, fg=typer.colors.GREEN if valid else typer.colors.RED, bold=True)
 
