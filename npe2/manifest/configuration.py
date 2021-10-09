@@ -27,7 +27,7 @@ SOFTWARE.
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Type, Union
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel, Extra, Field, root_validator, validator
 from typing_extensions import Literal
 
 JsonType = Union[
@@ -163,7 +163,7 @@ class JsonSchemaObject(BaseModel):
         return values
 
     class Config:
-        extra = "forbid"
+        extra = Extra.forbid
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True
 

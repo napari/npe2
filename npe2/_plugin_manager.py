@@ -79,7 +79,10 @@ class PluginManager:
         self._writers_by_type.clear()
         self._writers_by_command.clear()
 
-        for mf in PluginManifest.discover():
+        for result in PluginManifest.discover():
+            if result.manifest is None:
+                continue
+            mf = result.manifest
             self._manifests[mf.key] = mf
             if mf.contributions:
                 for cmd in mf.contributions.commands or []:

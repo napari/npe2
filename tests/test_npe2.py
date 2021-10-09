@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -27,13 +28,19 @@ def test_schema():
 
 def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path
-    manifests = [mn.name for mn in PluginManifest.discover()]
-    assert "my_plugin" not in manifests
+    manifests = list(
+        result.manifest for result in PluginManifest.discover() if result.manifest
+    )
+    names = [m.name for m in manifests]
+    assert "my_plugin" not in names
 
 
 def test_discover(uses_sample_plugin):
-    manifests = [mn.name for mn in PluginManifest.discover()]
-    assert "my_plugin" in manifests
+    manifests = list(
+        result.manifest for result in PluginManifest.discover() if result.manifest
+    )
+    names = [m.name for m in manifests]
+    assert "my_plugin" in names
 
 
 def test_plugin_manager(uses_sample_plugin):
@@ -78,13 +85,76 @@ def _mutator_4(data):
     return data
 
 
-@pytest.mark.parametrize("mutator", [_mutator_1, _mutator_2, _mutator_3, _mutator_4])
+def _valid_mutator_no_contributions(data):
+    """
+    Contributions can be absent, in which case the Pydantic model will set the
+    default value to None, and not the empty list, make sure that works.
+    """
+    del data["contributions"]
+    return data
+
+
+def _valid_mutator_no_contributions_None(data):
+    """
+    Contributions can be absent, in which case the Pydantic model will set the
+    default value to None, and not the empty list, make sure that works.
+    """
+    data["contributions"] = None
+    return data
+
+
+def _mutator_no_contributes_extra_field(data):
+    """
+    Contributions used to be called contributes.
+
+    Check that an extra field fails.
+    """
+    data["invalid_extra_name"] = data["contributions"]
+    del data["contributions"]
+    return data
+
+
+@pytest.mark.parametrize(
+    "mutator",
+    [
+        _mutator_1,
+        _mutator_2,
+        _mutator_3,
+        _mutator_4,
+        _mutator_no_contributes_extra_field,
+    ],
+)
 def test_invalid(mutator, uses_sample_plugin):
-
-    import json
-
-    pm = list(PluginManifest.discover())[0]
+    result = next(
+        result
+        for result in PluginManifest.discover()
+        if result.manifest and result.manifest.name == "my_plugin"
+    )
+    assert result.error is None
+    assert result.manifest is not None
+    pm = result.manifest
     data = json.loads(pm.json(exclude_unset=True))
     mutator(data)
     with pytest.raises(ValidationError):
         PluginManifest(**data)
+
+
+@pytest.mark.parametrize(
+    "mutator",
+    [_valid_mutator_no_contributions, _valid_mutator_no_contributions_None],
+)
+def test_valid_mutations(mutator, uses_sample_plugin):
+
+    assert mutator.__name__.startswith("_valid")
+
+    pm = next(
+        result.manifest
+        for result in PluginManifest.discover()
+        if result.manifest and result.manifest.name == "my_plugin"
+    )
+
+    # make sure the data is a copy as we'll mutate it
+    data = json.loads(pm.json(exclude_unset=True))
+    mutator(data)
+
+    PluginManifest(**data)

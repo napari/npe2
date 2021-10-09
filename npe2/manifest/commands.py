@@ -1,7 +1,7 @@
 from textwrap import dedent
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 from .icon import Icon
 
@@ -84,3 +84,6 @@ class CommandContribution(BaseModel):
         "in the plugin activate function is optional (but takes precedence).",
         regex=f"^{_dotted_name}:{_dotted_name}$",
     )
+
+    class Config:
+        extra = Extra.forbid

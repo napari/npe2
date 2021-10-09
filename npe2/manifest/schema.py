@@ -6,9 +6,9 @@ from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError, root_validator
+from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
 
@@ -25,7 +25,14 @@ logger = getLogger(__name__)
 ENTRY_POINT = "napari.manifest"
 
 
+class DiscoverResults(NamedTuple):
+    manifest: Optional[PluginManifest]
+    entrypoint: Optional[Any]
+    error: Optional[Exception]
+
+
 class PluginManifest(BaseModel):
+
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (probably yes)
     # do we normalize this? (i.e. underscores / dashes ?)
@@ -108,7 +115,7 @@ class PluginManifest(BaseModel):
     @root_validator
     def _validate_root(cls, values):
         invalid_commands = []
-        if "contributions" in values:
+        if values.get("contributions") is not None:
             for command in values["contributions"].commands:
                 if not command.id.startswith(values["name"]):
                     invalid_commands.append(command.id)
@@ -225,6 +232,7 @@ class PluginManifest(BaseModel):
     class Config:
         use_enum_values = True  # only needed for SPDX
         underscore_attrs_are_private = True
+        extra = Extra.forbid
 
     # should these be on this model itself? or helper functions elsewhere
 
@@ -268,7 +276,7 @@ class PluginManifest(BaseModel):
                     break
 
     @classmethod
-    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[PluginManifest]:
+    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
         This function searches for installed python packages with a matching
@@ -290,6 +298,11 @@ class PluginManifest(BaseModel):
         `<path/to/npe2-tester>/napari.yaml`.
 
         [1]: https://packaging.python.org/specifications/entry-points/
+
+        Yields
+        ------
+        DiscoverResults: (3 namedtuples: manifest, entrypoint, error)
+            3-tuples with either manifest or (entrypoint and error) being None.
         """
         try:
             from importlib.metadata import distributions
@@ -304,14 +317,16 @@ class PluginManifest(BaseModel):
                 try:
                     pm = cls._from_entrypoint(ep)
                     pm._populate_missing_meta(dist.metadata)
-                    yield pm
-                except ValidationError:
+                    yield DiscoverResults(pm, None, None)
+                except ValidationError as e:
                     logger.warning(msg=f"Invalid schema {ep.value!r}")
+                    yield DiscoverResults(None, ep, e)
                 except Exception as e:
                     logger.warning(
                         "%s -> %r could not be imported: %s"
                         % (entry_point_group, ep.value, e)
                     )
+                    yield DiscoverResults(None, ep, e)
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
@@ -374,11 +389,11 @@ class PluginManifest(BaseModel):
                 return PluginManifest.from_distribution(str(package_or_filename))
             except ValidationError:
                 raise
-            except Exception:
+            except Exception as e:
                 raise ValueError(
                     f"Could not find manifest for {package_or_filename!r} as either a "
                     "package name or a file.."
-                )
+                ) from e
 
     ValidationError = ValidationError  # for convenience of access
 
