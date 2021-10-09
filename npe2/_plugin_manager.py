@@ -63,6 +63,7 @@ class PluginManager:
     _writers_by_type: DefaultDict[
         LayerType, IntervalTree[WriterContribution]
     ] = DefaultDict(IntervalTree)
+    _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
     def __init__(self) -> None:
         self.discover()  # TODO: should we be immediately discovering?
@@ -76,6 +77,7 @@ class PluginManager:
         self._themes.clear()
         self._readers.clear()
         self._writers_by_type.clear()
+        self._writers_by_command.clear()
 
         for mf in PluginManifest.discover():
             self._manifests[mf.key] = mf
@@ -92,6 +94,7 @@ class PluginManager:
                     if reader.accepts_directories:
                         self._readers[""].append(reader)
                 for writer in mf.contributions.writers or []:
+                    self._writers_by_command[writer.command].append(writer)
                     for constraint in writer.layer_type_constraints():
                         self._writers_by_type.setdefault(
                             constraint.layer_type, IntervalTree()
@@ -164,6 +167,9 @@ class PluginManager:
                         seen.add(r.command)
                         yield r
 
+    def get_writer_for_command(self, command: str) -> Optional[WriterContribution]:
+        return next(iter(self._writers_by_command.get(command, [])), None)
+
     def iter_compatible_writers(
         self, layer_types: List[str]
     ) -> Iterator[WriterContribution]:
@@ -224,9 +230,17 @@ def write_layers(
 
     if writer.uses_single_layer_api:
         data, meta, _ = layer_data[0]
-        return list(execute_command(writer.command, args=[path, data, meta]))
+        return [execute_command(writer.command, args=[path, data, meta])]
     else:
-        return execute_command(writer.command, args=[path, layer_data])
+        # napari_get_writer-style writers don't always return a list
+        # though strictly speaking they should.
+        result = execute_command(writer.command, args=[path, layer_data])
+        if isinstance(result, str):
+            return [result]
+        elif result is None:
+            return []
+        else:
+            return result
 
 
 _GLOBAL_PM = None
