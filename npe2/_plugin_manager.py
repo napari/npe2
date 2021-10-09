@@ -178,14 +178,15 @@ class PluginManager:
     ) -> Iterator[WriterContribution]:
         """Attempt to match writers that consume all layers."""
 
+        if not layer_types:
+            return
+
         # First count how many of each distinct type are requested. We'll use
         # this to get candidate writers compatible with the requested count.
         counts = Counter(layer_types)
 
-        def get_candidates(layer_type: Optional[LayerType]) -> Set[WriterContribution]:
+        def get_candidates(layer_type: LayerType) -> Set[WriterContribution]:
             # WriterContributions are hashed based on their command id.
-            if not layer_type:
-                return set()
             return set(
                 map(
                     lambda v: v.data,  # unbox the Interval object
@@ -196,7 +197,7 @@ class PluginManager:
             )
 
         types = iter(LayerType)
-        candidates = get_candidates(next(types, None))
+        candidates = get_candidates(next(types))
         for lt in types:
             if candidates:
                 candidates &= get_candidates(lt)
@@ -229,9 +230,9 @@ def write_layers(
         Otherwise, if nothing was done, return ``None``.
     """
     if not layer_data:
-        return []
+        return [None]
 
-    if writer.uses_single_layer_api:
+    if writer.use_single_layer_api:
         data, meta, _ = layer_data[0]
         return [execute_command(writer.command, args=[path, data, meta])]
     else:
@@ -241,7 +242,7 @@ def write_layers(
         if isinstance(result, str):
             return [result]
         elif result is None:
-            return []
+            return [None]
         else:
             return result
 

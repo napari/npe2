@@ -134,7 +134,7 @@ class WriterContribution(BaseModel):
         default_factory=list,
         description="List of filename extensions compatible with this writer.",
     )
-    uses_single_layer_api: bool = Field(
+    use_single_layer_api: bool = Field(
         default=False,
         description="Whether this writer command uses the "
         "'Single Layers IO'-style callback from the original plugin engine.",
@@ -171,6 +171,16 @@ class WriterContribution(BaseModel):
             raise ValueError("layer_types must not be empty")
         return layer_types
 
+    @validator("layer_types")
+    def _layer_types_unique(cls, layer_types: List[str]) -> List[str]:
+        """Each layer type can be refered to at most once."""
+        from collections import Counter
+
+        c = Counter(LayerTypeConstraint.from_str(lt).layer_type for lt in layer_types)
+        if any(c[lt] > 1 for lt in c):
+            raise ValueError(f"Duplicate layer type in {layer_types}")
+        return layer_types
+
     @validator("filename_extensions")
     def _coerce_common_glob_patterns(cls, exts: List[str]) -> List[str]:
         """If any of the listed extensions are common glob patterns, replace the
@@ -185,11 +195,8 @@ class WriterContribution(BaseModel):
         4. File extensions must be at least two characters long.
         """
 
-        exts = [e if e[0] != "*" else e[1:] for e in exts if len(e) > 1]
-        exts = [e if e[0] == "." else f".{e}" for e in exts]
-
-        if not all(e.startswith(".") for e in exts):
-            raise ValueError("Invalid file extension: Must start with a period.")
+        exts = [e if e[0] != "*" else e[1:] for e in exts]
+        exts = [e if len(e) > 0 and e[0] == "." else f".{e}" for e in exts]
 
         if any(len(e) < 2 for e in exts):
             raise ValueError(

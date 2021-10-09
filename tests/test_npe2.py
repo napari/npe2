@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+import npe2
 from npe2 import PluginManifest
 from npe2._plugin_manager import PluginManager
 
@@ -112,6 +113,27 @@ def _mutator_no_contributes_extra_field(data):
     return data
 
 
+def _mutator_writer_requires_non_empty_layer_types(data):
+    data["contributions"]["writers"][0]["layer_types"] = []
+    return data
+
+
+def _mutator_writer_invalid_layer_type_constraint(data):
+    data["contributions"]["writers"][0]["layer_types"].append("image{")
+    return data
+
+
+def _mutator_writer_invalid_file_extension_1(data):
+    data["contributions"]["writers"][0]["filename_extensions"] = ["*"]
+    return data
+
+
+def _mutator_writer_invalid_file_extension_2(data):
+    print(f'HERE {data["contributions"]["writers"][0]["filename_extensions"]}')
+    data["contributions"]["writers"][0]["filename_extensions"] = ["."]
+    return data
+
+
 @pytest.mark.parametrize(
     "mutator",
     [
@@ -120,6 +142,10 @@ def _mutator_no_contributes_extra_field(data):
         _mutator_3,
         _mutator_4,
         _mutator_no_contributes_extra_field,
+        _mutator_writer_requires_non_empty_layer_types,
+        _mutator_writer_invalid_layer_type_constraint,
+        _mutator_writer_invalid_file_extension_1,
+        _mutator_writer_invalid_file_extension_2,
     ],
 )
 def test_invalid(mutator, uses_sample_plugin):
@@ -156,3 +182,135 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     mutator(data)
 
     PluginManifest(**data)
+
+
+def test_writer_empty_layers(uses_sample_plugin):
+    pm = PluginManager()
+    pm.discover()
+
+    writers = list(pm.iter_compatible_writers([]))
+    assert len(writers) == 0
+
+
+@pytest.fixture
+def clean_room_for_writers(uses_sample_plugin):
+    pm = PluginManager()
+    pm.discover()
+    # remove all writers that are not my_plugin
+    for key, mf in pm._manifests.items():
+        if key != "publisher.my_plugin":
+            if mf.contributions:
+                for writer in mf.contributions.writers or []:
+                    del pm._writers_by_command[writer.command]
+                    for lt, tree in pm._writers_by_type.items():
+                        to_remove = [item for item in tree if item.data == writer]
+                        for item in to_remove:
+                            tree.remove(item)
+    return pm
+
+
+@pytest.mark.parametrize(
+    "param",
+    [
+        (["image"] * 2, 1),
+        (["labels"], 0),
+        (["image"] * 4, 1),
+        (["image"] * 5, 0),
+    ],
+)
+def test_writer_ranges(param, clean_room_for_writers):
+    pm = clean_room_for_writers
+
+    layer_types, expected_count = param
+    writers = list(
+        filter(
+            lambda w: w.command == "my_plugin.my_writer",
+            pm.iter_compatible_writers(layer_types),
+        )
+    )
+    assert len(writers) == expected_count
+
+
+@pytest.mark.parametrize(
+    "expr",
+    [
+        "vectors{",
+        "image",  # should parse fine, but be a duplication error
+        "vectors{8,3}",
+        "vectors{-1}",
+        "vectors??",
+        "other?",
+    ],
+)
+def test_writer_invalid_layer_type_expressions(expr, uses_sample_plugin):
+    result = next(
+        result
+        for result in PluginManifest.discover()
+        if result.manifest and result.manifest.name == "my_plugin"
+    )
+    assert result.error is None
+    assert result.manifest is not None
+    pm = result.manifest
+    data = json.loads(pm.json(exclude_unset=True))
+
+    assert "contributions" in data
+    assert "writers" in data["contributions"]
+    data["contributions"]["writers"][0]["layer_types"].append(expr)
+
+    with pytest.raises(ValidationError):
+        PluginManifest(**data)
+
+
+@pytest.mark.parametrize(
+    "expr",
+    ["vectors", "vectors+", "vectors*", "vectors?", "vectors{3}", "vectors{3,8}"],
+)
+def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
+    result = next(
+        result
+        for result in PluginManifest.discover()
+        if result.manifest and result.manifest.name == "my_plugin"
+    )
+    assert result.error is None
+    assert result.manifest is not None
+    pm = result.manifest
+    data = json.loads(pm.json(exclude_unset=True))
+
+    assert "contributions" in data
+    assert "writers" in data["contributions"]
+    data["contributions"]["writers"][0]["layer_types"].append(expr)
+
+    PluginManifest(**data)
+
+
+def _mutator_writer_use_single_layer_api(data):
+    data["contributions"]["writers"][0]["use_single_layer_api"] = True
+    return data
+
+
+@pytest.mark.parametrize(
+    "layer_data",
+    [
+        [
+            (None, {}, "image"),
+            (None, {}, "image"),
+        ],
+        [],
+    ],
+)
+def test_writer_exec(layer_data, clean_room_for_writers):
+    pm = clean_room_for_writers
+    writer = next(pm.iter_compatible_writers(["image", "image"]), None)
+    assert writer is not None
+    # This writer doesn't do anything but type check.
+    paths = npe2.write_layers(writer, "test/path", layer_data)
+    assert len(paths) == 1
+
+
+def test_writer_single_alyer_api_exec(clean_room_for_writers):
+    pm = clean_room_for_writers
+    writer = next(pm.iter_compatible_writers(["labels"]), None)
+    assert writer is not None
+    # This writer doesn't do anything but type check.
+    paths = npe2.write_layers(writer, "test/path", [(None, {}, "labels")])
+    assert len(paths) == 1
