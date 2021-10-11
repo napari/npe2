@@ -84,6 +84,9 @@ class LayerTypeConstraint(BaseModel):
     def zero(cls, layer_type: LayerType) -> "LayerTypeConstraint":
         return cls(layer_type=layer_type, bounds=(0, 1))
 
+    def is_zero(self) -> bool:
+        return self.bounds == (0, 1)
+
     @classmethod
     def from_str(cls, expr: str) -> "LayerTypeConstraint":
         """Parse layer-type constraint expressions.

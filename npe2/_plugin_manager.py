@@ -204,7 +204,31 @@ class PluginManager:
             else:
                 break
 
-        yield from candidates
+        def dbg(f):
+            def g(x):
+                v = f(x)
+                print(v)
+                return v
+
+            return g
+
+        yield from sorted(
+            candidates,
+            key=dbg(
+                lambda writer: (
+                    # writers with no file extensions (like directory writers)
+                    # go last
+                    len(writer.filename_extensions) == 0,
+                    # more "specific" writers first
+                    sum(1 for c in writer.layer_type_constraints() if not c.is_zero()),
+                    # then sort by the number of listed extensions
+                    # (empty set of extensions goes last)
+                    len(writer.filename_extensions),
+                    # finally group related extensions together
+                    writer.filename_extensions,
+                )
+            ),
+        )
 
 
 def write_layers(
