@@ -83,8 +83,8 @@ class PluginManager:
     ] = DefaultDict(TypedIntervalTree)
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
-    def __init__(self, **kwargs) -> None:
-        self.discover(**kwargs)  # TODO: should we be immediately discovering?
+    def __init__(self, filter_by_key: Optional[Set[str]] = None) -> None:
+        self.discover(filter_by_key)  # TODO: should we be immediately discovering?
 
     def discover(self, filter_by_key: Optional[Set[str]] = None):
         """Finds and indexes npe2-based napari plugins installed in the python
