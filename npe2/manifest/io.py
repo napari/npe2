@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from pydantic import BaseModel, Extra, Field, validator
 
@@ -67,7 +67,7 @@ class LayerTypeConstraint(BaseModel):
     """
 
     layer_type: LayerType
-    bounds: Tuple[int, Optional[int]] = Field(
+    bounds: Tuple[int, int] = Field(
         ...,
         description="This writer consumes between bounds[0] and bounds[1] "
         "layers of `layer_type`",
@@ -198,8 +198,7 @@ class WriterContribution(BaseModel):
         4. File extensions must be at least two characters long.
         """
 
-        exts = [e if e[0] != "*" else e[1:] for e in exts]
-        exts = [e if len(e) > 0 and e[0] == "." else f".{e}" for e in exts]
+        exts = [f".{e.lstrip('*.')}" for e in exts]
 
         if any(len(e) < 2 for e in exts):
             raise ValueError(

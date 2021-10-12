@@ -11,11 +11,13 @@ from typing import (
     Any,
     DefaultDict,
     Dict,
+    Generic,
     Iterator,
     List,
     Optional,
     Set,
     Tuple,
+    TypeVar,
     Union,
 )
 from warnings import warn
@@ -31,6 +33,22 @@ if TYPE_CHECKING:
     from .manifest.menus import MenuItem
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
+
+T = TypeVar("T")
+
+
+class Interval(tuple, Generic[T]):
+    begin: int
+    end: int
+    data: T
+
+
+class TypedIntervalTree(IntervalTree, Generic[T]):
+    def addi(self, begin: int, end: int, data: T) -> None:
+        super().addi(begin, end, data)
+
+    def __getitem__(self, index: Union[int, slice]) -> Set[Interval[T]]:
+        return super().__getitem__(index)
 
 
 PluginKey = str  # this is defined on PluginManifest as `publisher.name`
@@ -61,16 +79,17 @@ class PluginManager:
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
-        LayerType, IntervalTree[WriterContribution]
-    ] = DefaultDict(IntervalTree)
+        LayerType, TypedIntervalTree[WriterContribution]
+    ] = DefaultDict(TypedIntervalTree)
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
-    def __init__(self) -> None:
-        self.discover()  # TODO: should we be immediately discovering?
+    def __init__(self, **kwargs) -> None:
+        self.discover(**kwargs)  # TODO: should we be immediately discovering?
 
-    def discover(self):
+    def discover(self, filter_by_key: Optional[Set[str]] = None):
         """Finds and indexes npe2-based napari plugins installed in the python
-        environment."""
+        environment.
+        """
         self._manifests.clear()
         self._commands.clear()
         self._submenus.clear()
@@ -83,6 +102,8 @@ class PluginManager:
             if result.manifest is None:
                 continue
             mf = result.manifest
+            if filter_by_key and (mf.key not in filter_by_key):
+                continue
             self._manifests[mf.key] = mf
             if mf.contributions:
                 for cmd in mf.contributions.commands or []:
@@ -98,10 +119,8 @@ class PluginManager:
                         self._readers[""].append(reader)
                 for writer in mf.contributions.writers or []:
                     self._writers_by_command[writer.command].append(writer)
-                    for constraint in writer.layer_type_constraints():
-                        self._writers_by_type.setdefault(
-                            constraint.layer_type, IntervalTree()
-                        ).addi(constraint.bounds[0], constraint.bounds[1], writer)
+                    for c in writer.layer_type_constraints():
+                        self._writers_by_type[c.layer_type].addi(*c.bounds, writer)
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
@@ -185,49 +204,36 @@ class PluginManager:
         # this to get candidate writers compatible with the requested count.
         counts = Counter(layer_types)
 
-        def get_candidates(layer_type: LayerType) -> Set[WriterContribution]:
+        def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
             # WriterContributions are hashed based on their command id.
-            return set(
-                map(
-                    lambda v: v.data,  # unbox the Interval object
-                    self._writers_by_type.get(layer_type, IntervalTree())[
-                        counts[layer_type]
-                    ],
-                )
-            )
+            return {v.data for v in self._writers_by_type[lt][counts[lt]] or []}
 
         types = iter(LayerType)
-        candidates = get_candidates(next(types))
+        candidates = _get_candidates(next(types))
         for lt in types:
             if candidates:
-                candidates &= get_candidates(lt)
+                candidates &= _get_candidates(lt)
             else:
                 break
 
-        def dbg(f):
-            def g(x):
-                v = f(x)
-                print(v)
-                return v
+        def _writer_key(writer: WriterContribution) -> Tuple[bool, int, int, List[str]]:
+            # 1. writers with no file extensions (like directory writers) go last
+            no_ext = len(writer.filename_extensions) == 0
 
-            return g
+            # 2. more "specific" writers first
+            nbounds = sum(not c.is_zero() for c in writer.layer_type_constraints())
+
+            # 3. then sort by the number of listed extensions
+            #    (empty set of extensions goes last)
+            ext_len = len(writer.filename_extensions)
+
+            # 4. finally group related extensions together
+            exts = writer.filename_extensions
+            return (no_ext, nbounds, ext_len, exts)
 
         yield from sorted(
             candidates,
-            key=dbg(
-                lambda writer: (
-                    # writers with no file extensions (like directory writers)
-                    # go last
-                    len(writer.filename_extensions) == 0,
-                    # more "specific" writers first
-                    sum(1 for c in writer.layer_type_constraints() if not c.is_zero()),
-                    # then sort by the number of listed extensions
-                    # (empty set of extensions goes last)
-                    len(writer.filename_extensions),
-                    # finally group related extensions together
-                    writer.filename_extensions,
-                )
-            ),
+            key=_writer_key,
         )
 
 
@@ -236,7 +242,7 @@ def write_layers(
     path: str,
     layer_data: List[Tuple[Any, Dict, str]],
 ) -> List[Optional[str]]:
-    """Write layer data to an svg.
+    """Write layer data to a path.
 
     Parameters
     ----------

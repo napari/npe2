@@ -19,6 +19,13 @@ def uses_sample_plugin():
     sys.path.remove(str(SAMPLE))
 
 
+@pytest.fixture
+def isolated_plugin_manager(uses_sample_plugin):
+    pm = PluginManager()
+    pm.discover(filter_by_key={"publisher.my_plugin"})
+    return pm
+
+
 def test_schema():
     assert isinstance(PluginManifest.schema_json(), str)
 
@@ -192,23 +199,6 @@ def test_writer_empty_layers(uses_sample_plugin):
     assert len(writers) == 0
 
 
-@pytest.fixture
-def clean_room_for_writers(uses_sample_plugin):
-    pm = PluginManager()
-    pm.discover()
-    # remove all writers that are not my_plugin
-    for key, mf in pm._manifests.items():
-        if key != "publisher.my_plugin":
-            if mf.contributions:
-                for writer in mf.contributions.writers or []:
-                    del pm._writers_by_command[writer.command]
-                    for lt, tree in pm._writers_by_type.items():
-                        to_remove = [item for item in tree if item.data == writer]
-                        for item in to_remove:
-                            tree.remove(item)
-    return pm
-
-
 @pytest.mark.parametrize(
     "param",
     [
@@ -218,17 +208,16 @@ def clean_room_for_writers(uses_sample_plugin):
         (["image"] * 5, 0),
     ],
 )
-def test_writer_ranges(param, clean_room_for_writers):
-    pm = clean_room_for_writers
+def test_writer_ranges(param, isolated_plugin_manager):
+    pm = isolated_plugin_manager
 
     layer_types, expected_count = param
-    writers = list(
-        filter(
-            lambda w: w.command == "my_plugin.my_writer",
-            pm.iter_compatible_writers(layer_types),
-        )
+    nwriters = sum(
+        w.command == "my_plugin.my_writer"
+        for w in pm.iter_compatible_writers(layer_types)
     )
-    assert len(writers) == expected_count
+
+    assert nwriters == expected_count
 
 
 @pytest.mark.parametrize(
@@ -283,11 +272,6 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     PluginManifest(**data)
 
 
-def _mutator_writer_use_single_layer_api(data):
-    data["contributions"]["writers"][0]["use_single_layer_api"] = True
-    return data
-
-
 @pytest.mark.parametrize(
     "layer_data",
     [
@@ -298,18 +282,18 @@ def _mutator_writer_use_single_layer_api(data):
         [],
     ],
 )
-def test_writer_exec(layer_data, clean_room_for_writers):
-    pm = clean_room_for_writers
-    writer = next(pm.iter_compatible_writers(["image", "image"]), None)
+def test_writer_exec(layer_data, isolated_plugin_manager):
+    writer = next(
+        isolated_plugin_manager.iter_compatible_writers(["image", "image"]), None
+    )
     assert writer is not None
     # This writer doesn't do anything but type check.
     paths = npe2.write_layers(writer, "test/path", layer_data)
     assert len(paths) == 1
 
 
-def test_writer_single_alyer_api_exec(clean_room_for_writers):
-    pm = clean_room_for_writers
-    writer = next(pm.iter_compatible_writers(["labels"]), None)
+def test_writer_single_layer_api_exec(isolated_plugin_manager):
+    writer = next(isolated_plugin_manager.iter_compatible_writers(["labels"]), None)
     assert writer is not None
     # This writer doesn't do anything but type check.
     paths = npe2.write_layers(writer, "test/path", [(None, {}, "labels")])
