@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from npe2.manifest.io import LayerType, WriterContribution
+from npe2.manifest.io import LayerType, WriterApiVersion, WriterContribution
 
 __all__ = ["plugin_manager", "PluginContext", "PluginManager"]  # noqa: F822
 import sys
@@ -205,7 +205,6 @@ class PluginManager:
         counts = Counter(layer_types)
 
         def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
-            # WriterContributions are hashed based on their command id.
             return {v.data for v in self._writers_by_type[lt][counts[lt]] or []}
 
         types = iter(LayerType)
@@ -262,12 +261,13 @@ def write_layers(
     if not layer_data:
         return [None]
 
-    if writer.use_single_layer_api:
+    def _v1_single_layer():
         data, meta, _ = layer_data[0]
         return [execute_command(writer.command, args=[path, data, meta])]
-    else:
+
+    def _v1_multi_layer():
         # napari_get_writer-style writers don't always return a list
-        # though strictly speaking they should.
+        # though strictly speaking they should?
         result = execute_command(writer.command, args=[path, layer_data])
         if isinstance(result, str):
             return [result]
@@ -275,6 +275,12 @@ def write_layers(
             return [None]
         else:
             return result
+
+    dispatch = {
+        WriterApiVersion.v1_multi_layer: _v1_multi_layer,
+        WriterApiVersion.v1_single_layer: _v1_single_layer,
+    }
+    return dispatch[writer.api]()
 
 
 _GLOBAL_PM = None

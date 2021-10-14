@@ -125,6 +125,24 @@ class LayerTypeConstraint(BaseModel):
         return cls(layer_type=lt, bounds=bounds)
 
 
+class WriterApiVersion(str, Enum):
+    """The API version of the writer command.
+
+    v1_multi
+        Corresponds to the writer function returned from the `napari_get_writer`
+        hook spec from the original napari plugin engine. The command should
+        be a `Callable[str,List[Tuple[Any, Dict, str]]->List[str]`.
+
+    v1_single
+        Corresponds to a single-layer writer function such as`napari_write_image`
+        hook spec from the original napari plugin engine. The command should
+        be a `Callable[str,Any,Dict]->Optional[str]`.
+    """
+
+    v1_multi_layer = "v1_multi_layer"
+    v1_single_layer = "v1_single_layer"
+
+
 class WriterContribution(BaseModel):
     command: str = Field(
         ..., description="Identifier of the command providing `napari_get_writer`."
@@ -137,10 +155,15 @@ class WriterContribution(BaseModel):
         default_factory=list,
         description="List of filename extensions compatible with this writer.",
     )
-    use_single_layer_api: bool = Field(
-        default=False,
-        description="Whether this writer command uses the "
-        "'Single Layers IO'-style callback from the original plugin engine.",
+    api: WriterApiVersion = Field(
+        default=WriterApiVersion.v1_multi_layer,
+        description="The API version of the writer.  This is used to determine "
+        "the calling convention that should be used when invoking the writer.",
+    )
+    save_dialog_title: str = Field(
+        default="",
+        description="Brief text used to describe this writer when presented "
+        "in a save dialog. When not specifed the command title is used instead.",
     )
 
     def layer_type_constraints(self) -> List[LayerTypeConstraint]:
@@ -149,10 +172,15 @@ class WriterContribution(BaseModel):
         return spec + [LayerTypeConstraint.zero(lt) for lt in unspecified_types]
 
     def __hash__(self):
-        return hash(self.command)
-
-    def __eq__(self, other):
-        return self.command == other.command
+        return hash(
+            (
+                self.command,
+                str(self.layer_types),
+                str(self.filename_extensions),
+                self.api,
+                self.save_dialog_title,
+            )
+        )
 
     class Config:
         extra = Extra.forbid

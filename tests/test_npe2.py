@@ -206,6 +206,8 @@ def test_writer_empty_layers(uses_sample_plugin):
         (["labels"], 0),
         (["image"] * 4, 1),
         (["image"] * 5, 0),
+        (["points", "surface"], 1),
+        (["points", "surface", "points"], 0),
     ],
 )
 def test_writer_ranges(param, isolated_plugin_manager):
