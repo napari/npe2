@@ -34,21 +34,19 @@ if TYPE_CHECKING:
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
 
-T = TypeVar("T")
+    T = TypeVar("T")
 
+    class Interval(tuple, Generic[T]):
+        begin: int
+        end: int
+        data: T
 
-class Interval(tuple, Generic[T]):
-    begin: int
-    end: int
-    data: T
+    class TypedIntervalTree(IntervalTree, Generic[T]):
+        def addi(self, begin: int, end: int, data: T) -> None:
+            ...
 
-
-class TypedIntervalTree(IntervalTree, Generic[T]):
-    def addi(self, begin: int, end: int, data: T) -> None:
-        super().addi(begin, end, data)
-
-    def __getitem__(self, index: Union[int, slice]) -> Set[Interval[T]]:
-        return super().__getitem__(index)
+        def __getitem__(self, index: Union[int, slice]) -> Set[Interval[T]]:
+            ...
 
 
 PluginKey = str  # this is defined on PluginManifest as `publisher.name`
@@ -80,7 +78,7 @@ class PluginManager:
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
         LayerType, TypedIntervalTree[WriterContribution]
-    ] = DefaultDict(TypedIntervalTree)
+    ] = DefaultDict(IntervalTree)
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
     def __init__(self, filter_by_key: Optional[Set[str]] = None) -> None:
