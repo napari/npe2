@@ -41,7 +41,7 @@ contributions:
     - command: my_plugin.my_single_writer
       filename_extensions: ["*.xyz"]
       layer_types: ["labels"]
-      api: v1_single_layer
+
   widgets:
     - command: my_plugin.affinder
   menus:

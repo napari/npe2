@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from npe2.manifest.io import LayerType, WriterApiVersion, WriterContribution
+from npe2.manifest.io import LayerType, WriterContribution
 
 __all__ = ["plugin_manager", "PluginContext", "PluginManager"]  # noqa: F822
 import sys
@@ -259,11 +259,11 @@ def write_layers(
     if not layer_data:
         return [None]
 
-    def _v1_single_layer():
+    def _write_single_layer():
         data, meta, _ = layer_data[0]
         return [execute_command(writer.command, args=[path, data, meta])]
 
-    def _v1_multi_layer():
+    def _write_multi_layer():
         # napari_get_writer-style writers don't always return a list
         # though strictly speaking they should?
         result = execute_command(writer.command, args=[path, layer_data])
@@ -274,11 +274,13 @@ def write_layers(
         else:
             return result
 
-    dispatch = {
-        WriterApiVersion.v1_multi_layer: _v1_multi_layer,
-        WriterApiVersion.v1_single_layer: _v1_single_layer,
-    }
-    return dispatch[writer.api]()
+    # Writers that take at most one layer must use the single-layer api.
+    # Otherwise, they must use the multi-layer api.
+    n = sum(ltc.max() for ltc in writer.layer_type_constraints())
+    if n <= 1:
+        return _write_single_layer()
+    else:
+        return _write_multi_layer()
 
 
 _GLOBAL_PM = None
