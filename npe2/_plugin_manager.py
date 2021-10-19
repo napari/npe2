@@ -1,9 +1,20 @@
 from __future__ import annotations
 
-__all__ = ["plugin_manager", "PluginContext", "PluginManager"]  # noqa: F822
+__all__ = ["PluginContext", "PluginManager"]
+
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, DefaultDict, Dict, Iterator, List, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    DefaultDict,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 from .manifest import PluginManifest
 
@@ -42,6 +53,7 @@ class PluginManager:
     _submenus: Dict[str, SubmenuContribution] = {}
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
+    __instance: Optional[PluginManager] = None  # a global instance
 
     def __init__(self) -> None:
         self.discover()  # TODO: should we be immediately discovering?
@@ -138,14 +150,9 @@ class PluginManager:
                         seen.add(r.command)
                         yield r
 
-
-_GLOBAL_PM = None
-
-
-def __getattr__(name):
-    if name == "plugin_manager":
-        global _GLOBAL_PM
-        if _GLOBAL_PM is None:
-            _GLOBAL_PM = PluginManager()
-        return _GLOBAL_PM
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    @classmethod
+    def instance(cls) -> PluginManager:
+        """Singleton instance."""
+        if cls.__instance is None:
+            cls.__instance = cls()
+        return cls.__instance

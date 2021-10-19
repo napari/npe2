@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 PDisposable = Callable[[], None]
 
@@ -56,16 +56,18 @@ class CommandRegistry:
     def get_command(self, id) -> Callable:
         # FIXME: who should control activation?
         if id not in self._commands:
-            from ._plugin_manager import plugin_manager
+            from ._plugin_manager import PluginManager
 
-            if id in plugin_manager._commands:
-                _, plugin_key = plugin_manager._commands[id]
-                plugin_manager.activate(plugin_key)
+            pm = PluginManager.instance()
+
+            if id in pm._commands:
+                _, plugin_key = pm._commands[id]
+                pm.activate(plugin_key)
         if id not in self._commands:
             raise KeyError(f"command {id!r} not registered")
         return self._commands[id]
 
-    def execute_command(self, id: str, args=(), kwargs={}):
+    def execute_command(self, id: str, args=(), kwargs={}) -> Any:
         return self.get_command(id)(*args, **kwargs)
 
     def register_command_alias(self, existing_id: str, new_id: str):

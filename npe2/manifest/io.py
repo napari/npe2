@@ -1,9 +1,12 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from .._types import ReaderFunction
+from .utils import Executable
 
-class ReaderContribution(BaseModel):
+
+class ReaderContribution(BaseModel, Executable):
     command: str = Field(
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
@@ -15,3 +18,8 @@ class ReaderContribution(BaseModel):
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
     )
+
+    def exec(self, args: tuple = (), kwargs: dict = {}) -> Optional[ReaderFunction]:
+        from .._command_registry import execute_command
+
+        return execute_command(self.command, args, kwargs)

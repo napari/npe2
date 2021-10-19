@@ -3,10 +3,12 @@ from typing import Optional
 from pydantic import BaseModel
 from pydantic.fields import Field
 
+from .utils import Executable
+
 
 # the existence of the command is not validated at registration-time,
 # but rather at call time... (since commands from other extensions can be called)
-class KeyBindingContribution(BaseModel):
+class KeyBindingContribution(BaseModel, Executable):
     command: str = Field(
         description="Identifier of the command to run when keybinding is triggered."
     )
