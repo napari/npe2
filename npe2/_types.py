@@ -10,8 +10,9 @@ if TYPE_CHECKING:
 class ArrayLike(Protocol):
     shape: Tuple[int, ...]
     ndim: int
+    dtype: "np.dtype"
 
-    def __array__(self) -> np.ndarray:
+    def __array__(self) -> "np.ndarray":
         ...
 
 
