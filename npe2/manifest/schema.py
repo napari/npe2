@@ -1,12 +1,23 @@
 from __future__ import annotations
 
+import sys
 import types
+from contextlib import contextmanager
 from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Union,
+)
 
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
@@ -276,8 +287,18 @@ class PluginManifest(BaseModel):
                     break
 
     @classmethod
-    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[DiscoverResults]:
+    def discover(
+        cls, entry_point_group: str = ENTRY_POINT, paths: Sequence[str] = ()
+    ) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
+
+        Parameters
+        ----------
+        entry_point_group : str, optional
+            name of entry point group to discover, by default 'napari.manifest'
+        paths : Sequence[str], optional
+            sequ, by default ()
+
 
         Yields
         ------
@@ -289,23 +310,24 @@ class PluginManifest(BaseModel):
         except ImportError:
             from importlib_metadata import distributions  # type: ignore
 
-        for dist in distributions():
-            for ep in dist.entry_points:
-                if ep.group != entry_point_group:
-                    continue
-                try:
-                    pm = cls._from_entrypoint(ep)
-                    pm._populate_missing_meta(dist.metadata)
-                    yield DiscoverResults(pm, None, None)
-                except ValidationError as e:
-                    logger.warning(msg=f"Invalid schema {ep.value!r}")
-                    yield DiscoverResults(None, ep, e)
-                except Exception as e:
-                    logger.warning(
-                        "%s -> %r could not be imported: %s"
-                        % (entry_point_group, ep.value, e)
-                    )
-                    yield DiscoverResults(None, ep, e)
+        with temporary_path_additions(paths):
+            for dist in distributions():
+                for ep in dist.entry_points:
+                    if ep.group != entry_point_group:
+                        continue
+                    try:
+                        pm = cls._from_entrypoint(ep)
+                        pm._populate_missing_meta(dist.metadata)
+                        yield DiscoverResults(pm, None, None)
+                    except ValidationError as e:
+                        logger.warning(msg=f"Invalid schema {ep.value!r}")
+                        yield DiscoverResults(None, ep, e)
+                    except Exception as e:
+                        logger.warning(
+                            "%s -> %r could not be imported: %s"
+                            % (entry_point_group, ep.value, e)
+                        )
+                        yield DiscoverResults(None, ep, e)
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
@@ -375,6 +397,17 @@ class PluginManifest(BaseModel):
                 ) from e
 
     ValidationError = ValidationError  # for convenience of access
+
+
+@contextmanager
+def temporary_path_additions(paths: Sequence[str] = ()):
+    for p in reversed(paths):
+        sys.path.insert(0, p)
+    try:
+        yield
+    finally:
+        for p in paths:
+            sys.path.remove(p)
 
 
 if __name__ == "__main__":

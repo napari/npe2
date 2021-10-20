@@ -1,12 +1,18 @@
-def activate(context):
-    from npe2 import register_command
+from npe2 import PluginContext
 
-    @register_command("my_plugin.hello_world")
+
+def activate(context: PluginContext):
+    @context.register_command("my_plugin.hello_world")
     def _hello():
         ...
 
-    register_command("my_plugin.another_command", lambda: print("yo!"))
+    context.register_command("my_plugin.another_command", lambda: print("yo!"))
 
 
-def get_reader(path):
-    ...
+def get_reader(path: str):
+    if path.endswith(".fzzy"):
+
+        def read(path):
+            return [(None,)]
+
+        return read

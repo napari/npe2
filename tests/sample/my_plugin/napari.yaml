@@ -9,8 +9,8 @@ contributions:
       title: Hello World
     - id: my_plugin.another_command
       title: Another Command
-    - id: my_plugin.tiff_reader
-      title: My Tiff Reader
+    - id: my_plugin.some_reader
+      title: Some Reader
       python_name: my_plugin:get_reader
   configuration: # call it settings?
     properties:
@@ -20,8 +20,8 @@ contributions:
         title: Load lazily
         description: Whether to load images lazily with dask
   readers:
-    - command: my_plugin.tiff_reader
-      filename_patterns: ["*.tif", "*.tiff"]
+    - command: my_plugin.some_reader
+      filename_patterns: ["*.fzy", "*.fzzy"]
       accepts_directories: false
   widgets:
     - command: my_plugin.affinder

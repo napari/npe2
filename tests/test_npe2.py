@@ -1,21 +1,10 @@
 import json
 import sys
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from npe2 import PluginManifest
-from npe2._plugin_manager import PluginManager
-
-SAMPLE = Path(__file__).parent / "sample"
-
-
-@pytest.fixture
-def uses_sample_plugin():
-    sys.path.append(str(SAMPLE))
-    yield
-    sys.path.remove(str(SAMPLE))
 
 
 def test_schema():
@@ -40,17 +29,10 @@ def test_discover(uses_sample_plugin):
     assert manifest.name == "my_plugin"
 
 
-def test_plugin_manager(uses_sample_plugin):
-    pm = PluginManager()
-    pm.discover()
-    assert len(pm._manifests) == 1
-    pm.activate("publisher.my_plugin")
-
-
-def test_cli(monkeypatch):
+def test_cli(monkeypatch, sample_path):
     from npe2.cli import main
 
-    cmd = ["npe2", "validate", str(SAMPLE / "my_plugin" / "napari.yaml")]
+    cmd = ["npe2", "validate", str(sample_path / "my_plugin" / "napari.yaml")]
     monkeypatch.setattr(sys, "argv", cmd)
     with pytest.raises(SystemExit) as e:
         main()
@@ -142,8 +124,9 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     assert mutator.__name__.startswith("_valid")
 
     pm = list(PluginManifest.discover())[0]
+    assert pm.manifest
     # make sure the data is a copy as we'll mutate it
-    data = json.loads(pm.json(exclude_unset=True))
+    data = json.loads(pm.manifest.json(exclude_unset=True))
     mutator(data)
 
     PluginManifest(**data)
