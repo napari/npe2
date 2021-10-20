@@ -4,7 +4,6 @@ from napari.plugins._plugin_manager import NapariPluginManager
 
 def create_manifest(plugin_name: str, plugin_manager: None) -> str:
     """function that takes plugin name and exports manifest"""
-    
     if plugin_manager is None:
         plugin_manager = NapariPluginManager()
     for current_name, plugin in sorted(plugin_manager.plugins.items(), key=lambda x: x[0]):
