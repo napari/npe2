@@ -5,6 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from npe2 import PluginManifest
+from npe2.cli import main
 
 
 def test_schema():
@@ -22,16 +23,16 @@ def test_discover_empty():
 
 
 def test_discover(uses_sample_plugin):
-    manifests_errors = list(PluginManifest.discover())
-    assert len(manifests_errors) == 1
-    [(manifest, entrypoint, error)] = manifests_errors
-    assert manifest is not None
-    assert manifest.name == "my_plugin"
+    discover_results = list(PluginManifest.discover())
+    assert len(discover_results) == 1
+    [(manifest, entrypoint, error)] = discover_results
+    assert manifest and manifest.name == "my_plugin"
+    assert entrypoint and entrypoint.group == "napari.manifest"
+    assert entrypoint.value == "my_plugin:napari.yaml"
+    assert error is None
 
 
 def test_cli(monkeypatch, sample_path):
-    from npe2.cli import main
-
     cmd = ["npe2", "validate", str(sample_path / "my_plugin" / "napari.yaml")]
     monkeypatch.setattr(sys, "argv", cmd)
     with pytest.raises(SystemExit) as e:

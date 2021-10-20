@@ -38,7 +38,7 @@ ENTRY_POINT = "napari.manifest"
 
 class DiscoverResults(NamedTuple):
     manifest: Optional[PluginManifest]
-    entrypoint: Optional[Any]
+    entrypoint: Optional[EntryPoint]
     error: Optional[Exception]
 
 
@@ -318,7 +318,7 @@ class PluginManifest(BaseModel):
                     try:
                         pm = cls._from_entrypoint(ep)
                         pm._populate_missing_meta(dist.metadata)
-                        yield DiscoverResults(pm, None, None)
+                        yield DiscoverResults(pm, ep, None)
                     except ValidationError as e:
                         logger.warning(msg=f"Invalid schema {ep.value!r}")
                         yield DiscoverResults(None, ep, e)
