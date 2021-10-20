@@ -6,7 +6,7 @@ from .._types import ReaderFunction
 from .utils import Executable
 
 
-class ReaderContribution(BaseModel, Executable):
+class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
     command: str = Field(
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
@@ -18,8 +18,3 @@ class ReaderContribution(BaseModel, Executable):
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
     )
-
-    def exec(self, args: tuple = (), kwargs: dict = {}) -> Optional[ReaderFunction]:
-        from .._command_registry import execute_command
-
-        return execute_command(self.command, args, kwargs)
