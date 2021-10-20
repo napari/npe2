@@ -143,7 +143,7 @@ def test_valid_mutations(mutator, uses_sample_plugin):
 
     pm = list(PluginManifest.discover())[0]
     # make sure the data is a copy as we'll mutate it
-    data = json.loads(pm.json(exclude_unset=True))
+    data = json.loads(pm.manifest.json(exclude_unset=True))
     mutator(data)
 
     PluginManifest(**data)
