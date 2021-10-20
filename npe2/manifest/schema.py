@@ -65,7 +65,7 @@ class PluginManifest(BaseModel):
 
     # mechanistic things:
     # this is the module that has the activate() function
-    entry_point: str = Field(
+    entry_point: Optional[str] = Field(
         ...,
         description="The extension entry point. This should be a fully qualified "
         "module string. e.g. `foo.bar.baz`",
