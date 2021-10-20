@@ -8,7 +8,7 @@ def create_manifest(plugin_name: str, plugin_manager: None) -> str:
 
     if plugin_manager is None:
         plugin_manager = NapariPluginManager()
-        
+
     for current_name, plugin in sorted(
         plugin_manager.plugins.items(), key=lambda x: x[0]
     ):
