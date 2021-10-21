@@ -237,7 +237,7 @@ class PluginManifest(BaseModel):
     # should these be on this model itself? or helper functions elsewhere
 
     def import_entry_point(self) -> types.ModuleType:
-        return import_module(self.entry_point)
+        return import_module(str(self.entry_point))
 
     def activate(self, context=None) -> Any:
         # TODO: work on context object
