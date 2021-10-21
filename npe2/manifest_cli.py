@@ -1,45 +1,36 @@
-from napari.plugins._plugin_manager import NapariPluginManager
-
 from npe2.manifest import PluginManifest
 
 
-def create_manifest(plugin_name: str, plugin_manager: None) -> str:
+def create_manifest(plugin_name: str) -> str:
     """function that takes plugin name and exports manifest"""
 
-    if plugin_manager is None:
-        plugin_manager = NapariPluginManager()
+    from napari.plugins import plugin_manager as plugin_manager
 
-    for current_name, plugin in sorted(
-        plugin_manager.plugins.items(), key=lambda x: x[0]
-    ):
-        if current_name == plugin_name:
-            name = plugin_name
-            publisher = plugin_manager.get_metadata(plugin, "author")
-            display_name = plugin_manager.get_standard_metadata(plugin_name)["package"]
-            description = plugin_manager.get_metadata(plugin, "summary")
-            version = plugin_manager.get_metadata(plugin, "version")
+    plugin_manager.discover()
 
-            commands = []
-            for hook in plugin_manager.get_standard_metadata(plugin_name)["hooks"]:
-                package = plugin_manager.get_standard_metadata(plugin_name)["package"]
-                plugin_manager.get_standard_metadata(plugin_name)["hooks"]
-                hk = hook.split("napari_")[1]
-                id = package + "." + hk
-                python_name = plugin_manager.plugins[plugin_name].__name__ + ":" + hook
-                title = " ".join(hook.split("_"))
-                commands.append({"id": id, "python_name": python_name, "title": title})
+    if plugin_name not in plugin_manager.plugins:
+        raise ValueError("Could not find plugin", plugin_name)
 
-            contributions = {"commands": commands}
+    module = plugin_manager.plugins[plugin_name]
+    standard_meta = plugin_manager.get_standard_metadata(plugin_name)
+    package = standard_meta["package"].replace("-", "_")
 
-            pm = PluginManifest(
-                name=name,
-                publisher=publisher,
-                display_name=display_name,
-                description=description,
-                version=version,
-                contributions=contributions,
-            )
+    commands = []
+    for caller in plugin_manager._plugin2hookcallers[module]:
+        for impl in caller.get_hookimpls():
+            if impl.plugin_name != plugin_name:
+                continue
+            name = impl.specname.replace("napari_", "")
+            id = f"{package}.{name}"
+            python_name = f"{impl.function.__module__}:{impl.function.__qualname__}"
+            title = " ".join(name.split("_")).title()
+            commands.append({"id": id, "python_name": python_name, "title": title})
 
-            return pm.yaml()
-
-    return None
+    pm = PluginManifest(
+        name=package,
+        publisher=standard_meta["author"],
+        description=standard_meta["summary"],
+        version=standard_meta["version"],
+        contributions={"commands": commands},
+    )
+    return pm.yaml()
