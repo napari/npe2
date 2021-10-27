@@ -17,9 +17,7 @@ def get_reader(path):
     ...
 
 
-def writer_function(
-    path: str, layer_data: List[Tuple[Any, Dict, str]]
-) -> List[Optional[str]]:
+def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
     class Arg(BaseModel):
         data: Any
         meta: Dict
@@ -28,7 +26,7 @@ def writer_function(
     for e in layer_data:
         Arg(data=e[0], meta=e[1], layer_type=e[2])
 
-    return [None]
+    return []
 
 
 def writer_function_single(path: str, layer_data: Any, meta: Dict) -> Optional[str]:

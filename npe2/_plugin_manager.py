@@ -128,6 +128,10 @@ class PluginManager:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
 
+    def get_manifest(self, command_id: str) -> PluginManifest:
+        mf = self._commands[command_id][1]
+        return self._manifests[mf]
+
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
         return self._submenus[submenu_id]
 
@@ -188,7 +192,8 @@ class PluginManager:
                         yield r
 
     def get_writer_for_command(self, command: str) -> Optional[WriterContribution]:
-        return next(iter(self._writers_by_command.get(command, [])), None)
+        writers = self._writers_by_command[command]
+        return writers[0] if writers else None
 
     def iter_compatible_writers(
         self, layer_types: List[str]
@@ -238,7 +243,7 @@ def write_layers(
     writer: WriterContribution,
     path: str,
     layer_data: List[Tuple[Any, Dict, str]],
-) -> List[Optional[str]]:
+) -> List[str]:
     """Write layer data to a path.
 
     Parameters
@@ -257,7 +262,7 @@ def write_layers(
         Otherwise, if nothing was done, return ``None``.
     """
     if not layer_data:
-        return [None]
+        return []
 
     def _write_single_layer():
         data, meta, _ = layer_data[0]
@@ -270,9 +275,9 @@ def write_layers(
         if isinstance(result, str):
             return [result]
         elif result is None:
-            return [None]
+            return []
         else:
-            return result
+            return [p for p in result if not p]
 
     # Writers that take at most one layer must use the single-layer api.
     # Otherwise, they must use the multi-layer api.

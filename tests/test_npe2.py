@@ -291,7 +291,7 @@ def test_writer_exec(layer_data, isolated_plugin_manager):
     assert writer is not None
     # This writer doesn't do anything but type check.
     paths = npe2.write_layers(writer, "test/path", layer_data)
-    assert len(paths) == 1
+    assert len(paths) == 0
 
 
 def test_writer_single_layer_api_exec(isolated_plugin_manager):

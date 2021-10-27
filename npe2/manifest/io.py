@@ -130,7 +130,7 @@ class LayerTypeConstraint(BaseModel):
 
 class WriterContribution(BaseModel):
     command: str = Field(
-        ..., description="Identifier of the command providing `napari_get_writer`."
+        ..., description="Identifier of the command providing a writer."
     )
     layer_types: List[str] = Field(
         ...,
@@ -140,10 +140,9 @@ class WriterContribution(BaseModel):
         default_factory=list,
         description="List of filename extensions compatible with this writer.",
     )
-    save_dialog_title: str = Field(
+    name: str = Field(
         default="",
-        description="Brief text used to describe this writer when presented "
-        "in a save dialog. When not specifed the command title is used instead.",
+        description="Brief text used to describe this writer when presented.",
     )
 
     def layer_type_constraints(self) -> List[LayerTypeConstraint]:
@@ -157,7 +156,7 @@ class WriterContribution(BaseModel):
                 self.command,
                 str(self.layer_types),
                 str(self.filename_extensions),
-                self.save_dialog_title,
+                self.name,
             )
         )
 
