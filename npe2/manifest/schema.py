@@ -279,6 +279,26 @@ class PluginManifest(BaseModel):
     def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
+        This function searches for installed python packages with a matching
+        entry point group and then attempts to resolve the manifest file.
+
+        The manifest file should be specified in the plugin's `setup.cfg` or
+        `setup.py` file using the [entry point group][1]: "napari.manifest".
+        For example, this would be the section for a plugin "npe-tester" with
+        "napari.yaml" as the manifest file:
+
+        ```cfg
+        [options.entry_points]
+        napari.manifest =
+            npe2-tester = npe2_tester:napari.yaml
+        ```
+
+        The manifest file is specified relative to the submodule root path.
+        So for the example it will be loaded from:
+        `<path/to/npe2-tester>/napari.yaml`.
+
+        [1]: https://packaging.python.org/specifications/entry-points/
+
         Yields
         ------
         DiscoverResults: (3 namedtuples: manifest, entrypoint, error)
@@ -289,6 +309,7 @@ class PluginManifest(BaseModel):
         except ImportError:
             from importlib_metadata import distributions  # type: ignore
 
+        logger.debug("Discovering npe2 plugin manifests.")
         for dist in distributions():
             for ep in dist.entry_points:
                 if ep.group != entry_point_group:

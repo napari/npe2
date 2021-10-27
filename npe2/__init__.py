@@ -6,6 +6,7 @@ __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
 
 from ._command_registry import execute_command, register_command, unregister_command
+from ._plugin_manager import write_layers
 from .manifest import PluginManifest
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "PluginManifest",
     "register_command",
     "unregister_command",
+    "write_layers",
 ]
 
 
