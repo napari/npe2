@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from .commands import CommandContribution
 from .configuration import JsonSchemaObject
-from .io import ReaderContribution
+from .io import ReaderContribution, WriterContribution
 from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
 from .submenu import SubmenuContribution
@@ -19,3 +19,4 @@ class ContributionPoints(BaseModel):
     submenus: Optional[List[SubmenuContribution]]
     themes: Optional[List[ThemeContribution]]
     readers: Optional[List[ReaderContribution]]
+    writers: Optional[List[WriterContribution]]
