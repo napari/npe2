@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from npe2 import PluginManifest
+from npe2 import PluginManager, PluginManifest
 
 
 @pytest.fixture
@@ -17,6 +17,13 @@ def uses_sample_plugin(sample_path):
     sys.path.append(str(sample_path))
     yield
     sys.path.remove(str(sample_path))
+
+
+@pytest.fixture
+def plugin_manager():
+    pm = PluginManager()
+    pm.discover()
+    return pm
 
 
 @pytest.fixture(autouse=True)

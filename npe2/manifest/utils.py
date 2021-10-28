@@ -14,6 +14,7 @@ class ProvidesCommand(Protocol):
     command: str
 
 
+# TODO: add ParamSpec when it's supported better by mypy
 class Executable(Generic[R]):
     def exec(
         self: ProvidesCommand,

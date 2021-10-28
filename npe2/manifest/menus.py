@@ -75,7 +75,7 @@ class MenusContribution(BaseModel):
         extra = "allow"
 
     @root_validator
-    def _validate_extra(cls, values):
+    def _validate_extra(cls, values: dict):
         """Plugins may declare custom menu IDs... we make sure they are valid here.
 
         They become accessible as attributes on the MenusContribution instance.

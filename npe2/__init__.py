@@ -5,7 +5,7 @@ except ImportError:
 __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
 
-from ._plugin_manager import PluginContext, PluginManager
+from ._plugin_manager import PluginContext, PluginManager, write_layers
 from .manifest import PluginManifest
 
-__all__ = ["PluginManifest", "PluginManager", "PluginContext"]
+__all__ = ["PluginManifest", "PluginManager", "PluginContext", "write_layers"]

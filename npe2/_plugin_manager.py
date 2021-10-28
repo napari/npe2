@@ -7,7 +7,6 @@ from collections import Counter
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     DefaultDict,
     Dict,
@@ -24,12 +23,14 @@ from typing import (
 
 from intervaltree import IntervalTree
 
-from ._command_registry import CommandRegistry, execute_command
+from ._command_registry import CommandRegistry
+from ._types import FullLayerData
 from .manifest import PluginManifest
+from .manifest.io import LayerType
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
-    from .manifest.io import LayerType, ReaderContribution, WriterContribution
+    from .manifest.io import ReaderContribution, WriterContribution
     from .manifest.menus import MenuItem
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
@@ -194,15 +195,8 @@ class PluginManager:
         return self._contexts[plugin_key]
 
     def get_writer_for_command(self, command: str) -> Optional[WriterContribution]:
-        writers = self._writers_by_command[command]
+        writers = self._contrib._writers_by_command[command]
         return writers[0] if writers else None
-
-    def register_command(self, id: str, command: Optional[Callable] = None):
-        def _inner(command):
-            self._disposables.add(self._command_registry.register(id, command))
-            return command
-
-        return _inner if command is None else _inner(command)
 
     def iter_compatible_writers(
         self, layer_types: List[str]
@@ -217,7 +211,9 @@ class PluginManager:
         counts = Counter(layer_types)
 
         def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
-            return {v.data for v in self._writers_by_type[lt][counts[lt]] or []}
+            return {
+                v.data for v in self._contrib._writers_by_type[lt][counts[lt]] or []
+            }
 
         types = iter(LayerType)
         candidates = _get_candidates(next(types))
@@ -266,11 +262,18 @@ class PluginContext:
         for dispose in self._disposables:
             dispose()
 
+    def register_command(self, id: str, command: Optional[Callable] = None):
+        def _inner(command):
+            self._disposables.add(self._command_registry.register(id, command))
+            return command
+
+        return _inner if command is None else _inner(command)
+
 
 def write_layers(
     writer: WriterContribution,
     path: str,
-    layer_data: List[Tuple[Any, Dict, str]],
+    layer_data: List[FullLayerData],
 ) -> List[str]:
     """Write layer data to a path.
 
@@ -292,25 +295,12 @@ def write_layers(
     if not layer_data:
         return []
 
-    def _write_single_layer():
-        data, meta, _ = layer_data[0]
-        return [execute_command(writer.command, args=[path, data, meta])]
-
-    def _write_multi_layer():
-        # napari_get_writer-style writers don't always return a list
-        # though strictly speaking they should?
-        result = execute_command(writer.command, args=[path, layer_data])
-        if isinstance(result, str):
-            return [result]
-        elif result is None:
-            return []
-        else:
-            return [p for p in result if not p]
-
     # Writers that take at most one layer must use the single-layer api.
     # Otherwise, they must use the multi-layer api.
     n = sum(ltc.max() for ltc in writer.layer_type_constraints())
-    if n <= 1:
-        return _write_single_layer()
-    else:
-        return _write_multi_layer()
+    args = (path, *layer_data[0][:2]) if n <= 1 else (path, layer_data)
+    res = writer.exec(args=args)
+
+    # napari_get_writer-style writers don't always return a list
+    # though strictly speaking they should?
+    return [res] if isinstance(res, str) else res or []  # type: ignore

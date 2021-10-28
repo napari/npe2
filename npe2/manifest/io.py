@@ -131,7 +131,7 @@ class LayerTypeConstraint(BaseModel):
         return cls(layer_type=lt, bounds=bounds)
 
 
-class WriterContribution(BaseModel):
+class WriterContribution(BaseModel, Executable[List[str]]):
     command: str = Field(
         ..., description="Identifier of the command providing a writer."
     )

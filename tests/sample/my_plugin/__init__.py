@@ -1,12 +1,8 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from pydantic import BaseModel
 
 from npe2 import PluginContext
-
-
-def activate(context):
-    pass
 
 
 def activate(context: PluginContext):
@@ -18,6 +14,7 @@ def activate(context: PluginContext):
 
 
 def get_reader(path: str):
+    print("Get read")
     if path.endswith(".fzzy"):
 
         def read(path):
@@ -38,11 +35,11 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     return []
 
 
-def writer_function_single(path: str, layer_data: Any, meta: Dict) -> Optional[str]:
+def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
     class Arg(BaseModel):
         data: Any
         meta: Dict
 
     Arg(data=layer_data, meta=meta)
 
-    return None
+    return [path]

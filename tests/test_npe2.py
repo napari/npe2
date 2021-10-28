@@ -4,16 +4,8 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-import npe2
-from npe2 import PluginManifest
+from npe2 import PluginManager, PluginManifest, write_layers
 from npe2.cli import main
-
-
-@pytest.fixture
-def isolated_plugin_manager(uses_sample_plugin):
-    pm = PluginManager()
-    pm.discover(filter_by_key={"publisher.my_plugin"})
-    return pm
 
 
 def test_schema():
@@ -26,9 +18,10 @@ def test_schema():
 
 def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path
-    manifests = list(
+    manifests = [
         result.manifest.name for result in PluginManifest.discover() if result.manifest
-    )
+    ]
+
     assert "my_plugin" not in manifests
 
 
@@ -171,10 +164,9 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     PluginManifest(**data)
 
 
-def test_writer_empty_layers(uses_sample_plugin):
+def test_writer_empty_layers():
     pm = PluginManager()
     pm.discover()
-
     writers = list(pm.iter_compatible_writers([]))
     assert len(writers) == 0
 
@@ -190,13 +182,11 @@ def test_writer_empty_layers(uses_sample_plugin):
         (["points", "surface", "points"], 0),
     ],
 )
-def test_writer_ranges(param, isolated_plugin_manager):
-    pm = isolated_plugin_manager
-
+def test_writer_ranges(param, plugin_manager: PluginManager):
     layer_types, expected_count = param
     nwriters = sum(
         w.command == "my_plugin.my_writer"
-        for w in pm.iter_compatible_writers(layer_types)
+        for w in plugin_manager.iter_compatible_writers(layer_types)
     )
 
     assert nwriters == expected_count
@@ -264,19 +254,17 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
         [],
     ],
 )
-def test_writer_exec(layer_data, isolated_plugin_manager):
-    writer = next(
-        isolated_plugin_manager.iter_compatible_writers(["image", "image"]), None
-    )
+def test_writer_exec(layer_data, plugin_manager: PluginManager):
+    writer = next(plugin_manager.iter_compatible_writers(["image", "image"]), None)
     assert writer is not None
     # This writer doesn't do anything but type check.
-    paths = npe2.write_layers(writer, "test/path", layer_data)
+    paths = write_layers(writer, "test/path", layer_data)
     assert len(paths) == 0
 
 
-def test_writer_single_layer_api_exec(isolated_plugin_manager):
-    writer = next(isolated_plugin_manager.iter_compatible_writers(["labels"]), None)
+def test_writer_single_layer_api_exec(plugin_manager):
+    writer = next(plugin_manager.iter_compatible_writers(["labels"]), None)
     assert writer is not None
     # This writer doesn't do anything but type check.
-    paths = npe2.write_layers(writer, "test/path", [(None, {}, "labels")])
+    paths = write_layers(writer, "test/path", [([], {}, "labels")])
     assert len(paths) == 1

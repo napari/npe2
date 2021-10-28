@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import types
 from contextlib import contextmanager
@@ -11,6 +12,7 @@ from textwrap import dedent
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Iterator,
     List,
     NamedTuple,
@@ -19,9 +21,16 @@ from typing import (
     Union,
 )
 
+import toml
+import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
+
+try:
+    from importlib.metadata import distributions
+except ImportError:
+    from importlib_metadata import distributions  # type: ignore
 
 if TYPE_CHECKING:
     from email.message import Message
@@ -144,15 +153,9 @@ class PluginManifest(BaseModel):
         return values
 
     def toml(self):
-        import toml
-
         return toml.dumps({"tool": {"napari": self.dict(exclude_unset=True)}})
 
     def yaml(self):
-        import json
-
-        import yaml
-
         return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
 
     @property
@@ -221,12 +224,13 @@ class PluginManifest(BaseModel):
         if not path.exists():
             raise FileNotFoundError(f"File not found: {path}")
 
+        loader: Callable
         if path.suffix.lower() == ".json":
-            loader = import_module("json").load  # type: ignore
+            loader = json.load
         elif path.suffix.lower() == ".toml":
-            loader = import_module("toml").load  # type: ignore
+            loader = toml.load
         elif path.suffix.lower() in (".yaml", ".yml"):
-            loader = import_module("yaml").safe_load  # type: ignore
+            loader = yaml.safe_load
         else:
             raise ValueError(f"unrecognized file extension: {path}")
 
@@ -324,11 +328,6 @@ class PluginManifest(BaseModel):
         DiscoverResults: (3 namedtuples: manifest, entrypoint, error)
             3-tuples with either manifest or (entrypoint and error) being None.
         """
-        try:
-            from importlib.metadata import distributions
-        except ImportError:
-            from importlib_metadata import distributions  # type: ignore
-
         with temporary_path_additions(paths):
             for dist in distributions():
                 for ep in dist.entry_points:
@@ -342,7 +341,7 @@ class PluginManifest(BaseModel):
                         logger.warning(msg=f"Invalid schema {ep.value!r}")
                         yield DiscoverResults(None, ep, e)
                     except Exception as e:
-                        logger.warning(
+                        logger.error(
                             "%s -> %r could not be imported: %s"
                             % (entry_point_group, ep.value, e)
                         )
