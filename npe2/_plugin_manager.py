@@ -24,7 +24,6 @@ from typing import (
 from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
-from ._types import FullLayerData
 from .manifest import PluginManifest
 from .manifest.io import LayerType
 
@@ -199,7 +198,7 @@ class PluginManager:
         return writers[0] if writers else None
 
     def iter_compatible_writers(
-        self, layer_types: List[str]
+        self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
         """Attempt to match writers that consume all layers."""
 
@@ -243,6 +242,53 @@ class PluginManager:
             key=_writer_key,
         )
 
+    def get_writer(
+        self, path: str, layer_types: Sequence[str], plugin_name: Optional[str] = None
+    ) -> Tuple[Optional[WriterContribution], str]:
+        """Get Writer contribution appropriate for `path`, and `layer_types`.
+
+        When `path` has a file extension, find a compatible writer that has
+        that same extension. When there is no extension and only a single layer,
+        find a compatible writer and append the extension.
+        Otherwise, find a compatible no-extension writer and write to that.
+        No-extension writers typically write to a folder.
+
+        Parameters
+        ----------
+        path : str
+            Path to write
+        layer_types : Sequence[str]
+            Sequence of layer type strings (e.g. ['image', 'labels'])
+        plugin_name : Optional[str], optional
+            Optional name of plugin to use. by default None (look for plugin)
+
+        Returns
+        -------
+        Tuple[Optional[WriterContribution], str]
+            WriterContribution and path that will be written.
+        """
+        ext = Path(path).suffix.lower() if path else ""
+
+        for writer in self.iter_compatible_writers(layer_types):
+            print("WW", writer)
+            if plugin_name and not writer.command.startswith(plugin_name):
+                continue
+
+            if (
+                ext
+                and ext in writer.filename_extensions
+                or not ext
+                and len(layer_types) != 1
+                and not writer.filename_extensions
+            ):
+                return writer, path
+            elif not ext and len(layer_types) == 1:  # No extension, single layer.
+                ext = next(iter(writer.filename_extensions), "")
+                return writer, path + ext
+            else:
+                raise ValueError
+        return None, path
+
 
 class PluginContext:
     """An object that can contain information for a plugin over its lifetime."""
@@ -268,39 +314,3 @@ class PluginContext:
             return command
 
         return _inner if command is None else _inner(command)
-
-
-def write_layers(
-    writer: WriterContribution,
-    path: str,
-    layer_data: List[FullLayerData],
-) -> List[str]:
-    """Write layer data to a path.
-
-    Parameters
-    ----------
-    writer : WriterContribution
-        Description of the writer to use.
-    path : str
-        path to file/directory
-    layer_data : list of napari.types.LayerData
-        List of layer_data, where layer_data is ``(data, meta, layer_type)``.
-
-    Returns
-    -------
-    path : List of str or None
-        If data is successfully written, return the ``path`` that was written.
-        Otherwise, if nothing was done, return ``None``.
-    """
-    if not layer_data:
-        return []
-
-    # Writers that take at most one layer must use the single-layer api.
-    # Otherwise, they must use the multi-layer api.
-    n = sum(ltc.max() for ltc in writer.layer_type_constraints())
-    args = (path, *layer_data[0][:2]) if n <= 1 else (path, layer_data)
-    res = writer.exec(args=args)
-
-    # napari_get_writer-style writers don't always return a list
-    # though strictly speaking they should?
-    return [res] if isinstance(res, str) else res or []  # type: ignore

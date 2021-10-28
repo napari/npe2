@@ -14,7 +14,6 @@ def activate(context: PluginContext):
 
 
 def get_reader(path: str):
-    print("Get read")
     if path.endswith(".fzzy"):
 
         def read(path):
@@ -32,7 +31,7 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     for e in layer_data:
         Arg(data=e[0], meta=e[1], layer_type=e[2])
 
-    return []
+    return [path]
 
 
 def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:

@@ -15,6 +15,8 @@ def sample_path():
 @pytest.fixture
 def uses_sample_plugin(sample_path):
     sys.path.append(str(sample_path))
+    pm = PluginManager.instance()
+    pm.discover()
     yield
     sys.path.remove(str(sample_path))
 

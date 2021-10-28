@@ -4,7 +4,8 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-from npe2 import PluginManager, PluginManifest, write_layers
+from npe2 import PluginManager, PluginManifest, write_layer_data
+from npe2._types import FullLayerData
 from npe2.cli import main
 
 
@@ -244,27 +245,31 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     PluginManifest(**data)
 
 
-@pytest.mark.parametrize(
-    "layer_data",
-    [
-        [
-            (None, {}, "image"),
-            (None, {}, "image"),
-        ],
-        [],
-    ],
-)
-def test_writer_exec(layer_data, plugin_manager: PluginManager):
-    writer = next(plugin_manager.iter_compatible_writers(["image", "image"]), None)
-    assert writer is not None
-    # This writer doesn't do anything but type check.
-    paths = write_layers(writer, "test/path", layer_data)
-    assert len(paths) == 0
+null_image: FullLayerData = ([], {}, "image")
 
 
-def test_writer_single_layer_api_exec(plugin_manager):
-    writer = next(plugin_manager.iter_compatible_writers(["labels"]), None)
-    assert writer is not None
+def test_writer_exec(uses_sample_plugin):
+    # the sample writer knows how to handle two image layers
+    result = write_layer_data("test.tif", [null_image, null_image])
+    assert result == ["test.tif"]
+
+
+@pytest.mark.parametrize("layer_data", [[null_image, null_image], []])
+def test_writer_exec_fails(layer_data, uses_sample_plugin):
+    # the sample writer doesn't accept no extension
+    with pytest.raises(ValueError):
+        write_layer_data("test/path", layer_data)
+
+
+def test_writer_exec_fails2(uses_sample_plugin):
+    # the sample writer doesn't accept 5 images
+    with pytest.raises(ValueError):
+        write_layer_data(
+            "test.tif", [null_image, null_image, null_image, null_image, null_image]
+        )
+
+
+def test_writer_single_layer_api_exec(uses_sample_plugin):
     # This writer doesn't do anything but type check.
-    paths = write_layers(writer, "test/path", [([], {}, "labels")])
+    paths = write_layer_data("test/path", [([], {}, "labels")])
     assert len(paths) == 1

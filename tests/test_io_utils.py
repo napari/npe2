@@ -1,4 +1,6 @@
-from npe2.io_utils import read
+import pytest
+
+from npe2.io_utils import read, read_get_reader
 
 
 def test_read(uses_sample_plugin):
@@ -7,12 +9,11 @@ def test_read(uses_sample_plugin):
 
 def test_read_with_plugin(uses_sample_plugin):
     # no such plugin name.... but skips over the sample plugin
-    assert read("some.fzzy", plugin_name="nope") is None
+    with pytest.raises(ValueError):
+        read("some.fzzy", plugin_name="nope")
 
 
 def test_read_return_reader(uses_sample_plugin):
-    result = read("some.fzzy", return_reader=True)
-    assert result
-    data, reader = result
+    data, reader = read_get_reader("some.fzzy")
     assert data == [(None,)]
     assert reader.command == "my_plugin.some_reader"
