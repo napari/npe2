@@ -1,3 +1,5 @@
+from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -40,53 +42,41 @@ def parse(name: str):
         typer.echo(pm.yaml())
 
 
-@app.command()
-def convert(name: str, out: Optional[str] = None):
-    """Convert existing plugin to new manifest"""
+class ManifestFormat(str, Enum):
+    yaml = "yaml"
+    json = "json"
+    toml = "toml"
 
-    mf = create_manifest(name)
+
+@app.command()
+def convert(
+    plugin_name: str = typer.Argument(..., help="The name of the plugin to convert"),
+    format: ManifestFormat = ManifestFormat.yaml,
+    out: Optional[Path] = None,
+):
+    """Convert existing plugin to new manifest
+
+    Parameters
+    ----------
+    plugin_name : str
+        [description]
+    format : ManifestFormat, optional
+        [description], by default ManifestFormat.yaml
+    out : Optional[Path], optional
+        [description], by default None
+    """
+    try:
+        pm = PluginManifest._from_npe1_plugin(plugin_name)
+        mf = getattr(pm, format)()
+    except Exception as e:
+        typer.secho(str(e), fg=typer.colors.RED, bold=True)
+        raise typer.Exit()
+
     if out is not None:
         with open(out, "w") as fh:
             fh.write(mf)
     else:
         print(mf)
-
-
-def create_manifest(plugin_name: str) -> str:
-    """function that takes plugin name and exports manifest"""
-
-    from .conversion import plugin_manager
-
-    # from napari.plugins import plugin_manager as plugin_manager
-
-    plugin_manager.discover()
-
-    if plugin_name not in plugin_manager.plugins:
-        raise ValueError("Could not find plugin", plugin_name)
-
-    module = plugin_manager.plugins[plugin_name]
-    standard_meta = plugin_manager.get_standard_metadata(plugin_name)
-    package = standard_meta["package"].replace("-", "_")
-
-    commands = []
-    for caller in plugin_manager._plugin2hookcallers[module]:
-        for impl in caller.get_hookimpls():
-            if impl.plugin_name != plugin_name:
-                continue
-            name = impl.specname.replace("napari_", "")
-            id = f"{package}.{name}"
-            python_name = f"{impl.function.__module__}:{impl.function.__qualname__}"
-            title = " ".join(name.split("_")).title()
-            commands.append({"id": id, "python_name": python_name, "title": title})
-
-    pm = PluginManifest(
-        name=package,
-        publisher=standard_meta["author"],
-        description=standard_meta["summary"],
-        version=standard_meta["version"],
-        contributions={"commands": commands},
-    )
-    return pm.yaml()
 
 
 def main():
