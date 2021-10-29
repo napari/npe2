@@ -29,6 +29,7 @@ from .manifest.io import LayerType
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
+    from .manifest.contributions import ContributionPoints
     from .manifest.io import ReaderContribution, WriterContribution
     from .manifest.menus import MenuItem
     from .manifest.submenu import SubmenuContribution
@@ -54,7 +55,7 @@ PluginKey = str  # this is defined on PluginManifest as `publisher.name`
 
 class _ContributionsIndex:
     _submenus: Dict[str, SubmenuContribution] = {}
-    _commands: Dict[str, Tuple[CommandContribution, PluginKey]] = {}
+    _commands: Dict[str, CommandContribution] = {}
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
@@ -63,10 +64,27 @@ class _ContributionsIndex:
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
     def get_command(self, command_id: str) -> CommandContribution:
-        return self._commands[command_id][0]
+        return self._commands[command_id]
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
         return self._submenus[submenu_id]
+
+    def index_contributions(self, ctrb: ContributionPoints):
+        for cmd in ctrb.commands or []:
+            self._commands[cmd.id] = cmd
+        for subm in ctrb.submenus or []:
+            self._submenus[subm.id] = subm
+        for theme in ctrb.themes or []:
+            self._themes[theme.id] = theme
+        for reader in ctrb.readers or []:
+            for pattern in reader.filename_patterns:
+                self._readers[pattern].append(reader)
+            if reader.accepts_directories:
+                self._readers[""].append(reader)
+        for writer in ctrb.writers or []:
+            self._writers_by_command[writer.command].append(writer)
+            for c in writer.layer_type_constraints():
+                self._writers_by_type[c.layer_type].addi(*c.bounds, writer)
 
 
 class PluginManager:
@@ -100,23 +118,7 @@ class PluginManager:
             mf = result.manifest
             self._manifests[mf.key] = mf
             if mf.contributions:
-                for cmd in mf.contributions.commands or []:
-                    self._contrib._commands[cmd.id] = (cmd, mf.key)
-                for subm in mf.contributions.submenus or []:
-                    self._contrib._submenus[subm.id] = subm
-                for theme in mf.contributions.themes or []:
-                    self._contrib._themes[theme.id] = theme
-                for reader in mf.contributions.readers or []:
-                    for pattern in reader.filename_patterns:
-                        self._contrib._readers[pattern].append(reader)
-                    if reader.accepts_directories:
-                        self._contrib._readers[""].append(reader)
-                for writer in mf.contributions.writers or []:
-                    self._contrib._writers_by_command[writer.command].append(writer)
-                    for c in writer.layer_type_constraints():
-                        self._contrib._writers_by_type[c.layer_type].addi(
-                            *c.bounds, writer
-                        )
+                self._contrib.index_contributions(mf.contributions)
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
