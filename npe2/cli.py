@@ -54,17 +54,7 @@ def convert(
     format: ManifestFormat = ManifestFormat.yaml,
     out: Optional[Path] = None,
 ):
-    """Convert existing plugin to new manifest
-
-    Parameters
-    ----------
-    plugin_name : str
-        [description]
-    format : ManifestFormat, optional
-        [description], by default ManifestFormat.yaml
-    out : Optional[Path], optional
-        [description], by default None
-    """
+    """Convert existing plugin to new manifest."""
     try:
         pm = PluginManifest._from_npe1_plugin(plugin_name)
         mf = getattr(pm, format)()
