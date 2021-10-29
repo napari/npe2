@@ -1,6 +1,6 @@
 # Types for GUI HookSpecs
 from pathlib import Path
-from typing import (  # TypedDict,
+from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
