@@ -66,7 +66,7 @@ class PluginManifest(BaseModel):
     # mechanistic things:
     # this is the module that has the activate() function
     entry_point: Optional[str] = Field(
-        ...,
+        default=None,
         description="The extension entry point. This should be a fully qualified "
         "module string. e.g. `foo.bar.baz`",
     )
@@ -237,7 +237,9 @@ class PluginManifest(BaseModel):
     # should these be on this model itself? or helper functions elsewhere
 
     def import_entry_point(self) -> types.ModuleType:
-        return import_module(str(self.entry_point))
+        if not self.entry_point:
+            raise ModuleNotFoundError(f"Plugin {self.name} declares no entry_point")
+        return import_module(self.entry_point)
 
     def activate(self, context=None) -> Any:
         # TODO: work on context object

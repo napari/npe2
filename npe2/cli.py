@@ -55,7 +55,9 @@ def convert(name: str, out: Optional[str] = None):
 def create_manifest(plugin_name: str) -> str:
     """function that takes plugin name and exports manifest"""
 
-    from napari.plugins import plugin_manager as plugin_manager
+    from .conversion import plugin_manager
+
+    # from napari.plugins import plugin_manager as plugin_manager
 
     plugin_manager.discover()
 
