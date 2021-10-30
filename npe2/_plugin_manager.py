@@ -55,7 +55,7 @@ PluginKey = str  # this is defined on PluginManifest as `publisher.name`
 
 class _ContributionsIndex:
     _submenus: Dict[str, SubmenuContribution] = {}
-    _commands: Dict[str, CommandContribution] = {}
+    _commands: Dict[str, Tuple[CommandContribution, PluginKey]] = {}
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
@@ -64,14 +64,14 @@ class _ContributionsIndex:
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
     def get_command(self, command_id: str) -> CommandContribution:
-        return self._commands[command_id]
+        return self._commands[command_id][0]
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
         return self._submenus[submenu_id]
 
-    def index_contributions(self, ctrb: ContributionPoints):
+    def index_contributions(self, ctrb: ContributionPoints, key: PluginKey):
         for cmd in ctrb.commands or []:
-            self._commands[cmd.id] = cmd
+            self._commands[cmd.id] = cmd, key
         for subm in ctrb.submenus or []:
             self._submenus[subm.id] = subm
         for theme in ctrb.themes or []:
@@ -118,7 +118,7 @@ class PluginManager:
             mf = result.manifest
             self._manifests[mf.key] = mf
             if mf.contributions:
-                self._contrib.index_contributions(mf.contributions)
+                self._contrib.index_contributions(mf.contributions, mf.key)
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
