@@ -418,6 +418,8 @@ class PluginManifest(BaseModel):
         package = standard_meta["package"].replace("-", "_")
 
         commands = []
+        readers = []
+        writers = []
         for caller in plugin_manager._plugin2hookcallers[module]:
             for impl in caller.get_hookimpls():
                 if impl.plugin_name != plugin_name:
@@ -428,13 +430,51 @@ class PluginManifest(BaseModel):
                 title = " ".join(name.split("_")).title()
                 commands.append({"id": id, "python_name": py_name, "title": title})
 
+                if "reader" in id:
+                    # add this to the readers list
+                    readers.append({"command": id, "accepts_directories": True})
+
+                write_layers = []
+                write_directory = False
+                if "write" in id:
+                    # add this to the writers list
+                    if "get_writer" not in id:
+                        layer = id.split("write_")[1]
+                        if layer != "directory":
+                            writers.append(
+                                {"command": id, "layer_types": [layer], "name": layer}
+                            )
+                            write_layers.append(layer + "*")
+                        else:
+                            id_dir = id
+                            write_directory = True
+                if write_directory:
+                    if len(write_layers) > 0:
+                        writers.append({"command": id_dir, "layer_types": write_layers})
+                    else:
+                        writers.append({"command": id_dir, "layer_types": ["*"]})
+
+                themes = []
+                if "theme" in id:
+                    from napari.utils.theme import get_theme
+
+                    theme = get_theme(impl.theme)
+                    themes.append(
+                        {"label": id, "type": impl.theme, "colors": theme}
+                    )  # ??
+
         # TODO: add additional contributions like readers, writers, samples, etc...
         return cls(
             name=package,
             publisher=standard_meta["author"],
             description=standard_meta["summary"],
             version=standard_meta["version"],
-            contributions={"commands": commands},
+            contributions={
+                "commands": commands,
+                "readers": readers,
+                "writers": writers,
+                "themes": themes,
+            },
         )
 
 
