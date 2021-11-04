@@ -26,6 +26,6 @@ class Executable(Generic[R]):
 
             from .._plugin_manager import PluginManager
 
-            _registery = PluginManager.instance().commands
+            _registry = PluginManager.instance().commands
 
-        return _registery.execute(self.command, args, kwargs)
+        return _registry.execute(self.command, args, kwargs)
