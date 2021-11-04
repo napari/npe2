@@ -443,6 +443,7 @@ class PluginManifest(BaseModel):
                     readers.append({"command": id, "accepts_directories": True})
 
                 if "write" in id and "get_writer" not in id:
+                    print("writing writers")
                     # add this to the writers list
                     layer = id.split("write_")[1]
                     writers.append(
@@ -466,6 +467,13 @@ class PluginManifest(BaseModel):
         if len(write_layers) > 0:
             id = f"{package}.write_directory"
             writers.append({"command": id, "layer_types": write_layers})
+
+            # add this command to the commands section
+            py_name = (
+                py_name
+            ) = f"{impl.function.__module__}:write_layer_data_with_plugins"
+            title = "Save to folder"
+            commands.append({"id": id, "python_name": py_name, "title": title})
 
         # TODO: add additional contributions like readers, writers, samples, etc...
         return cls(
