@@ -409,10 +409,16 @@ class PluginManifest(BaseModel):
             # TODO: it would be nice to add some logic to prevent confusion here.
             # for example... if the plugin name doesn't equal the package name, we
             # should still be able to find it if the user gives a package name
-            raise ValueError(
-                f"Could not find plugin {plugin_name!r}\n"
-                f"Found {set(plugin_manager.plugins)}"
-            )
+            from importlib.metadata import PackageNotFoundError, distribution
+
+            try:
+                dist = distribution(plugin_name)  # returns a list.  multiple plugins?
+                plugin_name = dist.entry_points[0].name
+            except PackageNotFoundError:
+                print(
+                    f"Could not find plugin {plugin_name!r}\n"
+                    f"Found {set(plugin_manager.plugins)}"
+                )
 
         module = plugin_manager.plugins[plugin_name]
         standard_meta = plugin_manager.get_standard_metadata(plugin_name)
