@@ -415,7 +415,7 @@ class PluginManifest(BaseModel):
                 dist = distribution(plugin_name)  # returns a list.  multiple plugins?
                 plugin_name = dist.entry_points[0].name
             except PackageNotFoundError:
-                print(
+                raise PackageNotFoundError(
                     f"Could not find plugin {plugin_name!r}\n"
                     f"Found {set(plugin_manager.plugins)}"
                 )
@@ -443,7 +443,6 @@ class PluginManifest(BaseModel):
                     readers.append({"command": id, "accepts_directories": True})
 
                 if "write" in id and "get_writer" not in id:
-                    print("writing writers")
                     # add this to the writers list
                     layer = id.split("write_")[1]
                     writers.append(
@@ -455,11 +454,7 @@ class PluginManifest(BaseModel):
                 if "theme" in id:
                     for name, theme in impl.function():
                         # cast theme into manifest.themes.ThemeColors dict
-                        manifest_theme = ThemeColors().dict()
-                        manifest_theme = {
-                            key: theme.get(key, manifest_theme[key])
-                            for key in manifest_theme
-                        }
+                        manifest_theme = ThemeColors(**theme)
                         themes.append(
                             {"label": id, "type": name, "colors": manifest_theme}
                         )
