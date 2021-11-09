@@ -68,10 +68,14 @@ class PluginManifest(BaseModel):
         None,
         description="The publisher name - can be an individual or an organization",
     )
-    # easy one... we need this.  character limit?  256 char?
+
     display_name: str = Field(
         "",
-        description="The display name for the extension used in the Marketplace.",
+        description="User-facing text to display as the name of this plugin",
+        # Must be 3-40 characters long, containing printable word characters,
+        # and must not begin or end with an underscore, white space, or
+        # non-word character.
+        regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
     # take this from setup.cfg
     description: Optional[str] = Field(
@@ -97,19 +101,12 @@ class PluginManifest(BaseModel):
     license: Optional[SPDX] = None
 
     contributions: Optional[ContributionPoints]
-    # # this would be there only for the hub.  which is not immediately planning
-    # # to support open ended keywords
-    # keywords: List[str] = Field(
-    #     default_factory=list,
-    #     description="An array of keywords to make it easier to find the "
-    #     "extension. These are included with other extension Tags on the "
-    #     "Marketplace. This list is currently limited to 5 keywords",
-    # )
-    # the hub *is* planning on supporting categories
+
     categories: List[str] = Field(
         default_factory=list,
         description="specifically defined classifiers",
     )
+
     # in the absense of input. should be inferred from version (require using rc ...)
     # or use `classifiers = Status`
     preview: Optional[bool] = Field(
