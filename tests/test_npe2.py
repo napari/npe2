@@ -203,6 +203,14 @@ def test_valid_display_names(display_name, uses_sample_plugin):
     PluginManifest(**data)
 
 
+def test_display_name_default_is_valid(uses_sample_plugin):
+    pm = list(PluginManifest.discover())[0]
+    assert pm.manifest
+    data = json.loads(pm.manifest.json(exclude_unset=True))
+    del data["display_name"]
+    PluginManifest(**data)
+
+
 def test_writer_empty_layers():
     pm = PluginManager()
     pm.discover()
