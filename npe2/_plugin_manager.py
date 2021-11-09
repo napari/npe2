@@ -62,12 +62,6 @@ class _ContributionsIndex:
     ] = DefaultDict(IntervalTree)
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
-    def get_command(self, command_id: str) -> CommandContribution:
-        return self._commands[command_id][0]
-
-    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        return self._submenus[submenu_id]
-
     def index_contributions(self, ctrb: ContributionPoints, key: PluginName):
         for cmd in ctrb.commands or []:
             self._commands[cmd.id] = cmd, key
@@ -125,6 +119,12 @@ class PluginManager:
             return self._manifests[key]
         except KeyError:
             raise KeyError(f"Manifest key {key!r} not found in {list(self._manifests)}")
+
+    def get_command(self, command_id: str) -> CommandContribution:
+        return self._contrib._commands[command_id][0]
+
+    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
+        return self._contrib._submenus[submenu_id]
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
