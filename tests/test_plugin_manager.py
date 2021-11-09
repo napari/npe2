@@ -9,7 +9,7 @@ def test_plugin_manager(sample_path):
     assert len(pm._manifests) == 0
     pm.discover([sample_path])
     assert len(pm._manifests) == 1
-    assert pm._contrib.get_command("my_plugin.hello_world")
+    assert pm.get_command("my_plugin.hello_world")
 
     assert "my_plugin" not in pm._contexts
     ctx = pm.activate("my_plugin")
@@ -21,11 +21,11 @@ def test_plugin_manager(sample_path):
     with pytest.raises(KeyError):
         pm.activate("not a thing")
 
-    assert pm._contrib.get_command("my_plugin.hello_world")
+    assert pm.get_command("my_plugin.hello_world")
     with pytest.raises(KeyError):
-        pm._contrib.get_command("my_plugin.not_a_thing")
+        pm.get_command("my_plugin.not_a_thing")
 
-    assert pm._contrib.get_submenu("mysubmenu")
+    assert pm.get_submenu("mysubmenu")
     assert len(list(pm.iter_menu("/napari/layer_context"))) == 2
 
     # deactivation
