@@ -2,6 +2,8 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
+from .utils import Executable
+
 # # napari provides these
 # class Menu(BaseModel):
 #     key: str
@@ -40,7 +42,7 @@ class Submenu(_MenuItem):
     # Menu item references a submenu ...` which is not defined in the 'submenus' section
 
 
-class MenuCommand(_MenuItem):
+class MenuCommand(_MenuItem, Executable):
     command: str = Field(
         ...,
         description="Identifier of the command to execute. "
@@ -73,7 +75,7 @@ class MenusContribution(BaseModel):
         extra = "allow"
 
     @root_validator
-    def _validate_extra(cls, values):
+    def _validate_extra(cls, values: dict):
         """Plugins may declare custom menu IDs... we make sure they are valid here.
 
         They become accessible as attributes on the MenusContribution instance.
