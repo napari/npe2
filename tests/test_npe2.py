@@ -177,13 +177,9 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     ],
 )
 def test_invalid_display_names(display_name, uses_sample_plugin):
-    pm = list(PluginManifest.discover())[0]
-    assert pm.manifest
-    data = json.loads(pm.manifest.json(exclude_unset=True))
-    data["display_name"] = display_name
-
-    with pytest.raises(ValidationError):
-        PluginManifest(**data)
+    field = PluginManifest.__fields__["display_name"]
+    value, err = field.validate(display_name, {}, loc="display_name")
+    assert err is not None
 
 
 @pytest.mark.parametrize(
@@ -196,19 +192,13 @@ def test_invalid_display_names(display_name, uses_sample_plugin):
     ],
 )
 def test_valid_display_names(display_name, uses_sample_plugin):
-    pm = list(PluginManifest.discover())[0]
-    assert pm.manifest
-    data = json.loads(pm.manifest.json(exclude_unset=True))
-    data["display_name"] = display_name
-    PluginManifest(**data)
+    field = PluginManifest.__fields__["display_name"]
+    value, err = field.validate(display_name, {}, loc="display_name")
+    assert err is None
 
 
-def test_display_name_default_is_valid(uses_sample_plugin):
-    pm = list(PluginManifest.discover())[0]
-    assert pm.manifest
-    data = json.loads(pm.manifest.json(exclude_unset=True))
-    del data["display_name"]
-    PluginManifest(**data)
+def test_display_name_default_is_valid():
+    PluginManifest(name="", entry_point="")
 
 
 def test_writer_empty_layers():
