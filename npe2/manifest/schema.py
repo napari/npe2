@@ -68,10 +68,14 @@ class PluginManifest(BaseModel):
         None,
         description="The publisher name - can be an individual or an organization",
     )
-    # easy one... we need this.  character limit?  256 char?
+
     display_name: str = Field(
         "",
         description="The display name for the extension used in the Marketplace.",
+        # Must be 3-40 characters long, containing printable word characters,
+        # and must not begin or end with an underscore, white space, or
+        # non-word character.
+        regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
     # take this from setup.cfg
     description: Optional[str] = Field(

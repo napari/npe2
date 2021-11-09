@@ -164,6 +164,45 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     PluginManifest(**data)
 
 
+@pytest.mark.parametrize(
+    "display_name",
+    [
+        "Here there everywhere and more with giggles and friends",
+        "ab",
+        " abc",
+        "abc ",
+        "_abc",
+        "abc_",
+        "abc♱",
+    ],
+)
+def test_invalid_display_names(display_name, uses_sample_plugin):
+    pm = list(PluginManifest.discover())[0]
+    assert pm.manifest
+    data = json.loads(pm.manifest.json(exclude_unset=True))
+    data["display_name"] = display_name
+
+    with pytest.raises(ValidationError):
+        PluginManifest(**data)
+
+
+@pytest.mark.parametrize(
+    "display_name",
+    [
+        "Some Cell & Stru买cture Segmenter",
+        "Segment Blobs and Things with Membranes",
+        "abc",
+        "abc䜁䜂",
+    ],
+)
+def test_valid_display_names(display_name, uses_sample_plugin):
+    pm = list(PluginManifest.discover())[0]
+    assert pm.manifest
+    data = json.loads(pm.manifest.json(exclude_unset=True))
+    data["display_name"] = display_name
+    PluginManifest(**data)
+
+
 def test_writer_empty_layers():
     pm = PluginManager()
     pm.discover()
