@@ -11,12 +11,12 @@ def test_plugin_manager(sample_path):
     assert len(pm._manifests) == 1
     assert pm._contrib.get_command("my_plugin.hello_world")
 
-    assert "publisher.my_plugin" not in pm._contexts
-    ctx = pm.activate("publisher.my_plugin")
-    assert "publisher.my_plugin" in pm._contexts
+    assert "my_plugin" not in pm._contexts
+    ctx = pm.activate("my_plugin")
+    assert "my_plugin" in pm._contexts
 
     # dual activation is prevented
-    assert pm.activate("publisher.my_plugin") is ctx
+    assert pm.activate("my_plugin") is ctx
 
     with pytest.raises(KeyError):
         pm.activate("not a thing")
@@ -29,8 +29,8 @@ def test_plugin_manager(sample_path):
     assert len(list(pm.iter_menu("/napari/layer_context"))) == 2
 
     # deactivation
-    assert "publisher.my_plugin" in pm._contexts
-    pm.deactivate("publisher.my_plugin")
-    assert "publisher.my_plugin" not in pm._contexts
-    pm.deactivate("publisher.my_plugin")  # second time is a no-op
-    assert "publisher.my_plugin" not in pm._contexts
+    assert "my_plugin" in pm._contexts
+    pm.deactivate("my_plugin")
+    assert "my_plugin" not in pm._contexts
+    pm.deactivate("my_plugin")  # second time is a no-op
+    assert "my_plugin" not in pm._contexts
