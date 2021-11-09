@@ -1,10 +1,13 @@
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from pydantic import BaseModel, Extra, Field, validator
 
+from .._types import ReaderFunction
+from .utils import Executable
 
-class ReaderContribution(BaseModel):
+
+class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
     command: str = Field(
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
@@ -128,7 +131,7 @@ class LayerTypeConstraint(BaseModel):
         return cls(layer_type=lt, bounds=bounds)
 
 
-class WriterContribution(BaseModel):
+class WriterContribution(BaseModel, Executable[List[str]]):
     command: str = Field(
         ..., description="Identifier of the command providing a writer."
     )

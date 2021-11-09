@@ -1,29 +1,11 @@
 import json
 import sys
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-import npe2
-from npe2 import PluginManifest
-from npe2._plugin_manager import PluginManager
-
-SAMPLE = Path(__file__).parent / "sample"
-
-
-@pytest.fixture
-def uses_sample_plugin():
-    sys.path.append(str(SAMPLE))
-    yield
-    sys.path.remove(str(SAMPLE))
-
-
-@pytest.fixture
-def isolated_plugin_manager(uses_sample_plugin):
-    pm = PluginManager()
-    pm.discover(filter_by_key={"publisher.my_plugin"})
-    return pm
+from npe2 import PluginManager, PluginManifest
+from npe2.cli import main
 
 
 def test_schema():
@@ -36,30 +18,25 @@ def test_schema():
 
 def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path
-    manifests = list(
+    manifests = [
         result.manifest.name for result in PluginManifest.discover() if result.manifest
-    )
+    ]
+
     assert "my_plugin" not in manifests
 
 
 def test_discover(uses_sample_plugin):
-    manifests = list(
-        result.manifest.name for result in PluginManifest.discover() if result.manifest
-    )
-    assert "my_plugin" in manifests
+    discover_results = list(PluginManifest.discover())
+    assert len(discover_results) == 1
+    [(manifest, entrypoint, error)] = discover_results
+    assert manifest and manifest.name == "my_plugin"
+    assert entrypoint and entrypoint.group == "napari.manifest"
+    assert entrypoint.value == "my_plugin:napari.yaml"
+    assert error is None
 
 
-def test_plugin_manager(uses_sample_plugin):
-    pm = PluginManager()
-    pm.discover()
-    assert len(pm._manifests) > 0
-    pm.activate("publisher.my_plugin")
-
-
-def test_cli(monkeypatch):
-    from npe2.cli import main
-
-    cmd = ["npe2", "validate", str(SAMPLE / "my_plugin" / "napari.yaml")]
+def test_cli(monkeypatch, sample_path):
+    cmd = ["npe2", "validate", str(sample_path / "my_plugin" / "napari.yaml")]
     monkeypatch.setattr(sys, "argv", cmd)
     with pytest.raises(SystemExit) as e:
         main()
@@ -178,23 +155,18 @@ def test_valid_mutations(mutator, uses_sample_plugin):
 
     assert mutator.__name__.startswith("_valid")
 
-    pm = next(
-        result.manifest
-        for result in PluginManifest.discover()
-        if result.manifest and result.manifest.name == "my_plugin"
-    )
-
+    pm = list(PluginManifest.discover())[0]
+    assert pm.manifest
     # make sure the data is a copy as we'll mutate it
-    data = json.loads(pm.json(exclude_unset=True))
+    data = json.loads(pm.manifest.json(exclude_unset=True))
     mutator(data)
 
     PluginManifest(**data)
 
 
-def test_writer_empty_layers(uses_sample_plugin):
+def test_writer_empty_layers():
     pm = PluginManager()
     pm.discover()
-
     writers = list(pm.iter_compatible_writers([]))
     assert len(writers) == 0
 
@@ -210,13 +182,11 @@ def test_writer_empty_layers(uses_sample_plugin):
         (["points", "surface", "points"], 0),
     ],
 )
-def test_writer_ranges(param, isolated_plugin_manager):
-    pm = isolated_plugin_manager
-
+def test_writer_ranges(param, plugin_manager: PluginManager):
     layer_types, expected_count = param
     nwriters = sum(
         w.command == "my_plugin.my_writer"
-        for w in pm.iter_compatible_writers(layer_types)
+        for w in plugin_manager.iter_compatible_writers(layer_types)
     )
 
     assert nwriters == expected_count
@@ -272,31 +242,3 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     data["contributions"]["writers"][0]["layer_types"].append(expr)
 
     PluginManifest(**data)
-
-
-@pytest.mark.parametrize(
-    "layer_data",
-    [
-        [
-            (None, {}, "image"),
-            (None, {}, "image"),
-        ],
-        [],
-    ],
-)
-def test_writer_exec(layer_data, isolated_plugin_manager):
-    writer = next(
-        isolated_plugin_manager.iter_compatible_writers(["image", "image"]), None
-    )
-    assert writer is not None
-    # This writer doesn't do anything but type check.
-    paths = npe2.write_layers(writer, "test/path", layer_data)
-    assert len(paths) == 0
-
-
-def test_writer_single_layer_api_exec(isolated_plugin_manager):
-    writer = next(isolated_plugin_manager.iter_compatible_writers(["labels"]), None)
-    assert writer is not None
-    # This writer doesn't do anything but type check.
-    paths = npe2.write_layers(writer, "test/path", [(None, {}, "labels")])
-    assert len(paths) == 1

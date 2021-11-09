@@ -1,16 +1,36 @@
 from __future__ import annotations
 
+import json
+import sys
 import types
+from contextlib import contextmanager
 from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Union,
+)
 
+import toml
+import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
+
+try:
+    from importlib.metadata import distributions
+except ImportError:
+    from importlib_metadata import distributions  # type: ignore
 
 if TYPE_CHECKING:
     from email.message import Message
@@ -27,7 +47,7 @@ ENTRY_POINT = "napari.manifest"
 
 class DiscoverResults(NamedTuple):
     manifest: Optional[PluginManifest]
-    entrypoint: Optional[Any]
+    entrypoint: Optional[EntryPoint]
     error: Optional[Exception]
 
 
@@ -133,15 +153,9 @@ class PluginManifest(BaseModel):
         return values
 
     def toml(self):
-        import toml
-
         return toml.dumps({"tool": {"napari": self.dict(exclude_unset=True)}})
 
     def yaml(self):
-        import json
-
-        import yaml
-
         return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
 
     @property
@@ -210,12 +224,13 @@ class PluginManifest(BaseModel):
         if not path.exists():
             raise FileNotFoundError(f"File not found: {path}")
 
+        loader: Callable
         if path.suffix.lower() == ".json":
-            loader = import_module("json").load  # type: ignore
+            loader = json.load
         elif path.suffix.lower() == ".toml":
-            loader = import_module("toml").load  # type: ignore
+            loader = toml.load
         elif path.suffix.lower() in (".yaml", ".yml"):
-            loader = import_module("yaml").safe_load  # type: ignore
+            loader = yaml.safe_load
         else:
             raise ValueError(f"unrecognized file extension: {path}")
 
@@ -276,7 +291,9 @@ class PluginManifest(BaseModel):
                     break
 
     @classmethod
-    def discover(cls, entry_point_group=ENTRY_POINT) -> Iterator[DiscoverResults]:
+    def discover(
+        cls, entry_point_group: str = ENTRY_POINT, paths: Sequence[str] = ()
+    ) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
         This function searches for installed python packages with a matching
@@ -299,34 +316,36 @@ class PluginManifest(BaseModel):
 
         [1]: https://packaging.python.org/specifications/entry-points/
 
+        Parameters
+        ----------
+        entry_point_group : str, optional
+            name of entry point group to discover, by default 'napari.manifest'
+        paths : Sequence[str], optional
+            paths to add to sys.path while discovering.
+
         Yields
         ------
         DiscoverResults: (3 namedtuples: manifest, entrypoint, error)
             3-tuples with either manifest or (entrypoint and error) being None.
         """
-        try:
-            from importlib.metadata import distributions
-        except ImportError:
-            from importlib_metadata import distributions  # type: ignore
-
-        logger.debug("Discovering npe2 plugin manifests.")
-        for dist in distributions():
-            for ep in dist.entry_points:
-                if ep.group != entry_point_group:
-                    continue
-                try:
-                    pm = cls._from_entrypoint(ep)
-                    pm._populate_missing_meta(dist.metadata)
-                    yield DiscoverResults(pm, None, None)
-                except ValidationError as e:
-                    logger.warning(msg=f"Invalid schema {ep.value!r}")
-                    yield DiscoverResults(None, ep, e)
-                except Exception as e:
-                    logger.warning(
-                        "%s -> %r could not be imported: %s"
-                        % (entry_point_group, ep.value, e)
-                    )
-                    yield DiscoverResults(None, ep, e)
+        with temporary_path_additions(paths):
+            for dist in distributions():
+                for ep in dist.entry_points:
+                    if ep.group != entry_point_group:
+                        continue
+                    try:
+                        pm = cls._from_entrypoint(ep)
+                        pm._populate_missing_meta(dist.metadata)
+                        yield DiscoverResults(pm, ep, None)
+                    except ValidationError as e:
+                        logger.warning(msg=f"Invalid schema {ep.value!r}")
+                        yield DiscoverResults(None, ep, e)
+                    except Exception as e:
+                        logger.error(
+                            "%s -> %r could not be imported: %s"
+                            % (entry_point_group, ep.value, e)
+                        )
+                        yield DiscoverResults(None, ep, e)
 
     @classmethod
     def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
@@ -396,6 +415,17 @@ class PluginManifest(BaseModel):
                 ) from e
 
     ValidationError = ValidationError  # for convenience of access
+
+
+@contextmanager
+def temporary_path_additions(paths: Sequence[str] = ()):
+    for p in reversed(paths):
+        sys.path.insert(0, p)
+    try:
+        yield
+    finally:
+        for p in paths:
+            sys.path.remove(p)
 
 
 if __name__ == "__main__":
