@@ -95,7 +95,7 @@ class CommandContribution(BaseModel):
         self,
         args: tuple = (),
         kwargs: dict = {},
-        _registry: Optional[CommandRegistry] = None,
+        _registry: Optional["CommandRegistry"] = None,
     ) -> Any:
         if _registry is None:
             from .._plugin_manager import PluginManager
