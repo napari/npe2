@@ -29,3 +29,8 @@ class Executable(Generic[R]):
             _registry = PluginManager.instance().commands
 
         return _registry.execute(self.command, args, kwargs)
+
+    @property
+    def plugin_name(self: ProvidesCommand):
+        # takes advantage of the fact that command always starts with manifest.name
+        return self.command.split(".")[0]

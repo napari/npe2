@@ -155,10 +155,6 @@ class PluginManifest(BaseModel):
     def yaml(self):
         return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
 
-    @property
-    def key(self):
-        return f"{self.publisher}.{self.name}"
-
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
         """Return PluginManifest given a distribution (package) name.

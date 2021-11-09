@@ -1,9 +1,12 @@
 from textwrap import dedent
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from pydantic import BaseModel, Extra, Field
 
 from .icon import Icon
+
+if TYPE_CHECKING:
+    from .._command_registry import CommandRegistry
 
 _identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
 
@@ -87,3 +90,15 @@ class CommandContribution(BaseModel):
 
     class Config:
         extra = Extra.forbid
+
+    def exec(
+        self,
+        args: tuple = (),
+        kwargs: dict = {},
+        _registry: Optional["CommandRegistry"] = None,
+    ) -> Any:
+        if _registry is None:
+            from .._plugin_manager import PluginManager
+
+            _registry = PluginManager.instance().commands
+        return _registry.execute(self.id, args, kwargs)

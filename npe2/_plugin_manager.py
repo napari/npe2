@@ -49,12 +49,12 @@ if TYPE_CHECKING:
             ...
 
 
-PluginKey = str  # this is defined on PluginManifest as `publisher.name`
+PluginName = str  # this is defined on PluginManifest as `publisher.name`
 
 
 class _ContributionsIndex:
     _submenus: Dict[str, SubmenuContribution] = {}
-    _commands: Dict[str, Tuple[CommandContribution, PluginKey]] = {}
+    _commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
     _themes: Dict[str, ThemeContribution] = {}
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
@@ -62,13 +62,7 @@ class _ContributionsIndex:
     ] = DefaultDict(IntervalTree)
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
-    def get_command(self, command_id: str) -> CommandContribution:
-        return self._commands[command_id][0]
-
-    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        return self._submenus[submenu_id]
-
-    def index_contributions(self, ctrb: ContributionPoints, key: PluginKey):
+    def index_contributions(self, ctrb: ContributionPoints, key: PluginName):
         for cmd in ctrb.commands or []:
             self._commands[cmd.id] = cmd, key
         for subm in ctrb.submenus or []:
@@ -92,8 +86,8 @@ class PluginManager:
 
     def __init__(self, reg: Optional[CommandRegistry] = None) -> None:
         self._command_registry = reg or CommandRegistry()
-        self._contexts: Dict[PluginKey, PluginContext] = {}
-        self._manifests: Dict[PluginKey, PluginManifest] = {}
+        self._contexts: Dict[PluginName, PluginContext] = {}
+        self._manifests: Dict[PluginName, PluginManifest] = {}
         self.discover()  # TODO: should we be immediately discovering?
 
     @property
@@ -115,16 +109,32 @@ class PluginManager:
             if result.manifest is None:
                 continue
             mf = result.manifest
-            self._manifests[mf.key] = mf
+            self._manifests[mf.name] = mf
             if mf.contributions:
-                self._contrib.index_contributions(mf.contributions, mf.key)
+                self._contrib.index_contributions(mf.contributions, mf.name)
+
+    def get_manifest(self, key: str) -> PluginManifest:
+        key = str(key).split(".")[0]
+        try:
+            return self._manifests[key]
+        except KeyError:
+            raise KeyError(f"Manifest key {key!r} not found in {list(self._manifests)}")
+
+    def get_command(self, command_id: str) -> CommandContribution:
+        return self._contrib._commands[command_id][0]
+
+    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
+        return self._contrib._submenus[submenu_id]
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
             if mf.contributions:
                 yield from getattr(mf.contributions.menus, menu_key, [])
 
-    def activate(self, key: PluginKey) -> PluginContext:
+    def iter_themes(self) -> Iterator[ThemeContribution]:
+        yield from self._contrib._themes.values()
+
+    def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.
 
         This does the following:
@@ -161,7 +171,7 @@ class PluginManager:
 
         return ctx
 
-    def deactivate(self, key: PluginKey) -> None:
+    def deactivate(self, key: PluginName) -> None:
         if key not in self._contexts:
             return
         plugin = self._manifests[key]
@@ -195,7 +205,7 @@ class PluginManager:
             cls.__instance = cls()
         return cls.__instance
 
-    def get_context(self, plugin_key: PluginKey) -> PluginContext:
+    def get_context(self, plugin_key: PluginName) -> PluginContext:
         if plugin_key not in self._contexts:
             self._contexts[plugin_key] = PluginContext(plugin_key, reg=self.commands)
         return self._contexts[plugin_key]
@@ -303,7 +313,7 @@ class PluginContext:
     # stores all created contexts (currently cleared by `PluginManager.deactivate`)
 
     def __init__(
-        self, plugin_key: PluginKey, reg: Optional[CommandRegistry] = None
+        self, plugin_key: PluginName, reg: Optional[CommandRegistry] = None
     ) -> None:
         self._activated = False
         self.plugin_key = plugin_key
