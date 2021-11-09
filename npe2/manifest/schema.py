@@ -321,7 +321,7 @@ class PluginManifest(BaseModel):
         entry_point_group : str, optional
             name of entry point group to discover, by default 'napari.manifest'
         paths : Sequence[str], optional
-            sequ, by default ()
+            paths to add to sys.path while discovering.
 
         Yields
         ------

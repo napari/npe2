@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __all__ = ["PluginContext", "PluginManager"]
 
-import sys
 from collections import Counter
 from pathlib import Path
 from typing import (
@@ -126,6 +125,15 @@ class PluginManager:
                 yield from getattr(mf.contributions.menus, menu_key, [])
 
     def activate(self, key: PluginKey) -> PluginContext:
+        """Activate plugin with `key`.
+
+        This does the following:
+            - finds the manifest for the associated plugin key
+            - gets or creates a PluginContext for the plugin
+            - bails if it's already activated
+            - otherwise calls the plugin's activate() function, passing the Context.
+            - imports any commands that were declared as python_name:
+        """
         # TODO: this is an important function... should be carefully considered
         try:
             mf = self._manifests[key]
@@ -139,16 +147,13 @@ class PluginManager:
             return ctx
 
         try:
-            modules_pre = set(sys.modules)
             mf.activate(ctx)
-            # store the modules imported by plugin activation
-            # (not sure if useful yet... but could be?)
-            ctx._imports = set(sys.modules).difference(modules_pre)
             ctx._activated = True
         except Exception as e:  # pragma: no cover
             self._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}") from e
 
+        # Note: this could also be delayed until the command is actually called.
         if mf.contributions and mf.contributions.commands:
             for cmd in mf.contributions.commands:
                 if cmd.python_name and cmd.id not in self.commands:

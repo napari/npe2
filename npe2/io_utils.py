@@ -43,7 +43,7 @@ def read_get_reader(
     return _read(path, plugin_name=plugin_name, return_reader=True)
 
 
-def write_layer_data(
+def write(
     path: str,
     layer_data: List[FullLayerData],
     *,
@@ -72,19 +72,17 @@ def write_layer_data(
     ValueError
         If no suitable writers are found.
     """
-    return _write_layer_data(path, layer_data, plugin_name=plugin_name)
+    return _write(path, layer_data, plugin_name=plugin_name)
 
 
-def write_layer_data_get_writer(
+def write_get_writer(
     path: str,
     layer_data: List[FullLayerData],
     *,
     plugin_name: Optional[str] = None,
 ) -> Tuple[List[str], WriterContribution]:
-    """Variant of write_layer_data that also returns the `WriterContribution` used."""
-    return _write_layer_data(
-        path, layer_data, plugin_name=plugin_name, return_writer=True
-    )
+    """Variant of write that also returns the `WriterContribution` used."""
+    return _write(path, layer_data, plugin_name=plugin_name, return_writer=True)
 
 
 # -----------------------------------------------------------------------------------
@@ -128,23 +126,15 @@ def _read(
             continue
         read_func = rdr.exec(kwargs={"path": path})
         if read_func is not None:
-            try:
-                layer_data = read_func(path)
-                if layer_data:
-                    return (layer_data, rdr) if return_reader else layer_data
-            except Exception:
-                # TODO: what here.
-                # a plugin has successfully passed the extension check, and returned
-                # a reader callable, but that callable has failed. How do we make this
-                # easy for developer to debug, but not too annoying for a user.
-                # should we be returning a list of exceptions?
-                continue
-
+            # if the reader function raises an exception here, we don't try to catch it
+            layer_data = read_func(path)
+            if layer_data:
+                return (layer_data, rdr) if return_reader else layer_data
     raise ValueError(f"No readers returned data for {path!r}")
 
 
 @overload
-def _write_layer_data(
+def _write(
     path: str,
     layer_data: List[FullLayerData],
     *,
@@ -156,7 +146,7 @@ def _write_layer_data(
 
 
 @overload
-def _write_layer_data(
+def _write(
     path: str,
     layer_data: List[FullLayerData],
     *,
@@ -167,7 +157,7 @@ def _write_layer_data(
     ...
 
 
-def _write_layer_data(
+def _write(
     path: str,
     layer_data: List[FullLayerData],
     *,
