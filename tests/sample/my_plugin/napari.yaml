@@ -23,6 +23,9 @@ contributions:
     - id: my_plugin.generate_random_data
       title: Generate uniform random data
       python_name: my_plugin:random_data
+    - id: my_plugin.some_widget
+      title: Create my widget
+      python_name: my_plugin:SomeWidget
   configuration: # call it settings?
     properties:
       my_plugin.reader.lazy:
@@ -46,7 +49,8 @@ contributions:
       layer_types: ["labels"]
 
   widgets:
-    - command: my_plugin.affinder
+    - command: my_plugin.some_widget
+      name: My Widget
   menus:
     /napari/layer_context:
       - submenu: mysubmenu

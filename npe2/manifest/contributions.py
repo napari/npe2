@@ -10,6 +10,7 @@ from .menus import MenusContribution
 from .sample_data import SampleDataContribution
 from .submenu import SubmenuContribution
 from .themes import ThemeContribution
+from .widgets import WidgetContribution
 
 
 class ContributionPoints(BaseModel):
@@ -22,3 +23,4 @@ class ContributionPoints(BaseModel):
     readers: Optional[List[ReaderContribution]]
     writers: Optional[List[WriterContribution]]
     sample_data: Optional[List[SampleDataContribution]]
+    widgets: Optional[List[WidgetContribution]]

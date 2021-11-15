@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from .manifest.sample_data import SampleDataContribution
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
+    from .manifest.widgets import WidgetContribution
 
     T = TypeVar("T")
 
@@ -57,6 +58,7 @@ class _ContributionsIndex:
     _submenus: Dict[str, SubmenuContribution] = {}
     _commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
     _themes: Dict[str, ThemeContribution] = {}
+    _widgets: List[WidgetContribution] = []
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
     _samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
@@ -73,6 +75,7 @@ class _ContributionsIndex:
             self._submenus[subm.id] = subm
         for theme in ctrb.themes or []:
             self._themes[theme.id] = theme
+        self._widgets.extend(ctrb.widgets or [])
         for reader in ctrb.readers or []:
             for pattern in reader.filename_patterns:
                 self._readers[pattern].append(reader)
@@ -113,6 +116,8 @@ class PluginManager:
             if result.manifest is None:
                 continue
             mf = result.manifest
+            if mf.name in self._manifests:
+                continue
             self._manifests[mf.name] = mf
             if mf.contributions:
                 self._contrib.index_contributions(mf.contributions, mf.name)
@@ -222,6 +227,9 @@ class PluginManager:
         writers = self._contrib._writers_by_command[command]
         return writers[0] if writers else None
 
+    def iter_widgets(self) -> Iterator[WidgetContribution]:
+        yield from self._contrib._widgets
+
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
@@ -295,7 +303,6 @@ class PluginManager:
         ext = Path(path).suffix.lower() if path else ""
 
         for writer in self.iter_compatible_writers(layer_types):
-            print("WW", writer)
             if plugin_name and not writer.command.startswith(plugin_name):
                 continue
 
