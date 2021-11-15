@@ -20,6 +20,9 @@ contributions:
       title: My single-layer Writer
       short_title: Single
       python_name: my_plugin:writer_function_single
+    - id: my_plugin.generate_random_data
+      title: Generate uniform random data
+      python_name: my_plugin:random_data
   configuration: # call it settings?
     properties:
       my_plugin.reader.lazy:
@@ -69,3 +72,8 @@ contributions:
         text: "#a1ef34"
         warning: "#f92672"
         current: "#66d9ef"
+  sample_data:
+    - display_name: Some Random Data (512 x 512)
+      command: my_plugin.generate_random_data
+    - display_name: Random internet image
+      uri: https://picsum.photos/1024
