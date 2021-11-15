@@ -20,6 +20,9 @@ contributions:
       title: My single-layer Writer
       short_title: Single
       python_name: my_plugin:writer_function_single
+    - id: my_plugin.some_widget
+      title: Create my widget
+      python_name: my_plugin:SomeWidget
   configuration: # call it settings?
     properties:
       my_plugin.reader.lazy:
@@ -43,7 +46,8 @@ contributions:
       layer_types: ["labels"]
 
   widgets:
-    - command: my_plugin.affinder
+    - command: my_plugin.some_widget
+      name: My Widget
   menus:
     /napari/layer_context:
       - submenu: mysubmenu

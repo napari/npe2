@@ -42,3 +42,7 @@ def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
     Arg(data=layer_data, meta=meta)
 
     return [path]
+
+
+class SomeWidget:
+    ...
