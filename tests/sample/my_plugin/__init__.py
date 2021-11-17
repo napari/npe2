@@ -46,3 +46,9 @@ def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
 
 class SomeWidget:
     ...
+
+
+def random_data():
+    import numpy as np
+
+    return [(np.random.rand(10, 10))]

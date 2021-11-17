@@ -290,3 +290,14 @@ def test_widget(uses_sample_plugin, plugin_manager: PluginManager):
     assert contrib.command == "my_plugin.some_widget"
     w = contrib.exec()
     assert type(w).__name__ == "SomeWidget"
+
+
+def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
+    plugin, contribs = list(plugin_manager.iter_sample_data())[0]
+    assert plugin == "my_plugin"
+    assert len(contribs) == 2
+    ctrbA, ctrbB = contribs
+    # ignoring types because .command and .uri come from different sample provider
+    # types... they don't both have "command" or "uri"
+    assert ctrbA.command == "my_plugin.generate_random_data"
+    assert ctrbB.uri == "https://picsum.photos/1024"

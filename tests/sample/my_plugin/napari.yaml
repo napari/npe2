@@ -78,6 +78,8 @@ contributions:
         current: "#66d9ef"
   sample_data:
     - display_name: Some Random Data (512 x 512)
+      key: random_data
       command: my_plugin.generate_random_data
     - display_name: Random internet image
+      key: internet_image
       uri: https://picsum.photos/1024
