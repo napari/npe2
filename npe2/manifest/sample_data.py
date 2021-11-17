@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 class _SampleDataContribution(BaseModel, ABC):
     display_name: str
+    key: str  # python identifier
 
     @abstractmethod
     def open(
