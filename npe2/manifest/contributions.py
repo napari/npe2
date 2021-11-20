@@ -9,6 +9,7 @@ from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
 from .submenu import SubmenuContribution
 from .themes import ThemeContribution
+from .widgets import WidgetContribution
 
 
 class ContributionPoints(BaseModel):
@@ -20,3 +21,4 @@ class ContributionPoints(BaseModel):
     themes: Optional[List[ThemeContribution]]
     readers: Optional[List[ReaderContribution]]
     writers: Optional[List[WriterContribution]]
+    widgets: Optional[List[WidgetContribution]]

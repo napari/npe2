@@ -5,6 +5,8 @@ from typing_extensions import Literal, Protocol
 
 if TYPE_CHECKING:
     import numpy as np
+    from magicgui.widgets import FunctionGui
+    from qtpy.QtWidgets import QWidget
 
 
 class ArrayLike(Protocol):
@@ -33,3 +35,4 @@ PathLike = Union[str, Path]
 PathOrPaths = Union[PathLike, Sequence[PathLike]]
 ReaderFunction = Callable[[PathOrPaths], List[LayerData]]
 WriterFunction = Callable[[str, List[FullLayerData]], List[str]]
+WidgetCallable = Callable[..., Union["FunctionGui", "QWidget"]]
