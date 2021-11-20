@@ -1,5 +1,7 @@
+import warnings
 from enum import Enum
 from pathlib import Path
+from textwrap import indent
 from typing import Optional
 
 import typer
@@ -55,8 +57,21 @@ def convert(
     out: Optional[Path] = None,
 ):
     """Convert existing plugin to new manifest."""
+    from ._from_npe1 import manifest_from_npe1
+
     try:
-        pm = PluginManifest._from_npe1_plugin(plugin_name)
+        with warnings.catch_warnings(record=True) as w:
+            pm = manifest_from_npe1(plugin_name)
+        if w:
+            typer.secho("Some errors occured:", fg=typer.colors.RED, bold=False)
+            for r in w:
+                typer.secho(
+                    indent(str(r.message), "  "),
+                    fg=typer.colors.MAGENTA,
+                    bold=False,
+                )
+            print()
+
         mf = getattr(pm, format)()
     except Exception as e:
         typer.secho(str(e), fg=typer.colors.RED, bold=True)

@@ -26,7 +26,6 @@ import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
-from .themes import ThemeColors
 
 try:
     from importlib.metadata import distributions
@@ -134,7 +133,7 @@ class PluginManifest(BaseModel):
     def _validate_root(cls, values):
         invalid_commands = []
         if values.get("contributions") is not None:
-            for command in values["contributions"].commands:
+            for command in values["contributions"].commands or []:
                 if not command.id.startswith(values["name"]):
                     invalid_commands.append(command.id)
 
@@ -411,90 +410,6 @@ class PluginManifest(BaseModel):
                 ) from e
 
     ValidationError = ValidationError  # for convenience of access
-
-    @classmethod
-    def _from_npe1_plugin(cls, plugin_name: str):
-        from .._from_npe1 import npe1_plugin_manager  # type: ignore
-
-        plugin_manager = npe1_plugin_manager()
-        if plugin_name not in plugin_manager.plugins:
-            # TODO: it would be nice to add some logic to prevent confusion here.
-            # for example... if the plugin name doesn't equal the package name, we
-            # should still be able to find it if the user gives a package name
-            from importlib.metadata import PackageNotFoundError, distribution
-
-            try:
-                dist = distribution(plugin_name)  # returns a list.  multiple plugins?
-                plugin_name = dist.entry_points[0].name
-            except PackageNotFoundError:
-                raise PackageNotFoundError(
-                    f"Could not find plugin {plugin_name!r}\n"
-                    f"Found {set(plugin_manager.plugins)}"
-                )
-
-        module = plugin_manager.plugins[plugin_name]
-        standard_meta = plugin_manager.get_standard_metadata(plugin_name)
-        package = standard_meta["package"].replace("-", "_")
-
-        commands = []
-        readers = []
-        writers = []
-        write_layers = []
-        for caller in plugin_manager._plugin2hookcallers[module]:
-            for impl in caller.get_hookimpls():
-                if impl.plugin_name != plugin_name:
-                    continue
-                name = impl.specname.replace("napari_", "")
-                id = f"{package}.{name}"
-                py_name = f"{impl.function.__module__}:{impl.function.__qualname__}"
-                title = " ".join(name.split("_")).title()
-                commands.append({"id": id, "python_name": py_name, "title": title})
-
-                if "reader" in id:
-                    # add this to the readers list
-                    readers.append({"command": id, "accepts_directories": True})
-
-                if "write" in id and "get_writer" not in id:
-                    # add this to the writers list
-                    layer = id.split("write_")[1]
-                    writers.append(
-                        {"command": id, "layer_types": [layer], "name": layer}
-                    )
-                    write_layers.append(layer + "*")
-
-                themes = []
-                if "theme" in id:
-                    for name, theme in impl.function():
-                        # cast theme into manifest.themes.ThemeColors dict
-                        manifest_theme = ThemeColors(**theme)
-                        themes.append(
-                            {"label": id, "type": name, "colors": manifest_theme}
-                        )
-
-        if len(write_layers) > 0:
-            id = f"{package}.write_directory"
-            writers.append({"command": id, "layer_types": write_layers})
-
-            # add this command to the commands section
-            py_name = (
-                py_name
-            ) = f"{impl.function.__module__}:write_layer_data_with_plugins"
-            title = "Save to folder"
-            commands.append({"id": id, "python_name": py_name, "title": title})
-
-        # TODO: add additional contributions like readers, writers, samples, etc...
-        return cls(
-            name=package,
-            publisher=standard_meta["author"],
-            description=standard_meta["summary"],
-            version=standard_meta["version"],
-            contributions={
-                "commands": commands,
-                "readers": readers,
-                "writers": writers,
-                "themes": themes,
-            },
-        )
 
 
 @contextmanager
