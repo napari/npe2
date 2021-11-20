@@ -25,6 +25,10 @@ def test_discover_empty():
     assert "my_plugin" not in manifests
 
 
+def test_sample_plugin_valid(sample_path):
+    assert PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
+
+
 def test_discover(uses_sample_plugin):
     discover_results = list(PluginManifest.discover())
     assert len(discover_results) == 1
@@ -279,3 +283,23 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     data["contributions"]["writers"][0]["layer_types"].append(expr)
 
     PluginManifest(**data)
+
+
+def test_widget(uses_sample_plugin, plugin_manager: PluginManager):
+    contrib = list(plugin_manager.iter_widgets())[0]
+    assert contrib.command == "my_plugin.some_widget"
+    w = contrib.exec()
+    assert type(w).__name__ == "SomeWidget"
+
+
+def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
+    plugin, contribs = list(plugin_manager.iter_sample_data())[0]
+    assert plugin == "my_plugin"
+    assert len(contribs) == 2
+    ctrbA, ctrbB = contribs
+    # ignoring types because .command and .uri come from different sample provider
+    # types... they don't both have "command" or "uri"
+    assert ctrbA.command == "my_plugin.generate_random_data"
+    assert ctrbB.uri == "https://picsum.photos/1024"
+    assert isinstance(ctrbA.open(), list)
+    assert isinstance(ctrbB.open(), list)

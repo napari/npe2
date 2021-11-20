@@ -22,6 +22,15 @@ def get_reader(path: str):
         return read
 
 
+def url_reader(path: str):
+    if path.startswith("http"):
+
+        def read(path):
+            return [(None,)]
+
+        return read
+
+
 def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
     class Arg(BaseModel):
         data: Any
@@ -42,3 +51,13 @@ def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
     Arg(data=layer_data, meta=meta)
 
     return [path]
+
+
+class SomeWidget:
+    ...
+
+
+def random_data():
+    import numpy as np
+
+    return [(np.random.rand(10, 10))]
