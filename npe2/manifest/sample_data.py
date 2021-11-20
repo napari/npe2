@@ -12,8 +12,14 @@ if TYPE_CHECKING:
 
 
 class _SampleDataContribution(BaseModel, ABC):
-    display_name: str
-    key: str  # python identifier
+    display_name: str = Field(
+        ..., description="String to show in the GUI when refering to this sample"
+    )
+    key: str = Field(
+        ...,
+        description="A key to identify this sample. Must be unique across the various "
+        "samples provided by a single plugin",
+    )
 
     @abstractmethod
     def open(
@@ -34,7 +40,11 @@ class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
 
 
 class SampleDataURI(_SampleDataContribution):
-    uri: str
+    uri: str = Field(
+        ...,
+        description="Path or URL to a data resource. "
+        "This URI should be a valid input to `io_utils.read`",
+    )
     reader_plugin: Optional[str] = Field(
         None,
         description="Name of plugin to use to open URI",
