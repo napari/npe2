@@ -12,6 +12,9 @@ contributions:
     - id: my_plugin.some_reader
       title: Some Reader
       python_name: my_plugin:get_reader
+    - id: my_plugin.url_reader
+      title: URL Reader
+      python_name: my_plugin:url_reader
     - id: my_plugin.my_writer
       title: My Multi-layer Writer
       short_title: Multi
@@ -36,6 +39,9 @@ contributions:
   readers:
     - command: my_plugin.some_reader
       filename_patterns: ["*.fzy", "*.fzzy"]
+      accepts_directories: false
+    - command: my_plugin.url_reader
+      filename_patterns: ["http://*", "https://*"]
       accepts_directories: false
   writers:
     - command: my_plugin.my_writer

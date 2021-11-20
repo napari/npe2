@@ -22,6 +22,15 @@ def get_reader(path: str):
         return read
 
 
+def url_reader(path: str):
+    if path.startswith("http"):
+
+        def read(path):
+            return [(None,)]
+
+        return read
+
+
 def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
     class Arg(BaseModel):
         data: Any

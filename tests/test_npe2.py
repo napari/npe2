@@ -301,3 +301,5 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     # types... they don't both have "command" or "uri"
     assert ctrbA.command == "my_plugin.generate_random_data"
     assert ctrbB.uri == "https://picsum.photos/1024"
+    assert isinstance(ctrbA.open(), list)
+    assert isinstance(ctrbB.open(), list)
