@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ["PluginContext", "PluginManager"]
 
+import os
 from collections import Counter
 from pathlib import Path
 from typing import (
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     from .manifest.contributions import ContributionPoints
     from .manifest.io import ReaderContribution, WriterContribution
     from .manifest.menus import MenuItem
+    from .manifest.sample_data import SampleDataContribution
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
     from .manifest.widgets import WidgetContribution
@@ -59,12 +61,15 @@ class _ContributionsIndex:
     _themes: Dict[str, ThemeContribution] = {}
     _widgets: List[WidgetContribution] = []
     _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
+    _samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(list)
     _writers_by_type: DefaultDict[
         LayerType, TypedIntervalTree[WriterContribution]
     ] = DefaultDict(IntervalTree)
     _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
 
     def index_contributions(self, ctrb: ContributionPoints, key: PluginName):
+        if ctrb.sample_data:
+            self._samples[key] = ctrb.sample_data
         for cmd in ctrb.commands or []:
             self._commands[cmd.id] = cmd, key
         for subm in ctrb.submenus or []:
@@ -191,7 +196,7 @@ class PluginManager:
 
         if isinstance(path, list):
             return NotImplemented
-        if Path(path).is_dir():
+        if os.path.isdir(path):
             yield from self._contrib._readers[""]
         else:
             seen: Set[str] = set()
@@ -214,6 +219,10 @@ class PluginManager:
         if plugin_key not in self._contexts:
             self._contexts[plugin_key] = PluginContext(plugin_key, reg=self.commands)
         return self._contexts[plugin_key]
+
+    def iter_sample_data(self) -> Iterator[Tuple[str, List[SampleDataContribution]]]:
+        """Iterates over (plugin_name, [sample_contribs])."""
+        yield from self._contrib._samples.items()
 
     def get_writer_for_command(self, command: str) -> Optional[WriterContribution]:
         writers = self._contrib._writers_by_command[command]

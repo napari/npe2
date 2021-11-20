@@ -7,6 +7,7 @@ from .configuration import JsonSchemaObject
 from .io import ReaderContribution, WriterContribution
 from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
+from .sample_data import SampleDataContribution
 from .submenu import SubmenuContribution
 from .themes import ThemeContribution
 from .widgets import WidgetContribution
@@ -21,4 +22,5 @@ class ContributionPoints(BaseModel):
     themes: Optional[List[ThemeContribution]]
     readers: Optional[List[ReaderContribution]]
     writers: Optional[List[WriterContribution]]
+    sample_data: Optional[List[SampleDataContribution]]
     widgets: Optional[List[WidgetContribution]]
