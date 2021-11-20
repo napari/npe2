@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ["PluginContext", "PluginManager"]
 
+import os
 from collections import Counter
 from pathlib import Path
 from typing import (
@@ -195,7 +196,7 @@ class PluginManager:
 
         if isinstance(path, list):
             return NotImplemented
-        if Path(path).is_dir():
+        if os.path.isdir(path):
             yield from self._contrib._readers[""]
         else:
             seen: Set[str] = set()
