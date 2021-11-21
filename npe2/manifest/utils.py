@@ -2,22 +2,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Generic, Optional, TypeVar
 
-from typing_extensions import Protocol
-
 if TYPE_CHECKING:
+    from typing_extensions import Protocol
+
     from .._command_registry import CommandRegistry
+
+    class ProvidesCommand(Protocol):
+        command: str
+
+        def get_callable(self, _registry: Optional[CommandRegistry] = None):
+            ...
+
 
 R = TypeVar("R")
 
 
-class ProvidesCommand(Protocol):
-    command: str
-
-
 # TODO: add ParamSpec when it's supported better by mypy
-class Executable(ProvidesCommand, Generic[R]):
+class Executable(Generic[R]):
     def exec(
-        self,
+        self: ProvidesCommand,
         args: tuple = (),
         kwargs: dict = {},
         _registry: Optional[CommandRegistry] = None,
@@ -25,7 +28,7 @@ class Executable(ProvidesCommand, Generic[R]):
         return self.get_callable(_registry)(*args, **kwargs)
 
     def get_callable(
-        self,
+        self: ProvidesCommand,
         _registry: Optional[CommandRegistry] = None,
     ) -> Callable[..., R]:
         if _registry is None:
