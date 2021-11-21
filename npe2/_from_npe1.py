@@ -49,6 +49,7 @@ for m in dir(HookSpecs):
         setattr(HookSpecs, m, napari_hook_specification(getattr(HookSpecs, m)))
 
 
+WidgetCallable = Union[Callable, Tuple[Callable, dict]]
 _PM = None
 
 
@@ -66,7 +67,7 @@ def manifest_from_npe1(
 ) -> PluginManifest:
     plugin_manager = npe1_plugin_manager()
     if module is not None:
-        if plugin_name:
+        if plugin_name:  # pragma: no cover
             warnings.warn("module provided, plugin_name ignored")
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
         if not plugin_manager.is_registered(plugin_name):
@@ -116,7 +117,10 @@ class HookImplParser:
                 if self.plugin_name and impl.plugin_name != self.plugin_name:
                     continue
                 # call the corresponding hookimpl parser
-                getattr(self, impl.specname)(impl)
+                try:
+                    getattr(self, impl.specname)(impl)
+                except Exception as e:  # pragma: no cover
+                    warnings.warn(f"Failed to convert {impl.specname}: {e}")
 
     def napari_experimental_provide_theme(self, impl: HookImplementation):
         ThemeDict = Dict[str, Union[str, Tuple, List]]
@@ -171,12 +175,30 @@ class HookImplParser:
             self.contributions["sample_data"].append(s)
 
     def napari_experimental_provide_function(self, impl: HookImplementation):
-        ...
-
-    def napari_experimental_provide_dock_widget(self, impl: HookImplementation):
-        items = impl.function()
+        items: Union[Callable, List[Callable]] = impl.function()
         if not isinstance(items, list):
             items = [items]
+        for idx, item in enumerate(items):
+            try:
+
+                cmd = f"{self.package}.{item.__name__}"
+                py_name = _python_name(item)
+                cmd_contrib = CommandContribution(
+                    id=cmd, python_name=py_name, title=item.__name__
+                )
+                self.contributions["commands"].append(cmd_contrib)
+
+            except Exception as e:
+                msg = (
+                    f"Error converting function [{idx}] "
+                    f"from {impl.function.__module__!r}:\n{e}"
+                )
+                warnings.warn(msg)
+
+    def napari_experimental_provide_dock_widget(self, impl: HookImplementation):
+        items: Union[WidgetCallable, List[WidgetCallable]] = impl.function()
+        if not isinstance(items, list):
+            items = [items]  # pragma: no cover
 
         for idx, item in enumerate(items):
             if isinstance(item, tuple):
@@ -202,31 +224,32 @@ class HookImplParser:
         func_name = getattr(wdg_creator, "__name__", "")
         wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
 
-        # create the corresponding command
-
-        if type(wdg_creator).__name__ == "MagicFactory":
-            real_func = wdg_creator.keywords["function"]
+        # in some cases, like partials and magic_factories, there might not be an
+        # easily accessible python name (from __module__.__qualname__)...
+        # so first we look for this object in the module namespace
+        for local_name, val in impl.function.__globals__.items():
+            if val is wdg_creator:
+                py_name = f"{impl.function.__module__}:{local_name}"
+                cmd = f"{self.package}.{local_name}"
+                break
         else:
-            real_func = wdg_creator
-
-        try:
-            py_name = _python_name(real_func)
-            cmd = f"{self.package}.{func_name or wdg_name.lower().replace(' ', '_')}"
-        except AttributeError:
-            for local_name, val in impl.function.__globals__.items():
-                if val is wdg_creator:
-                    py_name = f"{impl.function.__module__}:{local_name}"
-                    cmd = f"{self.package}.{local_name}"
-                    break
-            else:
-                raise ValueError(
-                    "No suitable python name to point to. "
-                    "Is this a locally defined function or partial?"
+            try:
+                py_name = _python_name(wdg_creator)
+                cmd = (
+                    f"{self.package}.{func_name or wdg_name.lower().replace(' ', '_')}"
                 )
+            except AttributeError:
+                pass
+
+        if not py_name:
+            raise ValueError(
+                "No suitable python name to point to. "
+                "Is this a locally defined function or partial?"
+            )
 
         # let these raise exceptions here immediately if they don't validate
         cmd_contrib = CommandContribution(
-            id=cmd, python_name=py_name, title=f"Create {wdg_name} widget"
+            id=cmd, python_name=py_name, title=f"Create {wdg_name}"
         )
         wdg_contrib = WidgetContribution(command=cmd, name=wdg_name)
         self.contributions["commands"].append(cmd_contrib)
@@ -263,9 +286,8 @@ class HookImplParser:
         title = " ".join(name.split("_")).title()
         if not py_name:
             py_name = _python_name(impl.function)
-        self.contributions["commands"].append(
-            {"id": id, "python_name": py_name, "title": title}
-        )
+        c = CommandContribution(id=id, python_name=py_name, title=title)
+        self.contributions["commands"].append(c)
         return id
 
 
