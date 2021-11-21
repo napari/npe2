@@ -140,7 +140,11 @@ class HookImplParser:
 
     def napari_get_reader(self, impl: HookImplementation):
         self.contributions["readers"].append(
-            {"command": self.add_command(impl), "accepts_directories": True}
+            {
+                "command": self.add_command(impl),
+                "accepts_directories": True,
+                "filename_patterns": ["<EDIT_ME>"],
+            }
         )
 
     def napari_provide_sample_data(self, impl: HookImplementation):
@@ -274,10 +278,14 @@ class HookImplParser:
         self._parse_writer(impl, "vectors")
 
     def _parse_writer(self, impl: HookImplementation, layer: str):
-        # add this to the writers list
         id = self.add_command(impl)
         self.contributions["writers"].append(
-            {"command": id, "layer_types": [layer], "name": layer}
+            {
+                "command": id,
+                "layer_types": [layer],
+                "name": layer,
+                "filename_extensions": ["<EDIT_ME>"],
+            }
         )
 
     def add_command(self, impl: HookImplementation, py_name: str = "") -> str:
