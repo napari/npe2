@@ -1,4 +1,5 @@
 from importlib.metadata import PackageNotFoundError
+
 import pytest
 from magicgui import magic_factory
 from napari_plugin_engine import napari_hook_implementation
