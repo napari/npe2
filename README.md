@@ -1,7 +1,7 @@
 # npe2
 
-[![CI](https://github.com/tlambert03/npe2/actions/workflows/ci.yml/badge.svg)](https://github.com/tlambert03/npe2/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/tlambert03/npe2/branch/main/graph/badge.svg?token=FTH635x542)](https://codecov.io/gh/tlambert03/npe2)
+[![CI](https://github.com/napari/npe2/actions/workflows/ci.yml/badge.svg)](https://github.com/napari/npe2/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/napari/npe2/branch/main/graph/badge.svg?token=FTH635x542)](https://codecov.io/gh/napari/npe2)
 
 proposal for napari plugin refactor
 
