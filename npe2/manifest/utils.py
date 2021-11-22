@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, Optional, TypeVar
-
-from typing_extensions import Protocol
+from typing import TYPE_CHECKING, Callable, Generic, Optional, TypeVar
 
 if TYPE_CHECKING:
+    from typing_extensions import Protocol
+
     from .._command_registry import CommandRegistry
 
+    class ProvidesCommand(Protocol):
+        command: str
+
+        def get_callable(self, _registry: Optional[CommandRegistry] = None):
+            ...
+
+
 R = TypeVar("R")
-
-
-class ProvidesCommand(Protocol):
-    command: str
 
 
 # TODO: add ParamSpec when it's supported better by mypy
@@ -22,13 +25,17 @@ class Executable(Generic[R]):
         kwargs: dict = {},
         _registry: Optional[CommandRegistry] = None,
     ) -> R:
-        if _registry is None:
+        return self.get_callable(_registry)(*args, **kwargs)
 
+    def get_callable(
+        self: ProvidesCommand,
+        _registry: Optional[CommandRegistry] = None,
+    ) -> Callable[..., R]:
+        if _registry is None:
             from .._plugin_manager import PluginManager
 
             _registry = PluginManager.instance().commands
-
-        return _registry.execute(self.command, args, kwargs)
+        return _registry.get(self.command)
 
     @property
     def plugin_name(self: ProvidesCommand):
