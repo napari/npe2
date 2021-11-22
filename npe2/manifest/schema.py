@@ -89,8 +89,8 @@ class PluginManifest(BaseModel):
 
     # mechanistic things:
     # this is the module that has the activate() function
-    entry_point: str = Field(
-        ...,
+    entry_point: Optional[str] = Field(
+        default=None,
         description="The extension entry point. This should be a fully qualified "
         "module string. e.g. `foo.bar.baz`",
     )
@@ -133,7 +133,7 @@ class PluginManifest(BaseModel):
     def _validate_root(cls, values):
         invalid_commands = []
         if values.get("contributions") is not None:
-            for command in values["contributions"].commands:
+            for command in values["contributions"].commands or []:
                 if not command.id.startswith(values["name"]):
                     invalid_commands.append(command.id)
 
@@ -245,6 +245,8 @@ class PluginManifest(BaseModel):
     # should these be on this model itself? or helper functions elsewhere
 
     def import_entry_point(self) -> types.ModuleType:
+        if not self.entry_point:
+            raise ModuleNotFoundError(f"Plugin {self.name} declares no entry_point")
         return import_module(self.entry_point)
 
     def activate(self, context=None) -> Any:
