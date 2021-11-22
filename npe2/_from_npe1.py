@@ -261,7 +261,8 @@ class HookImplParser:
 
     def napari_get_writer(self, impl: HookImplementation):
         warnings.warn(
-            "Found a multi-layer writer, but it's not convertable. Please add the writer manually."
+            "Found a multi-layer writer, but it's not convertable. "
+            "Please add the writer manually."
         )
         return NotImplemented
 
