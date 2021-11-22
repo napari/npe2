@@ -97,4 +97,3 @@ def test_conversion2():
 def test_conversion_missing():
     with pytest.raises(PackageNotFoundError):
         manifest_from_npe1("does-not-exist-asdf6as987")
-        
