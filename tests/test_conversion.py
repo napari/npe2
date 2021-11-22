@@ -90,3 +90,9 @@ def test_conversion():
 def test_conversion2():
     mf = manifest_from_npe1(module=TestPlugin)
     assert isinstance(mf.dict(), dict)
+
+
+def test_conversion_missing():
+    with pytest.raises(PackageNotFoundError):
+        manifest_from_npe1("does-not-exist-asdf6as987")
+        
