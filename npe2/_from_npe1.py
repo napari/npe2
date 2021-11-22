@@ -26,6 +26,11 @@ from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
 from npe2.manifest.widgets import WidgetContribution
 
+try:
+    from importlib.metadata import PackageNotFoundError, distribution
+except ImportError:
+    from importlib_metadata import PackageNotFoundError, distribution  # type: ignore
+
 
 # fmt: off
 class HookSpecs:
@@ -78,7 +83,6 @@ def manifest_from_npe1(
         # TODO: it would be nice to add some logic to prevent confusion here.
         # for example... if the plugin name doesn't equal the package name, we
         # should still be able to find it if the user gives a package name
-        from importlib.metadata import PackageNotFoundError, distribution
 
         try:
             dist = distribution(plugin_name)  # returns a list.  multiple plugins?
