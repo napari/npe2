@@ -1,5 +1,3 @@
-from importlib.metadata import PackageNotFoundError
-
 import pytest
 from magicgui import magic_factory
 from napari_plugin_engine import napari_hook_implementation
@@ -93,5 +91,5 @@ def test_conversion2():
 
 
 def test_conversion_missing():
-    with pytest.raises(PackageNotFoundError), pytest.warns(UserWarning):
+    with pytest.raises(ModuleNotFoundError), pytest.warns(UserWarning):
         manifest_from_npe1("does-not-exist-asdf6as987")
