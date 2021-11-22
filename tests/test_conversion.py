@@ -35,10 +35,6 @@ class TestPlugin:
     def napari_write_labels(path, data, meta):
         ...
 
-    @napari_hook_implementation
-    def napari_get_writer(path, layer_types):
-        ...
-
     @staticmethod
     @napari_hook_implementation
     def napari_provide_sample_data():
@@ -87,7 +83,8 @@ class TestPlugin:
 
 
 def test_conversion():
-    assert manifest_from_npe1("svg")
+    with pytest.warns(UserWarning):
+        assert manifest_from_npe1("svg")
 
 
 def test_conversion2():
@@ -96,5 +93,5 @@ def test_conversion2():
 
 
 def test_conversion_missing():
-    with pytest.raises(PackageNotFoundError):
+    with pytest.raises(PackageNotFoundError), pytest.warns(UserWarning):
         manifest_from_npe1("does-not-exist-asdf6as987")
