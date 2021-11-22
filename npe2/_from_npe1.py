@@ -260,6 +260,9 @@ class HookImplParser:
         self.contributions["widgets"].append(wdg_contrib)
 
     def napari_get_writer(self, impl: HookImplementation):
+        warnings.warn(
+            "Found a multi-layer writer, but it's not convertable. Please add the writer manually."
+        )
         return NotImplemented
 
     def napari_write_image(self, impl: HookImplementation):
