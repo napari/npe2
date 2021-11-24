@@ -27,9 +27,6 @@ class CommandRegistry:
         if not callable(command):
             raise TypeError(f"Cannot register non-callable command: {command}")
 
-        # TODO: validate argumemnts and type constraints
-        # possibly wrap command in a type validator?
-
         self._commands[id] = command
         self.commandRegistered.emit(id)
 
@@ -56,7 +53,6 @@ class CommandRegistry:
         self._commands.pop(id, None)
 
     def get(self, id: str) -> Callable:
-        # FIXME: who should control activation?
         if id not in self._commands:
             from ._plugin_manager import PluginManager
 

@@ -93,3 +93,8 @@ def test_conversion2():
 def test_conversion_missing():
     with pytest.raises(ModuleNotFoundError), pytest.warns(UserWarning):
         manifest_from_npe1("does-not-exist-asdf6as987")
+
+
+def test_conversion_package_is_not_a_plugin():
+    with pytest.raises(RuntimeError):
+        manifest_from_npe1("pytest")

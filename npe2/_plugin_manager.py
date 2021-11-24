@@ -52,7 +52,7 @@ if TYPE_CHECKING:
             ...
 
 
-PluginName = str  # this is defined on PluginManifest as `publisher.name`
+PluginName = str  # this is defined on PluginManifest as `manifest.name`
 
 
 class _ContributionsIndex:
@@ -96,7 +96,7 @@ class PluginManager:
         self._command_registry = reg or CommandRegistry()
         self._contexts: Dict[PluginName, PluginContext] = {}
         self._manifests: Dict[PluginName, PluginManifest] = {}
-        self.discover()  # TODO: should we be immediately discovering?
+        self.discover()
 
     @property
     def commands(self) -> CommandRegistry:
@@ -154,7 +154,6 @@ class PluginManager:
             - otherwise calls the plugin's activate() function, passing the Context.
             - imports any commands that were declared as python_name:
         """
-        # TODO: this is an important function... should be carefully considered
         try:
             mf = self._manifests[key]
         except KeyError:
@@ -318,8 +317,10 @@ class PluginManager:
             elif not ext and len(layer_types) == 1:  # No extension, single layer.
                 ext = next(iter(writer.filename_extensions), "")
                 return writer, path + ext
-            else:
-                raise ValueError
+            # When the list of extensions for the writer doesn't match the
+            # extension in the filename, keep searching.
+
+        # Nothing got found
         return None, path
 
 
