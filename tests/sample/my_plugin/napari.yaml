@@ -1,7 +1,6 @@
 name: my_plugin
 publisher: publisher
 display_name: My Plugin
-license: BSD-3-Clause
 entry_point: my_plugin
 contributions:
   commands:

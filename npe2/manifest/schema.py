@@ -4,7 +4,6 @@ import json
 import sys
 import types
 from contextlib import contextmanager
-from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
@@ -14,7 +13,6 @@ from typing import (
     Any,
     Callable,
     Iterator,
-    List,
     NamedTuple,
     Optional,
     Sequence,
@@ -37,9 +35,6 @@ if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
 
 
-spdx_ids = (Path(__file__).parent / "spdx.txt").read_text().splitlines()
-SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
-
 logger = getLogger(__name__)
 
 ENTRY_POINT = "napari.manifest"
@@ -53,17 +48,12 @@ class DiscoverResults(NamedTuple):
 
 class PluginManifest(BaseModel):
 
-    # VS Code uses <publisher>.<name> as a unique ID for the extension
-    # should this just be the package name ... not the module name? (probably yes)
-    # do we normalize this? (i.e. underscores / dashes ?)
-    # TODO: enforce that this matches the package name
     name: str = Field(
         ...,
-        description="The name of the plugin - should be all lowercase with no spaces.",
+        description="The name of the plugin. Should correspond to the python "
+        "package name for this plugin.",
     )
-    # this is not something that has an equivalent on PyPI ...
-    # it might be a good field with which we can identify trusted source
-    # but... it's not entire clear how that "trust" gets validated at the moment
+
     publisher: Optional[str] = Field(
         None,
         description="The publisher name - can be an individual or an organization",
@@ -77,55 +67,27 @@ class PluginManifest(BaseModel):
         # non-word character.
         regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
-    # take this from setup.cfg
+
     description: Optional[str] = Field(
         description="A short description of what your extension is and does."
+        "When unspecified, the description is taken from package metadata."
     )
 
-    # TODO:
-    # Perhaps we should version the plugin interface (not so the manifest, but
-    # the actual mechanism/consumption of plugin information) independently
-    # of napari itself
-
-    # mechanistic things:
-    # this is the module that has the activate() function
+    # The module that has the activate() function
     entry_point: Optional[str] = Field(
         default=None,
-        description="The extension entry point. This should be a fully qualified "
-        "module string. e.g. `foo.bar.baz`",
+        description="The extension entry point. This should be a fully "
+        "qualified module string. e.g. `foo.bar.baz` for a module containing "
+        "the plugin's activate() function.",
     )
 
-    # this comes from setup.cfg
-    version: Optional[str] = Field(None, description="SemVer compatible version.")
-    # this should come from setup.cfg ... but they don't requireq SPDX
-    license: Optional[SPDX] = None
+    version: Optional[str] = Field(
+        None,
+        description="SemVer compatible version. When unspecified the version "
+        "is taken from package metadata.",
+    )
 
     contributions: Optional[ContributionPoints]
-
-    categories: List[str] = Field(
-        default_factory=list,
-        description="specifically defined classifiers",
-    )
-
-    # in the absense of input. should be inferred from version (require using rc ...)
-    # or use `classifiers = Status`
-    preview: Optional[bool] = Field(
-        None,
-        description="Sets the extension to be flagged as a Preview in napari-hub.",
-    )
-    private: bool = Field(False, description="Whether this extension is private")
-
-    # activationEvents: Optional[List[ActivationEvent]] = Field(
-    #     default_factory=list,
-    #     description="Events upon which your extension becomes active.",
-    # )
-
-    # @validator("activationEvents", pre=True)
-    # def _validateActivationEvent(cls, val):
-    #     return [
-    #         dict(zip(("kind", "id"), x.split(":"))) if ":" in x else x
-    #         for x in val
-    #     ]
 
     _manifest_file: Optional[Path] = None
 
@@ -275,15 +237,6 @@ class PluginManifest(BaseModel):
             self.version = metadata["Version"]
         if not self.description:
             self.description = metadata["Summary"]
-        if not self.license:
-            self.license = metadata["License"]
-        if self.preview is None:
-            for k, v in getattr(metadata, "_headers"):
-                if k.lower() == "classifier" and v.lower().startswith(
-                    "development status"
-                ):
-                    self.preview = int(v.split(":: ")[-1][0]) < 3
-                    break
 
     @classmethod
     def discover(
