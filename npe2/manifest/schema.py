@@ -61,12 +61,11 @@ class PluginManifest(BaseModel):
         ...,
         description="The name of the plugin - should be all lowercase with no spaces.",
     )
-    # this is not something that has an equivalent on PyPI ...
-    # it might be a good field with which we can identify trusted source
-    # but... it's not entire clear how that "trust" gets validated at the moment
-    publisher: Optional[str] = Field(
+
+    authors: Optional[str] = Field(
         None,
-        description="The publisher name - can be an individual or an organization",
+        description="The author name(s). When unspecified, the description is "
+        "take from the 'Author' field of the package metadata.",
     )
 
     display_name: str = Field(
