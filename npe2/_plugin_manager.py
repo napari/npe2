@@ -52,7 +52,7 @@ if TYPE_CHECKING:
             ...
 
 
-PluginName = str  # this is defined on PluginManifest as `manifest.name`
+# this is `PluginManifest.name`
 
 
 class _ContributionsIndex:
