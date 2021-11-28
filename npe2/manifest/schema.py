@@ -48,6 +48,11 @@ class DiscoverResults(NamedTuple):
 
 class PluginManifest(BaseModel):
 
+    # VS Code uses <publisher>.<name> as a unique ID for the extension
+    # should this just be the package name ... not the module name? (yes)
+    # do we normalize this? (i.e. underscores / dashes ?) (no)
+    # TODO: enforce that this matches the package name
+
     name: str = Field(
         ...,
         description="The name of the plugin. Should correspond to the python "
@@ -74,6 +79,11 @@ class PluginManifest(BaseModel):
         description="A short description of what your extension is and does."
         "When unspecified, the description is taken from package metadata."
     )
+
+    # TODO:
+    # Perhaps we should version the plugin interface (not so the manifest, but
+    # the actual mechanism/consumption of plugin information) independently
+    # of napari itself
 
     # The module that has the activate() function
     entry_point: Optional[str] = Field(

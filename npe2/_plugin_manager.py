@@ -96,7 +96,7 @@ class PluginManager:
         self._command_registry = reg or CommandRegistry()
         self._contexts: Dict[PluginName, PluginContext] = {}
         self._manifests: Dict[PluginName, PluginManifest] = {}
-        self.discover()
+        self.discover()  # TODO: should we be immediately discovering?
 
     @property
     def commands(self) -> CommandRegistry:

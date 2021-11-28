@@ -27,6 +27,9 @@ class CommandRegistry:
         if not callable(command):
             raise TypeError(f"Cannot register non-callable command: {command}")
 
+        # TODO: validate arguments and type constraints
+        # possibly wrap command in a type validator?
+
         self._commands[id] = command
         self.commandRegistered.emit(id)
 
