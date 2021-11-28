@@ -62,7 +62,7 @@ class PluginManifest(BaseModel):
         description="The name of the plugin - should be all lowercase with no spaces.",
     )
 
-    authors: Optional[str] = Field(
+    author: Optional[str] = Field(
         None,
         description="The author name(s). When unspecified, the description is "
         "take from the 'Author' field of the package metadata.",
