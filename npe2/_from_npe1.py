@@ -102,7 +102,7 @@ def manifest_from_npe1(
 
     return PluginManifest(
         name=package,
-        authors=standard_meta.get("author"),
+        author=standard_meta.get("author"),
         description=standard_meta.get("summary"),
         version=standard_meta.get("version"),
         contributions=dict(parser.contributions),
