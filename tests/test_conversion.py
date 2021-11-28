@@ -1,10 +1,13 @@
-from importlib.metadata import PackageNotFoundError
-
 import pytest
 from magicgui import magic_factory
 from napari_plugin_engine import napari_hook_implementation
 
 from npe2._from_npe1 import manifest_from_npe1
+
+try:
+    from importlib.metadata import PackageNotFoundError
+except ImportError:
+    from importlib_metadata import PackageNotFoundError  # type: ignore
 
 
 def gen_data():
