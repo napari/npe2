@@ -52,7 +52,7 @@ if TYPE_CHECKING:
             ...
 
 
-PluginName = str  # this is defined on PluginManifest as `manifest.name`
+PluginName = str  # this is `PluginManifest.name`
 
 
 class _ContributionsIndex:
@@ -154,6 +154,7 @@ class PluginManager:
             - otherwise calls the plugin's activate() function, passing the Context.
             - imports any commands that were declared as python_name:
         """
+        # TODO: this is an important function... should be carefully considered
         try:
             mf = self._manifests[key]
         except KeyError:

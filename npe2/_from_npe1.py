@@ -81,17 +81,17 @@ def manifest_from_npe1(
 
     if not plugin_manager.is_registered(plugin_name):
         # "plugin name" is not necessarily the package name. If the user
-        # supplies the package name, try to look it up and see if it's a plugin.
+        # supplies the package name, try to look it up and see if it's a plugin
 
         try:
-            dist = distribution(plugin_name)  # returns a list.  multiple plugins?
+            dist = distribution(plugin_name)
             plugin_name = next(
                 e.name for e in dist.entry_points if e.group == "napari.plugin"
             )
         except StopIteration:
-            raise RuntimeError(
+            raise PackageNotFoundError(
                 f"Could not find plugin {plugin_name!r}. Found a package by "
-                "that name but lacked the `napari.plugin` entry point group."
+                "that name but it lacked the 'napari.plugin' entry point group"
             )
         except PackageNotFoundError:
             raise PackageNotFoundError(
@@ -108,7 +108,7 @@ def manifest_from_npe1(
 
     return PluginManifest(
         name=package,
-        publisher=standard_meta.get("author"),
+        author=standard_meta.get("author"),
         description=standard_meta.get("summary"),
         version=standard_meta.get("version"),
         contributions=dict(parser.contributions),

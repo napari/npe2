@@ -59,11 +59,10 @@ class PluginManifest(BaseModel):
         "package name for this plugin.",
     )
 
-    publisher: Optional[str] = Field(
+    author: Optional[str] = Field(
         None,
-        description="The publisher name - can be an individual or an "
-        "organization. When unspecified, the description is take from the "
-        "Author field of the package metadata.",
+        description="The author name(s). When unspecified, the description is "
+        "take from the 'Author' field of the package metadata.",
     )
 
     display_name: str = Field(
