@@ -4,6 +4,7 @@ import json
 import sys
 import types
 from contextlib import contextmanager
+from enum import Enum
 from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
@@ -34,6 +35,8 @@ if TYPE_CHECKING:
     from email.message import Message
     from importlib.metadata import EntryPoint
 
+spdx_ids = (Path(__file__).parent / "spdx.txt").read_text().splitlines()
+SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
 
 logger = getLogger(__name__)
 
@@ -91,6 +94,9 @@ class PluginManifest(BaseModel):
         "qualified module string. e.g. `foo.bar.baz` for a module containing "
         "the plugin's activate() function.",
     )
+
+    # this should come from setup.cfg ... but they don't require SPDX
+    license: Optional[SPDX] = None
 
     version: Optional[str] = Field(
         None,
