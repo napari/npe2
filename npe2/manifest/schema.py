@@ -254,6 +254,8 @@ class PluginManifest(BaseModel):
             self.version = metadata["Version"]
         if not self.description:
             self.description = metadata["Summary"]
+        if not self.license:
+            self.license = metadata["License"]
 
     @classmethod
     def discover(
