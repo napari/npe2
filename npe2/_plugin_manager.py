@@ -52,7 +52,7 @@ if TYPE_CHECKING:
             ...
 
 
-# this is `PluginManifest.name`
+PluginName = str  # this is `PluginManifest.name`
 
 
 class _ContributionsIndex:
@@ -318,8 +318,10 @@ class PluginManager:
             elif not ext and len(layer_types) == 1:  # No extension, single layer.
                 ext = next(iter(writer.filename_extensions), "")
                 return writer, path + ext
-            else:
-                raise ValueError
+            # When the list of extensions for the writer doesn't match the
+            # extension in the filename, keep searching.
+
+        # Nothing got found
         return None, path
 
 

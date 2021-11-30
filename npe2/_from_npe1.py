@@ -80,13 +80,19 @@ def manifest_from_npe1(
     plugin_name = cast(str, plugin_name)
 
     if not plugin_manager.is_registered(plugin_name):
-        # TODO: it would be nice to add some logic to prevent confusion here.
-        # for example... if the plugin name doesn't equal the package name, we
-        # should still be able to find it if the user gives a package name
+        # "plugin name" is not necessarily the package name. If the user
+        # supplies the package name, try to look it up and see if it's a plugin
 
         try:
-            dist = distribution(plugin_name)  # returns a list.  multiple plugins?
-            plugin_name = dist.entry_points[0].name
+            dist = distribution(plugin_name)
+            plugin_name = next(
+                e.name for e in dist.entry_points if e.group == "napari.plugin"
+            )
+        except StopIteration:
+            raise PackageNotFoundError(
+                f"Could not find plugin {plugin_name!r}. Found a package by "
+                "that name but it lacked the 'napari.plugin' entry point group"
+            )
         except PackageNotFoundError:
             raise PackageNotFoundError(
                 f"Could not find plugin {plugin_name!r}\n"
