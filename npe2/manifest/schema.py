@@ -20,7 +20,7 @@ from typing import (
     Union,
 )
 
-import toml
+import pytomlpp as toml
 import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
@@ -109,7 +109,7 @@ class PluginManifest(BaseModel):
     _manifest_file: Optional[Path] = None
 
     @root_validator
-    def _validate_root(cls, values):
+    def _validate_root(cls, values: dict) -> dict:
         invalid_commands = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
@@ -128,10 +128,13 @@ class PluginManifest(BaseModel):
 
         return values
 
-    def toml(self):
-        return toml.dumps({"tool": {"napari": self.dict(exclude_unset=True)}})
+    def toml(self, pyproject=False) -> str:
+        d = json.loads(self.json(exclude_unset=True))
+        if pyproject:
+            d = {"tool": {"napari": d}}
+        return toml.dumps(d)
 
-    def yaml(self):
+    def yaml(self) -> str:
         return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
 
     @classmethod

@@ -1,9 +1,16 @@
 from typing import Optional, Union
 
-from pydantic import BaseModel
-from pydantic.color import Color
+from pydantic import BaseModel, color
 from pydantic.fields import Field
 from typing_extensions import Literal
+
+
+# pydantic doesn't implement color equality?
+class Color(color.Color):
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, color.Color):
+            return False
+        return self.as_rgb_tuple() == __o.as_rgb_tuple()
 
 
 class ThemeColors(BaseModel):
