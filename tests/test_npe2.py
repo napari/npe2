@@ -303,3 +303,23 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)
+
+
+def test_toml_round_trip(sample_path, tmp_path):
+    pm = PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
+
+    toml_file = tmp_path / "napari.toml"
+    toml_file.write_text(pm.toml())
+
+    pm2 = PluginManifest.from_file(toml_file)
+    assert pm == pm2
+
+
+def test_json_round_trip(sample_path, tmp_path):
+    pm = PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
+
+    json_file = tmp_path / "napari.json"
+    json_file.write_text(pm.json())
+
+    pm2 = PluginManifest.from_file(json_file)
+    assert pm == pm2

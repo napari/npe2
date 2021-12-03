@@ -1,5 +1,5 @@
 """
-JsonSchemaObject class below vendored from datamodel-code-generator
+JsonSchemaObject class below vendored/modified from datamodel-code-generator
 
 MIT License
 
@@ -95,7 +95,7 @@ class JsonSchemaObject(BaseModel):
     enum_descriptions: List[str] = Field(
         default_factory=list, description="provides descriptive text for each enum."
     )
-    markdown_enum_descriptions: Optional[str] = Field(
+    markdown_enum_descriptions: Optional[List[str]] = Field(
         default_factory=list,
         description="If you use markdown_enum_descriptions instead of "
         "enum_descriptions, your descriptions will be rendered as Markdown",
@@ -104,7 +104,7 @@ class JsonSchemaObject(BaseModel):
     properties: Optional[Dict[str, "JsonSchemaObject"]]
     required: List[str] = []
     nullable: Optional[bool] = False
-    x_enum_varnames: List[str] = Field(default=[], alias="x-enum-varnames")
+    x_enum_varnames: List[str] = Field(default_factory=list)
     description: Optional[str]
     markdown_description: Optional[str] = Field(
         None,
@@ -132,8 +132,8 @@ class JsonSchemaObject(BaseModel):
     example: Any
     examples: Any
     default: Any
-    id: Optional[str] = Field(default=None, alias="$id")
-    custom_type_path: Optional[str] = Field(default=None, alias="customTypePath")
+    id: Optional[str] = Field(default=None)
+    custom_type_path: Optional[str] = Field(default=None)
     _raw: Dict[str, Any]
 
     @root_validator(pre=True)
