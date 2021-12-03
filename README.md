@@ -3,23 +3,29 @@
 [![CI](https://github.com/napari/npe2/actions/workflows/ci.yml/badge.svg)](https://github.com/napari/npe2/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/napari/npe2/branch/main/graph/badge.svg?token=FTH635x542)](https://codecov.io/gh/napari/npe2)
 
-proposal for napari plugin refactor
+napari plugin refactor
 
 see also https://github.com/napari/napari/issues/3115
 
-aug 10th meeting: https://hackmd.io/eA5_4I8kRd2mz-HB1HyPWQ?both
+Includes a command line tool `npe2` with the following commands:
+```bash
+Commands:
+  convert   Convert existing plugin to new manifest.
+  parse     Show parsed manifest as yaml
+  validate  Validate manifest for a distribution name or manifest filepath.
+```
 
-
-for an example plugin to test this out, see https://github.com/tlambert03/npe2-tester
-
-You can use the following to test/parse
+examples:
 
 ```bash
-npe2 validate npe2-tester
+# create npe2 manifest from first-generation napari plugin
+npe2 convert your-plugin-package --out napari.yaml
 ```
 
-```
-npe2 parse npe2-tester
+```bash
+npe2 validate your-plugin-package
 ```
 
-for a branch of napari experimenting with this, see https://github.com/tlambert03/napari/tree/npe2-support
+```bash
+npe2 parse your-plugin-package
+```
