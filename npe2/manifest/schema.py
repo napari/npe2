@@ -63,12 +63,6 @@ class PluginManifest(BaseModel):
         "package name for this plugin.",
     )
 
-    author: Optional[str] = Field(
-        None,
-        description="The author name(s). When unspecified, the description is "
-        "take from the 'Author' field of the package metadata.",
-    )
-
     display_name: str = Field(
         "",
         description="User-facing text to display as the name of this plugin",
@@ -98,21 +92,19 @@ class PluginManifest(BaseModel):
 
     @property
     def license(self) -> Optional[str]:
-        if self.package_metadata:
-            return self.package_metadata.license
-        return None
+        return self.package_metadata.license if self.package_metadata else None
 
     @property
     def version(self) -> Optional[str]:
-        if self.package_metadata:
-            return self.package_metadata.version
-        return None
+        return self.package_metadata.version if self.package_metadata else None
 
     @property
     def description(self) -> Optional[str]:
-        if self.package_metadata:
-            return self.package_metadata.summary
-        return None
+        return self.package_metadata.summary if self.package_metadata else None
+
+    @property
+    def author(self) -> Optional[str]:
+        return self.package_metadata.author if self.package_metadata else None
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
@@ -335,8 +327,8 @@ class PluginManifest(BaseModel):
                     meta = PackageMetadata.from_dist_metadata(distribution.metadata)
                     mf.package_metadata = meta
 
-                    # populate missing metadata
                     mf.name = mf.name or meta.name  # should we assert?
+                    return mf
 
         raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
 
