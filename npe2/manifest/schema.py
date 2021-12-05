@@ -6,7 +6,6 @@ import types
 from contextlib import contextmanager
 from enum import Enum
 from importlib import import_module, util
-from importlib.metadata import Distribution
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
@@ -29,9 +28,9 @@ from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 
 try:
-    from importlib.metadata import distributions
+    from importlib.metadata import Distribution, distributions
 except ImportError:
-    from importlib_metadata import distributions  # type: ignore
+    from importlib_metadata import Distribution, distributions  # type: ignore
 
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
