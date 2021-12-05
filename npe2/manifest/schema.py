@@ -6,6 +6,7 @@ import types
 from contextlib import contextmanager
 from enum import Enum
 from importlib import import_module, util
+from importlib.metadata import Distribution
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
@@ -25,6 +26,7 @@ import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
 from .contributions import ContributionPoints
+from .package_metadata import PackageMetadata
 
 try:
     from importlib.metadata import distributions
@@ -32,7 +34,6 @@ except ImportError:
     from importlib_metadata import distributions  # type: ignore
 
 if TYPE_CHECKING:
-    from email.message import Message
     from importlib.metadata import EntryPoint
 
 spdx_ids = (Path(__file__).parent / "spdx.txt").read_text().splitlines()
@@ -77,11 +78,6 @@ class PluginManifest(BaseModel):
         regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
 
-    description: Optional[str] = Field(
-        description="A short description of what your extension is and does."
-        "When unspecified, the description is taken from package metadata."
-    )
-
     # TODO:
     # Perhaps we should version the plugin interface (not so the manifest, but
     # the actual mechanism/consumption of plugin information) independently
@@ -95,18 +91,28 @@ class PluginManifest(BaseModel):
         "the plugin's activate() function.",
     )
 
-    # this should come from setup.cfg ... but they don't require SPDX
-    license: Optional[SPDX] = None
-
-    version: Optional[str] = Field(
-        None,
-        description="SemVer compatible version. When unspecified the version "
-        "is taken from package metadata.",
-    )
-
     contributions: Optional[ContributionPoints]
 
     _manifest_file: Optional[Path] = None
+    package_metadata: Optional[PackageMetadata] = None
+
+    @property
+    def license(self) -> Optional[str]:
+        if self.package_metadata:
+            return self.package_metadata.license
+        return None
+
+    @property
+    def version(self) -> Optional[str]:
+        if self.package_metadata:
+            return self.package_metadata.version
+        return None
+
+    @property
+    def description(self) -> Optional[str]:
+        if self.package_metadata:
+            return self.package_metadata.summary
+        return None
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
@@ -167,9 +173,7 @@ class PluginManifest(BaseModel):
         dist = distribution(name)  # may raise PackageNotFoundError
         for ep in dist.entry_points:
             if ep.group == ENTRY_POINT:
-                pm = PluginManifest._from_entrypoint(ep)
-                pm._populate_missing_meta(dist.metadata)
-                return pm
+                return PluginManifest._from_entrypoint(ep, dist)
         raise ValueError(
             "Distribution {name!r} exists but does not provide a napari manifest"
         )
@@ -249,17 +253,6 @@ class PluginManifest(BaseModel):
         if callable(getattr(mod, "deactivate", None)):
             return mod.deactivate(context)  # type: ignore
 
-    def _populate_missing_meta(self, metadata: Message):
-        """add missing items from an importlib metadata object"""
-        if not self.name:
-            self.name = metadata["Name"]
-        if not self.version:
-            self.version = metadata["Version"]
-        if not self.description:
-            self.description = metadata["Summary"]
-        if not self.license:
-            self.license = metadata["License"]
-
     @classmethod
     def discover(
         cls, entry_point_group: str = ENTRY_POINT, paths: Sequence[str] = ()
@@ -304,8 +297,7 @@ class PluginManifest(BaseModel):
                     if ep.group != entry_point_group:
                         continue
                     try:
-                        pm = cls._from_entrypoint(ep)
-                        pm._populate_missing_meta(dist.metadata)
+                        pm = cls._from_entrypoint(ep, dist)
                         yield DiscoverResults(pm, ep, None)
                     except ValidationError as e:
                         logger.warning(msg=f"Invalid schema {ep.value!r}")
@@ -318,7 +310,9 @@ class PluginManifest(BaseModel):
                         yield DiscoverResults(None, ep, e)
 
     @classmethod
-    def _from_entrypoint(cls, entry_point: EntryPoint) -> PluginManifest:
+    def _from_entrypoint(
+        cls, entry_point: EntryPoint, distribution: Optional[Distribution] = None
+    ) -> PluginManifest:
 
         match = entry_point.pattern.match(entry_point.value)  # type: ignore
         module = match.group("module")
@@ -334,9 +328,16 @@ class PluginManifest(BaseModel):
         fname = match.group("attr")
 
         for loc in spec.submodule_search_locations or []:
-            mf = Path(loc) / fname
-            if mf.exists():
-                return PluginManifest.from_file(mf)
+            mf_file = Path(loc) / fname
+            if mf_file.exists():
+                mf = PluginManifest.from_file(mf_file)
+                if distribution is not None:
+                    meta = PackageMetadata.from_dist_metadata(distribution.metadata)
+                    mf.package_metadata = meta
+
+                    # populate missing metadata
+                    mf.name = mf.name or meta.name  # should we assert?
+
         raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
 
     @classmethod
