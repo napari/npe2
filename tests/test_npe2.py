@@ -50,6 +50,20 @@ def test_package_meta(uses_sample_plugin):
     assert manifest.package_metadata == direct_meta
 
 
+def test_all_package_meta():
+    """make sure PackageMetadata works for whatever packages are in the environment.
+
+    just a brute force way to get a little more validation coverage
+    """
+    try:
+        from importlib.metadata import distributions
+    except ImportError:
+        from importlib_metadata import distributions  # type: ignore
+
+    for d in distributions():
+        assert PackageMetadata.from_dist_metadata(d.metadata)
+
+
 def test_cli(monkeypatch, sample_path):
     cmd = ["npe2", "validate", str(sample_path / "my_plugin" / "napari.yaml")]
     monkeypatch.setattr(sys, "argv", cmd)
