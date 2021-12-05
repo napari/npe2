@@ -1,5 +1,10 @@
 import email.message
-from importlib.metadata import metadata
+
+try:
+    from importlib.metadata import metadata
+except ImportError:
+    from importlib_metadata import metadata  # type: ignore
+
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, constr
