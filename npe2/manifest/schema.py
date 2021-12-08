@@ -326,7 +326,7 @@ class PluginManifest(BaseModel):
                     meta = PackageMetadata.from_dist_metadata(distribution.metadata)
                     mf.package_metadata = meta
 
-                    mf.name = mf.name or meta.name  # should we assert?
+                    assert mf.name == meta.name, "Manifest name must match package name"
                     return mf
 
         raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
