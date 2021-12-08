@@ -81,6 +81,7 @@ class CommandContribution(BaseModel):
     #         "by other means, like the `executeCommand` api."
     #     ),
     # )
+
     python_name: Optional[str] = Field(
         None,
         description="(Optional) Fully qualified name to callable python object "
@@ -90,14 +91,15 @@ class CommandContribution(BaseModel):
         "in the plugin activate function is optional (but takes precedence).",
     )
 
-    @validator('python_name')
+    @validator("python_name")
     def validate_python_name(cls, v):
         # test for regex validation.
         import re
-        regex=f"^{_dotted_name}:{_dotted_name}$"
+
+        regex = f"^{_dotted_name}:{_dotted_name}$"
         if not bool(re.match(regex, v)):
             raise ValueError(
-                f"{v} is not a valid python_name.  A python_name must " 
+                f"{v} is not a valid python_name.  A python_name must "
                 "be of the form `{obj.__module__}:{obj.__qualname__} `(e.g. "
                 "`my_package.a_module:some_function`). "
             )
