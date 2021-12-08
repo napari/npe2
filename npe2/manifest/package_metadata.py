@@ -1,15 +1,17 @@
-import email.message
-
 try:
     from importlib.metadata import metadata
 except ImportError:
     from importlib_metadata import metadata  # type: ignore
 
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Extra, Field, constr
 from pydantic.fields import SHAPE_LIST
 from typing_extensions import Literal
+
+if TYPE_CHECKING:
+    import email.message
+
 
 # https://packaging.python.org/specifications/core-metadata/
 
@@ -27,6 +29,9 @@ class PackageMetadata(BaseModel):
     The `importlib.metadata` provides the `metadata()` function,
     but it returns a somewhat awkward `email.message.Message` object.
     """
+
+    class Config:
+        extra = Extra.ignore
 
     metadata_version: MetadataVersion = Field(description="Version of the file format")
     name: PackageName = Field(  # type: ignore
