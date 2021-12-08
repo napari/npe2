@@ -10,8 +10,7 @@ from .io import ReaderContribution, WriterContribution
 # from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
 from .sample_data import SampleDataContribution
-
-# from .submenu import SubmenuContribution
+from .submenu import SubmenuContribution
 from .themes import ThemeContribution
 from .widgets import WidgetContribution
 
@@ -30,4 +29,4 @@ class ContributionPoints(BaseModel):
 
     # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]
-    # submenus: Optional[List[SubmenuContribution]]
+    submenus: Optional[List[SubmenuContribution]]
