@@ -170,7 +170,7 @@ class PackageMetadata(BaseModel):
         return cls.from_dist_metadata(metadata(name))
 
     @classmethod
-    def from_dist_metadata(cls, meta: email.message.Message) -> "PackageMetadata":
+    def from_dist_metadata(cls, meta: "email.message.Message") -> "PackageMetadata":
         """Accepts importlib.metadata.Distribution.metadata"""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
         d: Dict[str, Union[str, List[str]]] = {}
