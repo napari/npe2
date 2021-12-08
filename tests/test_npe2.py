@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from npe2 import PluginManager, PluginManifest
 from npe2.cli import main
+from npe2.manifest.package_metadata import PackageMetadata
 
 
 def test_schema():
@@ -37,6 +38,30 @@ def test_discover(uses_sample_plugin):
     assert entrypoint and entrypoint.group == "napari.manifest"
     assert entrypoint.value == "my_plugin:napari.yaml"
     assert error is None
+
+
+def test_package_meta(uses_sample_plugin):
+    direct_meta = PackageMetadata.for_package("my_plugin")
+    assert direct_meta.name == "my_plugin"
+    assert direct_meta.version == "1.2.3"
+    discover_results = list(PluginManifest.discover())
+    [(manifest, *_)] = discover_results
+    assert manifest
+    assert manifest.package_metadata == direct_meta
+
+
+def test_all_package_meta():
+    """make sure PackageMetadata works for whatever packages are in the environment.
+
+    just a brute force way to get a little more validation coverage
+    """
+    try:
+        from importlib.metadata import distributions
+    except ImportError:
+        from importlib_metadata import distributions  # type: ignore
+
+    for d in distributions():
+        assert PackageMetadata.from_dist_metadata(d.metadata)
 
 
 def test_cli(monkeypatch, sample_path):
@@ -117,7 +142,6 @@ def _mutator_writer_invalid_file_extension_1(data):
 
 
 def _mutator_writer_invalid_file_extension_2(data):
-    print(f'HERE {data["contributions"]["writers"][0]["filename_extensions"]}')
     data["contributions"]["writers"][0]["filename_extensions"] = ["."]
     return data
 
