@@ -17,11 +17,11 @@ from typing import (
     Sequence,
     Union,
 )
-
+import re
 import pytomlpp as toml
 import semver
 import yaml
-from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
+from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
 
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
@@ -73,7 +73,6 @@ class PluginManifest(BaseModel):
         # Must be 3-40 characters long, containing printable word characters,
         # and must not begin or end with an underscore, white space, or
         # non-word character.
-        regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
 
     # Plugins rely on certain guarantees to interoperate propertly with the
@@ -147,13 +146,40 @@ class PluginManifest(BaseModel):
             )
         return values
 
+    @validator('display_name')
+    def validate_display_name(cls, v):
+        
+        regex=r"^[^\W_][\w -~]{1,38}[^\W_]$"
+        if not bool(re.match(regex, v)):
+            raise ValueError(
+                f"{v} is not a valid display_name.  The display_name must " \
+                "be 3-40 characters long, containing printable word characters, " \
+                "and must not begin or end with an underscore, white space, or " \
+                "non-word character."
+            )
+        return v
+
+    
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
         invalid_commands = []
+        invalid_python_names = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
                 if not command.id.startswith(values["name"]):
                     invalid_commands.append(command.id)
+
+                try:
+                    #check for normalized version of python name that matches package name. 
+                    # Does it need to be lowercase?  
+                    python_name_start_expected = ''.join([i.lower() if i !='-' else '_'for i in values["name"]])
+                    python_name_start_actual = command.python_name.split('.')[0]
+                    if python_name_start_expected != python_name_start_actual:
+                        invalid_python_names.append(command.python_name)
+                        
+                except NameError:
+                    # There isn't a python_name here.
+                    pass
 
         if invalid_commands:
             raise ValueError(
@@ -164,6 +190,16 @@ class PluginManifest(BaseModel):
             """
                 )
             )
+        if invalid_python_names:
+            raise ValueError(
+                            dedent(
+                                f"Python names must include a normalized package name of the form "
+                                "`{obj.__module__}:{obj.__qualname__} `(e.g. "
+                                "`my_package.a_module:some_function`).  The following python names "
+                                "did not match the package names: "
+                                f"{invalid_python_names}"
+                            )
+                        )
 
         return values
 

@@ -1,7 +1,7 @@
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, validator
 
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
@@ -88,8 +88,20 @@ class CommandContribution(BaseModel):
         "`{obj.__module__}:{obj.__qualname__} (e.g. "
         "`my_package.a_module:some_function`). If provided, using `register_command` "
         "in the plugin activate function is optional (but takes precedence).",
-        regex=f"^{_dotted_name}:{_dotted_name}$",
     )
+
+    @validator('python_name')
+    def validate_python_name(cls, v):
+        # test for regex validation.
+        import re
+        regex=f"^{_dotted_name}:{_dotted_name}$"
+        if not bool(re.match(regex, v)):
+            raise ValueError(
+                f"{v} is not a valid python_name.  A python_name must " 
+                "be of the form `{obj.__module__}:{obj.__qualname__} `(e.g. "
+                "`my_package.a_module:some_function`). "
+            )
+        return v
 
     class Config:
         extra = Extra.forbid
