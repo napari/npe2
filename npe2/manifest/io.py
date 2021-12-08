@@ -12,9 +12,10 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
     filename_patterns: List[str] = Field(
-        default_factory=list,
+        ...,
         description="List of filename patterns (for fnmatch) that this reader can "
-        "accept. Reader will be tried only if `fnmatch(filename, pattern) == True`",
+        "accept. Reader will be tried only if `fnmatch(filename, pattern) == True`. "
+        "Use `['*']` to match all filenames.",
     )
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
@@ -140,10 +141,10 @@ class WriterContribution(BaseModel, Executable[List[str]]):
         description="List of layer type constraints.",
     )
     filename_extensions: List[str] = Field(
-        default_factory=list,
+        default_factory=list,  # TODO: make default *.*
         description="List of filename extensions compatible with this writer.",
     )
-    name: str = Field(
+    display_name: str = Field(
         default="",
         description="Brief text used to describe this writer when presented.",
     )

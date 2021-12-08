@@ -66,6 +66,8 @@ MenuItem = Union[MenuCommand, Submenu]
 
 # how to do something like layers/context
 class MenusContribution(BaseModel):
+    # TODO: list of (str, menu item) coerce to dict/MenuItem
+    # TODO: define convention around strings
     command_pallete: Optional[List[MenuItem]]
     layers__context: Optional[List[MenuItem]]
     plugins__widgets: Optional[List[MenuItem]]

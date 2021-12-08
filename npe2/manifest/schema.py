@@ -71,10 +71,15 @@ class PluginManifest(BaseModel):
         regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
 
+    # TODO: add version and @validator(pre=True) maybe on root validator
+
     # TODO:
     # Perhaps we should version the plugin interface (not so the manifest, but
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
+
+    # [ ] Point to activate function rather than
+    # [ ] Point to deactivate function
 
     # The module that has the activate() function
     entry_point: Optional[str] = Field(
@@ -87,6 +92,7 @@ class PluginManifest(BaseModel):
     contributions: Optional[ContributionPoints]
 
     _manifest_file: Optional[Path] = None
+
     package_metadata: Optional[PackageMetadata] = None
 
     @property

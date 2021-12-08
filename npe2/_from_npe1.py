@@ -238,6 +238,8 @@ class HookImplParser:
         # in some cases, like partials and magic_factories, there might not be an
         # easily accessible python name (from __module__.__qualname__)...
         # so first we look for this object in the module namespace
+        py_name = None
+        cmd = None
         for local_name, val in impl.function.__globals__.items():
             if val is wdg_creator:
                 py_name = f"{impl.function.__module__}:{local_name}"
