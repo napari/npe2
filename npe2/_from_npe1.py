@@ -1,6 +1,9 @@
 import re
 import sys
 import warnings
+from dataclasses import dataclass
+from functools import lru_cache
+from importlib.metadata import PackageNotFoundError
 from typing import (
     Any,
     Callable,
@@ -27,9 +30,9 @@ from npe2.manifest.themes import ThemeColors
 from npe2.manifest.widgets import WidgetContribution
 
 try:
-    from importlib.metadata import PackageNotFoundError, distribution
+    from importlib import metadata
 except ImportError:
-    from importlib_metadata import PackageNotFoundError, distribution  # type: ignore
+    import importlib_metadata as metadata  # type: ignore
 
 
 # fmt: off
@@ -55,66 +58,102 @@ for m in dir(HookSpecs):
 
 
 WidgetCallable = Union[Callable, Tuple[Callable, dict]]
-_PM = None
-_DISCOVER_RESULT: Tuple[int, list] = (0, [])
 
 
-def npe1_plugin_manager():
-    global _PM
-    global _DISCOVER_RESULT
-    if _PM is None:
-        _PM = PluginManager("napari", discover_entry_point="napari.plugin")
-        _PM.add_hookspecs(HookSpecs)
-        _DISCOVER_RESULT = _PM.discover()
-    return _PM, _DISCOVER_RESULT
+@dataclass
+class PluginPackage:
+    package_name: str
+    ep_name: str
+    ep_value: str
+    top_module: str
 
 
-def manifest_from_npe1(
-    plugin_name: Optional[str] = None, module: Any = None
-) -> PluginManifest:
-    plugin_manager, (count, errors) = npe1_plugin_manager()
-    for e in errors:
-        if e.plugin_name == plugin_name or (module and e.plugin == module):
-            raise type(e)(e.format())
+@lru_cache()
+def plugin_packages() -> List[PluginPackage]:
+    """List of all packages with napari entry points.
+
+    This is useful to help resolve naming issues (due to the terrible confusion
+    around *what* a npe1 plugin name actually was).
+    """
+
+    packages = []
+    for dist in metadata.distributions():
+        for ep in dist.entry_points:
+            if ep.group != "napari.plugin":
+                continue
+            top = dist.read_text("top_level.txt")
+            top = top.splitlines()[0] if top else ep.value.split(".")[0]
+            packages.append(
+                PluginPackage(dist.metadata["Name"], ep.name, ep.value, top)
+            )
+    return packages
+
+
+@lru_cache()
+def npe1_plugin_manager() -> Tuple[PluginManager, Tuple[int, list]]:
+    pm = PluginManager("napari", discover_entry_point="napari.plugin")
+    pm.add_hookspecs(HookSpecs)
+    result = pm.discover()
+    return pm, result
+
+
+def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> str:
+    """Try all the things we know to detect something called `plugin_name`."""
+    plugin_manager, (_, errors) = npe1_plugin_manager()
+
+    # directly providing a module is mostly for testing.
     if module is not None:
         if plugin_name:  # pragma: no cover
             warnings.warn("module provided, plugin_name ignored")
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
         if not plugin_manager.is_registered(plugin_name):
             plugin_manager.register(module, plugin_name)
-    plugin_name = cast(str, plugin_name)
+        return cast(str, plugin_name)
 
-    if not plugin_manager.is_registered(plugin_name):
-        # "plugin name" is not necessarily the package name. If the user
-        # supplies the package name, try to look it up and see if it's a plugin
+    if plugin_name in plugin_manager.plugins:
+        return cast(str, plugin_name)
 
-        try:
-            dist = distribution(plugin_name)
-            ep = next(e for e in dist.entry_points if e.group == "napari.plugin")
-            plugin_name = ep.name
-        except StopIteration:
-            raise PackageNotFoundError(
-                f"Could not find plugin {plugin_name!r}. Found a package by "
-                "that name but it lacked the 'napari.plugin' entry point group"
-            )
-        except PackageNotFoundError:
-            raise PackageNotFoundError(
-                f"Could not find plugin {plugin_name!r}\n"
-                f"Found {set(plugin_manager.plugins)}"
-            )
-        else:
-            if plugin_name not in plugin_manager.plugins:
-                raise RuntimeError(
-                    f"Plugin entrypoint found ({ep}), but was undetected by the "
-                    "napari plugin_manager"
-                )
+    for pkg in plugin_packages():
+        for v in (pkg.ep_name, pkg.package_name, pkg.top_module):
+            if plugin_name == v and v in plugin_manager.plugins:
+                return v
 
-    module = plugin_manager.plugins[plugin_name]
+    # we couldn't find it:
+    for e in errors:
+        if module and e.plugin == module:
+            raise type(e)(e.format())
+        for pkg in plugin_packages():
+            if plugin_name in (pkg.ep_name, pkg.package_name, pkg.top_module):
+                raise type(e)(e.format())
+
+    msg = f"We tried hard! but could not detect a plugin named {plugin_name!r}."
+    if plugin_manager.plugins:
+        msg += f" Plugins found include: {list(plugin_manager.plugins)}"
+    raise PackageNotFoundError(msg)
+
+
+def manifest_from_npe1(
+    plugin_name: Optional[str] = None, module: Any = None
+) -> PluginManifest:
+    print("plasdf1", plugin_name)
+    plugin_manager, _ = npe1_plugin_manager()
+    plugin_name = norm_plugin_name(plugin_name, module)
+    print("plasdf", plugin_name)
+
+    _module = plugin_manager.plugins[plugin_name]
     standard_meta = plugin_manager.get_standard_metadata(plugin_name)
-    package = standard_meta.get("package", "unknown").replace("-", "_")
+    package = standard_meta.get("package")
+    if not package:
+        if module is not None:
+            package = "dynamic"
+        else:
+            # NOTE: this is more of an assertion error, shouldn't happen.
+            raise ModuleNotFoundError(
+                f"Could not find package for plugin {plugin_name!r}"
+            )
 
     parser = HookImplParser(package, plugin_name)
-    parser.parse_callers(plugin_manager._plugin2hookcallers[module])
+    parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
 
     return PluginManifest(
         name=package,
