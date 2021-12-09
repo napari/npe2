@@ -199,6 +199,13 @@ class HookImplParser:
                 )
                 self.contributions["commands"].append(cmd_contrib)
 
+                wdg_contrib = WidgetContribution(
+                    command=cmd,
+                    display_name=item.__name__.replace("_", " "),
+                    autogenerate_from_command=True,
+                )
+                self.contributions["widgets"].append(wdg_contrib)
+
             except Exception as e:
                 msg = (
                     f"Error converting function [{idx}] "
@@ -230,7 +237,7 @@ class HookImplParser:
                 )
                 warnings.warn(msg)
 
-    def _create_widget_contrib(self, impl, wdg_creator, kwargs):
+    def _create_widget_contrib(self, impl, wdg_creator, kwargs, is_function=False):
         # Get widget name
         func_name = getattr(wdg_creator, "__name__", "")
         wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
