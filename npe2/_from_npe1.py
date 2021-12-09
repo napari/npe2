@@ -1,3 +1,4 @@
+import itertools
 import re
 import sys
 import warnings
@@ -67,6 +68,11 @@ class PluginPackage:
     ep_value: str
     top_module: str
 
+    @property
+    def name_pairs(self):
+        names = (self.ep_name, self.package_name, self.top_module)
+        return itertools.product(names, repeat=2)
+
 
 @lru_cache()
 def plugin_packages() -> List[PluginPackage]:
@@ -114,9 +120,9 @@ def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> s
         return cast(str, plugin_name)
 
     for pkg in plugin_packages():
-        for v in (pkg.ep_name, pkg.package_name, pkg.top_module):
-            if plugin_name == v and v in plugin_manager.plugins:
-                return v
+        for a, b in pkg.name_pairs:
+            if plugin_name == a and b in plugin_manager.plugins:
+                return b
 
     # we couldn't find it:
     for e in errors:
@@ -135,10 +141,8 @@ def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> s
 def manifest_from_npe1(
     plugin_name: Optional[str] = None, module: Any = None
 ) -> PluginManifest:
-    print("plasdf1", plugin_name)
     plugin_manager, _ = npe1_plugin_manager()
     plugin_name = norm_plugin_name(plugin_name, module)
-    print("plasdf", plugin_name)
 
     _module = plugin_manager.plugins[plugin_name]
     standard_meta = plugin_manager.get_standard_metadata(plugin_name)
