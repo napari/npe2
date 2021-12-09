@@ -262,7 +262,7 @@ class HookImplParser:
         cmd_contrib = CommandContribution(
             id=cmd, python_name=py_name, title=f"Create {wdg_name}"
         )
-        wdg_contrib = WidgetContribution(command=cmd, name=wdg_name)
+        wdg_contrib = WidgetContribution(command=cmd, display_name=wdg_name)
         self.contributions["commands"].append(cmd_contrib)
         self.contributions["widgets"].append(wdg_contrib)
 
