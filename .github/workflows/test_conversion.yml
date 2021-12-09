@@ -45,4 +45,6 @@ jobs:
         run: pip install ${{ matrix.plugin }}
 
       - name: Test Conversion
-        run: npe2 convert ${{ matrix.plugin }}
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: npe2 convert ${{ matrix.plugin }}
