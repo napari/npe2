@@ -2,6 +2,7 @@ name: Test Plugin Conversion
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
