@@ -101,8 +101,7 @@ def manifest_from_npe1(
 
     module = plugin_manager.plugins[plugin_name]
     standard_meta = plugin_manager.get_standard_metadata(plugin_name)
-    package = standard_meta.get("package", "unknown").replace("-", "_")
-
+    package = standard_meta.get("package", "unknown")
     parser = HookImplParser(package, plugin_name)
     parser.parse_callers(plugin_manager._plugin2hookcallers[module])
 

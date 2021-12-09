@@ -6,7 +6,7 @@ from pydantic import BaseModel, Extra, Field
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
 
-_distname = "([a-zA-Z-_][a-zA-Z0-9-_]+)"
+_distname = "([a-zA-Z_-][a-zA-Z0-9_-]+)"
 _identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
 
 # how do we deal with keywords ?
