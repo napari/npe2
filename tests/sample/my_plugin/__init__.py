@@ -1,8 +1,11 @@
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from pydantic import BaseModel
 
 from npe2 import PluginContext
+
+if TYPE_CHECKING:
+    import napari.types
 
 
 def activate(context: PluginContext):
@@ -61,3 +64,7 @@ def random_data():
     import numpy as np
 
     return [(np.random.rand(10, 10))]
+
+
+def make_widget_from_function(image: "napari.types.ImageData", threshold: int):
+    ...

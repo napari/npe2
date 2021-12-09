@@ -27,6 +27,9 @@ contributions:
     - id: my_plugin.some_widget
       title: Create my widget
       python_name: my_plugin:SomeWidget
+    - id: my_plugin.some_function_widget
+      title: Create widget from my function
+      python_name: my_plugin:make_widget_from_function
   configuration: # call it settings?
     properties:
       my_plugin.reader.lazy:
@@ -54,7 +57,10 @@ contributions:
 
   widgets:
     - command: my_plugin.some_widget
-      name: My Widget
+      display_name: My Widget
+    - command: my_plugin.some_function_widget
+      display_name: A Widget From a Function
+      autogenerate_from_command: true
   menus:
     /napari/layer_context:
       - submenu: mysubmenu

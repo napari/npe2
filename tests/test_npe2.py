@@ -233,7 +233,7 @@ def test_writer_empty_layers():
     pm = PluginManager()
     pm.discover()
     writers = list(pm.iter_compatible_writers([]))
-    assert len(writers) == 0
+    assert not writers
 
 
 @pytest.mark.parametrize(
@@ -247,7 +247,7 @@ def test_writer_empty_layers():
         (["points", "surface", "points"], 0),
     ],
 )
-def test_writer_ranges(param, plugin_manager: PluginManager):
+def test_writer_ranges(param, uses_sample_plugin, plugin_manager: PluginManager):
     layer_types, expected_count = param
     nwriters = sum(
         w.command == "my_plugin.my_writer"
@@ -309,11 +309,18 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     PluginManifest(**data)
 
 
-def test_widget(uses_sample_plugin, plugin_manager: PluginManager):
-    contrib = list(plugin_manager.iter_widgets())[0]
-    assert contrib.command == "my_plugin.some_widget"
-    w = contrib.exec()
+def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
+    from magicgui._magicgui import MagicFactory
+
+    widgets = list(plugin_manager.iter_widgets())
+    assert len(widgets) == 2
+    assert widgets[0].command == "my_plugin.some_widget"
+    w = widgets[0].exec()
     assert type(w).__name__ == "SomeWidget"
+
+    assert widgets[1].command == "my_plugin.some_function_widget"
+    w = widgets[1].get_callable()
+    assert isinstance(w, MagicFactory)
 
 
 def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
