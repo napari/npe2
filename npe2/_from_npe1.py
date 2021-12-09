@@ -63,14 +63,17 @@ def npe1_plugin_manager():
     if _PM is None:
         _PM = PluginManager("napari", discover_entry_point="napari.plugin")
         _PM.add_hookspecs(HookSpecs)
-        _PM.discover()
-    return _PM
+        result = _PM.discover()
+    return _PM, result
 
 
 def manifest_from_npe1(
     plugin_name: Optional[str] = None, module: Any = None
 ) -> PluginManifest:
-    plugin_manager = npe1_plugin_manager()
+    plugin_manager, (count, errors) = npe1_plugin_manager()
+    for e in errors:
+        if e.plugin_name == plugin_name or (module and e.plugin == module):
+            raise type(e)(e.format())
     if module is not None:
         if plugin_name:  # pragma: no cover
             warnings.warn("module provided, plugin_name ignored")
@@ -85,9 +88,8 @@ def manifest_from_npe1(
 
         try:
             dist = distribution(plugin_name)
-            plugin_name = next(
-                e.name for e in dist.entry_points if e.group == "napari.plugin"
-            )
+            ep = next(e for e in dist.entry_points if e.group == "napari.plugin")
+            plugin_name = ep.name
         except StopIteration:
             raise PackageNotFoundError(
                 f"Could not find plugin {plugin_name!r}. Found a package by "
@@ -98,6 +100,12 @@ def manifest_from_npe1(
                 f"Could not find plugin {plugin_name!r}\n"
                 f"Found {set(plugin_manager.plugins)}"
             )
+        else:
+            if plugin_name not in plugin_manager.plugins:
+                raise RuntimeError(
+                    f"Plugin entrypoint found ({ep}), but was undetected by the "
+                    "napari plugin_manager"
+                )
 
     module = plugin_manager.plugins[plugin_name]
     standard_meta = plugin_manager.get_standard_metadata(plugin_name)

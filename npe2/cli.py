@@ -74,8 +74,9 @@ def convert(
 
         mf = getattr(pm, format)()
     except Exception as e:
-        typer.secho(str(e), fg=typer.colors.RED, bold=True)
-        raise typer.Exit()
+        msg = f"Conversion error:\n{type(e).__name__}: {e}"
+        typer.secho(msg, fg=typer.colors.RED, bold=True)
+        raise typer.Exit(1)
 
     if out is not None:
         with open(out, "w") as fh:
