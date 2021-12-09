@@ -23,6 +23,7 @@ from napari_plugin_engine import (
 
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
+from npe2.manifest.schema import ENGINE_VERSION
 from npe2.manifest.themes import ThemeColors
 from npe2.manifest.widgets import WidgetContribution
 
@@ -107,6 +108,7 @@ def manifest_from_npe1(
 
     return PluginManifest(
         name=package,
+        engine=ENGINE_VERSION,
         contributions=dict(parser.contributions),
     )
 
@@ -304,7 +306,7 @@ class HookImplParser:
             {
                 "command": id,
                 "layer_types": [layer],
-                "name": layer,
+                "display_name": layer,
                 "filename_extensions": ["<EDIT_ME>"],
             }
         )

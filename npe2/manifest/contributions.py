@@ -24,9 +24,7 @@ class ContributionPoints(BaseModel):
     widgets: Optional[List[WidgetContribution]]
 
     menus: Optional[MenusContribution]
-
-    # [ ] look to kill
+    submenus: Optional[List[SubmenuContribution]]
 
     # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]
-    submenus: Optional[List[SubmenuContribution]]

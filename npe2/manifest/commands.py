@@ -50,9 +50,10 @@ class CommandContribution(BaseModel):
         regex=f"^(({_distname}\\.)*{_identifier})$",
     )
 
-    # [ ] clarify description
     title: str = Field(
-        ..., description="Title by which the command is represented in the UI"
+        ...,
+        description="User facing title representing the command. Example: "
+        "'Apply gaussian blur'.",
     )
     # short_title: Optional[str] = Field(
     #     None,

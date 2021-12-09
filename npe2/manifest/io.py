@@ -141,7 +141,7 @@ class WriterContribution(BaseModel, Executable[List[str]]):
         description="List of layer type constraints.",
     )
     filename_extensions: List[str] = Field(
-        default_factory=list,  # TODO: make default *.*
+        default=[".*"],
         description="List of filename extensions compatible with this writer.",
     )
     display_name: str = Field(
@@ -160,7 +160,7 @@ class WriterContribution(BaseModel, Executable[List[str]]):
                 self.command,
                 str(self.layer_types),
                 str(self.filename_extensions),
-                self.name,
+                self.display_name,
             )
         )
 
