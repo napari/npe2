@@ -56,16 +56,21 @@ PluginName = str  # this is `PluginManifest.name`
 
 
 class _ContributionsIndex:
-    _submenus: Dict[str, SubmenuContribution] = {}
-    _commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-    _themes: Dict[str, ThemeContribution] = {}
-    _widgets: List[WidgetContribution] = []
-    _readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
-    _samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(list)
-    _writers_by_type: DefaultDict[
-        LayerType, TypedIntervalTree[WriterContribution]
-    ] = DefaultDict(IntervalTree)
-    _writers_by_command: DefaultDict[str, List[WriterContribution]] = DefaultDict(list)
+    def __init__(self) -> None:
+        self._submenus: Dict[str, SubmenuContribution] = {}
+        self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
+        self._themes: Dict[str, ThemeContribution] = {}
+        self._widgets: List[WidgetContribution] = []
+        self._readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
+        self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(
+            list
+        )
+        self._writers_by_type: DefaultDict[
+            LayerType, TypedIntervalTree[WriterContribution]
+        ] = DefaultDict(IntervalTree)
+        self._writers_by_command: DefaultDict[
+            str, List[WriterContribution]
+        ] = DefaultDict(list)
 
     def index_contributions(self, ctrb: ContributionPoints, key: PluginName):
         if ctrb.sample_data:
