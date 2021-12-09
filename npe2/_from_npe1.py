@@ -56,15 +56,17 @@ for m in dir(HookSpecs):
 
 WidgetCallable = Union[Callable, Tuple[Callable, dict]]
 _PM = None
+_DISCOVER_RESULT: Tuple[int, list] = (0, [])
 
 
 def npe1_plugin_manager():
     global _PM
+    global _DISCOVER_RESULT
     if _PM is None:
         _PM = PluginManager("napari", discover_entry_point="napari.plugin")
         _PM.add_hookspecs(HookSpecs)
-        result = _PM.discover()
-    return _PM, result
+        _DISCOVER_RESULT = _PM.discover()
+    return _PM, _DISCOVER_RESULT
 
 
 def manifest_from_npe1(
