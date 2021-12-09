@@ -194,10 +194,19 @@ class HookImplParser:
 
                 cmd = f"{self.package}.{item.__name__}"
                 py_name = _python_name(item)
+
+                docsum = item.__doc__.splitlines()[0] if item.__doc__ else None
                 cmd_contrib = CommandContribution(
-                    id=cmd, python_name=py_name, title=item.__name__
+                    id=cmd, python_name=py_name, title=docsum or item.__name__
                 )
                 self.contributions["commands"].append(cmd_contrib)
+
+                wdg_contrib = WidgetContribution(
+                    command=cmd,
+                    display_name=item.__name__.replace("_", " "),
+                    autogenerate_from_command=True,
+                )
+                self.contributions["widgets"].append(wdg_contrib)
 
             except Exception as e:
                 msg = (
@@ -230,7 +239,7 @@ class HookImplParser:
                 )
                 warnings.warn(msg)
 
-    def _create_widget_contrib(self, impl, wdg_creator, kwargs):
+    def _create_widget_contrib(self, impl, wdg_creator, kwargs, is_function=False):
         # Get widget name
         func_name = getattr(wdg_creator, "__name__", "")
         wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
@@ -262,7 +271,7 @@ class HookImplParser:
         cmd_contrib = CommandContribution(
             id=cmd, python_name=py_name, title=f"Create {wdg_name}"
         )
-        wdg_contrib = WidgetContribution(command=cmd, name=wdg_name)
+        wdg_contrib = WidgetContribution(command=cmd, display_name=wdg_name)
         self.contributions["commands"].append(cmd_contrib)
         self.contributions["widgets"].append(wdg_contrib)
 
