@@ -17,8 +17,9 @@ jobs:
     outputs:
       plugins: ${{ steps.plugin_names.outputs.plugins }}
 
-  test:
+  convert:
     needs: get-plugins
+    name: convert ${{ matrix.plugin }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
