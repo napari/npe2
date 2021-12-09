@@ -194,8 +194,10 @@ class HookImplParser:
 
                 cmd = f"{self.package}.{item.__name__}"
                 py_name = _python_name(item)
+
+                docsum = item.__doc__.splitlines()[0] if item.__doc__ else None
                 cmd_contrib = CommandContribution(
-                    id=cmd, python_name=py_name, title=item.__name__
+                    id=cmd, python_name=py_name, title=docsum or item.__name__
                 )
                 self.contributions["commands"].append(cmd_contrib)
 
