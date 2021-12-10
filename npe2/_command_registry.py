@@ -76,7 +76,7 @@ class CommandRegistry:
             raise ValueError(f"Command {id} already exists")
 
         if isinstance(command, str):
-            if not _dotted_name_pattrn.match(command):
+            if not _dotted_name_pattern.match(command):
                 raise ValueError(
                     "String command {command!r} is not a valid qualified python path."
                 )
