@@ -172,7 +172,7 @@ class PluginManager:
             return ctx
 
         try:
-            mf.activate(ctx)
+            mf._call_func_in_plugin_entrypoint("activate", (ctx))
             ctx._activated = True
         except Exception as e:  # pragma: no cover
             self._contexts.pop(key, None)
@@ -188,9 +188,9 @@ class PluginManager:
     def deactivate(self, key: PluginName) -> None:
         if key not in self._contexts:
             return
-        plugin = self._manifests[key]
-        plugin.deactivate()
+        mf = self._manifests[key]
         ctx = self._contexts.pop(key)
+        mf._call_func_in_plugin_entrypoint("deactivate", (ctx))
         ctx._dispose()
 
     def iter_compatible_readers(
