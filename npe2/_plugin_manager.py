@@ -172,26 +172,25 @@ class PluginManager:
             return ctx
 
         try:
-            mf.activate(ctx)
+            mf._call_func_in_plugin_entrypoint("activate", args=(ctx,))
             ctx._activated = True
         except Exception as e:  # pragma: no cover
             self._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}") from e
 
-        # Note: this could also be delayed until the command is actually called.
         if mf.contributions and mf.contributions.commands:
             for cmd in mf.contributions.commands:
                 if cmd.python_name and cmd.id not in self.commands:
-                    self.commands._register_python_name(cmd.id, cmd.python_name)
+                    self.commands.register(cmd.id, cmd.python_name)
 
         return ctx
 
     def deactivate(self, key: PluginName) -> None:
         if key not in self._contexts:
             return
-        plugin = self._manifests[key]
-        plugin.deactivate()
+        mf = self._manifests[key]
         ctx = self._contexts.pop(key)
+        mf._call_func_in_plugin_entrypoint("deactivate", args=(ctx,))
         ctx._dispose()
 
     def iter_compatible_readers(
