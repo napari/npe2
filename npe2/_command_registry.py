@@ -38,8 +38,8 @@ class CommandHandler:
 
 
 class CommandRegistry:
-    commandRegistered = Signal(str)
-    commandUnregistered = Signal(str)
+    command_registered = Signal(str)
+    command_unregistered = Signal(str)
 
     def __init__(self) -> None:
         self._commands: Dict[str, CommandHandler] = {}
@@ -90,7 +90,7 @@ class CommandRegistry:
         # possibly wrap command in a type validator?
 
         self._commands[id] = cmd
-        self.commandRegistered.emit(id)
+        self.command_registered.emit(id)
 
         return partial(self.unregister, id)
 
@@ -98,7 +98,7 @@ class CommandRegistry:
         """Unregister command with key `id`.  No-op if key doesn't exist."""
         if id in self._commands:
             del self._commands[id]
-            self.commandUnregistered.emit(id)
+            self.command_unregistered.emit(id)
 
     def get(self, id: str) -> Callable:
         """Get callable object for command `id`."""
