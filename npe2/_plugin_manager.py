@@ -178,7 +178,6 @@ class PluginManager:
             self._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}") from e
 
-        # Note: this could also be delayed until the command is actually called.
         if mf.contributions and mf.contributions.commands:
             for cmd in mf.contributions.commands:
                 if cmd.python_name and cmd.id not in self.commands:
