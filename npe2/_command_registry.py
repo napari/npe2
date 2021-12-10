@@ -95,11 +95,13 @@ class CommandRegistry:
         return partial(self.unregister, id)
 
     def unregister(self, id: str):
+        """Unregister command with key `id`.  No-op if key doesn't exist."""
         if id in self._commands:
             del self._commands[id]
             self.commandUnregistered.emit(id)
 
     def get(self, id: str) -> Callable:
+        """Get callable object for command `id`."""
         # FIXME: who should control activation?
         if id not in self._commands:
             from ._plugin_manager import PluginManager
