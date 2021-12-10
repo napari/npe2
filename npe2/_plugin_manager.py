@@ -172,7 +172,7 @@ class PluginManager:
             return ctx
 
         try:
-            mf._call_func_in_plugin_entrypoint("activate", (ctx))
+            mf._call_func_in_plugin_entrypoint("activate", args=(ctx,))
             ctx._activated = True
         except Exception as e:  # pragma: no cover
             self._contexts.pop(key, None)
@@ -190,7 +190,7 @@ class PluginManager:
             return
         mf = self._manifests[key]
         ctx = self._contexts.pop(key)
-        mf._call_func_in_plugin_entrypoint("deactivate", (ctx))
+        mf._call_func_in_plugin_entrypoint("deactivate", args=(ctx,))
         ctx._dispose()
 
     def iter_compatible_readers(
