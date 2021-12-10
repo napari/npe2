@@ -182,7 +182,7 @@ class PluginManager:
         if mf.contributions and mf.contributions.commands:
             for cmd in mf.contributions.commands:
                 if cmd.python_name and cmd.id not in self.commands:
-                    self.commands._register_python_name(cmd.id, cmd.python_name)
+                    self.commands.register(cmd.id, cmd.python_name)
 
         return ctx
 
