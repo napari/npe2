@@ -140,8 +140,12 @@ class WriterContribution(BaseModel, Executable[List[str]]):
         ...,
         description="List of layer type constraints.",
     )
+    # An empty filename_extensions list matches any file extension. Making the
+    # default something like ['.*'] is tempting but we don't actually use
+    # these for glob matching and supporting this default ends up making the
+    # code more complicated.
     filename_extensions: List[str] = Field(
-        default=[".*"],
+        default_factory=list,
         description="List of filename extensions compatible with this writer.",
     )
     display_name: str = Field(
