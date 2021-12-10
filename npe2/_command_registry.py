@@ -44,8 +44,6 @@ class CommandRegistry:
     def __init__(self) -> None:
         self._commands: Dict[str, CommandHandler] = {}
 
-    # similar to:
-    # https://github.com/microsoft/vscode/blob/main/src/vs/platform/commands/common/commands.ts#L61
     def register(self, id: str, command: Union[Callable, str]) -> PDisposable:
         """Register a command under `id`.
 
