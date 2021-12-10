@@ -13,7 +13,7 @@ from psygnal import Signal
 
 from .manifest.commands import _dotted_name
 
-_dotted_name_pattrn = re.compile(_dotted_name)
+_dotted_name_pattern = re.compile(_dotted_name)
 
 
 @dataclass
