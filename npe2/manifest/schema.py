@@ -47,7 +47,7 @@ ENTRY_POINT = "napari.manifest"
 # As the contract around plugins evolve the ENGINE_NUMBER should be
 # increased follow SemVer rules. Note that sometimes the version number
 # will change even though no npe2 code changes.
-ENGINE_VERSION = "0.0.0"
+ENGINE_VERSION = "0.1.0"
 
 
 class DiscoverResults(NamedTuple):
