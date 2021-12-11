@@ -15,11 +15,9 @@ contributions:
       python_name: my_plugin:url_reader
     - id: my_plugin.my_writer
       title: My Multi-layer Writer
-      short_title: Multi
       python_name: my_plugin:writer_function
     - id: my_plugin.my_single_writer
       title: My single-layer Writer
-      short_title: Single
       python_name: my_plugin:writer_function_single
     - id: my_plugin.generate_random_data
       title: Generate uniform random data

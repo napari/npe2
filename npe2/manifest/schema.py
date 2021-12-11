@@ -19,6 +19,7 @@ from typing import (
 )
 
 import pytomlpp as toml
+import semver
 import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
@@ -39,6 +40,12 @@ SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
 logger = getLogger(__name__)
 
 ENTRY_POINT = "napari.manifest"
+
+# The first release of npe2 defines the first engine version: 0.0.0.
+# As the contract around plugins evolve the ENGINE_NUMBER should be
+# increased follow SemVer rules. Note that sometimes the version number
+# will change even though no npe2 code changes.
+ENGINE_VERSION = "0.1.0"
 
 
 class DiscoverResults(NamedTuple):
@@ -69,10 +76,33 @@ class PluginManifest(BaseModel):
         regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
 
+    # Plugins rely on certain guarantees to interoperate propertly with the
+    # plugin engine. These include the manifest specification, conventions
+    # around python packaging, command api's, etc. Together these form a
+    # "contract". The version of this contract is the "engine version."
+    #
+    # The first release of npe2 defines the first engine version: 0.0.0.
+    # As the contract around plugins evolve the ENGINE_NUMBER should be
+    # increased follow SemVer rules. Note that sometimes the version number
+    # will change even though no npe2 code changes.
+    #
+    # The `engine` field declares the version of the contract that this plugin
+    # targets. Since there is no other version at the moment, it defaults to
+    # the current npe2 engine version.
+    engine: str = Field(
+        ENGINE_VERSION,
+        description="A SemVer compatible version string matching the versions "
+        "of the plugin engine that the extension is compatible with.",
+    )
+
     # TODO:
     # Perhaps we should version the plugin interface (not so the manifest, but
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
+
+    # TODO: refactor entry_point to binding points for activate,deactivate
+    # TODO: Point to activate function
+    # TODO: Point to deactivate function
 
     # The module that has the activate() function
     entry_point: Optional[str] = Field(
@@ -102,6 +132,20 @@ class PluginManifest(BaseModel):
     @property
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
+
+    @root_validator
+    def _check_engine_version(cls, values: dict) -> dict:
+        declared_version = semver.VersionInfo.parse(values.get("engine", ""))
+        current_version = semver.VersionInfo.parse(ENGINE_VERSION)
+        if current_version < declared_version:
+            raise ValueError(
+                dedent(
+                    f"The declared engine version {declared_version} is "
+                    "newer than npe2 engine {current_version}. You may need to "
+                    "upgrade npe2."
+                )
+            )
+        return values
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:

@@ -146,6 +146,11 @@ def _mutator_writer_invalid_file_extension_2(data):
     return data
 
 
+def _mutator_engine_version_too_high(data):
+    data["engine"] = "999.999.999"
+    return data
+
+
 @pytest.mark.parametrize(
     "mutator",
     [
@@ -158,6 +163,7 @@ def _mutator_writer_invalid_file_extension_2(data):
         _mutator_writer_invalid_layer_type_constraint,
         _mutator_writer_invalid_file_extension_1,
         _mutator_writer_invalid_file_extension_2,
+        _mutator_engine_version_too_high,
     ],
 )
 def test_invalid(mutator, uses_sample_plugin):
