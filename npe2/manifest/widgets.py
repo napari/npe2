@@ -31,7 +31,7 @@ class WidgetContribution(BaseModel, Executable[Widget]):
         self, _registry: Optional[CommandRegistry] = None
     ) -> Callable[..., Widget]:
         func = super().get_callable()
-        if self.autogenerate_from_command:
+        if self.autogenerate:
             from magicgui import magic_factory
 
             return magic_factory(func)

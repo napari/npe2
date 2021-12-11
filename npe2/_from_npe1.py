@@ -205,7 +205,7 @@ class HookImplParser:
                 wdg_contrib = WidgetContribution(
                     command=cmd,
                     display_name=item.__name__.replace("_", " "),
-                    autogenerate_from_command=True,
+                    autogenerate=True,
                 )
                 self.contributions["widgets"].append(wdg_contrib)
 
