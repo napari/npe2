@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import sys
-import types
 from contextlib import contextmanager
 from enum import Enum
 from importlib import import_module, util
@@ -11,7 +10,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Iterator,
     NamedTuple,
@@ -219,34 +217,20 @@ class PluginManifest(BaseModel):
         underscore_attrs_are_private = True
         extra = Extra.forbid
 
-    # should these be on this model itself? or helper functions elsewhere
-
-    def import_entry_point(self) -> types.ModuleType:
+    def _call_func_in_plugin_entrypoint(self, funcname: str, args=()) -> None:
+        """convenience to call a function in the plugins entry_point, if declared."""
         if not self.entry_point:
-            raise ModuleNotFoundError(f"Plugin {self.name} declares no entry_point")
-        return import_module(self.entry_point)
-
-    def activate(self, context=None) -> Any:
-        # TODO: work on context object
-        try:
-            mod = self.import_entry_point()
-        except ModuleNotFoundError:
-            # currently, we're playing with the idea that a command could register
-            # itself with a qualified python name.  In some cases, this obviates the
-            # need for the activate function... so it should be acceptable to omit it.
             return None
-
-        if callable(getattr(mod, "activate", None)):
-            return mod.activate(context)  # type: ignore
-
-    def deactivate(self, context=None):
-        mod = self.import_entry_point()
-        if callable(getattr(mod, "deactivate", None)):
-            return mod.deactivate(context)  # type: ignore
+        mod = import_module(self.entry_point)
+        func = getattr(mod, funcname, None)
+        if callable(func):
+            return func(*args)
 
     @classmethod
     def discover(
-        cls, entry_point_group: str = ENTRY_POINT, paths: Sequence[str] = ()
+        cls,
+        entry_point_group: str = ENTRY_POINT,
+        paths: Sequence[Union[str, Path]] = (),
     ) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
@@ -380,14 +364,14 @@ class PluginManifest(BaseModel):
 
 
 @contextmanager
-def temporary_path_additions(paths: Sequence[str] = ()):
+def temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     for p in reversed(paths):
-        sys.path.insert(0, p)
+        sys.path.insert(0, str(p))
     try:
         yield
     finally:
         for p in paths:
-            sys.path.remove(p)
+            sys.path.remove(str(p))
 
 
 if __name__ == "__main__":
