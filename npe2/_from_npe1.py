@@ -27,6 +27,7 @@ from napari_plugin_engine import (
 
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
+from npe2.manifest.schema import ENGINE_VERSION
 from npe2.manifest.themes import ThemeColors
 from npe2.manifest.widgets import WidgetContribution
 
@@ -161,6 +162,7 @@ def manifest_from_npe1(
 
     return PluginManifest(
         name=package,
+        engine=ENGINE_VERSION,
         contributions=dict(parser.contributions),
     )
 
@@ -257,7 +259,7 @@ class HookImplParser:
                 wdg_contrib = WidgetContribution(
                     command=cmd,
                     display_name=item.__name__.replace("_", " "),
-                    autogenerate_from_command=True,
+                    autogenerate=True,
                 )
                 self.contributions["widgets"].append(wdg_contrib)
 
@@ -300,6 +302,8 @@ class HookImplParser:
         # in some cases, like partials and magic_factories, there might not be an
         # easily accessible python name (from __module__.__qualname__)...
         # so first we look for this object in the module namespace
+        py_name = None
+        cmd = None
         for local_name, val in impl.function.__globals__.items():
             if val is wdg_creator:
                 py_name = f"{impl.function.__module__}:{local_name}"
@@ -356,7 +360,7 @@ class HookImplParser:
             {
                 "command": id,
                 "layer_types": [layer],
-                "name": layer,
+                "display_name": layer,
                 "filename_extensions": ["<EDIT_ME>"],
             }
         )

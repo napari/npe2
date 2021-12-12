@@ -18,7 +18,7 @@ def validate(name: str, debug: bool = False):
     valid = False
     try:
         pm = PluginManifest._from_package_or_name(name)
-        msg = f"✔ Manifest for {pm.display_name!r} valid!"
+        msg = f"✔ Manifest for {(pm.display_name or pm.name)!r} valid!"
         valid = True
     except PluginManifest.ValidationError as err:
         msg = f"🅇 Invalid! {err}"

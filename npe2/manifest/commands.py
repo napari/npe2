@@ -1,13 +1,12 @@
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Extra, Field
-
-from .icon import Icon
 
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
 
+_distname = "([a-zA-Z_][a-zA-Z0-9_-]+)"
 _identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
 _identifier_plus_dash = "([a-zA-Z_][a-zA-Z_0-9-]+)"
 
@@ -49,36 +48,39 @@ class CommandContribution(BaseModel):
         It follow the same rule as Python fully qualified name, with the extra
         restriction as being limited to ascii"""
         ),
-        regex="^" + _dotted_name + "$",
+        regex=f"^(({_distname}\\.)*{_identifier})$",
     )
+
     title: str = Field(
-        ..., description="Title by which the command is represented in the UI"
+        ...,
+        description="User facing title representing the command. Example: "
+        "'Apply gaussian blur' or 'Open my dock widget.",
     )
-    short_title: Optional[str] = Field(
-        None,
-        description="(Optional) Short title by which the command is "
-        "represented in the UI",
-    )
-    category: Optional[str] = Field(
-        None,
-        description="(Optional) Category string by the command is grouped in the UI",
-    )
-    icon: Optional[Union[str, Icon]] = Field(
-        None,
-        description=(
-            "(Optional) Icon which is used to represent the command in the UI."
-            " Either a file path, an object with file paths for dark and light"
-            "themes, or a theme icon references, like `$(zap)`"
-        ),
-    )
-    enablement: Optional[str] = Field(
-        None,
-        description=(
-            "(Optional) Condition which must be true to enable the command in the UI "
-            "(menu and keybindings). Does not prevent executing the command "
-            "by other means, like the `executeCommand` api."
-        ),
-    )
+    # short_title: Optional[str] = Field(
+    #     None,
+    #     description="(Optional) Short title by which the command is "
+    #     "represented in the UI",
+    # )
+    # category: Optional[str] = Field(
+    #     None,
+    #     description="(Optional) Category string by the command is grouped in the UI",
+    # )
+    # icon: Optional[Union[str, Icon]] = Field(
+    #     None,
+    #     description=(
+    #         "(Optional) Icon which is used to represent the command in the UI."
+    #         " Either a file path, an object with file paths for dark and light"
+    #         "themes, or a theme icon references, like `$(zap)`"
+    #     ),
+    # )
+    # enablement: Optional[str] = Field(
+    #     None,
+    #     description=(
+    #         "(Optional) Condition which must be true to enable the command in the UI "
+    #         "(menu and keybindings). Does not prevent executing the command "
+    #         "by other means, like the `executeCommand` api."
+    #     ),
+    # )
     python_name: Optional[str] = Field(
         None,
         description="(Optional) Fully qualified name to callable python object "

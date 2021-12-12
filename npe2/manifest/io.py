@@ -12,9 +12,10 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
     filename_patterns: List[str] = Field(
-        default_factory=list,
+        ...,
         description="List of filename patterns (for fnmatch) that this reader can "
-        "accept. Reader will be tried only if `fnmatch(filename, pattern) == True`",
+        "accept. Reader will be tried only if `fnmatch(filename, pattern) == True`. "
+        "Use `['*']` to match all filenames.",
     )
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
@@ -139,11 +140,15 @@ class WriterContribution(BaseModel, Executable[List[str]]):
         ...,
         description="List of layer type constraints.",
     )
+    # An empty filename_extensions list matches any file extension. Making the
+    # default something like ['.*'] is tempting but we don't actually use
+    # these for glob matching and supporting this default ends up making the
+    # code more complicated.
     filename_extensions: List[str] = Field(
         default_factory=list,
         description="List of filename extensions compatible with this writer.",
     )
-    name: str = Field(
+    display_name: str = Field(
         default="",
         description="Brief text used to describe this writer when presented.",
     )
@@ -159,7 +164,7 @@ class WriterContribution(BaseModel, Executable[List[str]]):
                 self.command,
                 str(self.layer_types),
                 str(self.filename_extensions),
-                self.name,
+                self.display_name,
             )
         )
 

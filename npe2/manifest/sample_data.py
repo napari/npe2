@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class _SampleDataContribution(BaseModel, ABC):
     display_name: str = Field(
-        ..., description="String to show in the GUI when refering to this sample"
+        ..., description="String to show in the GUI when referring to this sample"
     )
     key: str = Field(
         ...,
