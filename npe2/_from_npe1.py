@@ -526,7 +526,7 @@ class _SetupVisitor(ast.NodeVisitor):
         self._entry_points: List[List[str]] = []  # [[name, value], ...]
 
     def visit_Call(self, node: ast.Call) -> Any:
-        if getattr(node.func, "id" "") != "setup":
+        if getattr(node.func, "id", "") != "setup":
             return
         for kw in node.keywords:
             if kw.arg == "name":
