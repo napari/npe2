@@ -8,12 +8,13 @@ if TYPE_CHECKING:
 
 _distname = "([a-zA-Z_][a-zA-Z0-9_-]+)"
 _identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
+_identifier_plus_dash = "([a-zA-Z_][a-zA-Z_0-9-]+)"
 
 # how do we deal with keywords ?
 # do we try to validate ? Or do we just
 # assume users won't try to create a command named
 # `npe2_tester.False.if.for.in` ?
-_dotted_name = f"(({_identifier}\\.)*{_identifier})"
+_dotted_name = f"(({_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
 
 
 class CommandContribution(BaseModel):
