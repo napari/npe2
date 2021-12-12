@@ -101,6 +101,15 @@ def plugin_packages() -> List[PluginPackage]:
     return packages
 
 
+def ensure_package_name(name: str):
+    """Try all the tricks we know to find a package name given a plugin name."""
+    for attr in ("package_name", "ep_name", "top_module"):
+        for p in plugin_packages():
+            if name == getattr(p, attr):
+                return p.package_name
+    raise KeyError(f"Unable to find a locally installed package for plugin {name!r}")
+
+
 @lru_cache()
 def npe1_plugin_manager() -> Tuple[PluginManager, Tuple[int, list]]:
     pm = PluginManager("napari", discover_entry_point=NPE1_EP)
@@ -162,16 +171,7 @@ def manifest_from_npe1(
     plugin_name = norm_plugin_name(plugin_name, module)
 
     _module = plugin_manager.plugins[plugin_name]
-    standard_meta = plugin_manager.get_standard_metadata(plugin_name)
-    package = standard_meta.get("package")
-    if not package:
-        if module is not None:
-            package = "dynamic"
-        else:
-            # NOTE: this is more of an assertion error, shouldn't happen.
-            raise ModuleNotFoundError(
-                f"Could not find package for plugin {plugin_name!r}"
-            )
+    package = ensure_package_name(plugin_name) if module is None else "dynamic"
 
     parser = HookImplParser(package, plugin_name)
     parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
