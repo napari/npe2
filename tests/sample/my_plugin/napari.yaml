@@ -58,7 +58,7 @@ contributions:
       display_name: My Widget
     - command: my_plugin.some_function_widget
       display_name: A Widget From a Function
-      autogenerate_from_command: true
+      autogenerate: true
   menus:
     /napari/layer_context:
       - submenu: mysubmenu

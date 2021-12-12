@@ -41,7 +41,7 @@ logger = getLogger(__name__)
 
 ENTRY_POINT = "napari.manifest"
 
-# The first release of npe2 defines the first engine version: 0.0.0.
+# The first release of npe2 defines the first engine version: 0.1.0.
 # As the contract around plugins evolve the ENGINE_NUMBER should be
 # increased follow SemVer rules. Note that sometimes the version number
 # will change even though no npe2 code changes.
@@ -81,7 +81,7 @@ class PluginManifest(BaseModel):
     # around python packaging, command api's, etc. Together these form a
     # "contract". The version of this contract is the "engine version."
     #
-    # The first release of npe2 defines the first engine version: 0.0.0.
+    # The first release of npe2 defines the first engine version.
     # As the contract around plugins evolve the ENGINE_NUMBER should be
     # increased follow SemVer rules. Note that sometimes the version number
     # will change even though no npe2 code changes.
