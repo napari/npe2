@@ -42,9 +42,7 @@ jobs:
           # pip install PyQt5
 
       - name: Fetch repo URL
-        run: |
-          URL = $(curl -s https://api.napari-hub.org/plugins/${{ matrix.plugin }} | jq '.code_repository')
-          echo "repo_url=$URL" >> $GITHUB_ENV
+        run: echo "repo_url=$(curl -s https://api.napari-hub.org/plugins/${{ matrix.plugin }} | jq '.code_repository')" >> $GITHUB_ENV
 
       - name: Checkout plugin repo
         uses: actions/checkout@v2
