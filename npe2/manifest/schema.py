@@ -168,13 +168,15 @@ class PluginManifest(BaseModel):
         return values
 
     def toml(self, pyproject=False) -> str:
-        d = json.loads(self.json(exclude_unset=True))
-        if pyproject:
-            d = {"tool": {"napari": d}}
-        return toml.dumps(d)
+        with engine_in_fields_set(self):
+            d = json.loads(self.json(exclude_unset=True))
+            if pyproject:
+                d = {"tool": {"napari": d}}
+            return toml.dumps(d)
 
     def yaml(self) -> str:
-        return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
+        with engine_in_fields_set(self):
+            return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
 
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
@@ -416,6 +418,17 @@ def temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     finally:
         for p in paths:
             sys.path.remove(str(p))
+
+
+@contextmanager
+def engine_in_fields_set(manifest: PluginManifest):
+    was_there = "engine" in manifest.__fields_set__
+    manifest.__fields_set__.add("engine")
+    try:
+        yield
+    finally:
+        if not was_there:
+            manifest.__fields_set__.discard("engine")
 
 
 if __name__ == "__main__":

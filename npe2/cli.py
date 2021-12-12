@@ -1,5 +1,4 @@
 import warnings
-from enum import Enum
 from pathlib import Path
 from textwrap import indent
 from typing import Optional
@@ -44,26 +43,21 @@ def parse(name: str):
         typer.echo(pm.yaml())
 
 
-class ManifestFormat(str, Enum):
-    yaml = "yaml"
-    json = "json"
-    toml = "toml"
-
-
 @app.command()
 def convert(
-    plugin_name: str = typer.Argument(..., help="The name of the plugin to convert"),
-    format: ManifestFormat = ManifestFormat.yaml,
-    out: Optional[Path] = None,
+    path: Path = typer.Argument(..., help="The path of the repository to convert."),
+    just_print: Optional[bool] = typer.Option(
+        False, help="Just print manifest to stdout. Do not modify anything"
+    ),
 ):
     """Convert existing plugin to new manifest."""
-    from ._from_npe1 import manifest_from_npe1
+    from ._from_npe1 import convert_repository
 
     try:
         with warnings.catch_warnings(record=True) as w:
-            pm = manifest_from_npe1(plugin_name)
+            pm, mf_path = convert_repository(path, _just_manifest=just_print)
         if w:
-            typer.secho("Some errors occured:", fg=typer.colors.RED, bold=False)
+            typer.secho("Some issues occured:", fg=typer.colors.RED, bold=False)
             for r in w:
                 typer.secho(
                     indent(str(r.message), "  "),
@@ -71,18 +65,16 @@ def convert(
                     bold=False,
                 )
             print()
-
-        mf = getattr(pm, format)()
     except Exception as e:
-        msg = f"Conversion error:\n{type(e).__name__}: {e}"
+        msg = f"Conversion failed:\n{type(e).__name__}: {e}"
         typer.secho(msg, fg=typer.colors.RED, bold=True)
         raise typer.Exit(1)
 
-    if out is not None:
-        with open(out, "w") as fh:
-            fh.write(mf)
+    if just_print:
+        print(pm.yaml())
     else:
-        print(mf)
+        msg = f"✔  Conversion complete! New manifest at {mf_path}"
+        typer.secho(msg, fg=typer.colors.GREEN, bold=True)
 
 
 def main():
