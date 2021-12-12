@@ -52,16 +52,18 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: ${{ env.plugin_repo }}
+          path: 'plugin_repo'
+          fetch-depth: 0
 
       - name: Install ${{ matrix.plugin }}
-        run: pip install -e .
+        run: pip install -e ./plugin_repo
 
       - name: Test Conversion
         id: test-without-napari
         uses: GabrielBB/xvfb-action@v1
         continue-on-error: true
         with:
-          run: npe2 convert .
+          run: npe2 convert ./plugin_repo
 
       - name: Install napari
         if: ${{ steps.test-without-napari.outcome == 'failure' }}
@@ -71,7 +73,7 @@ jobs:
         if: ${{ steps.test-without-napari.outcome == 'failure' }}
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: npe2 convert .
+          run: npe2 convert ./plugin_repo
 
       # this won't work, we'd need to first fork the repo somewhere we have write permissions
       # then push changes that that repository, and then create a PR to the original repo
