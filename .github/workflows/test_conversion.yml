@@ -1,6 +1,7 @@
 name: Test Plugin Conversion
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -22,11 +23,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        plugin: ${{ fromJson(needs.get-plugins.outputs.plugins) }}
+        # plugin: ${{ fromJson(needs.get-plugins.outputs.plugins) }}
+        plugin: ["napari-dv", "affinder"]
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: tlambert03/setup-qt-libs@v1
+      # - uses: tlambert03/setup-qt-libs@v1
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
@@ -36,25 +37,35 @@ jobs:
           pip install -U pip
           # just in case... we ask them not to depend on this or Pyside
           # since it's up to the enduser to have with napari
-          pip install PyQt5
-          pip install -e .
+          pip install git+https://github.com/napari/npe2.git@refs/pull/60/head#egg=npe2
+          # pip install PyQt5
 
-      - name: Install ${{ matrix.plugin }}
-        run: pip install ${{ matrix.plugin }}
+      - name: Fetch repo URL
+        run: |
+          URL = $(curl -s https://api.napari-hub.org/plugins/${{ matrix.plugin }} | jq '.code_repository')
+          echo "repo_url=$URL" >> $GITHUB_ENV
 
-      - name: Test Conversion
-        id: test-without-napari
-        uses: GabrielBB/xvfb-action@v1
-        continue-on-error: true
+      - name: Checkout plugin repo
+        uses: actions/checkout@v2
         with:
-          run: npe2 convert ${{ matrix.plugin }}
+          repository: ${{ env.repo_url }}
 
-      - name: Install napari
-        if: ${{ steps.test-without-napari.outcome == 'failure' }}
-        run: pip install napari
+      # - name: Install ${{ matrix.plugin }}
+      #   run: pip install ${{ matrix.plugin }}
 
-      - name: Test Conversion again with napari
-        if: ${{ steps.test-without-napari.outcome == 'failure' }}
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: npe2 convert ${{ matrix.plugin }}
+      # - name: Test Conversion
+      #   id: test-without-napari
+      #   uses: GabrielBB/xvfb-action@v1
+      #   continue-on-error: true
+      #   with:
+      #     run: npe2 convert ${{ matrix.plugin }}
+
+      # - name: Install napari
+      #   if: ${{ steps.test-without-napari.outcome == 'failure' }}
+      #   run: pip install napari
+
+      # - name: Test Conversion again with napari
+      #   if: ${{ steps.test-without-napari.outcome == 'failure' }}
+      #   uses: GabrielBB/xvfb-action@v1
+      #   with:
+      #     run: npe2 convert ${{ matrix.plugin }}
