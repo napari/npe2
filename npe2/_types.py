@@ -1,12 +1,21 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from typing_extensions import Literal, Protocol
 
 if TYPE_CHECKING:
+    import magicgui.widgets
     import numpy as np
-    from magicgui.widgets import FunctionGui
-    from qtpy.QtWidgets import QWidget
+    import qtpy.QtWidgets
+
+
+# General types
+
+PathLike = Union[str, Path]
+PathOrPaths = Union[PathLike, Sequence[PathLike]]
+
+
+# Layer-related types
 
 
 class ArrayLike(Protocol):
@@ -31,9 +40,28 @@ Metadata = Dict
 DataType = Union[ArrayLike, Sequence[ArrayLike]]
 FullLayerData = Tuple[DataType, Metadata, LayerName]
 LayerData = Union[Tuple[DataType], Tuple[DataType, Metadata], FullLayerData]
-PathLike = Union[str, Path]
-PathOrPaths = Union[PathLike, Sequence[PathLike]]
+
+# ########################## CONTRIBUTIONS #################################
+
+# WidgetContribution.command must point to a WidgetCreator
+Widget = Union["magicgui.widgets.Widget", "qtpy.QtWidgets.QWidget"]
+WidgetCreator = Callable[..., Widget]
+
+# ReaderContribution.command must point to a ReaderGetter
 ReaderFunction = Callable[[PathOrPaths], List[LayerData]]
-WriterFunction = Callable[[str, List[FullLayerData]], List[str]]
-Widget = Union["FunctionGui", "QWidget"]
-WidgetCallable = Callable[..., Widget]
+ReaderGetter = Callable[[Union[str, List[str]]], Optional[ReaderFunction]]
+
+# SampleDataGenerator.command must point to a SampleDataCreator
+SampleDataCreator = Callable[..., List[LayerData]]
+
+# WriterContribution.command must point to a WriterFunction
+# Writers that take at most one layer must provide a SingleWriterFunction command.
+# Otherwise, they must provide a MultiWriterFunction.
+# where the number of layers they take is defined as
+# n = sum(ltc.max() for ltc in WriterContribution.layer_type_constraints())
+# @nclack, please check ... and let's see if we can make that clearer in the docstrings
+SingleWriterFunction = Callable[[str, DataType, Metadata], List[str]]
+MultiWriterFunction = Callable[[str, List[FullLayerData]], List[str]]
+WriterFunction = Union[SingleWriterFunction, MultiWriterFunction]
+
+# ##########################################################################

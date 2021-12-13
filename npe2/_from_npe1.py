@@ -64,9 +64,6 @@ for m in dir(HookSpecs):
         setattr(HookSpecs, m, napari_hook_specification(getattr(HookSpecs, m)))
 
 
-WidgetCallable = Union[Callable, Tuple[Callable, dict]]
-
-
 @dataclass
 class PluginPackage:
     package_name: str
@@ -284,6 +281,7 @@ class HookImplParser:
                 warnings.warn(msg)
 
     def napari_experimental_provide_dock_widget(self, impl: HookImplementation):
+        WidgetCallable = Union[Callable, Tuple[Callable, dict]]
         items: Union[WidgetCallable, List[WidgetCallable]] = impl.function()
         if not isinstance(items, list):
             items = [items]  # pragma: no cover
