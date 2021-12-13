@@ -416,6 +416,10 @@ def _camel_to_spaces(val):
     return _camel_to_spaces_pattern.sub(r" \1", val)
 
 
+def get_top_module_path(package_name) -> Path:
+    return metadata.distribution(package_name).locate_file("")  # type: ignore
+
+
 def convert_repository(
     path: Union[Path, str], mf_name: str = "napari.yaml", _just_manifest=False
 ) -> Tuple[PluginManifest, Path]:
@@ -431,7 +435,8 @@ def convert_repository(
 
     # write the yaml to top_module/napari.yaml
     yml = manifest.yaml()
-    top_module = path / info.top_module
+
+    top_module = get_top_module_path(info.package_name)
     if not top_module.is_dir():
         raise ValueError(
             f"Detection of top-level module failed. {top_module} is not a directory."
