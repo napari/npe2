@@ -96,8 +96,9 @@ class CommandContribution(BaseModel):
         # test for regex validation.
         import re
 
+        print("python name: ", v)
         regex = f"^{_dotted_name}:{_dotted_name}$"
-        if not bool(re.match(regex, v)):
+        if v is not None and not bool(re.match(regex, v)):
             raise ValueError(
                 f"{v} is not a valid python_name.  A python_name must "
                 "be of the form `{obj.__module__}:{obj.__qualname__} `(e.g. "
