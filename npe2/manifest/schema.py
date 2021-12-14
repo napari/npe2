@@ -47,6 +47,7 @@ ENTRY_POINT = "napari.manifest"
 # increased follow SemVer rules. Note that sometimes the version number
 # will change even though no npe2 code changes.
 ENGINE_VERSION = "0.1.0"
+_display_name_pattern = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
 
 
 class DiscoverResults(NamedTuple):
@@ -149,9 +150,7 @@ class PluginManifest(BaseModel):
 
     @validator("display_name")
     def validate_display_name(cls, v):
-
-        regex = r"^[^\W_][\w -~]{1,38}[^\W_]$"
-        if not bool(re.match(regex, v)):
+        if not _display_name_pattern.match(v):
             raise ValueError(
                 f"{v} is not a valid display_name.  The display_name must "
                 "be 3-40 characters long, containing printable word characters, "

@@ -1,3 +1,4 @@
+import re
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -15,6 +16,7 @@ _identifier_plus_dash = "([a-zA-Z_][a-zA-Z_0-9-]+)"
 # assume users won't try to create a command named
 # `npe2_tester.False.if.for.in` ?
 _dotted_name = f"(({_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
+_python_name_pattern = re.compile(f"^{_dotted_name}:{_dotted_name}$")
 
 
 class CommandContribution(BaseModel):
@@ -94,10 +96,7 @@ class CommandContribution(BaseModel):
     @validator("python_name")
     def validate_python_name(cls, v):
         # test for regex validation.
-        import re
-
-        regex = f"^{_dotted_name}:{_dotted_name}$"
-        if v is not None and not bool(re.match(regex, v)):
+        if v and not _python_name_pattern.match(v):
             raise ValueError(
                 f"{v} is not a valid python_name.  A python_name must "
                 "be of the form `{obj.__module__}:{obj.__qualname__} `(e.g. "
