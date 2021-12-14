@@ -170,24 +170,6 @@ class PluginManifest(BaseModel):
                 if values["name"] != id_start_actual:
                     invalid_commands.append(command.id)
 
-                try:
-                    # check for normalized version of python name that matches
-                    # package name. Does it need to be lowercase?
-                    python_name_start_expected = "".join(
-                        [i.lower() if i != "-" else "_" for i in values["name"]]
-                    )
-                    python_name_start_actual = command.python_name.split(".")[0]
-                    python_name_start_actual = python_name_start_actual.split(":")[0]
-
-                    if (python_name_start_expected != "dynamic") and (
-                        python_name_start_expected != python_name_start_actual
-                    ):
-                        invalid_python_names.append(command.python_name)
-
-                except (NameError, AttributeError):
-                    # There isn't a python_name here.
-                    pass
-
         if invalid_commands:
             raise ValueError(
                 dedent(
