@@ -1,7 +1,8 @@
+import re
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, validator
 
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
@@ -15,6 +16,7 @@ _identifier_plus_dash = "([a-zA-Z_][a-zA-Z_0-9-]+)"
 # assume users won't try to create a command named
 # `npe2_tester.False.if.for.in` ?
 _dotted_name = f"(({_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
+_python_name_pattern = re.compile(f"^{_dotted_name}:{_dotted_name}$")
 
 
 class CommandContribution(BaseModel):
@@ -81,6 +83,7 @@ class CommandContribution(BaseModel):
     #         "by other means, like the `executeCommand` api."
     #     ),
     # )
+
     python_name: Optional[str] = Field(
         None,
         description="(Optional) Fully qualified name to callable python object "
@@ -88,8 +91,18 @@ class CommandContribution(BaseModel):
         "`{obj.__module__}:{obj.__qualname__} (e.g. "
         "`my_package.a_module:some_function`). If provided, using `register_command` "
         "in the plugin activate function is optional (but takes precedence).",
-        regex=f"^{_dotted_name}:{_dotted_name}$",
     )
+
+    @validator("python_name")
+    def validate_python_name(cls, v):
+        # test for regex validation.
+        if v and not _python_name_pattern.match(v):
+            raise ValueError(
+                f"{v} is not a valid python_name.  A python_name must "
+                "be of the form `{obj.__module__}:{obj.__qualname__} `(e.g. "
+                "`my_package.a_module:some_function`). "
+            )
+        return v
 
     class Config:
         extra = Extra.forbid
