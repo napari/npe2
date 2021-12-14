@@ -59,7 +59,6 @@ SampleDataCreator = Callable[..., List[LayerData]]
 # Otherwise, they must provide a MultiWriterFunction.
 # where the number of layers they take is defined as
 # n = sum(ltc.max() for ltc in WriterContribution.layer_type_constraints())
-# @nclack, please check ... and let's see if we can make that clearer in the docstrings
 SingleWriterFunction = Callable[[str, DataType, Metadata], List[str]]
 MultiWriterFunction = Callable[[str, List[FullLayerData]], List[str]]
 WriterFunction = Union[SingleWriterFunction, MultiWriterFunction]
