@@ -104,6 +104,7 @@ class Version:
         return cls(**matched_version_parts)
 
     # NOTE: we're only comparing the numeric parts for now.
+    # ALSO: the rest of the comparators come  from functools.total_ordering
     def __eq__(self, other) -> bool:
         return self.to_tuple()[:3] == self._from_obj(other).to_tuple()[:3]
 
