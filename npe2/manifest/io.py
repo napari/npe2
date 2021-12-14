@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from .._types import ReaderFunction
+from ..types import ReaderFunction
 from .utils import Executable
 
 

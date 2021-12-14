@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from contextlib import contextmanager
 from enum import Enum
@@ -19,12 +20,12 @@ from typing import (
 )
 
 import pytomlpp as toml
-import semver
 import yaml
-from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
+from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
 
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
+from .utils import Version
 
 try:
     from importlib.metadata import Distribution, distributions
@@ -46,6 +47,7 @@ ENTRY_POINT = "napari.manifest"
 # increased follow SemVer rules. Note that sometimes the version number
 # will change even though no npe2 code changes.
 ENGINE_VERSION = "0.1.0"
+_display_name_pattern = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
 
 
 class DiscoverResults(NamedTuple):
@@ -73,7 +75,6 @@ class PluginManifest(BaseModel):
         # Must be 3-40 characters long, containing printable word characters,
         # and must not begin or end with an underscore, white space, or
         # non-word character.
-        regex=r"^[^\W_][\w -~]{1,38}[^\W_]$",
     )
 
     # Plugins rely on certain guarantees to interoperate propertly with the
@@ -135,8 +136,8 @@ class PluginManifest(BaseModel):
 
     @root_validator
     def _check_engine_version(cls, values: dict) -> dict:
-        declared_version = semver.VersionInfo.parse(values.get("engine", ""))
-        current_version = semver.VersionInfo.parse(ENGINE_VERSION)
+        declared_version = Version.parse(values.get("engine", ""))
+        current_version = Version.parse(ENGINE_VERSION)
         if current_version < declared_version:
             raise ValueError(
                 dedent(
@@ -147,12 +148,24 @@ class PluginManifest(BaseModel):
             )
         return values
 
+    @validator("display_name")
+    def validate_display_name(cls, v):
+        if not _display_name_pattern.match(v):
+            raise ValueError(
+                f"{v} is not a valid display_name.  The display_name must "
+                "be 3-40 characters long, containing printable word characters, "
+                "and must not begin or end with an underscore, white space, or "
+                "non-word character."
+            )
+        return v
+
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
         invalid_commands = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
-                if not command.id.startswith(values["name"]):
+                id_start_actual = command.id.split(".")[0]
+                if values["name"] != id_start_actual:
                     invalid_commands.append(command.id)
 
         if invalid_commands:

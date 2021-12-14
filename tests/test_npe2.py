@@ -97,6 +97,12 @@ def _mutator_4(data):
     return data
 
 
+def _mutator_5(data):
+    assert "contributions" in data
+    data["contributions"]["commands"][0]["python_name"] = "1starts_with_number"
+    return data
+
+
 def _valid_mutator_no_contributions(data):
     """
     Contributions can be absent, in which case the Pydantic model will set the
@@ -158,6 +164,7 @@ def _mutator_engine_version_too_high(data):
         _mutator_2,
         _mutator_3,
         _mutator_4,
+        _mutator_5,
         _mutator_no_contributes_extra_field,
         _mutator_writer_requires_non_empty_layer_types,
         _mutator_writer_invalid_layer_type_constraint,
