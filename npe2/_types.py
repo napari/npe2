@@ -54,11 +54,13 @@ ReaderGetter = Callable[[Union[str, List[str]]], Optional[ReaderFunction]]
 # SampleDataGenerator.command must point to a SampleDataCreator
 SampleDataCreator = Callable[..., List[LayerData]]
 
-# WriterContribution.command must point to a WriterFunction
-# Writers that take at most one layer must provide a SingleWriterFunction command.
-# Otherwise, they must provide a MultiWriterFunction.
-# where the number of layers they take is defined as
-# n = sum(ltc.max() for ltc in WriterContribution.layer_type_constraints())
+# WriterContribution.command must point to a WriterFunction.
+# Currently, two calling conventions are supported for writers: single-layer and
+# multi-layer writers. When at most one layer can be matched by a writer, it
+# must use the single-layer convention. Otherwise, the multi-layer convention
+# must be used. WriterFunctions are only called when the set of layers to be
+# written satisfies a set of layer-type constraints specified by
+# WriterContribution.layer_types.layer_type_constraints().
 SingleWriterFunction = Callable[[str, DataType, Metadata], List[str]]
 MultiWriterFunction = Callable[[str, List[FullLayerData]], List[str]]
 WriterFunction = Union[SingleWriterFunction, MultiWriterFunction]
