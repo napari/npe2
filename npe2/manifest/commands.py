@@ -96,7 +96,6 @@ class CommandContribution(BaseModel):
         # test for regex validation.
         import re
 
-        print("python name: ", v)
         regex = f"^{_dotted_name}:{_dotted_name}$"
         if v is not None and not bool(re.match(regex, v)):
             raise ValueError(
