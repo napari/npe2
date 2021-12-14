@@ -95,6 +95,7 @@ class Version:
 
     @classmethod
     def parse(cls, version: Union[bytes, str]) -> Version:
+        """Convert string or bytes into Version object."""
         if isinstance(version, bytes):
             version = version.decode("UTF-8")
         match = cls._SEMVER_PATTERN.match(version)
