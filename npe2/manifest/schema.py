@@ -179,17 +179,6 @@ class PluginManifest(BaseModel):
                 )
             )
 
-        if invalid_python_names:
-            raise ValueError(
-                dedent(
-                    f"Python names must include a normalized package name of the form "
-                    "`{obj.__module__}:{obj.__qualname__} `(e.g. "
-                    "`my_package.a_module:some_function`).  The following python names "
-                    "did not match the package names: "
-                    f"{invalid_python_names}"
-                )
-            )
-
         return values
 
     def toml(self, pyproject=False) -> str:
