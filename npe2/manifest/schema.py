@@ -177,18 +177,14 @@ class PluginManifest(BaseModel):
                         [i.lower() if i != "-" else "_" for i in values["name"]]
                     )
                     python_name_start_actual = command.python_name.split(".")[0]
-                    print(
-                        "expected: ",
-                        python_name_start_expected,
-                        " actual: ",
-                        python_name_start_expected,
-                    )
+                    python_name_start_actual = python_name_start_actual.split(":")[0]
+
                     if (python_name_start_expected != "dynamic") and (
                         python_name_start_expected != python_name_start_actual
                     ):
                         invalid_python_names.append(command.python_name)
 
-                except NameError:
+                except (NameError, AttributeError):
                     # There isn't a python_name here.
                     pass
 
