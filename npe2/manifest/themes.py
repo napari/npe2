@@ -28,6 +28,8 @@ class ThemeColors(BaseModel):
 
 
 class ThemeContribution(BaseModel):
+    """Theme docstring."""
+
     label: str = Field(description="Label of the color theme as shown in the UI.")
     id: str = Field(description="Id of the color theme as used in the user settings.")
     type: Union[Literal["dark"], Literal["light"]] = Field(

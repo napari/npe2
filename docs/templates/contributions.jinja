@@ -1,0 +1,27 @@
+# Contributions
+
+**Contributions** are a set of static declarations that you make in the `contributions` field of the [Plugin Manifest](). Your extension registers **Contributions** to extend various functionalities within napari. Here is a list of all available **Contributions**:
+
+{% for contrib in contributions -%}
+- [`{{ contrib.name }}`](#contributes.{{ contrib.name }})
+{% endfor %}
+
+
+{% for contrib in contributions%}
+## `contributes.{{contrib.name}}`
+
+{{ contrib.doc }}
+
+{% for field in contrib.fields%}
+- **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional).* {% endif %}
+{{- field.field_info.description|replace("\n","  ") -}}
+{% endfor %}
+
+
+### {{contrib.name}} example
+
+```yaml
+{{contrib.example}}
+```
+
+{% endfor %}

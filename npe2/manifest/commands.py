@@ -40,7 +40,7 @@ class CommandContribution(BaseModel):
         ...,
         description=dedent(
             """
-        Identifier of the command to execute
+        Identifier of the command to execute.
 
         While this may looks a python fully qualified name this does not refer
         to a python object.
@@ -58,17 +58,17 @@ class CommandContribution(BaseModel):
     )
     # short_title: Optional[str] = Field(
     #     None,
-    #     description="(Optional) Short title by which the command is "
+    #     description="Short title by which the command is "
     #     "represented in the UI",
     # )
     # category: Optional[str] = Field(
     #     None,
-    #     description="(Optional) Category string by the command is grouped in the UI",
+    #     description="Category string by the command is grouped in the UI",
     # )
     # icon: Optional[Union[str, Icon]] = Field(
     #     None,
     #     description=(
-    #         "(Optional) Icon which is used to represent the command in the UI."
+    #         "Icon which is used to represent the command in the UI."
     #         " Either a file path, an object with file paths for dark and light"
     #         "themes, or a theme icon references, like `$(zap)`"
     #     ),
@@ -76,14 +76,14 @@ class CommandContribution(BaseModel):
     # enablement: Optional[str] = Field(
     #     None,
     #     description=(
-    #         "(Optional) Condition which must be true to enable the command in the UI "
+    #         "Condition which must be true to enable the command in the UI "
     #         "(menu and keybindings). Does not prevent executing the command "
     #         "by other means, like the `executeCommand` api."
     #     ),
     # )
     python_name: Optional[str] = Field(
         None,
-        description="(Optional) Fully qualified name to callable python object "
+        description="Fully qualified name to callable python object "
         "implementing this command. This usually takes the form of "
         "`{obj.__module__}:{obj.__qualname__} (e.g. "
         "`my_package.a_module:some_function`). If provided, using `register_command` "
