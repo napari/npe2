@@ -6,7 +6,6 @@ import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
 from functools import lru_cache
-from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 from typing import (
     Any,
@@ -35,8 +34,10 @@ from npe2.manifest.widgets import WidgetContribution
 
 try:
     from importlib import metadata
+    from importlib.metadata import PackageNotFoundError
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
+    from importlib_metadata import PackageNotFoundError  # type: ignore
 
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
