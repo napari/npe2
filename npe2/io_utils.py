@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union, overload
 from typing_extensions import Literal
 
 from . import PluginManager
-from ._types import FullLayerData, LayerData, PathLike
+from .types import FullLayerData, LayerData, PathLike
 
 if TYPE_CHECKING:
     from .manifest.io import ReaderContribution, WriterContribution

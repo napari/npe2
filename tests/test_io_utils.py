@@ -1,7 +1,7 @@
 import pytest
 
-from npe2._types import FullLayerData
 from npe2.io_utils import read, read_get_reader, write
+from npe2.types import FullLayerData
 
 
 def test_read(uses_sample_plugin):

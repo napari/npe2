@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from pydantic import BaseModel, Extra, Field
 
-from .._types import Widget
+from ..types import Widget
 from .utils import Executable
 
 if TYPE_CHECKING:

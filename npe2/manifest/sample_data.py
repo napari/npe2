@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from pydantic import BaseModel
 from pydantic.fields import Field
 
-from .._types import LayerData
+from ..types import LayerData
 from .utils import Executable
 
 if TYPE_CHECKING:
