@@ -20,12 +20,12 @@ from typing import (
 )
 
 import pytomlpp as toml
-import semver
 import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
 
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
+from .utils import Version
 
 try:
     from importlib.metadata import Distribution, distributions
@@ -135,8 +135,8 @@ class PluginManifest(BaseModel):
 
     @root_validator
     def _check_engine_version(cls, values: dict) -> dict:
-        declared_version = semver.VersionInfo.parse(values.get("engine", ""))
-        current_version = semver.VersionInfo.parse(ENGINE_VERSION)
+        declared_version = Version.parse(values.get("engine", ""))
+        current_version = Version.parse(ENGINE_VERSION)
         if current_version < declared_version:
             raise ValueError(
                 dedent(

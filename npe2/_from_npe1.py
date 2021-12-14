@@ -65,9 +65,6 @@ for m in dir(HookSpecs):
         setattr(HookSpecs, m, napari_hook_specification(getattr(HookSpecs, m)))
 
 
-WidgetCallable = Union[Callable, Tuple[Callable, dict]]
-
-
 @dataclass
 class PluginPackage:
     package_name: str
@@ -143,7 +140,7 @@ def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> s
     msg = f"We tried hard! but could not detect a plugin named {plugin_name!r}."
     if plugin_manager.plugins:
         msg += f" Plugins found include: {list(plugin_manager.plugins)}"
-    raise PackageNotFoundError(msg)
+    raise metadata.PackageNotFoundError(msg)
 
 
 def manifest_from_npe1(
@@ -285,6 +282,7 @@ class HookImplParser:
                 warnings.warn(msg)
 
     def napari_experimental_provide_dock_widget(self, impl: HookImplementation):
+        WidgetCallable = Union[Callable, Tuple[Callable, dict]]
         items: Union[WidgetCallable, List[WidgetCallable]] = impl.function()
         if not isinstance(items, list):
             items = [items]  # pragma: no cover
