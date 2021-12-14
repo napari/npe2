@@ -163,7 +163,6 @@ class PluginManifest(BaseModel):
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
         invalid_commands = []
-        invalid_python_names = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
                 id_start_actual = command.id.split(".")[0]
