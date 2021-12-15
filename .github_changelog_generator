@@ -1,0 +1,9 @@
+# generate new changelog with
+# https://github.com/github-changelog-generator/github-changelog-generator
+# set `CHANGELOG_GITHUB_TOKEN` to github token then,
+# e.g. `github_changelog_generator --future-release v0.1.0`
+user=napari
+project=npe2
+issues=false
+exclude-labels=duplicate,question,invalid,wontfix,hide
+add-sections={"tests":{"prefix":"**Tests & CI:**","labels":["tests"]},"refactor":{"prefix":"**Refactors:**","labels":["refactor"]}}
