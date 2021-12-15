@@ -98,6 +98,15 @@ def plugin_packages() -> List[PluginPackage]:
     return packages
 
 
+def ensure_package_name(name: str):
+    """Try all the tricks we know to find a package name given a plugin name."""
+    for attr in ("package_name", "ep_name", "top_module"):
+        for p in plugin_packages():
+            if name == getattr(p, attr):
+                return p.package_name
+    raise KeyError(f"Unable to find a locally installed package for plugin {name!r}")
+
+
 @lru_cache()
 def npe1_plugin_manager() -> Tuple[PluginManager, Tuple[int, list]]:
     pm = PluginManager("napari", discover_entry_point=NPE1_EP)
@@ -159,16 +168,7 @@ def manifest_from_npe1(
     plugin_name = norm_plugin_name(plugin_name, module)
 
     _module = plugin_manager.plugins[plugin_name]
-    standard_meta = plugin_manager.get_standard_metadata(plugin_name)
-    package = standard_meta.get("package")
-    if not package:
-        if module is not None:
-            package = "dynamic"
-        else:
-            # NOTE: this is more of an assertion error, shouldn't happen.
-            raise ModuleNotFoundError(
-                f"Could not find package for plugin {plugin_name!r}"
-            )
+    package = ensure_package_name(plugin_name) if module is None else "dynamic"
 
     parser = HookImplParser(package, plugin_name)
     parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
@@ -414,8 +414,24 @@ def _camel_to_spaces(val):
     return _camel_to_spaces_pattern.sub(r" \1", val)
 
 
+def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
+    dist = metadata.distribution(package_name)
+    if not top_module:
+        top_mods = (dist.read_text("top_level.txt") or "").strip().splitlines()
+        if not top_mods:
+            raise ValueError(
+                "Could not detect a top level module in distribution metadata "
+                f"for {package_name}"
+            )
+        top_module = top_mods[0]
+
+    path = Path(dist.locate_file(top_module))
+    assert path.is_dir()
+    return path
+
+
 def convert_repository(
-    path: Union[Path, str], mf_name: str = "napari.yaml", _just_manifest=False
+    path: Union[Path, str], mf_name: str = "napari.yaml", dry_run=False
 ) -> Tuple[PluginManifest, Path]:
     """Convert repository at `path` to new npe2 style."""
     path = Path(path)
@@ -423,24 +439,19 @@ def convert_repository(
     # get the info we need and create a manifest
     info = get_package_dir_info(path)
     manifest = manifest_from_npe1(info.package_name)
-
-    if _just_manifest:
-        return manifest, Path()
-
-    # write the yaml to top_module/napari.yaml
-    yml = manifest.yaml()
-    top_module = path / info.top_module
+    top_module = get_top_module_path(info.package_name, info.top_module)
     if not top_module.is_dir():
         raise ValueError(
             f"Detection of top-level module failed. {top_module} is not a directory."
         )
-
     mf_path = top_module / mf_name
-    mf_path.write_text(yml)
+
+    if dry_run:
+        return manifest, mf_path
 
     # update the entry_points in setup.cfg/setup.py
     if info.setup_cfg:
-        _write_new_setup_cfg_ep(info, f"{info.top_module}:{mf_name}")
+        _write_new_setup_cfg_ep(info, mf_name)
     # or tell them to do it themselves in setup.py
     else:
         # tell them to do it manually
@@ -454,18 +465,27 @@ def convert_repository(
                "{info.package_name} = {info.top_module}:{mf_name}",
            ],
        }},
+       package_data={{"{info.top_module}": ["{mf_name}"]}},
 """
         )
 
+    # write the yaml to top_module/napari.yaml
+    mf_path.write_text(manifest.yaml())
     return manifest, mf_path
 
 
-def _write_new_setup_cfg_ep(info: PluginPackage, mf_path: str):
+def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
     assert info.setup_cfg
     p = ConfigParser(comment_prefixes="/", allow_no_value=True)  # preserve comments
     p.read(info.setup_cfg)
+    mf_path = f"{info.top_module}:{mf_name}"
     new_ep = f"\n{info.package_name} = {mf_path}"
+    if "options.entry_points" not in p.sections():
+        p.add_section("options.entry_points")
     p.set("options.entry_points", NPE2_EP, new_ep)
+    if "options.package_data" not in p.sections():
+        p.add_section("options.package_data")
+    p.set("options.package_data", info.top_module, mf_name)
     p.remove_option("options.entry_points", NPE1_EP)
     with open(info.setup_cfg, "w") as fh:
         p.write(fh)
@@ -524,7 +544,7 @@ class _SetupVisitor(ast.NodeVisitor):
         self._entry_points: List[List[str]] = []  # [[name, value], ...]
 
     def visit_Call(self, node: ast.Call) -> Any:
-        if getattr(node.func, "id" "") != "setup":
+        if getattr(node.func, "id", "") != "setup":
             return
         for kw in node.keywords:
             if kw.arg == "name":
