@@ -15,6 +15,7 @@
 
 **Tests & CI:**
 
+- add changelog generator config [\#65](https://github.com/napari/npe2/pull/65) ([tlambert03](https://github.com/tlambert03))
 - Test conversion for all plugins [\#52](https://github.com/napari/npe2/pull/52) ([tlambert03](https://github.com/tlambert03))
 
 **Refactors:**
