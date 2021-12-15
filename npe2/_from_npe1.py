@@ -414,8 +414,20 @@ def _camel_to_spaces(val):
     return _camel_to_spaces_pattern.sub(r" \1", val)
 
 
-def get_top_module_path(package_name) -> Path:
-    return metadata.distribution(package_name).locate_file("")  # type: ignore
+def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
+    dist = metadata.distribution(package_name)
+    if not top_module:
+        top_mods = (dist.read_text("top_level.txt") or "").strip().splitlines()
+        if not top_mods:
+            raise ValueError(
+                "Could not detect a top level module in distribution metadata "
+                f"for {package_name}"
+            )
+        top_module = top_mods[0]
+
+    path = Path(dist.locate_file(top_module))
+    assert path.is_dir()
+    return path
 
 
 def convert_repository(
@@ -427,7 +439,7 @@ def convert_repository(
     # get the info we need and create a manifest
     info = get_package_dir_info(path)
     manifest = manifest_from_npe1(info.package_name)
-    top_module = get_top_module_path(info.package_name)
+    top_module = get_top_module_path(info.package_name, info.top_module)
     if not top_module.is_dir():
         raise ValueError(
             f"Detection of top-level module failed. {top_module} is not a directory."
@@ -437,14 +449,9 @@ def convert_repository(
     if dry_run:
         return manifest, mf_path
 
-    # write the yaml to top_module/napari.yaml
-    yml = manifest.yaml()
-
-    mf_path.write_text(yml)
-
     # update the entry_points in setup.cfg/setup.py
     if info.setup_cfg:
-        _write_new_setup_cfg_ep(info, f"{info.top_module}:{mf_name}")
+        _write_new_setup_cfg_ep(info, mf_name)
     # or tell them to do it themselves in setup.py
     else:
         # tell them to do it manually
@@ -458,18 +465,27 @@ def convert_repository(
                "{info.package_name} = {info.top_module}:{mf_name}",
            ],
        }},
+       package_data={{"{info.top_module}": ["{mf_name}"]}},
 """
         )
 
+    # write the yaml to top_module/napari.yaml
+    mf_path.write_text(manifest.yaml())
     return manifest, mf_path
 
 
-def _write_new_setup_cfg_ep(info: PluginPackage, mf_path: str):
+def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
     assert info.setup_cfg
     p = ConfigParser(comment_prefixes="/", allow_no_value=True)  # preserve comments
     p.read(info.setup_cfg)
+    mf_path = f"{info.top_module}:{mf_name}"
     new_ep = f"\n{info.package_name} = {mf_path}"
+    if "options.entry_points" not in p.sections():
+        p.add_section("options.entry_points")
     p.set("options.entry_points", NPE2_EP, new_ep)
+    if "options.package_data" not in p.sections():
+        p.add_section("options.package_data")
+    p.set("options.package_data", info.top_module, mf_name)
     p.remove_option("options.entry_points", NPE1_EP)
     with open(info.setup_cfg, "w") as fh:
         p.write(fh)
