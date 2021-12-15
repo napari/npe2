@@ -419,7 +419,7 @@ def get_top_module_path(package_name) -> Path:
 
 
 def convert_repository(
-    path: Union[Path, str], mf_name: str = "napari.yaml", _just_manifest=False
+    path: Union[Path, str], mf_name: str = "napari.yaml", dry_run=False
 ) -> Tuple[PluginManifest, Path]:
     """Convert repository at `path` to new npe2 style."""
     path = Path(path)
@@ -427,20 +427,19 @@ def convert_repository(
     # get the info we need and create a manifest
     info = get_package_dir_info(path)
     manifest = manifest_from_npe1(info.package_name)
-
-    if _just_manifest:
-        return manifest, Path()
-
-    # write the yaml to top_module/napari.yaml
-    yml = manifest.yaml()
-
     top_module = get_top_module_path(info.package_name)
     if not top_module.is_dir():
         raise ValueError(
             f"Detection of top-level module failed. {top_module} is not a directory."
         )
-
     mf_path = top_module / mf_name
+
+    if dry_run:
+        return manifest, mf_path
+
+    # write the yaml to top_module/napari.yaml
+    yml = manifest.yaml()
+
     mf_path.write_text(yml)
 
     # update the entry_points in setup.cfg/setup.py

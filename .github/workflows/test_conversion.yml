@@ -70,10 +70,18 @@ jobs:
         run: pip install napari
 
       - name: Test Conversion again with napari
+        id: test-with-napari
         if: ${{ steps.test-without-napari.outcome == 'failure' }}
         uses: GabrielBB/xvfb-action@v1
         with:
           run: npe2 convert ./plugin_repo
+
+      - name: Test Conversion again with napari
+        if: ${{ steps.test-without-napari.outcome == 'failure' && steps.test-with-napari.outcome == 'failure' }}
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          # try without modifying directory
+          run: npe2 convert -n ${{ matrix.plugin }}
 
       # this won't work, we'd need to first fork the repo somewhere we have write permissions
       # then push changes that that repository, and then create a PR to the original repo
