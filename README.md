@@ -10,7 +10,7 @@ see also https://github.com/napari/napari/issues/3115
 Includes a command line tool `npe2` with the following commands:
 ```bash
 Commands:
-  convert   Convert existing plugin to new manifest.
+  convert   Convert existing plugin repository to npe2 format (create manifest, update setup.cfg)
   parse     Show parsed manifest as yaml
   validate  Validate manifest for a distribution name or manifest filepath.
 ```
@@ -18,8 +18,9 @@ Commands:
 examples:
 
 ```bash
-# create npe2 manifest from first-generation napari plugin
-npe2 convert your-plugin-package --out napari.yaml
+# convert current directory to an npe2-ready plugin
+# (note: the repo must also be installed and importable in the current environment)
+npe2 convert .
 ```
 
 ```bash
