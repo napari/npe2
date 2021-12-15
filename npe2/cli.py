@@ -51,8 +51,8 @@ def parse(name: str):
 def convert(
     path: Path = typer.Argument(
         ...,
-        help="Path of a repository to convert (package must still be installed in "
-        "current environment). Or, a name of an installed package/plugin. If a "
+        help="Path of a local repository to convert (package must also be installed in"
+        " current environment). Or, the name of an installed package/plugin. If a "
         "package is provided instead of a directory, the new manifest will simply be "
         "printed to stdout.",
     ),
