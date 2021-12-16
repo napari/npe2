@@ -20,35 +20,27 @@ if TYPE_CHECKING:
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
+EXAMPLE = PluginManifest.from_file(DOCS / "example_manfest.yaml")
 
-Example = PluginManifest.from_file(DOCS / "example_manfest.yaml")
-ExampleCommands = Example.contributions.commands  # type: ignore
 Contrib = namedtuple("Contrib", "name doc fields union_fields example")
 UnionField = namedtuple("UnionField", "doc fields")
 
 
-def _get_contributions(exclude={"menus", "submenus"}):
-    return [
-        Contrib(field.name, *_get_fields(field), _get_example(field))
-        for field in ContributionPoints.__fields__.values()
-        if field.name not in exclude
-    ]
-
-
-def _get_example(field: ModelField):
+def _extract_example(field: ModelField, example: PluginManifest = EXAMPLE):
     # present example for just this field
-    contribs = getattr(Example.contributions, field.name)
+    assert example.contributions
+    contribs = getattr(example.contributions, field.name)
     # only take the first command example ... the rest are for executables
     if field.name == "commands":
         contribs = [contribs[0]]
 
     ex = ContributionPoints(**{field.name: contribs})
     # for "executables", include associated command
+    ExampleCommands = example.contributions.commands
+    assert ExampleCommands
     for c in contribs or ():
         if isinstance(c, Executable):
-            associated_command = next(
-                i for i in ExampleCommands if i.id == c.command  # type: ignore
-            )
+            associated_command = next(i for i in ExampleCommands if i.id == c.command)
             if not ex.commands:
                 ex.commands = []
             ex.commands.append(associated_command)
@@ -88,16 +80,21 @@ def _common_base(*classes):
     return None
 
 
+def _get_contributions():
+    return [
+        Contrib(field.name, *_get_fields(field), _extract_example(field))
+        for field in ContributionPoints.__fields__.values()
+        if field.name not in getattr(ContributionPoints.__config__, "docs_exclude", {})
+    ]
+
+
 def main():
     env = Environment(loader=PackageLoader("docs"), autoescape=select_autoescape())
     _BUILD.mkdir(exist_ok=True, parents=True)
     suffix = ".md"
     for t in TEMPLATES.glob("*.jinja"):
         template = env.get_template(t.name)
-        context = {
-            "contributions": _get_contributions(),
-            "example": Example,
-        }
+        context = {"contributions": _get_contributions()}
         (_BUILD / f"{t.stem}{suffix}").write_text(template.render(context))
 
 

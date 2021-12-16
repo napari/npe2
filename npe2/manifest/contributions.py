@@ -28,3 +28,6 @@ class ContributionPoints(BaseModel):
 
     # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]
+
+    class Config:
+        docs_exclude = {"menus", "submenus"}
