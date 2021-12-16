@@ -11,11 +11,31 @@
 
 {{ contrib.doc }}
 
-### Fields
+### {%if contrib.union_fields %}Common {%endif%}Fields
 {% for field in contrib.fields%}
 - **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional: default={{field.get_default()}}).* {% endif %}
 {{- field.field_info.description -}}
 {% endfor %}
+
+{%if contrib.union_fields %}
+### Union Fields
+
+In addition to the common fields, {{contrib.name}} should also provide on of the following interfaces:
+
+{% for uf in contrib.union_fields%}
+
+<hr/>
+
+{{ uf.doc }}
+
+{% for field in uf.fields%}
+- **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional: default={{field.get_default()}}).* {% endif %}
+{{- field.field_info.description -}}
+{% endfor %}
+
+{% endfor %}
+<hr/>
+{% endif %}
 
 ### {{contrib.name.title()}} example
 

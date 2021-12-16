@@ -16,6 +16,9 @@ contributions:
     - id: my-plugin.do_threshold
       python_name: my_plugin._some_module:threshold
       title: Perform threshold on image, return new image
+    - id: my-plugin.data.fractal
+      title: Create fractal image
+      python_name: my_plugin._data:fractal
   readers:
     - command: my-plugin.read_xyz
       filename_patterns: ["*.xyz"]
@@ -45,3 +48,10 @@ contributions:
         text: "#a1ef34"
         warning: "#f92672"
         current: "#66d9ef"
+  sample_data:
+    - display_name: Fractal
+      key: fractal
+      command: my-plugin.data.fractal
+    - display_name: Tabueran Kiribati
+      key: napari
+      uri: https://en.wikipedia.org/wiki/Napari#/media/File:Tabuaeran_Kiribati.jpg
