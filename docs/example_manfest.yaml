@@ -1,0 +1,35 @@
+name: my-plugin
+display_name: My Plugin
+contributions:
+  commands:
+    - id: my-plugin.hello_world
+      title: Hello World
+    - id: my-plugin.read_xyz
+      title: Read ".xyz" files
+      python_name: my_plugin._some_module:get_xyz_reader
+    - id: my-plugin.write_points
+      python_name: my_plugin._some_module:write_points
+      title: Save points layer to csv
+  readers:
+    - command: my-plugin.read_xyz
+      filename_patterns: ["*.xyz"]
+      accepts_directories: false
+  writers:
+    - command: my-plugin.write_points
+      filename_extensions: [".csv"]
+      layer_types: ["points"]
+  themes:
+    - label: "Monokai"
+      id: "monokai"
+      type: "dark"
+      colors:
+        canvas: "#000000"
+        console: "#000000"
+        background: "#272822"
+        foreground: "#75715e"
+        primary: "#cfcfc2"
+        secondary: "#f8f8f2"
+        highlight: "#e6db74"
+        text: "#a1ef34"
+        warning: "#f92672"
+        current: "#66d9ef"

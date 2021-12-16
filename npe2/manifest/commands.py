@@ -18,44 +18,50 @@ _dotted_name = f"(({_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
 
 
 class CommandContribution(BaseModel):
-    """Contribute a command.
+    """Contribute a **command** (a python callable) consisting of a unique `id`,
+    a `title` and (optionally) a `python_path` that points to a fully qualified python
+    callable.  If a `python_path` is not included in the manifest, it *must* be
+    registered during activation with `register_command`.
 
-    Contribute the UI for a command consisting of a title and (optionally) an
-    icon, category, and enabled state. Enablement is expressed with when
-    clauses. By default, commands show in the Command Palette (⇧⌘P) but they
-    can also show in other menus.
+    ```{admonition} Plans
+    Command contributions will eventually include an **icon**, **category**, and
+    **enabled** state. Enablement is expressed with when clauses, that capture a
+    conditional expression determining whether the command should be enabled or not,
+    based on the current state of the program.  (i.e. "*If the active layer is a
+    `Labels` layer*")
+    ```
 
-    Presentation of contributed commands depends on the containing menu. The
-    Command Palette, for instance, prefixes commands with their category,
-    allowing for easy grouping. However, the Command Palette doesn't show icons
-    nor disabled commands. The editor context menu, on the other hand, shows
-    disabled items but doesn't show the category label.
-
-    Note: When a command is invoked (from a key binding, from the Command
-    Palette, any other menu, or programmatically), VS Code will emit an
-    activationEvent onCommand:${command}.
+    Commands will show in a the Command Palette (⇧⌘P) but they can also show in other
+    menus.
     """
 
     id: str = Field(
         ...,
         description=dedent(
-            """
-        Identifier of the command to execute.
-
-        While this may looks a python fully qualified name this does not refer
-        to a python object.
-        This identifier is specific to Napari, and will be considered unique.
-        It follow the same rule as Python fully qualified name, with the extra
-        restriction as being limited to ascii"""
+            "A unique identifier used to reference this command. While this may look "
+            "like a python fully qualified name this does *not* refer to a python "
+            "object; this identifier is specific to napari.  It must begin with "
+            "the name of the package, and include only alphanumeric characters, plus "
+            "dashes and underscores."
         ),
         regex=f"^(({_distname}\\.)*{_identifier})$",
     )
 
     title: str = Field(
         ...,
-        description="User facing title representing the command. Example: "
-        "'Apply gaussian blur' or 'Open my dock widget.",
+        description="User facing title representing the command. This might be used, "
+        "for example, when searching in a command palette. Examples: 'Generate lily "
+        "sample', 'Read tiff image', 'Open gaussian blur widget'. ",
     )
+    python_name: Optional[str] = Field(
+        None,
+        description="Fully qualified name to a callable python object "
+        "implementing this command. This usually takes the form of "
+        "`{obj.__module__}:{obj.__qualname__} (e.g. "
+        "`my_package.a_module:some_function`)",
+        regex=f"^{_dotted_name}:{_dotted_name}$",
+    )
+
     # short_title: Optional[str] = Field(
     #     None,
     #     description="Short title by which the command is "
@@ -81,15 +87,6 @@ class CommandContribution(BaseModel):
     #         "by other means, like the `executeCommand` api."
     #     ),
     # )
-    python_name: Optional[str] = Field(
-        None,
-        description="Fully qualified name to callable python object "
-        "implementing this command. This usually takes the form of "
-        "`{obj.__module__}:{obj.__qualname__} (e.g. "
-        "`my_package.a_module:some_function`). If provided, using `register_command` "
-        "in the plugin activate function is optional (but takes precedence).",
-        regex=f"^{_dotted_name}:{_dotted_name}$",
-    )
 
     class Config:
         extra = Extra.forbid

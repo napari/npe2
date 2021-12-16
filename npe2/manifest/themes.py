@@ -27,12 +27,40 @@ class ThemeColors(BaseModel):
     current: Optional[Color]
 
 
-class ThemeContribution(BaseModel):
-    """Theme docstring."""
+_color_keys = ", ".join([f"`{k}`" for k in ThemeColors.__fields__])
+_color_args = """
+    - name: `"Black"`, `"azure"`
+    - hexadecimal value: `"0x000"`, `"#FFFFFF"`, `"7fffd4"`
+    - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`
+    - RGB/RGBA strings: `"rgb(255, 255, 255)"`, `"rgba(255, 255, 255, 0.5)`"
+    - HSL strings: "`hsl(270, 60%, 70%)"`, `"hsl(270, 60%, 70%, .5)`"
+"""
 
-    label: str = Field(description="Label of the color theme as shown in the UI.")
-    id: str = Field(description="Id of the color theme as used in the user settings.")
-    type: Union[Literal["dark"], Literal["light"]] = Field(
-        description="Base theme type, used for icons and filling in unprovided colors"
+
+class ThemeContribution(BaseModel):
+    """Contribute a color theme to napari.
+
+    You must specify an **id**, **label**, whether the theme is a dark theme or a light
+    theme (such that the rest of napari changes to match your theme). Any color keys
+    omitted from the theme contribution will use the default napari dark/light theme
+    colors.
+    """
+
+    # TODO: do we need both id and label?
+    id: str = Field(
+        description="Identifier of the color theme as used in the user settings."
     )
-    colors: ThemeColors = Field(description="Theme colors")
+    label: str = Field(description="Label of the color theme as shown in the UI.")
+    type: Union[Literal["dark"], Literal["light"]] = Field(
+        description="Base theme type, used for icons and filling in unprovided colors. "
+        "Must be either `'dark'` or "
+    )
+    colors: ThemeColors = Field(
+        description=f"Theme colors. Valid keys include: {_color_keys}. "
+        f"Colors can be defined via:\n"
+        '   - name: `"Black"`, `"azure"`\n'
+        '   - hexadecimal value: `"0x000"`, `"#FFFFFF"`, `"7fffd4"`\n'
+        "   - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`\n"
+        '   - RGB/RGBA strings: `"rgb(255, 255, 255)"`, `"rgba(255, 255, 255, 0.5)`"\n'
+        '   - HSL strings: "`hsl(270, 60%, 70%)"`, `"hsl(270, 60%, 70%, .5)`"\n'
+    )

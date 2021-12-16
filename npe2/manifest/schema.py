@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import sys
 from contextlib import contextmanager
 from enum import Enum
@@ -8,20 +7,11 @@ from importlib import import_module, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Iterator,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
 
-import pytomlpp as toml
-import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator
 
+from ._bases import ImportExportMixin
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 from .utils import Version
@@ -54,7 +44,7 @@ class DiscoverResults(NamedTuple):
     error: Optional[Exception]
 
 
-class PluginManifest(BaseModel):
+class PluginManifest(BaseModel, ImportExportMixin):
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
@@ -169,14 +159,11 @@ class PluginManifest(BaseModel):
 
     def toml(self, pyproject=False) -> str:
         with engine_in_fields_set(self):
-            d = json.loads(self.json(exclude_unset=True))
-            if pyproject:
-                d = {"tool": {"napari": d}}
-            return toml.dumps(d)
+            return super().toml(pyproject=pyproject)
 
     def yaml(self) -> str:
         with engine_in_fields_set(self):
-            return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
+            return super().yaml()
 
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
@@ -234,28 +221,8 @@ class PluginManifest(BaseModel):
         ValueError
             If the file extension is not in {'.json', '.yaml', '.yml', '.toml'}
         """
-        path = Path(path).expanduser().absolute().resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
-
-        loader: Callable
-        if path.suffix.lower() == ".json":
-            loader = json.load
-        elif path.suffix.lower() == ".toml":
-            loader = toml.load
-        elif path.suffix.lower() in (".yaml", ".yml"):
-            loader = yaml.safe_load
-        else:
-            raise ValueError(f"unrecognized file extension: {path}")
-
-        with open(path) as f:
-            data = loader(f) or {}
-
-        if path.name == "pyproject.toml":
-            data = data["tool"]["napari"]
-
-        mf = cls(**data)
-        mf._manifest_file = path
+        mf = super().from_file(path=path)
+        mf._manifest_file = Path(path).expanduser().absolute().resolve()
         return mf
 
     class Config:

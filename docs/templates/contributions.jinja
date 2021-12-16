@@ -6,19 +6,18 @@
 - [`{{ contrib.name }}`](#contributes.{{ contrib.name }})
 {% endfor %}
 
-
-{% for contrib in contributions%}
+{%- for contrib in contributions%}
 ## `contributes.{{contrib.name}}`
 
 {{ contrib.doc }}
 
+### Fields
 {% for field in contrib.fields%}
 - **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional).* {% endif %}
-{{- field.field_info.description|replace("\n","  ") -}}
+{{- field.field_info.description -}}
 {% endfor %}
 
-
-### {{contrib.name}} example
+### {{contrib.name.title()}} example
 
 ```yaml
 {{contrib.example}}
