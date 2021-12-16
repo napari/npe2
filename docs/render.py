@@ -18,11 +18,11 @@ if TYPE_CHECKING:
     from pydantic.fields import ModelField
 
 DOCS = Path(__file__).parent
-Example = PluginManifest.from_file(DOCS / "example_manfest.yaml")
-ExampleCommands = Example.contributions.commands  # type: ignore
-
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
+
+Example = PluginManifest.from_file(DOCS / "example_manfest.yaml")
+ExampleCommands = Example.contributions.commands  # type: ignore
 Contrib = namedtuple("Contrib", "name doc fields union_fields example")
 UnionField = namedtuple("UnionField", "doc fields")
 
