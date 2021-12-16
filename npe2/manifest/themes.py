@@ -40,9 +40,10 @@ _color_args = """
 class ThemeContribution(BaseModel):
     """Contribute a color theme to napari.
 
-    You must specify an **id**, **label**, whether the theme is a dark theme or a light
-    theme (such that the rest of napari changes to match your theme). Any color keys
-    omitted from the theme contribution will use the default napari dark/light theme
+    You must specify an **id**, **label**, and whether the theme is a dark theme or a
+    light theme (such that the rest of napari changes to match your theme). Any color
+    keys omitted from the theme contribution will use the default napari dark/light
+    theme
     colors.
     """
 
