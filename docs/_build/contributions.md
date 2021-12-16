@@ -192,7 +192,7 @@ capable of reading that path/URI).
 
 ### Union Fields
 
-In addition to the common fields, sample_data should also provide on of the following interfaces:
+In addition to the common fields, `sample_data` should additional include one of the following interfaces:
 
 
 

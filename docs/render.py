@@ -69,7 +69,6 @@ def _get_fields(
             ]
             union_fields.append(UnionField(_model_doc(subf), fields))
         field_type = base
-        print("union_fields", union_fields)
 
     doc = _model_doc(field_type)
     fields = field_type.__fields__.values()
