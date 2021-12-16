@@ -18,13 +18,15 @@ ExampleCommands = Example.contributions.commands  # type: ignore
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
 
-
+EXCLUDE = {"menus", "submenus", "sample_data"}
 Contrib = namedtuple("Contrib", "name doc example, fields")
 contributions = []
 for name, v in ContributionPoints.__fields__.items():
-    doc = dedent("    " + (v.type_.__doc__ or ""))
-
+    if name in EXCLUDE:
+        continue
     field_type = v.type_
+    doc = dedent("    " + (field_type.__doc__ or ""))
+
     if typing.get_origin(field_type) == typing.Union:
         # TODO: iterate
         field_type = field_type.__args__[0]

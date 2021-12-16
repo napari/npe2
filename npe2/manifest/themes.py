@@ -56,8 +56,8 @@ class ThemeContribution(BaseModel):
         "Must be either `'dark'` or "
     )
     colors: ThemeColors = Field(
-        description=f"Theme colors. Valid keys include: {_color_keys}. "
-        f"Colors can be defined via:\n"
+        description=f"Theme colors. Valid keys include: {_color_keys}. All keys "
+        "are optional. Color values can be defined via:\n"
         '   - name: `"Black"`, `"azure"`\n'
         '   - hexadecimal value: `"0x000"`, `"#FFFFFF"`, `"7fffd4"`\n'
         "   - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`\n"

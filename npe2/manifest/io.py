@@ -153,7 +153,7 @@ class WriterContribution(BaseModel, Executable[List[str]]):
     Save Selected Layer(s)...` or `Save All Layers...`
 
 
-    See the [Writer Guide]() on how to create a reader contribution.
+    See the [Writer Guide]() on how to create a writer contribution.
     """
 
     command: str = Field(

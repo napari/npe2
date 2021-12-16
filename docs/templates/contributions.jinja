@@ -3,17 +3,17 @@
 **Contributions** are a set of static declarations that you make in the `contributions` field of the [Plugin Manifest](). Your extension registers **Contributions** to extend various functionalities within napari. Here is a list of all available **Contributions**:
 
 {% for contrib in contributions -%}
-- [`{{ contrib.name }}`](#contributes.{{ contrib.name }})
+- [`{{ contrib.name }}`](#contributions.{{ contrib.name }})
 {% endfor %}
 
 {%- for contrib in contributions%}
-## `contributes.{{contrib.name}}`
+## contributions.{{contrib.name}}
 
 {{ contrib.doc }}
 
 ### Fields
 {% for field in contrib.fields%}
-- **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional).* {% endif %}
+- **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional: default={{field.get_default()}}).* {% endif %}
 {{- field.field_info.description -}}
 {% endfor %}
 

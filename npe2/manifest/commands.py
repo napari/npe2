@@ -23,7 +23,7 @@ class CommandContribution(BaseModel):
     callable.  If a `python_path` is not included in the manifest, it *must* be
     registered during activation with `register_command`.
 
-    ```{admonition} Plans
+    ```{admonition} Future Plans
     Command contributions will eventually include an **icon**, **category**, and
     **enabled** state. Enablement is expressed with when clauses, that capture a
     conditional expression determining whether the command should be enabled or not,

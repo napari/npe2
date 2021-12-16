@@ -10,6 +10,12 @@ contributions:
     - id: my-plugin.write_points
       python_name: my_plugin._some_module:write_points
       title: Save points layer to csv
+    - id: my-plugin.animation_wizard
+      python_name: my_plugin._some_module:AnimationWizard
+      title: Open animation wizard
+    - id: my-plugin.do_threshold
+      python_name: my_plugin._some_module:threshold
+      title: Perform threshold on image, return new image
   readers:
     - command: my-plugin.read_xyz
       filename_patterns: ["*.xyz"]
@@ -18,6 +24,12 @@ contributions:
     - command: my-plugin.write_points
       filename_extensions: [".csv"]
       layer_types: ["points"]
+  widgets:
+    - command: my-plugin.animation_wizard
+      display_name: Wizard
+    - command: my-plugin.do_threshold
+      display_name: Threshold
+      autogenerate: true
   themes:
     - label: "Monokai"
       id: "monokai"
