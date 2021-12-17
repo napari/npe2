@@ -1,19 +1,16 @@
 # flake8: noqa
 from __future__ import annotations
 
-from functools import partial
-from typing import Any, Callable, Dict, Optional, Union
-
-PDisposable = Callable[[], None]
-import re
 from dataclasses import dataclass
+from functools import partial
 from importlib import import_module
+from typing import Any, Callable, Dict, Optional, Union
 
 from psygnal import Signal
 
-from .manifest.commands import _dotted_name
+from .manifest._validators import DOTTED_NAME_PATTERN
 
-_dotted_name_pattern = re.compile(_dotted_name)
+PDisposable = Callable[[], None]
 
 
 @dataclass
@@ -76,7 +73,7 @@ class CommandRegistry:
             raise ValueError(f"Command {id} already exists")
 
         if isinstance(command, str):
-            if not _dotted_name_pattern.match(command):
+            if not DOTTED_NAME_PATTERN.match(command):
                 raise ValueError(
                     "String command {command!r} is not a valid qualified python path."
                 )
