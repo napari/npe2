@@ -3,7 +3,7 @@ import itertools
 import re
 import sys
 import warnings
-from configparser import ConfigParser
+from configparser import ConfigParser, DuplicateSectionError
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -440,7 +440,7 @@ def convert_repository(
 
     # update the entry_points in setup.cfg/setup.py
     if info.setup_cfg:
-        _write_new_setup_cfg_ep(info, f"{info.top_module}:{mf_name}")
+        _write_new_setup_cfg_ep(info, info.top_module, mf_name)
     # or tell them to do it themselves in setup.py
     else:
         # tell them to do it manually
@@ -460,12 +460,17 @@ def convert_repository(
     return manifest, mf_path
 
 
-def _write_new_setup_cfg_ep(info: PluginPackage, mf_path: str):
+def _write_new_setup_cfg_ep(info: PluginPackage, top_module: str, mf_name: str):
     assert info.setup_cfg
     p = ConfigParser(comment_prefixes="/", allow_no_value=True)  # preserve comments
     p.read(info.setup_cfg)
-    new_ep = f"\n{info.package_name} = {mf_path}"
+    new_ep = f"\n{info.package_name} = {top_module}:{mf_name}"
     p.set("options.entry_points", NPE2_EP, new_ep)
+    try:
+        p.add_section("options.package_data")
+    except DuplicateSectionError:
+        pass
+    p.set("options.package_data", info.package_name, mf_name)
     p.remove_option("options.entry_points", NPE1_EP)
     with open(info.setup_cfg, "w") as fh:
         p.write(fh)
