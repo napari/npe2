@@ -173,8 +173,8 @@ class PluginManager:
             return ctx
 
         try:
-            if mf.activate_function:
-                _call_python_name(mf.activate_function, args=(ctx,))
+            if mf.on_activate:
+                _call_python_name(mf.on_activate, args=(ctx,))
                 ctx._activated = True
         except Exception as e:  # pragma: no cover
             self._contexts.pop(key, None)
@@ -192,8 +192,8 @@ class PluginManager:
             return
         mf = self._manifests[key]
         ctx = self._contexts.pop(key)
-        if mf.deactivate_function:
-            _call_python_name(mf.deactivate_function, args=(ctx,))
+        if mf.on_deactivate:
+            _call_python_name(mf.on_deactivate, args=(ctx,))
             ctx._activated = False
         ctx._dispose()
 

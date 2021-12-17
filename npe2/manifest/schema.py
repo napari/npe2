@@ -97,7 +97,7 @@ class PluginManifest(BaseModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    activate_function: Optional[str] = Field(
+    on_activate: Optional[str] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "upon plugin activation (e.g. my_plugin._some_module:activate). The activate "
@@ -105,16 +105,16 @@ class PluginManifest(BaseModel):
         "other side-effects. A plugin will be 'activated' when one of its "
         "contributions is requested by the user (such as a widget, or reader).",
     )
-    _validate_activate_func = validator("activate_function", allow_reuse=True)(
+    _validate_activate_func = validator("on_activate", allow_reuse=True)(
         _validators.python_name
     )
-    deactivate_function: Optional[str] = Field(
+    on_deactivate: Optional[str] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "when a user deactivates a plugin (e.g. my_plugin._some_module:deactivate). "
         "This is optional, but may be used to perform any plugin cleanup.",
     )
-    _validate_deactivate_func = validator("deactivate_function", allow_reuse=True)(
+    _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
         _validators.python_name
     )
 
