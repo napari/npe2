@@ -239,7 +239,7 @@ def test_valid_display_names(display_name, uses_sample_plugin):
 
 
 def test_display_name_default_is_valid():
-    PluginManifest(name="", entry_point="")
+    PluginManifest(name="")
 
 
 def test_writer_empty_layers():

@@ -1,22 +1,15 @@
-import re
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Extra, Field, validator
+
+from . import _validators
 
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
 
 _distname = "([a-zA-Z_][a-zA-Z0-9_-]+)"
 _identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
-_identifier_plus_dash = "([a-zA-Z_][a-zA-Z_0-9-]+)"
-
-# how do we deal with keywords ?
-# do we try to validate ? Or do we just
-# assume users won't try to create a command named
-# `npe2_tester.False.if.for.in` ?
-_dotted_name = f"(({_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
-_python_name_pattern = re.compile(f"^{_dotted_name}:{_dotted_name}$")
 
 
 class CommandContribution(BaseModel):
@@ -64,10 +57,10 @@ class CommandContribution(BaseModel):
         None,
         description="Fully qualified name to a callable python object "
         "implementing this command. This usually takes the form of "
-        "`{obj.__module__}:{obj.__qualname__} (e.g. "
-        "`my_package.a_module:some_function`)",
-        regex=f"^{_dotted_name}:{_dotted_name}$",
+        "`{obj.__module__}:{obj.__qualname__} "
+        "(e.g. `my_package.a_module:some_function`)",
     )
+    _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
     # short_title: Optional[str] = Field(
     #     None,
@@ -94,17 +87,6 @@ class CommandContribution(BaseModel):
     #         "by other means, like the `executeCommand` api."
     #     ),
     # )
-
-    @validator("python_name")
-    def validate_python_name(cls, v):
-        # test for regex validation.
-        if v and not _python_name_pattern.match(v):
-            raise ValueError(
-                f"{v} is not a valid python_name.  A python_name must "
-                "be of the form `{obj.__module__}:{obj.__qualname__} `(e.g. "
-                "`my_package.a_module:some_function`). "
-            )
-        return v
 
     class Config:
         extra = Extra.forbid

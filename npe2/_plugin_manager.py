@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     DefaultDict,
     Dict,
@@ -24,7 +25,7 @@ from typing import (
 from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
-from .manifest import PluginManifest
+from .manifest import PluginManifest, _validators
 from .manifest.io import LayerType
 
 if TYPE_CHECKING:
@@ -172,8 +173,9 @@ class PluginManager:
             return ctx
 
         try:
-            mf._call_func_in_plugin_entrypoint("activate", args=(ctx,))
-            ctx._activated = True
+            if mf.on_activate:
+                _call_python_name(mf.on_activate, args=(ctx,))
+                ctx._activated = True
         except Exception as e:  # pragma: no cover
             self._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}") from e
@@ -190,7 +192,9 @@ class PluginManager:
             return
         mf = self._manifests[key]
         ctx = self._contexts.pop(key)
-        mf._call_func_in_plugin_entrypoint("deactivate", args=(ctx,))
+        if mf.on_deactivate:
+            _call_python_name(mf.on_deactivate, args=(ctx,))
+            ctx._activated = False
         ctx._dispose()
 
     def iter_compatible_readers(
@@ -353,3 +357,22 @@ class PluginContext:
             return command
 
         return _inner if command is None else _inner(command)
+
+
+def _call_python_name(python_name: str, args=()) -> Any:
+    """convenience to call `python_name` function. eg `module.submodule:funcname`."""
+    from importlib import import_module
+
+    if not python_name:
+        return None
+
+    match = _validators.PYTHON_NAME_PATTERN.match(python_name)
+    if not match:
+        raise ValueError(f"Invalid python name: {python_name}")
+
+    module_name, funcname = match.groups()
+
+    mod = import_module(module_name)
+    func = getattr(mod, funcname, None)
+    if callable(func):
+        return func(*args)
