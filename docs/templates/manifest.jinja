@@ -1,0 +1,15 @@
+# Plugin Manifest
+
+Every napari plugin needs to ship a manifest file with their package. By
+convention, this file is called `napari.yaml` and it is placed in the top level
+module of the package, but it can be named anything and placed anywhere.
+
+You tell napari where to find your manifest by adding a `napari.manifest` [entry
+point](https://packaging.python.org/en/latest/specifications/entry-points/) to
+your package metadata:
+
+```ini
+[options.entry_points]
+napari.manifest =
+    my-plugin = my_plugin:napari.yaml
+```

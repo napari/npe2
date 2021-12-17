@@ -1,18 +1,25 @@
 # Contributions
 
-**Contributions** are a set of static declarations that you make in the `contributions` field of the [Plugin Manifest](). Your extension registers **Contributions** to extend various functionalities within napari. Here is a list of all available **Contributions**:
+**Contributions** are a set of static declarations that you make in the
+`contributions` field of the [Plugin Manifest](). Your extension registers
+**Contributions** to extend various functionalities within napari.
+Here is a list of all available **Contributions**:
 
 {% for contrib in contributions -%}
-- [`{{ contrib.name }}`](#contributions.{{ contrib.name }})
+  - [`{{ contrib.name }}`](#contributions.{{ contrib.name }})
 {% endfor %}
 
-{%- for contrib in contributions%}
+You may add as many contributions as you'd like to a single manifest. For
+clarity, the following examples include only the specific contribution that
+is being discussed.
+
+{%- for contrib in contributions %}
 ## contributions.{{contrib.name}}
 
 {{ contrib.doc }}
 
 ### {%if contrib.union_fields %}Common {%endif%}Fields
-{% for field in contrib.fields%}
+{% for field in contrib.fields %}
 - **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional: default={{field.get_default()}}).* {% endif %}
 {{- field.field_info.description -}}
 {% endfor %}
@@ -20,27 +27,21 @@
 {%if contrib.union_fields %}
 ### Union Fields
 
-In addition to the common fields, `{{contrib.name}}` should additional include one of the following interfaces:
-
-{% for uf in contrib.union_fields%}
-
+In addition to the common fields, `{{contrib.name}}` should additionally
+include one of the following interfaces:
+{% for uf in contrib.union_fields %}
 <hr/>
-
 {{ uf.doc }}
-
 {% for field in uf.fields%}
 - **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional: default={{field.get_default()}}).* {% endif %}
 {{- field.field_info.description -}}
 {% endfor %}
-
 {% endfor %}
 <hr/>
 {% endif %}
-
-### {{contrib.name.title()}} example
+### `{{contrib.name}}` example
 
 ```yaml
 {{contrib.example}}
 ```
-
 {% endfor %}
