@@ -5,7 +5,7 @@ import re
 import sys
 from contextlib import contextmanager
 from enum import Enum
-from importlib import import_module, util
+from importlib import util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
@@ -23,6 +23,7 @@ import pytomlpp as toml
 import yaml
 from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
 
+from . import _validators
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 from .utils import Version
@@ -96,16 +97,25 @@ class PluginManifest(BaseModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    # TODO: refactor entry_point to binding points for activate,deactivate
-    # TODO: Point to activate function
-    # TODO: Point to deactivate function
-
-    # The module that has the activate() function
-    entry_point: Optional[str] = Field(
+    on_activate: Optional[str] = Field(
         default=None,
-        description="The extension entry point. This should be a fully "
-        "qualified module string. e.g. `foo.bar.baz` for a module containing "
-        "the plugin's activate() function.",
+        description="Fully qualified python path to a function that will be called "
+        "upon plugin activation (e.g. my_plugin._some_module:activate). The activate "
+        "function can be used to connect command ids to python callables, or perform "
+        "other side-effects. A plugin will be 'activated' when one of its "
+        "contributions is requested by the user (such as a widget, or reader).",
+    )
+    _validate_activate_func = validator("on_activate", allow_reuse=True)(
+        _validators.python_name
+    )
+    on_deactivate: Optional[str] = Field(
+        default=None,
+        description="Fully qualified python path to a function that will be called "
+        "when a user deactivates a plugin (e.g. my_plugin._some_module:deactivate). "
+        "This is optional, and may be used to perform any plugin cleanup.",
+    )
+    _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
+        _validators.python_name
     )
 
     contributions: Optional[ContributionPoints]
@@ -268,15 +278,6 @@ class PluginManifest(BaseModel):
         use_enum_values = True  # only needed for SPDX
         underscore_attrs_are_private = True
         extra = Extra.forbid
-
-    def _call_func_in_plugin_entrypoint(self, funcname: str, args=()) -> None:
-        """convenience to call a function in the plugins entry_point, if declared."""
-        if not self.entry_point:
-            return None
-        mod = import_module(self.entry_point)
-        func = getattr(mod, funcname, None)
-        if callable(func):
-            return func(*args)
 
     @classmethod
     def discover(

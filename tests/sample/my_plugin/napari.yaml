@@ -1,6 +1,6 @@
 name: my_plugin
 display_name: My Plugin
-entry_point: my_plugin
+on_activate: my_plugin:activate
 contributions:
   commands:
     - id: my_plugin.hello_world
