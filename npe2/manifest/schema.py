@@ -117,7 +117,7 @@ class PluginManifest(BaseModel):
         default=None,
         description="Fully qualified python path to a function that will be called "
         "when a user deactivates a plugin (e.g. my_plugin._some_module:deactivate). "
-        "This is optional, but may be used to perform any plugin cleanup.",
+        "This is optional, and may be used to perform any plugin cleanup.",
     )
     _validate_deactivate_func = validator("deactivate_function", allow_reuse=True)(
         _validators.python_name
