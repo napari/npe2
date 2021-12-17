@@ -28,9 +28,9 @@ from .package_metadata import PackageMetadata
 from .utils import Version
 
 try:
-    from importlib.metadata import Distribution, distributions
+    from importlib import metadata
 except ImportError:
-    from importlib_metadata import Distribution, distributions  # type: ignore
+    import importlib_metadata as metadata  # type: ignore
 
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
@@ -213,9 +213,7 @@ class PluginManifest(BaseModel):
         ValidationError
             If the manifest is not valid
         """
-        from importlib.metadata import distribution
-
-        dist = distribution(name)  # may raise PackageNotFoundError
+        dist = metadata.distribution(name)  # may raise PackageNotFoundError
         for ep in dist.entry_points:
             if ep.group == ENTRY_POINT:
                 return PluginManifest._from_entrypoint(ep, dist)
@@ -246,7 +244,7 @@ class PluginManifest(BaseModel):
         """
         path = Path(path).expanduser().absolute().resolve()
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
+            raise FileNotFoundError(f"File not found: {path}")  # pragma: no cover
 
         loader: Callable
         if path.suffix.lower() == ".json":
@@ -256,7 +254,7 @@ class PluginManifest(BaseModel):
         elif path.suffix.lower() in (".yaml", ".yml"):
             loader = yaml.safe_load
         else:
-            raise ValueError(f"unrecognized file extension: {path}")
+            raise ValueError(f"unrecognized file extension: {path}")  # pragma: no cover
 
         with open(path) as f:
             data = loader(f) or {}
@@ -314,7 +312,7 @@ class PluginManifest(BaseModel):
             3-tuples with either manifest or (entrypoint and error) being None.
         """
         with _temporary_path_additions(paths):
-            for dist in distributions():
+            for dist in metadata.distributions():
                 for ep in dist.entry_points:
                     if ep.group != entry_point_group:
                         continue
@@ -333,14 +331,16 @@ class PluginManifest(BaseModel):
 
     @classmethod
     def _from_entrypoint(
-        cls, entry_point: EntryPoint, distribution: Optional[Distribution] = None
+        cls,
+        entry_point: EntryPoint,
+        distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
         match = entry_point.pattern.match(entry_point.value)  # type: ignore
         module = match.group("module")
 
         spec = util.find_spec(module or "")
-        if not spec:
+        if not spec:  # pragma: no cover
             raise ValueError(
                 f"Cannot find module {module!r} declared in "
                 f"entrypoint: {entry_point.value!r}"
@@ -360,7 +360,9 @@ class PluginManifest(BaseModel):
                     assert mf.name == meta.name, "Manifest name must match package name"
                     return mf
 
-        raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
+        raise FileNotFoundError(  # pragma: no cover
+            f"Could not find file {fname!r} in module {module!r}"
+        )
 
     @classmethod
     def _from_package_or_name(

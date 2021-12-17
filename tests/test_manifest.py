@@ -3,6 +3,11 @@ import pytest
 from npe2 import PluginManifest
 from npe2.manifest.package_metadata import PackageMetadata
 
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata  # type: ignore
+
 
 def test_sample_plugin_valid(sample_manifest):
     assert sample_manifest
@@ -62,9 +67,27 @@ def test_all_package_meta():
         assert PackageMetadata.from_dist_metadata(d.metadata)
 
 
-@pytest.mark.parametrize("format", ["toml", "json", "yaml"])
+@pytest.mark.parametrize("format", ["toml", "json", "yaml", "pyproject"])
 def test_export_round_trip(sample_manifest, tmp_path, format):
     """Test that an exported manifest can be round-tripped."""
-    out_file = tmp_path / f"napari.{format}"
-    out_file.write_text(getattr(sample_manifest, format)())
+    if format == "pyproject":
+        out_file = tmp_path / "pyproject.toml"
+        out_file.write_text(sample_manifest.toml(pyproject=True))
+    else:
+        out_file = tmp_path / f"napari.{format}"
+        out_file.write_text(getattr(sample_manifest, format)())
     assert sample_manifest == PluginManifest.from_file(out_file)
+
+
+def test_from_distribution(uses_sample_plugin):
+    mf = PluginManifest.from_distribution("my_plugin")
+    assert mf.name == "my_plugin"
+    assert mf.package_metadata == PackageMetadata.for_package("my_plugin")
+
+    with pytest.raises(metadata.PackageNotFoundError):
+        _ = PluginManifest.from_distribution("not-an-installed-package")
+
+    with pytest.raises(ValueError) as e:
+        # valid package, but doesn't have a manifest
+        _ = PluginManifest.from_distribution("pytest")
+    assert "exists but does not provide a napari manifest" in str(e.value)
