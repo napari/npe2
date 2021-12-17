@@ -40,13 +40,9 @@ SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
 
 logger = getLogger(__name__)
 
-ENTRY_POINT = "napari.manifest"
 
-# The first release of npe2 defines the first engine version: 0.1.0.
-# As the contract around plugins evolve the ENGINE_NUMBER should be
-# increased follow SemVer rules. Note that sometimes the version number
-# will change even though no npe2 code changes.
-ENGINE_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.1.0"
+ENTRY_POINT = "napari.manifest"
 _display_name_pattern = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
 
 
@@ -80,20 +76,19 @@ class PluginManifest(BaseModel):
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
     # around python packaging, command api's, etc. Together these form a
-    # "contract". The version of this contract is the "engine version."
+    # "contract". The version of this contract is the "schema version."
     #
-    # The first release of npe2 defines the first engine version.
-    # As the contract around plugins evolve the ENGINE_NUMBER should be
+    # The first release of npe2 defines the first schema version.
+    # As the contract around plugins evolve the SCHEMA_VERSION should be
     # increased follow SemVer rules. Note that sometimes the version number
     # will change even though no npe2 code changes.
     #
-    # The `engine` field declares the version of the contract that this plugin
-    # targets. Since there is no other version at the moment, it defaults to
-    # the current npe2 engine version.
-    engine: str = Field(
-        ENGINE_VERSION,
-        description="A SemVer compatible version string matching the versions "
-        "of the plugin engine that the extension is compatible with.",
+    # The `schema_version` field declares the version of the contract that this
+    # plugin targets.
+    schema_version: str = Field(
+        SCHEMA_VERSION,
+        description="A SemVer compatible version string matching the napari plugin "
+        "schema version that the plugin is compatible with.",
     )
 
     # TODO:
@@ -134,20 +129,6 @@ class PluginManifest(BaseModel):
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
 
-    @root_validator
-    def _check_engine_version(cls, values: dict) -> dict:
-        declared_version = Version.parse(values.get("engine", ""))
-        current_version = Version.parse(ENGINE_VERSION)
-        if current_version < declared_version:
-            raise ValueError(
-                dedent(
-                    f"The declared engine version {declared_version} is "
-                    "newer than npe2 engine {current_version}. You may need to "
-                    "upgrade npe2."
-                )
-            )
-        return values
-
     @validator("display_name")
     def validate_display_name(cls, v):
         if not _display_name_pattern.match(v):
@@ -161,6 +142,18 @@ class PluginManifest(BaseModel):
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
+        # validate schema version
+        declared_version = Version.parse(values.get("schema_version", ""))
+        current_version = Version.parse(SCHEMA_VERSION)
+        if current_version < declared_version:
+            raise ValueError(
+                dedent(
+                    f"The declared schema version {declared_version} is "
+                    f"newer than npe2's schema version: {current_version}. You may "
+                    "need to upgrade npe2."
+                )
+            )
+
         invalid_commands = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
@@ -181,14 +174,14 @@ class PluginManifest(BaseModel):
         return values
 
     def toml(self, pyproject=False) -> str:
-        with engine_in_fields_set(self):
+        with _schema_version_in_fields_set(self):
             d = json.loads(self.json(exclude_unset=True))
             if pyproject:
                 d = {"tool": {"napari": d}}
             return toml.dumps(d)
 
     def yaml(self) -> str:
-        with engine_in_fields_set(self):
+        with _schema_version_in_fields_set(self):
             return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
 
     @classmethod
@@ -325,7 +318,7 @@ class PluginManifest(BaseModel):
         DiscoverResults: (3 namedtuples: manifest, entrypoint, error)
             3-tuples with either manifest or (entrypoint and error) being None.
         """
-        with temporary_path_additions(paths):
+        with _temporary_path_additions(paths):
             for dist in distributions():
                 for ep in dist.entry_points:
                     if ep.group != entry_point_group:
@@ -423,7 +416,7 @@ class PluginManifest(BaseModel):
 
 
 @contextmanager
-def temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
+def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     for p in reversed(paths):
         sys.path.insert(0, str(p))
     try:
@@ -434,14 +427,14 @@ def temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
 
 
 @contextmanager
-def engine_in_fields_set(manifest: PluginManifest):
-    was_there = "engine" in manifest.__fields_set__
-    manifest.__fields_set__.add("engine")
+def _schema_version_in_fields_set(manifest: PluginManifest):
+    was_there = "schema_version" in manifest.__fields_set__
+    manifest.__fields_set__.add("schema_version")
     try:
         yield
     finally:
         if not was_there:
-            manifest.__fields_set__.discard("engine")
+            manifest.__fields_set__.discard("schema_version")
 
 
 if __name__ == "__main__":
