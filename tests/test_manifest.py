@@ -1,16 +1,17 @@
+import pytest
+
 from npe2 import PluginManifest
 from npe2.manifest.package_metadata import PackageMetadata
 
 
-def test_sample_plugin_valid(sample_path):
-    assert PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
+def test_sample_plugin_valid(sample_manifest):
+    assert sample_manifest
 
 
 def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path to be discovered
-    manifests = [
-        result.manifest.name for result in PluginManifest.discover() if result.manifest
-    ]
+    results = PluginManifest.discover()
+    manifests = [result.manifest.name for result in results if result.manifest]
     assert "my_plugin" not in manifests
 
 
@@ -61,21 +62,9 @@ def test_all_package_meta():
         assert PackageMetadata.from_dist_metadata(d.metadata)
 
 
-def test_toml_round_trip(sample_path, tmp_path):
-    pm = PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
-
-    toml_file = tmp_path / "napari.toml"
-    toml_file.write_text(pm.toml())
-
-    pm2 = PluginManifest.from_file(toml_file)
-    assert pm == pm2
-
-
-def test_json_round_trip(sample_path, tmp_path):
-    pm = PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
-
-    json_file = tmp_path / "napari.json"
-    json_file.write_text(pm.json())
-
-    pm2 = PluginManifest.from_file(json_file)
-    assert pm == pm2
+@pytest.mark.parametrize("format", ["toml", "json", "yaml"])
+def test_export_round_trip(sample_manifest, tmp_path, format):
+    """Test that an exported manifest can be round-tripped."""
+    out_file = tmp_path / f"napari.{format}"
+    out_file.write_text(getattr(sample_manifest, format)())
+    assert sample_manifest == PluginManifest.from_file(out_file)

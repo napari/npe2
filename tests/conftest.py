@@ -13,6 +13,11 @@ def sample_path():
 
 
 @pytest.fixture
+def sample_manifest(sample_path):
+    return PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
+
+
+@pytest.fixture
 def uses_sample_plugin(sample_path):
     sys.path.append(str(sample_path))
     pm = PluginManager.instance()
