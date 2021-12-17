@@ -139,3 +139,11 @@ class Version:
 
     def __iter__(self):
         yield from self.to_tuple()
+
+    def __str__(self) -> str:
+        v = f"{self.major}.{self.minor}.{self.patch}"
+        if self.prerelease:
+            v += str(self.prerelease)
+        if self.build:
+            v += str(self.build)
+        return v

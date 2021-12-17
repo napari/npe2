@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import sys
 from contextlib import contextmanager
 from enum import Enum
@@ -44,7 +43,6 @@ logger = getLogger(__name__)
 
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
-_display_name_pattern = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
 
 
 class DiscoverResults(NamedTuple):
@@ -65,6 +63,9 @@ class PluginManifest(BaseModel):
         description="The name of the plugin. Should correspond to the python "
         "package name for this plugin.",
     )
+    _validate_name = validator("name", pre=True, allow_reuse=True)(
+        _validators.package_name
+    )
 
     display_name: str = Field(
         "",
@@ -72,6 +73,9 @@ class PluginManifest(BaseModel):
         # Must be 3-40 characters long, containing printable word characters,
         # and must not begin or end with an underscore, white space, or
         # non-word character.
+    )
+    _validate_display_name = validator("display_name", allow_reuse=True)(
+        _validators.display_name
     )
 
     # Plugins rely on certain guarantees to interoperate propertly with the
@@ -128,7 +132,7 @@ class PluginManifest(BaseModel):
         return self.package_metadata.license if self.package_metadata else None
 
     @property
-    def version(self) -> Optional[str]:
+    def package_version(self) -> Optional[str]:
         return self.package_metadata.version if self.package_metadata else None
 
     @property
@@ -139,17 +143,6 @@ class PluginManifest(BaseModel):
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
 
-    @validator("display_name")
-    def validate_display_name(cls, v):
-        if not _display_name_pattern.match(v):
-            raise ValueError(
-                f"{v} is not a valid display_name.  The display_name must "
-                "be 3-40 characters long, containing printable word characters, "
-                "and must not begin or end with an underscore, white space, or "
-                "non-word character."
-            )
-        return v
-
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
         # validate schema version
@@ -158,23 +151,24 @@ class PluginManifest(BaseModel):
         if current_version < declared_version:
             raise ValueError(
                 dedent(
-                    f"The declared schema version {declared_version} is "
-                    f"newer than npe2's schema version: {current_version}. You may "
+                    f"The declared schema version '{declared_version}' is "
+                    f"newer than npe2's schema version: '{current_version}'. You may "
                     "need to upgrade npe2."
                 )
             )
 
+        mf_name = values.get("name")
         invalid_commands = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
                 id_start_actual = command.id.split(".")[0]
-                if values["name"] != id_start_actual:
+                if mf_name != id_start_actual:
                     invalid_commands.append(command.id)
 
         if invalid_commands:
             raise ValueError(
                 dedent(
-                    f"""Commands identifiers must start with the current package name {values['name']!r}
+                    f"""Commands identifiers must start with the current package name {mf_name!r}
             the following commands where found to break this assumption:
                 {invalid_commands}
             """
