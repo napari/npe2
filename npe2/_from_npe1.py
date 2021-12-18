@@ -188,7 +188,7 @@ class HookImplParser:
         for caller in callers:
             for impl in caller.get_hookimpls():
                 if self.plugin_name and impl.plugin_name != self.plugin_name:
-                    continue
+                    continue  # pragma: no cover
                 # call the corresponding hookimpl parser
                 try:
                     getattr(self, impl.specname)(impl)
