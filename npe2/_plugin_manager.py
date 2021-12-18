@@ -120,14 +120,15 @@ class PluginManager:
         self._manifests.clear()
 
         for result in PluginManifest.discover(paths=paths):
-            if result.manifest is None:
-                continue
-            mf = result.manifest
-            if mf.name in self._manifests:
-                continue
-            self._manifests[mf.name] = mf
-            if mf.contributions:
-                self._contrib.index_contributions(mf.contributions, mf.name)
+            if result.manifest and result.manifest.name not in self._manifests:
+                self.register(result.manifest)
+
+    def register(self, manifest: PluginManifest) -> None:
+        if manifest.name in self._manifests:
+            raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
+        self._manifests[manifest.name] = manifest
+        if manifest.contributions:
+            self._contrib.index_contributions(manifest.contributions, manifest.name)
 
     def get_manifest(self, key: str) -> PluginManifest:
         key = str(key).split(".")[0]

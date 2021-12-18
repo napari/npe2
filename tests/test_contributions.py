@@ -1,8 +1,10 @@
 import json
+from unittest.mock import MagicMock
 
 import pytest
 
 from npe2 import PluginManager, PluginManifest
+from npe2.manifest.commands import CommandContribution
 
 
 def test_writer_empty_layers():
@@ -80,3 +82,19 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)
+
+
+def test_command_exec():
+    """Test CommandContribution.exec()"""
+    pm = PluginManager.instance()
+    try:
+        cmd_id = "pkg.some_id"
+        cmd = CommandContribution(id=cmd_id, title="a title")
+        mf = PluginManifest(name="pkg", contributions={"commands": [cmd]})
+        pm.register(mf)
+        some_func = MagicMock()
+        pm._command_registry.register(cmd_id, some_func)
+        cmd.exec(args=("hi!",))
+        some_func.assert_called_once_with("hi!")
+    finally:
+        pm.__instance = None
