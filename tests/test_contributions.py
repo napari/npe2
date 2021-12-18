@@ -79,6 +79,7 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     # ignoring types because .command and .uri come from different sample provider
     # types... they don't both have "command" or "uri"
     assert ctrbA.command == "my_plugin.generate_random_data"
+    assert ctrbA.plugin_name == "my_plugin"
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)

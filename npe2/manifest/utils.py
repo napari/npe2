@@ -142,8 +142,8 @@ class Version:
 
     def __str__(self) -> str:
         v = f"{self.major}.{self.minor}.{self.patch}"
-        if self.prerelease:
+        if self.prerelease:  # pragma: no cover
             v += str(self.prerelease)
-        if self.build:
+        if self.build:  # pragma: no cover
             v += str(self.build)
         return v
