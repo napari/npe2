@@ -50,6 +50,7 @@ def test_cli_convert_repo_dry_run(npe1_repo, mock_npe1_pm_with_plugin):
     assert "# Manifest would be written to" in result.stdout
 
 
+@pytest.mark.filterwarnings("ignore:The distutils package is deprecated")
 @pytest.mark.filterwarnings("default:Failed to convert napari_get_writer")
 def test_cli_convert_svg():
     result = runner.invoke(app, ["convert", "napari-svg"])
