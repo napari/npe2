@@ -18,7 +18,7 @@ except ImportError:
 NPE1_REPO = Path(__file__).parent / "npe1-plugin"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def npe1_plugin_module():
     import sys
     from importlib.util import module_from_spec, spec_from_file_location
@@ -35,7 +35,7 @@ def npe1_plugin_module():
         del sys.modules[spec.name]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def mock_npe1_pm():
     from napari_plugin_engine import PluginManager
 
@@ -46,7 +46,7 @@ def mock_npe1_pm():
         yield pm
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def mock_npe1_pm_with_plugin(mock_npe1_pm):
     """Mocks a fully installed local repository"""
     from npe2._from_npe1 import metadata, plugin_packages
@@ -77,7 +77,7 @@ def mock_npe1_pm_with_plugin(mock_npe1_pm):
             setup_cfg.write_text(cfg)
             if new_manifest.exists():
                 new_manifest.unlink()
-            if (NPE1_REPO / "setup.py").exists:
+            if (NPE1_REPO / "setup.py").exists():
                 (NPE1_REPO / "setup.py").unlink()
 
 
