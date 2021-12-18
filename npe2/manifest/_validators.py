@@ -25,11 +25,19 @@ def package_name(name: str) -> str:
 def python_name(name: str) -> str:
     """Assert that `name` is a valid python name: e.g. `module.submodule:funcname`"""
     if name and not PYTHON_NAME_PATTERN.match(name):
-        raise ValueError(
+        msg = (
             f"{name!r} is not a valid python_name.  A python_name must "
             "be of the form '{obj.__module__}:{obj.__qualname__}' (e.g. "
-            "'my_package.a_module:some_function'). "
+            "'my_package.a_module:some_function')."
         )
+        if ".<locals>." in name:
+            a, b = name.split(".<locals>.")
+            a = a.split(":")[-1]
+            msg += (
+                " Note: functions defined in local scopes are not yet supported. "
+                f"Please move function {b!r} to the global scope of module {a!r}"
+            )
+        raise ValueError(msg)
     return name
 
 

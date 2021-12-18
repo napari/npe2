@@ -10,14 +10,14 @@ from npe2 import PluginManifest
 app = typer.Typer()
 
 
-def _pprint_yaml(string):
+def _pprint_yaml(string):  # pragma: no cover
     """Print yaml nicely, depending on available modules."""
     try:
         from rich.console import Console
         from rich.syntax import Syntax
 
         Console().print(Syntax(string, "yaml", theme="fruity"))
-    except Exception:
+    except ImportError:
         typer.echo(string)
 
 
