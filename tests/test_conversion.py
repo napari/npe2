@@ -8,6 +8,7 @@ except ImportError:
     from importlib_metadata import PackageNotFoundError  # type: ignore
 
 
+@pytest.mark.filterwarnings("ignore:the imp module is deprecated")
 @pytest.mark.filterwarnings("ignore:Failed to convert napari_get_writer")
 @pytest.mark.parametrize("package", ["svg", "napari-animation"])
 def test_conversion(package):

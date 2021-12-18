@@ -103,18 +103,16 @@ def mock_npe1_pm_with_plugin(npe1_repo, mock_npe1_pm, npe1_plugin_module):
 
     setup_cfg = npe1_repo / "setup.cfg"
     new_manifest = npe1_repo / "npe1_module" / "napari.yaml"
-    with (
-        patch.object(metadata, "distributions", new=_dists),
-        patch.object(metadata.Distribution, "from_name", new=_from_name),
-    ):
-        cfg = setup_cfg.read_text()
-        plugin_packages.cache_clear()
-        try:
-            yield mock_npe1_pm
-        finally:
+    with patch.object(metadata, "distributions", new=_dists):
+        with patch.object(metadata.Distribution, "from_name", new=_from_name):
+            cfg = setup_cfg.read_text()
             plugin_packages.cache_clear()
-            setup_cfg.write_text(cfg)
-            if new_manifest.exists():
-                new_manifest.unlink()
-            if (npe1_repo / "setup.py").exists():
-                (npe1_repo / "setup.py").unlink()
+            try:
+                yield mock_npe1_pm
+            finally:
+                plugin_packages.cache_clear()
+                setup_cfg.write_text(cfg)
+                if new_manifest.exists():
+                    new_manifest.unlink()
+                if (npe1_repo / "setup.py").exists():
+                    (npe1_repo / "setup.py").unlink()
