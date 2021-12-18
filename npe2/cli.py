@@ -80,7 +80,8 @@ def convert(
                     fg=typer.colors.MAGENTA,
                     bold=False,
                 )
-            print()
+            typer.echo()
+
     except Exception as e:
         msg = f"Conversion failed:\n{type(e).__name__}: {e}"
         typer.secho(msg, fg=typer.colors.RED, bold=True)

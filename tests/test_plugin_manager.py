@@ -65,6 +65,10 @@ def test_command_reg_register():
         # already registered
         reg.register("some.id", "this.is.a_valid_python_name")
 
+    with pytest.raises(KeyError) as e:
+        reg.get("not.a.command")
+    assert "command 'not.a.command' not registered" in str(e.value)
+
 
 def test_command_reg_get():
     def f(x, y):
