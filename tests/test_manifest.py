@@ -1,4 +1,8 @@
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
+from pydantic import ValidationError
 
 from npe2 import PluginManifest
 from npe2.manifest.package_metadata import PackageMetadata
@@ -36,6 +40,51 @@ def test_discover(uses_sample_plugin):
     assert entrypoint and entrypoint.group == "napari.manifest"
     assert entrypoint.value == "my_plugin:napari.yaml"
     assert error is None
+
+
+def test_discover_errors(tmp_path: Path):
+    """testing various discovery errors"""
+    # package with proper `napari.manifest` entry_point, but invalid pointer to
+    # a manifest should yield an error in results
+    a = tmp_path / "a"
+    a.mkdir()
+    a_ep = a / "entry_points.txt"
+    bad_value = "asdfsad:blahblahblah.yaml"
+    a_ep.write_text(f"[napari.manifest]\nmy_plugin = {bad_value}")
+
+    # package with proper `napari.manifest` entry_point, but invalid manifest
+    b = tmp_path / "b"
+    b.mkdir()
+    b_ep = b / "entry_points.txt"
+    b_ep.write_text("[napari.manifest]\nsome_plugin = module:napari.yaml")
+    module = tmp_path / "module"
+    module.mkdir()
+    (module / "napari.yaml").write_text("name: hi??")
+
+    # a regular package, with out napari.manifest entry_point should just be skipped
+    c = tmp_path / "c"
+    c.mkdir()
+    c_ep = c / "entry_points.txt"
+    c_ep.write_text("[console.scripts]\nsomething = something")
+
+    dists = [
+        metadata.PathDistribution(a),
+        metadata.PathDistribution(b),
+        metadata.PathDistribution(c),
+    ]
+
+    with patch.object(metadata, "distributions", return_value=dists):
+        discover_results = list(PluginManifest.discover(paths=[tmp_path]))
+
+    assert len(discover_results) == 2
+    res_a, res_b = discover_results
+    assert res_a.manifest is None
+    assert res_a.entrypoint.value == bad_value  # type: ignore
+    assert "Cannot find module 'asdfsad'" in str(res_a.error)
+
+    assert res_b.manifest is None
+    assert res_b.entrypoint.value == "module:napari.yaml"  # type: ignore
+    assert isinstance(res_b.error, ValidationError)
 
 
 def test_package_meta(uses_sample_plugin):
@@ -91,3 +140,9 @@ def test_from_distribution(uses_sample_plugin):
         # valid package, but doesn't have a manifest
         _ = PluginManifest.from_distribution("pytest")
     assert "exists but does not provide a napari manifest" in str(e.value)
+
+
+def test_from_package_name_err():
+    with pytest.raises(ValueError) as e:
+        PluginManifest._from_package_or_name("nonsense")
+    assert "Could not find manifest for 'nonsense'" in str(e.value)

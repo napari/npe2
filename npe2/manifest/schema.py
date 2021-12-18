@@ -392,12 +392,12 @@ class PluginManifest(BaseModel):
 
         try:
             return PluginManifest.from_file(package_or_filename)
-        except ValidationError:
+        except ValidationError:  # pragma: no cover
             raise
         except (FileNotFoundError, ValueError):
             try:
                 return PluginManifest.from_distribution(str(package_or_filename))
-            except ValidationError:
+            except ValidationError:  # pragma: no cover
                 raise
             except Exception as e:
                 raise ValueError(

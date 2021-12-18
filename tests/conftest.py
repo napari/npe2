@@ -47,4 +47,4 @@ def mock_discover():
             sys.path = before
 
     with patch("npe2.PluginManifest.discover", wraps=wrapper):
-        yield
+        yield 1
