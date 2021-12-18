@@ -204,7 +204,7 @@ class PluginManager:
         from fnmatch import fnmatch
 
         if isinstance(path, list):
-            return NotImplemented
+            return NotImplemented  # pragma: no cover
         if os.path.isdir(path):
             yield from self._contrib._readers[""]
         else:
@@ -212,10 +212,9 @@ class PluginManager:
             for ext, readers in self._contrib._readers.items():
                 if ext and fnmatch(str(path), ext):
                     for r in readers:
-                        if r.command in seen:
-                            continue
-                        seen.add(r.command)
-                        yield r
+                        if r.command not in seen:
+                            seen.add(r.command)
+                            yield r
 
     @classmethod
     def instance(cls) -> PluginManager:
@@ -232,10 +231,6 @@ class PluginManager:
     def iter_sample_data(self) -> Iterator[Tuple[str, List[SampleDataContribution]]]:
         """Iterates over (plugin_name, [sample_contribs])."""
         yield from self._contrib._samples.items()
-
-    def get_writer_for_command(self, command: str) -> Optional[WriterContribution]:
-        writers = self._contrib._writers_by_command[command]
-        return writers[0] if writers else None
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
         yield from self._contrib._widgets

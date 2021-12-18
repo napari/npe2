@@ -1,7 +1,7 @@
 import re
 
 _package_name = "([a-zA-Z][a-zA-Z0-9_-]+)"
-_python_identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"  # noqa
+_python_identifier = "([a-zA-Z_][a-zA-Z_0-9]*)"  # noqa
 
 # how do we deal with keywords ?
 # do we try to validate ? Or do we just
@@ -10,9 +10,19 @@ _python_identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"  # noqa
 _identifier_plus_dash = "(?:[a-zA-Z_][a-zA-Z_0-9-]+)"
 _dotted_name = f"(?:(?:{_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
 PACKAGE_NAME_PATTERN = re.compile(f"^{_package_name}$")
-PYTHON_NAME_PATTERN = re.compile(f"^({_dotted_name}):({_dotted_name})$")
 DOTTED_NAME_PATTERN = re.compile(_dotted_name)
 DISPLAY_NAME_PATTERN = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
+PYTHON_NAME_PATTERN = re.compile(f"^({_dotted_name}):({_dotted_name})$")
+COMMAND_ID_PATTERN = re.compile(f"^(({_package_name}\\.)*{_python_identifier})$")
+
+
+def command_id(id: str) -> str:
+    if id and not COMMAND_ID_PATTERN.match(id):
+        raise ValueError(
+            f"{id!r} is not a valid command id. Note: it can only contain alphanumeric"
+            " characters, plus dashes and underscores."
+        )
+    return id
 
 
 def package_name(name: str) -> str:
@@ -31,7 +41,7 @@ def python_name(name: str) -> str:
             "'my_package.a_module:some_function')."
         )
         if ".<locals>." in name:
-            a, b = name.split(".<locals>.")
+            *_, a, b = name.split(".<locals>.")
             a = a.split(":")[-1]
             msg += (
                 " Note: functions defined in local scopes are not yet supported. "

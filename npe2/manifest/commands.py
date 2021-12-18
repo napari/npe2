@@ -40,8 +40,8 @@ class CommandContribution(BaseModel):
         It follow the same rule as Python fully qualified name, with the extra
         restriction as being limited to ascii"""
         ),
-        regex=f"^(({_validators._package_name}\\.)*{_validators._python_identifier})$",
     )
+    _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
     title: str = Field(
         ...,

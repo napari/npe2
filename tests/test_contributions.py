@@ -57,6 +57,13 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     PluginManifest(**data)
 
 
+def test_writer_for_command(
+    uses_sample_plugin, plugin_manager: PluginManager, tmp_path
+):
+    reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
+    assert reader.command == "my_plugin.some_reader"
+
+
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
     from magicgui._magicgui import MagicFactory
 
@@ -83,6 +90,16 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)
+
+
+def test_directory_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
+    reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
+    assert reader.command == "my_plugin.some_reader"
+
+
+def test_themes(uses_sample_plugin, plugin_manager: PluginManager):
+    theme = list(plugin_manager.iter_themes())[0]
+    assert theme.label == "Monokai"
 
 
 def test_command_exec():

@@ -19,6 +19,25 @@ def test_conversion_from_module(mock_npe1_pm, npe1_plugin_module):
     assert isinstance(mf.dict(), dict)
 
 
+def test_conversion_from_obj_with_locals(mock_npe1_pm):
+    from napari_plugin_engine import napari_hook_implementation
+
+    class MyPlugin:
+        @staticmethod
+        @napari_hook_implementation
+        def napari_experimental_provide_function():
+            def f(x: int):
+                ...
+
+            return [f]
+
+    with pytest.warns(UserWarning) as record:
+        mf = manifest_from_npe1(module=MyPlugin)
+    msg = str(record[0].message)
+    assert "functions defined in local scopes are not yet supported." in msg
+    assert isinstance(mf.dict(), dict)
+
+
 def test_conversion_from_package(npe1_repo, mock_npe1_pm_with_plugin):
     setup_cfg = npe1_repo / "setup.cfg"
     before = setup_cfg.read_text()

@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from npe2 import PluginManifest
+from npe2.manifest import _validators
 
 # the docstrings here are used to assert the validation error that is printed.
 
@@ -199,3 +200,9 @@ def test_writer_invalid_layer_type_expressions(expr, uses_sample_plugin):
 
     with pytest.raises(ValidationError):
         PluginManifest(**data)
+
+
+@pytest.mark.parametrize("id", ["badchar!?", "-bad-start", "has space"])
+def test_invalid_command_id(id):
+    with pytest.raises(ValueError):
+        _validators.command_id(id)
