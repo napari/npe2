@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import sys
 from contextlib import contextmanager
-from enum import Enum
 from importlib import util
 from logging import getLogger
 from pathlib import Path
@@ -35,8 +34,6 @@ except ImportError:
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
 
-spdx_ids = (Path(__file__).parent / "spdx.txt").read_text().splitlines()
-SPDX = Enum("SPDX", {i.replace("-", "_"): i for i in spdx_ids})  # type: ignore
 
 logger = getLogger(__name__)
 
@@ -267,7 +264,6 @@ class PluginManifest(BaseModel):
         return mf
 
     class Config:
-        use_enum_values = True  # only needed for SPDX
         underscore_attrs_are_private = True
         extra = Extra.forbid
 
