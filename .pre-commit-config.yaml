@@ -5,11 +5,11 @@ repos:
       - id: check-docstring-first
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.20.0
-    hooks:
-      - id: setup-cfg-fmt
-        exclude: tests/npe1-plugin/setup.cfg
+  # - repo: https://github.com/asottile/setup-cfg-fmt
+  #   rev: v1.20.0
+  #   hooks:
+  #     - id: setup-cfg-fmt
+  #       exclude: tests/npe1-plugin/setup.cfg
   - repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
