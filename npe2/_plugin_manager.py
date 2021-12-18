@@ -314,7 +314,7 @@ class PluginManager:
 
         for writer in self.iter_compatible_writers(layer_types):
             if plugin_name and not writer.command.startswith(plugin_name):
-                continue
+                continue  # pragma: no cover
 
             if (
                 ext
@@ -364,11 +364,11 @@ def _call_python_name(python_name: str, args=()) -> Any:
     """convenience to call `python_name` function. eg `module.submodule:funcname`."""
     from importlib import import_module
 
-    if not python_name:
+    if not python_name:  # pragma: no cover
         return None
 
     match = _validators.PYTHON_NAME_PATTERN.match(python_name)
-    if not match:
+    if not match:  # pragma: no cover
         raise ValueError(f"Invalid python name: {python_name}")
 
     module_name, funcname = match.groups()
