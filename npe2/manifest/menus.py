@@ -90,7 +90,7 @@ class MenusContribution(BaseModel):
         for i, (key, val) in enumerate(values.items()):
             if key not in cls.__fields__:
                 val, err = validate(val, {}, loc=str(i))
-                if err:
+                if err:  # pragma: no cover
                     raise ValidationError([err], cls)
                 values[key] = val
         return values
