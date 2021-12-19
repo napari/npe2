@@ -9,10 +9,10 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
 
-from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
+from pydantic import Extra, Field, ValidationError, root_validator, validator
 
 from . import _validators
-from ._bases import ImportExportMixin
+from ._bases import ImportExportModel
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 from .utils import Version
@@ -40,7 +40,7 @@ class DiscoverResults(NamedTuple):
     error: Optional[Exception]
 
 
-class PluginManifest(BaseModel, ImportExportMixin):
+class PluginManifest(ImportExportModel):
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
@@ -77,6 +77,7 @@ class PluginManifest(BaseModel, ImportExportMixin):
         SCHEMA_VERSION,
         description="A SemVer compatible version string matching the napari plugin "
         "schema version that the plugin is compatible with.",
+        always_export=True,
     )
 
     # TODO:
@@ -111,7 +112,6 @@ class PluginManifest(BaseModel, ImportExportMixin):
         "[contributions](#contributions.md)",
     )
 
-    _manifest_file: Optional[Path] = None
     package_metadata: Optional[PackageMetadata] = Field(
         None,
         description="Package metadata following "
@@ -181,14 +181,6 @@ class PluginManifest(BaseModel, ImportExportMixin):
 
         return values
 
-    def toml(self, pyproject=False) -> str:
-        with _schema_version_in_fields_set(self):
-            return super().toml(pyproject=pyproject)
-
-    def yaml(self) -> str:
-        with _schema_version_in_fields_set(self):
-            return super().yaml()
-
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
         """Return PluginManifest given a distribution (package) name.
@@ -223,31 +215,6 @@ class PluginManifest(BaseModel, ImportExportMixin):
         raise ValueError(
             "Distribution {name!r} exists but does not provide a napari manifest"
         )
-
-    @classmethod
-    def from_file(cls, path: Union[Path, str]) -> PluginManifest:
-        """Parse PluginManifest from a specific file.
-
-        Parameters
-        ----------
-        path : Path or str
-            Path to a manifest.  Must have extension {'.json', '.yaml', '.yml', '.toml'}
-
-        Returns
-        -------
-        PluginManifest
-            The parsed manifest.
-
-        Raises
-        ------
-        FileNotFoundError
-            If `path` does not exist.
-        ValueError
-            If the file extension is not in {'.json', '.yaml', '.yml', '.toml'}
-        """
-        mf = super().from_file(path=path)
-        mf._manifest_file = Path(path).expanduser().absolute().resolve()
-        return mf
 
     class Config:
         underscore_attrs_are_private = True
@@ -399,17 +366,6 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     finally:
         for p in paths:
             sys.path.remove(str(p))
-
-
-@contextmanager
-def _schema_version_in_fields_set(manifest: PluginManifest):
-    was_there = "schema_version" in manifest.__fields_set__
-    manifest.__fields_set__.add("schema_version")
-    try:
-        yield
-    finally:
-        if not was_there:
-            manifest.__fields_set__.discard("schema_version")
 
 
 if __name__ == "__main__":
