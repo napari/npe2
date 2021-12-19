@@ -1,36 +1,36 @@
-name: my-plugin
-display_name: My Plugin
+name: example-plugin
+display_name: Example Plugin
 contributions:
   commands:
-    - id: my-plugin.hello_world
+    - id: example-plugin.hello_world
       title: Hello World
-    - id: my-plugin.read_xyz
+    - id: example-plugin.read_xyz
       title: Read ".xyz" files
-      python_name: my_plugin._some_module:get_xyz_reader
-    - id: my-plugin.write_points
-      python_name: my_plugin._some_module:write_points
+      python_name: example_plugin._some_module:get_xyz_reader
+    - id: example-plugin.write_points
+      python_name: example_plugin._some_module:write_points
       title: Save points layer to csv
-    - id: my-plugin.animation_wizard
-      python_name: my_plugin._some_module:AnimationWizard
+    - id: example-plugin.animation_wizard
+      python_name: example_plugin._some_module:AnimationWizard
       title: Open animation wizard
-    - id: my-plugin.do_threshold
-      python_name: my_plugin._some_module:threshold
+    - id: example-plugin.do_threshold
+      python_name: example_plugin._some_module:threshold
       title: Perform threshold on image, return new image
-    - id: my-plugin.data.fractal
+    - id: example-plugin.data.fractal
       title: Create fractal image
-      python_name: my_plugin._data:fractal
+      python_name: example_plugin._data:fractal
   readers:
-    - command: my-plugin.read_xyz
+    - command: example-plugin.read_xyz
       filename_patterns: ["*.xyz"]
       accepts_directories: false
   writers:
-    - command: my-plugin.write_points
+    - command: example-plugin.write_points
       filename_extensions: [".csv"]
       layer_types: ["points"]
   widgets:
-    - command: my-plugin.animation_wizard
+    - command: example-plugin.animation_wizard
       display_name: Wizard
-    - command: my-plugin.do_threshold
+    - command: example-plugin.do_threshold
       display_name: Threshold
       autogenerate: true
   themes:
@@ -51,7 +51,7 @@ contributions:
   sample_data:
     - display_name: Fractal
       key: fractal
-      command: my-plugin.data.fractal
+      command: example-plugin.data.fractal
     - display_name: Tabueran Kiribati
       key: napari
       uri: https://en.wikipedia.org/wiki/Napari#/media/File:Tabuaeran_Kiribati.jpg
