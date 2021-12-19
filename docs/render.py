@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
-EXAMPLE = PluginManifest.from_file(DOCS / "example_manfest.yaml")
+EXAMPLE = PluginManifest.from_file(DOCS / "example_manifest.yaml")
 
 Contrib = namedtuple("Contrib", "name doc fields union_fields example")
 UnionField = namedtuple("UnionField", "doc fields")
@@ -88,9 +88,9 @@ def _get_contributions():
     ]
 
 
-def main():
+def main(dest: Path = _BUILD):
     env = Environment(loader=PackageLoader("docs"), autoescape=select_autoescape())
-    _BUILD.mkdir(exist_ok=True, parents=True)
+    dest.mkdir(exist_ok=True, parents=True)
     for t in TEMPLATES.glob("*.jinja"):
         template = env.get_template(t.name)
         context = {
@@ -98,9 +98,9 @@ def main():
             "schema": PluginManifest.schema(),
             "example": EXAMPLE,
         }
-        output = _BUILD / f"{t.stem}"
-        output.write_text(template.render(context))
-        print(f"Rendered {output}")
+        _dest = dest / f"{t.stem}"
+        _dest.write_text(template.render(context))
+        print(f"Rendered {_dest}")
 
 
 if __name__ == "__main__":
