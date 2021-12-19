@@ -3,8 +3,20 @@ from typing import List, Optional, Tuple
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from ..types import ReaderFunction
+from ..types import LayerData, PathOrPaths, ReaderFunction
 from .utils import Executable
+
+
+def reader(path: PathOrPaths) -> List[LayerData]:
+    """
+    A function that accepts a `path` and returns a list of LayerData.
+    """
+
+
+def get_reader(path: PathOrPaths) -> Optional[ReaderFunction]:
+    """A reference ReaderContribution command."""
+    # if some condition about path is met ...
+    return reader
 
 
 class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
@@ -33,6 +45,7 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
 
     class Config:
         extra = Extra.forbid
+        reference_spec = get_reader
 
 
 class LayerType(str, Enum):

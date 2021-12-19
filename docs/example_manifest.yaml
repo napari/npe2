@@ -6,7 +6,7 @@ contributions:
       title: Hello World
     - id: example-plugin.read_xyz
       title: Read ".xyz" files
-      python_name: example_plugin._some_module:get_xyz_reader
+      python_name: example_plugin._some_module:get_reader
     - id: example-plugin.write_points
       python_name: example_plugin._some_module:write_points
       title: Save points layer to csv

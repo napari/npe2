@@ -27,14 +27,8 @@ class ArrayLike(Protocol):
         ...
 
 
-LayerName = Union[
-    Literal["image"],
-    Literal["labels"],
-    Literal["points"],
-    Literal["shapes"],
-    Literal["surface"],
-    Literal["tracks"],
-    Literal["vectors"],
+LayerName = Literal[
+    "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
 ]
 Metadata = Dict
 DataType = Union[ArrayLike, Sequence[ArrayLike]]
@@ -49,7 +43,8 @@ WidgetCreator = Callable[..., Widget]
 
 # ReaderContribution.command must point to a ReaderGetter
 ReaderFunction = Callable[[PathOrPaths], List[LayerData]]
-ReaderGetter = Callable[[Union[str, List[str]]], Optional[ReaderFunction]]
+ReaderGetter = Callable[[PathOrPaths], Optional[ReaderFunction]]
+
 
 # SampleDataGenerator.command must point to a SampleDataCreator
 SampleDataCreator = Callable[..., List[LayerData]]
