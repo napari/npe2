@@ -17,11 +17,11 @@ from .widgets import WidgetContribution
 
 class ContributionPoints(BaseModel):
     commands: Optional[List[CommandContribution]]
-    themes: Optional[List[ThemeContribution]]
     readers: Optional[List[ReaderContribution]]
     writers: Optional[List[WriterContribution]]
-    sample_data: Optional[List[SampleDataContribution]]
     widgets: Optional[List[WidgetContribution]]
+    sample_data: Optional[List[SampleDataContribution]]
+    themes: Optional[List[ThemeContribution]]
 
     menus: Optional[MenusContribution]
     submenus: Optional[List[SubmenuContribution]]

@@ -49,8 +49,8 @@ class PluginManifest(BaseModel, ImportExportMixin):
 
     name: str = Field(
         ...,
-        description="The name of the plugin. Should correspond to the python "
-        "package name for this plugin.",
+        description="The name of the plugin. Though this field is mandatory, it *must*"
+        " match the package `name` as defined in the python package metadata.",
     )
 
     display_name: str = Field(
@@ -87,9 +87,9 @@ class PluginManifest(BaseModel, ImportExportMixin):
     on_activate: Optional[str] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
-        "upon plugin activation (e.g. my_plugin._some_module:activate). The activate "
-        "function can be used to connect command ids to python callables, or perform "
-        "other side-effects. A plugin will be 'activated' when one of its "
+        "upon plugin activation (e.g. `'my_plugin._some_module:activate'`). The "
+        "activate function can be used to connect command ids to python callables, or"
+        " perform other side-effects. A plugin will be 'activated' when one of its "
         "contributions is requested by the user (such as a widget, or reader).",
     )
     _validate_activate_func = validator("on_activate", allow_reuse=True)(
@@ -98,17 +98,28 @@ class PluginManifest(BaseModel, ImportExportMixin):
     on_deactivate: Optional[str] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
-        "when a user deactivates a plugin (e.g. my_plugin._some_module:deactivate). "
-        "This is optional, and may be used to perform any plugin cleanup.",
+        "when a user deactivates a plugin (e.g. `'my_plugin._some_module:deactivate'`)"
+        ". This is optional, and may be used to perform any plugin cleanup.",
     )
     _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
         _validators.python_name
     )
 
-    contributions: Optional[ContributionPoints]
+    contributions: Optional[ContributionPoints] = Field(
+        None,
+        description="An object describing the plugin's "
+        "[contributions](#contributions.md)",
+    )
 
     _manifest_file: Optional[Path] = None
-    package_metadata: Optional[PackageMetadata] = None
+    package_metadata: Optional[PackageMetadata] = Field(
+        None,
+        description="Package metadata following "
+        "https://packaging.python.org/specifications/core-metadata/. "
+        "For normal (non-dynamic) plugins, this data will come from the package's "
+        "setup.cfg",
+        hide_docs=True,
+    )
 
     @property
     def license(self) -> Optional[str]:

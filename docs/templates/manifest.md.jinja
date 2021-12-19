@@ -1,0 +1,45 @@
+# Plugin Manifest
+
+Every napari plugin needs to ship a manifest file with their package. By
+convention, this file is called `napari.yaml` and it is placed in the top level
+module of the package, but it can be named anything and placed anywhere.
+
+You tell napari where to find your manifest by adding a `napari.manifest` [entry
+point](https://packaging.python.org/en/latest/specifications/entry-points/) to
+your package metadata:
+
+```ini
+# tell napari where to find to your manifest
+[options.entry_points]
+napari.manifest =
+    my-plugin = my_plugin:napari.yaml
+
+# make sure it gets included in your package
+[options.package_data]
+my-plugin = napari.yaml
+```
+
+## Fields
+
+All fields are optional except those in **bold**: ({{ schema.required|join(", ") }})
+
+| Name | Details |
+|------|---------|
+{%- for key, field in schema.properties.items() %}
+{%- if not field.hide_docs %}
+| {% if key in schema.required %} **`{{ key }}`** {%else%} `{{ key }}` {%endif%} | {{ field.description }}|
+{%- endif %}
+{%- endfor %}
+
+*Note that [package metadata](https://packaging.python.org/en/latest/specifications/core-metadata/)
+from your `setup.cfg` file will also be parsed for version, license, and other info.*
+
+## Example
+
+Here is a complete example of what the manifest of a plugin providing *all*
+contributions might look like. (Note, however, that a plugin needn't implement
+more than a single contribution type)
+
+```yaml
+{{ example.yaml() }}
+```

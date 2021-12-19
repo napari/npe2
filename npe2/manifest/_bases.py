@@ -19,7 +19,9 @@ class ImportExportMixin:
         return toml.dumps(d)
 
     def yaml(self: BaseModel) -> str:
-        return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
+        return yaml.safe_dump(
+            json.loads(self.json(exclude_unset=True)), sort_keys=False
+        )
 
     @classmethod
     def from_file(cls: Type[T], path: Union[Path, str]) -> T:

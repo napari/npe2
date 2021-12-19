@@ -91,11 +91,14 @@ def _get_contributions():
 def main():
     env = Environment(loader=PackageLoader("docs"), autoescape=select_autoescape())
     _BUILD.mkdir(exist_ok=True, parents=True)
-    suffix = ".md"
     for t in TEMPLATES.glob("*.jinja"):
         template = env.get_template(t.name)
-        context = {"contributions": _get_contributions()}
-        (_BUILD / f"{t.stem}{suffix}").write_text(template.render(context))
+        context = {
+            "contributions": _get_contributions(),
+            "schema": PluginManifest.schema(),
+            "example": EXAMPLE,
+        }
+        (_BUILD / f"{t.stem}").write_text(template.render(context))
 
 
 if __name__ == "__main__":
