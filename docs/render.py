@@ -98,7 +98,9 @@ def main():
             "schema": PluginManifest.schema(),
             "example": EXAMPLE,
         }
-        (_BUILD / f"{t.stem}").write_text(template.render(context))
+        output = _BUILD / f"{t.stem}"
+        output.write_text(template.render(context))
+        print(f"Rendered {output}")
 
 
 if __name__ == "__main__":
