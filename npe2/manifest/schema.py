@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import sys
 from contextlib import contextmanager
@@ -8,21 +7,12 @@ from importlib import util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Iterator,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
 
-import pytomlpp as toml
-import yaml
-from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
+from pydantic import Extra, Field, ValidationError, root_validator, validator
 
 from . import _validators
+from ._bases import ImportExportModel
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 from .utils import Version
@@ -50,7 +40,7 @@ class DiscoverResults(NamedTuple):
     error: Optional[Exception]
 
 
-class PluginManifest(BaseModel):
+class PluginManifest(ImportExportModel):
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
@@ -87,6 +77,7 @@ class PluginManifest(BaseModel):
         SCHEMA_VERSION,
         description="A SemVer compatible version string matching the napari plugin "
         "schema version that the plugin is compatible with.",
+        always_export=True,
     )
 
     # TODO:
@@ -117,7 +108,6 @@ class PluginManifest(BaseModel):
 
     contributions: Optional[ContributionPoints]
 
-    _manifest_file: Optional[Path] = None
     package_metadata: Optional[PackageMetadata] = None
 
     @property
@@ -180,17 +170,6 @@ class PluginManifest(BaseModel):
 
         return values
 
-    def toml(self, pyproject=False) -> str:
-        with _schema_version_in_fields_set(self):
-            d = json.loads(self.json(exclude_unset=True))
-            if pyproject:
-                d = {"tool": {"napari": d}}
-            return toml.dumps(d)
-
-    def yaml(self) -> str:
-        with _schema_version_in_fields_set(self):
-            return yaml.safe_dump(json.loads(self.json(exclude_unset=True)))
-
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
         """Return PluginManifest given a distribution (package) name.
@@ -225,51 +204,6 @@ class PluginManifest(BaseModel):
         raise ValueError(
             "Distribution {name!r} exists but does not provide a napari manifest"
         )
-
-    @classmethod
-    def from_file(cls, path: Union[Path, str]) -> PluginManifest:
-        """Parse PluginManifest from a specific file.
-
-        Parameters
-        ----------
-        path : Path or str
-            Path to a manifest.  Must have extension {'.json', '.yaml', '.yml', '.toml'}
-
-        Returns
-        -------
-        PluginManifest
-            The parsed manifest.
-
-        Raises
-        ------
-        FileNotFoundError
-            If `path` does not exist.
-        ValueError
-            If the file extension is not in {'.json', '.yaml', '.yml', '.toml'}
-        """
-        path = Path(path).expanduser().absolute().resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
-
-        loader: Callable
-        if path.suffix.lower() == ".json":
-            loader = json.load
-        elif path.suffix.lower() == ".toml":
-            loader = toml.load
-        elif path.suffix.lower() in (".yaml", ".yml"):
-            loader = yaml.safe_load
-        else:
-            raise ValueError(f"unrecognized file extension: {path}")
-
-        with open(path) as f:
-            data = loader(f) or {}
-
-        if path.name == "pyproject.toml":
-            data = data["tool"]["napari"]
-
-        mf = cls(**data)
-        mf._manifest_file = path
-        return mf
 
     class Config:
         underscore_attrs_are_private = True
@@ -421,17 +355,6 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     finally:
         for p in paths:
             sys.path.remove(str(p))
-
-
-@contextmanager
-def _schema_version_in_fields_set(manifest: PluginManifest):
-    was_there = "schema_version" in manifest.__fields_set__
-    manifest.__fields_set__.add("schema_version")
-    try:
-        yield
-    finally:
-        if not was_there:
-            manifest.__fields_set__.discard("schema_version")
 
 
 if __name__ == "__main__":
