@@ -26,13 +26,13 @@ from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest, _validators
-from .manifest.io import LayerType
+from .manifest.writers import LayerType, WriterContribution
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
     from .manifest.contributions import ContributionPoints
-    from .manifest.io import ReaderContribution, WriterContribution
     from .manifest.menus import MenuItem
+    from .manifest.readers import ReaderContribution
     from .manifest.sample_data import SampleDataContribution
     from .manifest.submenu import SubmenuContribution
     from .manifest.themes import ThemeContribution
