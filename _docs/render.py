@@ -166,7 +166,8 @@ def _get_needed_types(source: str, so_far=set()):
 
 
 def main(dest: Path = _BUILD):
-    env = Environment(loader=PackageLoader("docs"), autoescape=select_autoescape())
+    this = Path(__file__).parent.name
+    env = Environment(loader=PackageLoader(this), autoescape=select_autoescape())
     dest.mkdir(exist_ok=True, parents=True)
     context = {
         "contributions": _get_contributions(),
@@ -182,4 +183,7 @@ def main(dest: Path = _BUILD):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    dest = Path(sys.argv[1]).absolute() if len(sys.argv) > 1 else _BUILD
+    main(dest)

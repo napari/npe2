@@ -1,4 +1,4 @@
-# Contributions
+# Contributions Reference
 
 **Contributions** are a set of static declarations that you make in the
 `contributions` field of the [Plugin Manifest](). Your extension registers
@@ -6,7 +6,7 @@
 Here is a list of all available **Contributions**:
 
 {% for contrib in contributions -%}
-  - [`{{ contrib.name }}`](#contributions.{{ contrib.name }})
+  - [`{{ contrib.name }}`](#contributions-{{ contrib.name }})
 {% endfor %}
 
 You may add as many contributions as you'd like to a single manifest. For
@@ -14,18 +14,21 @@ clarity, the following examples include only the specific contribution that
 is being discussed.
 
 {%- for contrib in contributions %}
-## contributions.{{contrib.name}}
+(contributions-{{contrib.name}})=
+## `contributions.{{contrib.name}}`
 
 {{ contrib.doc }}
 
-### {%if contrib.union_fields %}Common {%endif%}Fields
+{# Using bold instead of headers in this case to avoid right-side nav #}
+
+**{%if contrib.union_fields %}Common {%endif%}Fields**
 {% for field in contrib.fields %}
 - **`{{contrib.name}}.{{field.name}}`** : {% if not field.required -%}*(Optional: default={{field.get_default()}}).* {% endif %}
 {{- field.field_info.description -}}
 {% endfor %}
 
 {%if contrib.union_fields %}
-### Union Fields
+**Union Fields**
 
 In addition to the common fields, `{{contrib.name}}` should additionally
 include one of the following interfaces:
@@ -39,7 +42,8 @@ include one of the following interfaces:
 {% endfor %}
 <hr/>
 {% endif %}
-### `{{contrib.name}}` example
+
+### {{ contrib.name.title()|replace("_", " ") }} example
 
 ```yaml
 {{contrib.example}}
