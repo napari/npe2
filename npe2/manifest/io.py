@@ -27,7 +27,8 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
     command line, or when a user opens a file in the graphical user interface by
     dropping a file into the canvas, or using `File -> Open...`
 
-    See the [Reader Guide]() on how to create a reader contribution.
+    See the [Readers Guide](./guides.html#readers-contribution-guide) on how to create
+    a reader contribution.
     """
 
     command: str = Field(
