@@ -4,15 +4,16 @@ from pydantic import BaseModel
 
 from .commands import CommandContribution
 
-# from .configuration import JsonSchemaObject
-from .io import ReaderContribution, WriterContribution
-
 # from .keybindings import KeyBindingContribution
 from .menus import MenusContribution
+from .readers import ReaderContribution
 from .sample_data import SampleDataContribution
 from .submenu import SubmenuContribution
 from .themes import ThemeContribution
 from .widgets import WidgetContribution
+
+# from .configuration import JsonSchemaObject
+from .writers import WriterContribution
 
 
 class ContributionPoints(BaseModel):
