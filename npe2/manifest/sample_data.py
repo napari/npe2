@@ -32,7 +32,7 @@ class _SampleDataContribution(BaseModel, ABC):
 
 
 class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
-    """Contribute a command that generates data."""
+    """Contribute a callable command that creates data on demand."""
 
     command: str = Field(
         ..., description="Identifier of a command that returns layer data tuple."
@@ -42,6 +42,9 @@ class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
         self, *args, _registry: Optional["CommandRegistry"] = None, **kwargs
     ) -> List[LayerData]:
         return self.exec(args, kwargs, _registry=_registry)
+
+    class Config:
+        title = "Sample Data Function"
 
 
 class SampleDataURI(_SampleDataContribution):
@@ -63,6 +66,9 @@ class SampleDataURI(_SampleDataContribution):
         from ..io_utils import read
 
         return read(self.uri, plugin_name=self.reader_plugin)
+
+    class Config:
+        title = "Sample Data URI"
 
 
 SampleDataContribution = Union[SampleDataGenerator, SampleDataURI]

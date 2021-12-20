@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .commands import CommandContribution
 
@@ -23,8 +23,8 @@ class ContributionPoints(BaseModel):
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
 
-    menus: Optional[MenusContribution]
-    submenus: Optional[List[SubmenuContribution]]
+    menus: Optional[MenusContribution] = Field(None, hide_docs=True)
+    submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
 
     # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]

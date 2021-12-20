@@ -41,10 +41,9 @@ class ThemeContribution(BaseModel):
     """Contribute a color theme to napari.
 
     You must specify an **id**, **label**, and whether the theme is a dark theme or a
-    light theme (such that the rest of napari changes to match your theme). Any color
-    keys omitted from the theme contribution will use the default napari dark/light
-    theme
-    colors.
+    light theme **type** (such that the rest of napari changes to match your theme).
+    Any color keys omitted from the theme contribution will use the default napari
+    dark/light theme colors.
     """
 
     # TODO: do we need both id and label?
