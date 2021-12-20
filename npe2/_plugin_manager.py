@@ -298,7 +298,8 @@ class PluginManager:
         layer_types : Sequence[str]
             Sequence of layer type strings (e.g. ['image', 'labels'])
         plugin_name : Optional[str], optional
-            Optional name of plugin to use. by default None (look for plugin)
+            Name of plugin to use. If provided, only writers from `plugin_name` will be
+            considered, otherwise all plugins are considered. by default `None`.
 
         Returns
         -------
@@ -308,22 +309,20 @@ class PluginManager:
         ext = Path(path).suffix.lower() if path else ""
 
         for writer in self.iter_compatible_writers(layer_types):
-            if plugin_name and not writer.command.startswith(plugin_name):
-                continue  # pragma: no cover
-
-            if (
-                ext
-                and ext in writer.filename_extensions
-                or not ext
-                and len(layer_types) != 1
-                and not writer.filename_extensions
-            ):
-                return writer, path
-            elif not ext and len(layer_types) == 1:  # No extension, single layer.
-                ext = next(iter(writer.filename_extensions), "")
-                return writer, path + ext
-            # When the list of extensions for the writer doesn't match the
-            # extension in the filename, keep searching.
+            if not plugin_name or writer.command.startswith(plugin_name):
+                if (
+                    ext
+                    and ext in writer.filename_extensions
+                    or not ext
+                    and len(layer_types) != 1
+                    and not writer.filename_extensions
+                ):
+                    return writer, path
+                elif not ext and len(layer_types) == 1:  # No extension, single layer.
+                    ext = next(iter(writer.filename_extensions), "")
+                    return writer, path + ext
+                # When the list of extensions for the writer doesn't match the
+                # extension in the filename, keep searching.
 
         # Nothing got found
         return None, path
