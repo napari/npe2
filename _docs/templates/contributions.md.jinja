@@ -30,21 +30,20 @@ is being discussed.
 {%- endif -%}
 {%- if union %}
 ```{tip}
-This field is a union that accepts multiple schema types
+This contribution accepts {{ type_names|length }} schema types
 ```
 {%- endif -%}
 
 {%- for tname in type_names -%}
 {% set type = schema['definitions'][tname] %}
-{% if union %}##### {{loop.index}}. {{type.title}}{% endif -%}
+{% if union %}##### {{loop.index}}. {{type.title}}{% endif %}
 {{ type.description }}
 
 {# Using bold instead of headers in this case to avoid right-side nav #}
 **Fields**
 {%- for field_name, field_props in type.properties.items() -%}
 {% set required = field_name in type.required %}
-- **`{{contrib_name}}.{{field_name}}`** :
-{%- if not required %}
+- **`{{contrib_name}}.{{field_name}}`** : {% if not required %}
 *(Optional: default={{ field_props.default if field_props.default is not undefined else 'None' }}).*
 {% endif -%}
 {{- field_props.description -}}
