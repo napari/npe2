@@ -120,14 +120,15 @@ class PluginManager:
         self._manifests.clear()
 
         for result in PluginManifest.discover(paths=paths):
-            if result.manifest is None:
-                continue
-            mf = result.manifest
-            if mf.name in self._manifests:
-                continue
-            self._manifests[mf.name] = mf
-            if mf.contributions:
-                self._contrib.index_contributions(mf.contributions, mf.name)
+            if result.manifest and result.manifest.name not in self._manifests:
+                self.register(result.manifest)
+
+    def register(self, manifest: PluginManifest) -> None:
+        if manifest.name in self._manifests:
+            raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
+        self._manifests[manifest.name] = manifest
+        if manifest.contributions:
+            self._contrib.index_contributions(manifest.contributions, manifest.name)
 
     def get_manifest(self, key: str) -> PluginManifest:
         key = str(key).split(".")[0]
@@ -203,7 +204,7 @@ class PluginManager:
         from fnmatch import fnmatch
 
         if isinstance(path, list):
-            return NotImplemented
+            return NotImplemented  # pragma: no cover
         if os.path.isdir(path):
             yield from self._contrib._readers[""]
         else:
@@ -211,10 +212,9 @@ class PluginManager:
             for ext, readers in self._contrib._readers.items():
                 if ext and fnmatch(str(path), ext):
                     for r in readers:
-                        if r.command in seen:
-                            continue
-                        seen.add(r.command)
-                        yield r
+                        if r.command not in seen:
+                            seen.add(r.command)
+                            yield r
 
     @classmethod
     def instance(cls) -> PluginManager:
@@ -231,10 +231,6 @@ class PluginManager:
     def iter_sample_data(self) -> Iterator[Tuple[str, List[SampleDataContribution]]]:
         """Iterates over (plugin_name, [sample_contribs])."""
         yield from self._contrib._samples.items()
-
-    def get_writer_for_command(self, command: str) -> Optional[WriterContribution]:
-        writers = self._contrib._writers_by_command[command]
-        return writers[0] if writers else None
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
         yield from self._contrib._widgets
@@ -302,7 +298,8 @@ class PluginManager:
         layer_types : Sequence[str]
             Sequence of layer type strings (e.g. ['image', 'labels'])
         plugin_name : Optional[str], optional
-            Optional name of plugin to use. by default None (look for plugin)
+            Name of plugin to use. If provided, only writers from `plugin_name` will be
+            considered, otherwise all plugins are considered. by default `None`.
 
         Returns
         -------
@@ -312,22 +309,20 @@ class PluginManager:
         ext = Path(path).suffix.lower() if path else ""
 
         for writer in self.iter_compatible_writers(layer_types):
-            if plugin_name and not writer.command.startswith(plugin_name):
-                continue
-
-            if (
-                ext
-                and ext in writer.filename_extensions
-                or not ext
-                and len(layer_types) != 1
-                and not writer.filename_extensions
-            ):
-                return writer, path
-            elif not ext and len(layer_types) == 1:  # No extension, single layer.
-                ext = next(iter(writer.filename_extensions), "")
-                return writer, path + ext
-            # When the list of extensions for the writer doesn't match the
-            # extension in the filename, keep searching.
+            if not plugin_name or writer.command.startswith(plugin_name):
+                if (
+                    ext
+                    and ext in writer.filename_extensions
+                    or not ext
+                    and len(layer_types) != 1
+                    and not writer.filename_extensions
+                ):
+                    return writer, path
+                elif not ext and len(layer_types) == 1:  # No extension, single layer.
+                    ext = next(iter(writer.filename_extensions), "")
+                    return writer, path + ext
+                # When the list of extensions for the writer doesn't match the
+                # extension in the filename, keep searching.
 
         # Nothing got found
         return None, path
@@ -363,11 +358,11 @@ def _call_python_name(python_name: str, args=()) -> Any:
     """convenience to call `python_name` function. eg `module.submodule:funcname`."""
     from importlib import import_module
 
-    if not python_name:
+    if not python_name:  # pragma: no cover
         return None
 
     match = _validators.PYTHON_NAME_PATTERN.match(python_name)
-    if not match:
+    if not match:  # pragma: no cover
         raise ValueError(f"Invalid python name: {python_name}")
 
     module_name, funcname = match.groups()

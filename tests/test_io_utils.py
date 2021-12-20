@@ -1,6 +1,6 @@
 import pytest
 
-from npe2.io_utils import read, read_get_reader, write
+from npe2.io_utils import read, read_get_reader, write, write_get_writer
 from npe2.types import FullLayerData
 
 
@@ -27,6 +27,10 @@ def test_writer_exec(uses_sample_plugin):
     # the sample writer knows how to handle two image layers
     result = write("test.tif", [null_image, null_image])
     assert result == ["test.tif"]
+
+    result, contrib = write_get_writer("test.tif", [null_image, null_image])
+    assert result == ["test.tif"]
+    assert contrib.command == "my_plugin.my_writer"
 
 
 @pytest.mark.parametrize("layer_data", [[null_image, null_image], []])

@@ -8,9 +8,6 @@ from . import _validators
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
 
-_distname = "([a-zA-Z_][a-zA-Z0-9_-]+)"
-_identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
-
 
 class CommandContribution(BaseModel):
     """Contribute a command.
@@ -43,8 +40,8 @@ class CommandContribution(BaseModel):
         It follow the same rule as Python fully qualified name, with the extra
         restriction as being limited to ascii"""
         ),
-        regex=f"^(({_distname}\\.)*{_identifier})$",
     )
+    _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
     title: str = Field(
         ...,

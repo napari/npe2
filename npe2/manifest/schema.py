@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import sys
 from contextlib import contextmanager
 from importlib import util
@@ -18,9 +17,9 @@ from .package_metadata import PackageMetadata
 from .utils import Version
 
 try:
-    from importlib.metadata import Distribution, distributions
+    from importlib import metadata
 except ImportError:
-    from importlib_metadata import Distribution, distributions  # type: ignore
+    import importlib_metadata as metadata  # type: ignore
 
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
@@ -31,7 +30,6 @@ logger = getLogger(__name__)
 
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
-_display_name_pattern = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
 
 
 class DiscoverResults(NamedTuple):
@@ -52,6 +50,9 @@ class PluginManifest(ImportExportModel):
         description="The name of the plugin. Should correspond to the python "
         "package name for this plugin.",
     )
+    _validate_name = validator("name", pre=True, allow_reuse=True)(
+        _validators.package_name
+    )
 
     display_name: str = Field(
         "",
@@ -59,6 +60,9 @@ class PluginManifest(ImportExportModel):
         # Must be 3-40 characters long, containing printable word characters,
         # and must not begin or end with an underscore, white space, or
         # non-word character.
+    )
+    _validate_display_name = validator("display_name", allow_reuse=True)(
+        _validators.display_name
     )
 
     # Plugins rely on certain guarantees to interoperate propertly with the
@@ -115,7 +119,7 @@ class PluginManifest(ImportExportModel):
         return self.package_metadata.license if self.package_metadata else None
 
     @property
-    def version(self) -> Optional[str]:
+    def package_version(self) -> Optional[str]:
         return self.package_metadata.version if self.package_metadata else None
 
     @property
@@ -126,17 +130,6 @@ class PluginManifest(ImportExportModel):
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
 
-    @validator("display_name")
-    def validate_display_name(cls, v):
-        if not _display_name_pattern.match(v):
-            raise ValueError(
-                f"{v} is not a valid display_name.  The display_name must "
-                "be 3-40 characters long, containing printable word characters, "
-                "and must not begin or end with an underscore, white space, or "
-                "non-word character."
-            )
-        return v
-
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
         # validate schema version
@@ -145,23 +138,24 @@ class PluginManifest(ImportExportModel):
         if current_version < declared_version:
             raise ValueError(
                 dedent(
-                    f"The declared schema version {declared_version} is "
-                    f"newer than npe2's schema version: {current_version}. You may "
+                    f"The declared schema version '{declared_version}' is "
+                    f"newer than npe2's schema version: '{current_version}'. You may "
                     "need to upgrade npe2."
                 )
             )
 
+        mf_name = values.get("name")
         invalid_commands = []
         if values.get("contributions") is not None:
             for command in values["contributions"].commands or []:
                 id_start_actual = command.id.split(".")[0]
-                if values["name"] != id_start_actual:
+                if mf_name != id_start_actual:
                     invalid_commands.append(command.id)
 
         if invalid_commands:
             raise ValueError(
                 dedent(
-                    f"""Commands identifiers must start with the current package name {values['name']!r}
+                    f"""Commands identifiers must start with the current package name {mf_name!r}
             the following commands where found to break this assumption:
                 {invalid_commands}
             """
@@ -195,9 +189,7 @@ class PluginManifest(ImportExportModel):
         ValidationError
             If the manifest is not valid
         """
-        from importlib.metadata import distribution
-
-        dist = distribution(name)  # may raise PackageNotFoundError
+        dist = metadata.distribution(name)  # may raise PackageNotFoundError
         for ep in dist.entry_points:
             if ep.group == ENTRY_POINT:
                 return PluginManifest._from_entrypoint(ep, dist)
@@ -250,7 +242,7 @@ class PluginManifest(ImportExportModel):
             3-tuples with either manifest or (entrypoint and error) being None.
         """
         with _temporary_path_additions(paths):
-            for dist in distributions():
+            for dist in metadata.distributions():
                 for ep in dist.entry_points:
                     if ep.group != entry_point_group:
                         continue
@@ -269,14 +261,16 @@ class PluginManifest(ImportExportModel):
 
     @classmethod
     def _from_entrypoint(
-        cls, entry_point: EntryPoint, distribution: Optional[Distribution] = None
+        cls,
+        entry_point: EntryPoint,
+        distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
         match = entry_point.pattern.match(entry_point.value)  # type: ignore
         module = match.group("module")
 
         spec = util.find_spec(module or "")
-        if not spec:
+        if not spec:  # pragma: no cover
             raise ValueError(
                 f"Cannot find module {module!r} declared in "
                 f"entrypoint: {entry_point.value!r}"
@@ -296,7 +290,9 @@ class PluginManifest(ImportExportModel):
                     assert mf.name == meta.name, "Manifest name must match package name"
                     return mf
 
-        raise FileNotFoundError(f"Could not find file {fname!r} in module {module!r}")
+        raise FileNotFoundError(  # pragma: no cover
+            f"Could not find file {fname!r} in module {module!r}"
+        )
 
     @classmethod
     def _from_package_or_name(
@@ -330,12 +326,12 @@ class PluginManifest(ImportExportModel):
 
         try:
             return PluginManifest.from_file(package_or_filename)
-        except ValidationError:
+        except ValidationError:  # pragma: no cover
             raise
         except (FileNotFoundError, ValueError):
             try:
                 return PluginManifest.from_distribution(str(package_or_filename))
-            except ValidationError:
+            except ValidationError:  # pragma: no cover
                 raise
             except Exception as e:
                 raise ValueError(
