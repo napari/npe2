@@ -1,52 +1,9 @@
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from ..types import LayerData, PathOrPaths, ReaderFunction
 from .utils import Executable
-
-
-def reader(path: PathOrPaths) -> List[LayerData]:
-    """
-    A function that accepts a `path` and returns a list of LayerData.
-    """
-
-
-def get_reader(path: PathOrPaths) -> Optional[ReaderFunction]:
-    """A reference ReaderContribution command."""
-    # if some condition about path is met ...
-    return reader
-
-
-class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
-    """Contribute a file reader.
-
-    Readers may be associated with specific **filename_patterns** (e.g. "*.tif",
-    "*.zip") and are invoked whenever `viewer.open('some/path')` is used on the
-    command line, or when a user opens a file in the graphical user interface by
-    dropping a file into the canvas, or using `File -> Open...`
-
-    See the [Readers Guide](./guides.html#readers-contribution-guide) on how to create
-    a reader contribution.
-    """
-
-    command: str = Field(
-        ..., description="Identifier of the command providing the reader interface."
-    )
-    filename_patterns: List[str] = Field(
-        ...,
-        description="List of [fnmatch](https://docs.python.org/3/library/fnmatch.html)"
-        " filename patterns that this reader accepts. Reader will be tried only if "
-        "`fnmatch(filename, pattern) == True`. Use `['*']` to match all filenames.",
-    )
-    accepts_directories: bool = Field(
-        False, description="Whether this reader accepts directories."
-    )
-
-    class Config:
-        extra = Extra.forbid
-        reference_spec = get_reader
 
 
 class LayerType(str, Enum):
