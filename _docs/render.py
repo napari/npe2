@@ -4,7 +4,7 @@ import json
 from functools import lru_cache
 from inspect import getsource
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict
+from typing import Dict
 
 import yaml
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -12,9 +12,6 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from npe2.manifest import PluginManifest
 from npe2.manifest.contributions import ContributionPoints
 from npe2.manifest.utils import Executable
-
-if TYPE_CHECKING:
-    pass
 
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"

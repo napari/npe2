@@ -6,15 +6,15 @@ contributions:
       title: Hello World
     - id: example-plugin.read_xyz
       title: Read ".xyz" files
-      python_name: example_plugin._some_module:get_reader
+      python_name: example_plugin.some_module:get_reader
     - id: example-plugin.write_points
-      python_name: example_plugin._some_module:write_points
+      python_name: example_plugin.some_module:write_points
       title: Save points layer to csv
     - id: example-plugin.animation_wizard
-      python_name: example_plugin._some_module:AnimationWizard
+      python_name: example_plugin.some_module:AnimationWizard
       title: Open animation wizard
     - id: example-plugin.do_threshold
-      python_name: example_plugin._some_module:threshold
+      python_name: example_plugin.some_module:threshold
       title: Perform threshold on image, return new image
     - id: example-plugin.data.fractal
       title: Create fractal image

@@ -28,7 +28,7 @@ example-plugin = napari.yaml
 
 ## Fields
 
-All fields are optional except those in **bold**: ({{ schema.required|join(", ") }})
+All fields are optional except those in **bold**.
 
 | Name | Details |
 |------|---------|
@@ -38,24 +38,26 @@ All fields are optional except those in **bold**: ({{ schema.required|join(", ")
 {%- endif %}
 {%- endfor %}
 
-*Note that [package metadata](https://packaging.python.org/en/latest/specifications/core-metadata/)
-from your `setup.cfg` file will also be parsed for version, license, and other info.*
+```{note}
+Standard python
+[package metadata](https://packaging.python.org/en/latest/specifications/core-metadata/)
+from your `setup.cfg` file will also be parsed for version, license, and other info.
+```
 
 ## Example
 
 Here is a complete example of what the manifest of a plugin providing *all*
-contributions might look like. (Note, however, that a plugin needn't implement
-more than a single contribution type).  Both YAML and TOML are supported, but
-YAML is the default/conventional format.
+contributions might look like. (Note: a plugin needn't implement
+more than a single contribution type).
 
-````{tabbed} yaml
-```yaml
-{{ example.yaml() }}
+```{tip}
+Both [YAML](https://yaml.org/) and [TOML](https://toml.io/en/) are supported
+manifest formats, though YAML is the "default" and more common format.
+```
+{% for format in ['yaml', 'toml'] %}
+````{tabbed} {{format}}
+```{{format}}
+{{ example[format]() }}
 ```
 ````
-
-````{tabbed} toml
-```toml
-{{ example.toml() }}
-```
-````
+{% endfor -%}

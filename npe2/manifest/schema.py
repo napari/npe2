@@ -92,7 +92,7 @@ class PluginManifest(ImportExportModel):
     on_activate: Optional[str] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
-        "upon plugin activation (e.g. `'my_plugin._some_module:activate'`). The "
+        "upon plugin activation (e.g. `'my_plugin.some_module:activate'`). The "
         "activate function can be used to connect command ids to python callables, or"
         " perform other side-effects. A plugin will be 'activated' when one of its "
         "contributions is requested by the user (such as a widget, or reader).",
@@ -103,7 +103,7 @@ class PluginManifest(ImportExportModel):
     on_deactivate: Optional[str] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
-        "when a user deactivates a plugin (e.g. `'my_plugin._some_module:deactivate'`)"
+        "when a user deactivates a plugin (e.g. `'my_plugin.some_module:deactivate'`)"
         ". This is optional, and may be used to perform any plugin cleanup.",
     )
     _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
