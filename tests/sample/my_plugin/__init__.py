@@ -16,6 +16,10 @@ def activate(context: PluginContext):
     context.register_command("my_plugin.another_command", lambda: print("yo!"))
 
 
+def deactivate(context: PluginContext):
+    """just here for tests"""
+
+
 def get_reader(path: str):
     if path.endswith(".fzzy"):
 

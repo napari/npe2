@@ -1,30 +1,38 @@
+import sys
+
 import pytest
 
 from npe2._command_registry import CommandHandler, CommandRegistry
 from npe2._plugin_manager import PluginManager
+from npe2.manifest.schema import PluginManifest
 
 
-def test_plugin_manager(sample_path):
+@pytest.fixture
+def pm(sample_path):
+
     pm = PluginManager()
     pm.discover()
     assert len(pm._manifests) == 0
-    pm.discover([sample_path])
-    assert len(pm._manifests) == 1
+    sys.path.append(str(sample_path))
+    try:
+        pm.discover()
+        yield pm
+    finally:
+        sys.path.remove(str(sample_path))
+
+
+def test_plugin_manager(pm: PluginManager):
     assert pm.get_command("my_plugin.hello_world")
 
     assert "my_plugin" not in pm._contexts
     ctx = pm.activate("my_plugin")
     assert "my_plugin" in pm._contexts
+    assert pm.get_manifest("my_plugin")
 
     # dual activation is prevented
     assert pm.activate("my_plugin") is ctx
 
-    with pytest.raises(KeyError):
-        pm.activate("not a thing")
-
     assert pm.get_command("my_plugin.hello_world")
-    with pytest.raises(KeyError):
-        pm.get_command("my_plugin.not_a_thing")
 
     assert pm.get_submenu("mysubmenu")
     assert len(list(pm.iter_menu("/napari/layer_context"))) == 2
@@ -35,6 +43,18 @@ def test_plugin_manager(sample_path):
     assert "my_plugin" not in pm._contexts
     pm.deactivate("my_plugin")  # second time is a no-op
     assert "my_plugin" not in pm._contexts
+
+
+def test_plugin_manager_raises(pm: PluginManager):
+    with pytest.raises(KeyError):
+        pm.get_manifest("not-a-pluginxxx")
+    with pytest.raises(KeyError):
+        pm.activate("not a thing")
+    with pytest.raises(KeyError):
+        pm.get_command("my_plugin.not_a_thing")
+    with pytest.raises(ValueError) as e:
+        pm.register(PluginManifest(name="my_plugin"))
+    assert "A manifest with name 'my_plugin' already exists." in str(e.value)
 
 
 def test_command_handler():
@@ -64,6 +84,10 @@ def test_command_reg_register():
     with pytest.raises(ValueError):
         # already registered
         reg.register("some.id", "this.is.a_valid_python_name")
+
+    with pytest.raises(KeyError) as e:
+        reg.get("not.a.command")
+    assert "command 'not.a.command' not registered" in str(e.value)
 
 
 def test_command_reg_get():

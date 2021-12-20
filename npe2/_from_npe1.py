@@ -89,7 +89,7 @@ def plugin_packages() -> List[PluginPackage]:
     for dist in metadata.distributions():
         for ep in dist.entry_points:
             if ep.group != NPE1_EP:
-                continue
+                continue  # pragma: no cover
             top = dist.read_text("top_level.txt")
             top = top.splitlines()[0] if top else ep.value.split(".")[0]
             packages.append(
@@ -104,7 +104,9 @@ def ensure_package_name(name: str):
         for p in plugin_packages():
             if name == getattr(p, attr):
                 return p.package_name
-    raise KeyError(f"Unable to find a locally installed package for plugin {name!r}")
+    raise KeyError(  # pragma: no cover
+        f"Unable to find a locally installed package for plugin {name!r}"
+    )
 
 
 @lru_cache()
@@ -137,7 +139,7 @@ def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> s
                 return b
 
     # we couldn't find it:
-    for e in errors:
+    for e in errors:  # pragma: no cover
         if module and e.plugin == module:
             raise type(e)(e.format())
         for pkg in plugin_packages():
@@ -186,7 +188,7 @@ class HookImplParser:
         for caller in callers:
             for impl in caller.get_hookimpls():
                 if self.plugin_name and impl.plugin_name != self.plugin_name:
-                    continue
+                    continue  # pragma: no cover
                 # call the corresponding hookimpl parser
                 try:
                     getattr(self, impl.specname)(impl)
@@ -272,7 +274,7 @@ class HookImplParser:
                 )
                 self.contributions["widgets"].append(wdg_contrib)
 
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 msg = (
                     f"Error converting function [{idx}] "
                     f"from {impl.function.__module__!r}:\n{e}"
@@ -291,13 +293,15 @@ class HookImplParser:
                 kwargs = item[1] if len(item) > 1 else {}
             else:
                 wdg_creator, kwargs = (item, {})
-            if not callable(wdg_creator) and isinstance(kwargs, dict):
+            if not callable(wdg_creator) and isinstance(
+                kwargs, dict
+            ):  # pragma: no cover
                 warnings.warn(f"Invalid widget spec: {wdg_creator}, {kwargs}")
                 continue
 
             try:
                 self._create_widget_contrib(impl, wdg_creator, kwargs)
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 msg = (
                     f"Error converting dock widget [{idx}] "
                     f"from {impl.function.__module__!r}:\n{e}"
@@ -325,10 +329,10 @@ class HookImplParser:
                 cmd = (
                     f"{self.package}.{func_name or wdg_name.lower().replace(' ', '_')}"
                 )
-            except AttributeError:
+            except AttributeError:  # pragma: no cover
                 pass
 
-        if not py_name:
+        if not py_name:  # pragma: no cover
             raise ValueError(
                 "No suitable python name to point to. "
                 "Is this a locally defined function or partial?"
@@ -347,7 +351,7 @@ class HookImplParser:
             "Found a multi-layer writer, but it's not convertable. "
             "Please add the writer manually."
         )
-        return NotImplemented
+        return NotImplemented  # pragma: no cover
 
     def napari_write_image(self, impl: HookImplementation):
         self._parse_writer(impl, "image")
@@ -419,7 +423,7 @@ def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
     if not top_module:
         top_mods = (dist.read_text("top_level.txt") or "").strip().splitlines()
         if not top_mods:
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 "Could not detect a top level module in distribution metadata "
                 f"for {package_name}"
             )
@@ -441,7 +445,7 @@ def convert_repository(
     manifest = manifest_from_npe1(info.package_name)
     top_module = get_top_module_path(info.package_name, info.top_module)
     if not top_module.is_dir():
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Detection of top-level module failed. {top_module} is not a directory."
         )
     mf_path = top_module / mf_name
@@ -481,7 +485,7 @@ def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
     mf_path = f"{info.top_module}:{mf_name}"
     new_ep = f"\n{info.package_name} = {mf_path}"
     if "options.entry_points" not in p.sections():
-        p.add_section("options.entry_points")
+        p.add_section("options.entry_points")  # pragma: no cover
     p.set("options.entry_points", NPE2_EP, new_ep)
     if "options.package_data" not in p.sections():
         p.add_section("options.package_data")
@@ -494,7 +498,7 @@ def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
 def get_package_dir_info(path: Union[Path, str]) -> PluginPackage:
     """Attempts to *statically* get plugin info from a package directory."""
     path = Path(path).absolute()
-    if not path.is_dir():
+    if not path.is_dir():  # pragma: no cover
         raise ValueError(f"Provided path is not a directory: {path}")
 
     _name = None
@@ -545,14 +549,20 @@ class _SetupVisitor(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> Any:
         if getattr(node.func, "id", "") != "setup":
-            return
+            return  # pragma: no cover
         for kw in node.keywords:
             if kw.arg == "name":
-                self._name = getattr(kw.value, "id", "")
+                self._name = (
+                    getattr(kw.value, "value", "")
+                    or getattr(kw.value, "id", "")
+                    or getattr(kw.value, "s", "")  # py3.7
+                )
+
             if kw.arg == "entry_points":
                 eps: dict = ast.literal_eval(kw.value)
                 for k, v in eps.items():
-                    if k != NPE1_EP:
-                        continue
-                    for item in v:
-                        self._entry_points.append([i.strip() for i in item.split("=")])
+                    if k == NPE1_EP:
+                        for item in v:
+                            self._entry_points.append(
+                                [i.strip() for i in item.split("=")]
+                            )

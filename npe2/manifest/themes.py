@@ -9,7 +9,7 @@ from typing_extensions import Literal
 class Color(color.Color):
     def __eq__(self, __o: object) -> bool:
         if not isinstance(__o, color.Color):
-            return False
+            return False  # pragma: no cover
         return self.as_rgb_tuple() == __o.as_rgb_tuple()
 
 

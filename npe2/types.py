@@ -24,7 +24,7 @@ class ArrayLike(Protocol):
     dtype: "np.dtype"
 
     def __array__(self) -> "np.ndarray":
-        ...
+        ...  # pragma: no cover
 
 
 LayerName = Literal[

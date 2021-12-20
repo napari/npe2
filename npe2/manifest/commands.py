@@ -8,9 +8,6 @@ from . import _validators
 if TYPE_CHECKING:
     from .._command_registry import CommandRegistry
 
-_distname = "([a-zA-Z_][a-zA-Z0-9_-]+)"
-_identifier = "([a-zA-Z_][a-zA-Z_0-9]+)"
-
 
 class CommandContribution(BaseModel):
     """Contribute a **command** (a python callable) consisting of a unique `id`,
@@ -44,8 +41,8 @@ class CommandContribution(BaseModel):
             "the name of the package, and include only alphanumeric characters, plus "
             "dashes and underscores."
         ),
-        regex=f"^(({_distname}\\.)*{_identifier})$",
     )
+    _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
     title: str = Field(
         ...,
