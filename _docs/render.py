@@ -1,32 +1,33 @@
 from __future__ import annotations
 
+import inspect
 import json
 import re
+import sys
 from functools import lru_cache
 from inspect import getsource
 from pathlib import Path
-from typing import Dict
+from types import FunctionType
+from typing import Dict, Optional, Set
 
 import yaml
 from jinja2 import Environment, PackageLoader, select_autoescape
+from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
 from npe2.manifest import PluginManifest
 from npe2.manifest.contributions import ContributionPoints
-from npe2.manifest.schema import _temporary_path_additions
 from npe2.manifest.utils import Executable
 
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
 EXAMPLE_MANIFEST = PluginManifest.from_file(DOCS / "example_manifest.yaml")
-with _temporary_path_additions([str(DOCS.absolute())]):
-    pass
-PluginManager.instance().register(EXAMPLE_MANIFEST)
 
 
 @lru_cache
 def type_strings() -> Dict[str, str]:
+    """Return map of type name to source code for all types in types.py"""
     from npe2 import types as _t
 
     type_strings = {}
@@ -55,20 +56,37 @@ def type_strings() -> Dict[str, str]:
     return type_strings
 
 
-def _build_example(contrib) -> str:
-    import inspect
+def _get_needed_types(source: str, so_far: Optional[Set[str]] = None) -> Set[str]:
+    """Return the names of types in the npe2.types.py that are used in `source`"""
+    so_far = so_far or set()
+    for name, string in type_strings().items():
+        # we treat LayerData specially
+        if (
+            name != "LayerData"
+            and name not in so_far
+            and re.search(fr"\W{name}\W", source)
+        ):
+            so_far.add(name)
+            so_far.update(_get_needed_types(string, so_far=so_far))
+    return so_far
 
-    from magicgui._magicgui import MagicFactory
 
-    if not hasattr(contrib, "get_callable"):
+def _build_example(contrib: Executable) -> str:
+    """Extract just the source code for a specific executable contribution"""
+
+    if not isinstance(contrib, Executable):
         return ""
+
     func = contrib.get_callable()
     if not callable(func):
         return ""
     if isinstance(func, MagicFactory):
         func = func.keywords["function"]
     source = inspect.getsource(func)
-    if hasattr(func, "__code__"):
+
+    # additionally get source code of all internally referenced functions
+    # i.e. for get_reader we also get the source for the returned reader.
+    if isinstance(func, FunctionType):
         for name in func.__code__.co_names:
             if name in func.__globals__:
                 f = func.__globals__[name]
@@ -83,31 +101,17 @@ def _build_example(contrib) -> str:
 
 
 def example_implementation(contrib_name: str) -> str:
-
+    """Build an example string of python source implementing a specific contribution."""
     contrib = getattr(EXAMPLE_MANIFEST.contributions, contrib_name)
     if isinstance(contrib, list):
         return "\n\n".join([_build_example(x) for x in contrib]).strip()
     return _build_example(contrib)
 
 
-def _get_needed_types(source: str, so_far=None):
-    so_far = so_far or set()
-    for name, string in type_strings().items():
-        # we treat LayerData specially
-        if (
-            name != "LayerData"
-            and name not in so_far
-            and re.search(fr"\W{name}\W", source)
-        ):
-            so_far.add(name)
-            so_far.update(_get_needed_types(string, so_far=so_far))
-    return so_far
-
-
 def example_contribution(
     contrib_name: str, format="yaml", manifest: PluginManifest = EXAMPLE_MANIFEST
 ) -> str:
-    """Get small example for just this `contrib_name`"""
+    """Get small manifest example for just contribution named `contrib_name`"""
     assert manifest.contributions
     contribs = getattr(manifest.contributions, contrib_name)
     # only take the first command example ... the rest are for executables
@@ -137,6 +141,12 @@ def example_contribution(
 
 
 def main(dest: Path = _BUILD):
+    """Render all jinja docs in ./templates and output to `dest`"""
+
+    # register the example plugin so we can use `.get_callable()` in _build_example
+    sys.path.append(str(DOCS.absolute()))
+    PluginManager.instance().register(EXAMPLE_MANIFEST)
+
     this = Path(__file__).parent.name
     env = Environment(loader=PackageLoader(this), autoescape=select_autoescape())
     env.filters["example_contribution"] = example_contribution
@@ -152,6 +162,7 @@ def main(dest: Path = _BUILD):
         # "specs": _get_specs(),
         "specs": {},
     }
+
     for t in TEMPLATES.glob("*.jinja"):
         template = env.get_template(t.name)
         _dest = dest / f"{t.stem}"
@@ -160,7 +171,5 @@ def main(dest: Path = _BUILD):
 
 
 if __name__ == "__main__":
-    import sys
-
     dest = Path(sys.argv[1]).absolute() if len(sys.argv) > 1 else _BUILD
     main(dest)
