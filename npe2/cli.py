@@ -40,12 +40,13 @@ def validate(
     name: str,
     imports: bool = typer.Option(
         False,
-        help="Validate all python_name entries by importing",
+        help="Validate all `python_name` entries by importing. This runs python code! "
+        "package must be importable on sys.path.",
     ),
     debug: bool = typer.Option(
         False,
         "--debug",
-        help="Just print manifest to stdout. Do not modify anything",
+        help="Print tracebacks on error.",
     ),
 ):
     """Validate manifest for a distribution name or manifest filepath."""
