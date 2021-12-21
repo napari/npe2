@@ -78,7 +78,7 @@ class ImportExportModel(BaseModel):
         elif path.suffix.lower() in (".yaml", ".yml"):
             loader = yaml.safe_load
         else:
-            raise ValueError(f"unrecognized file extension: {path}")
+            raise ValueError(f"unrecognized file extension: {path}")  # pragma: no cover
 
         with open(path) as f:
             data = loader(f) or {}

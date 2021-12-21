@@ -25,8 +25,9 @@ from typing import (
 from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
-from .manifest import PluginManifest, _validators
+from .manifest import PluginManifest
 from .manifest.writers import LayerType, WriterContribution
+from .types import PythonName
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
@@ -354,20 +355,13 @@ class PluginContext:
         return _inner if command is None else _inner(command)
 
 
-def _call_python_name(python_name: str, args=()) -> Any:
+def _call_python_name(python_name: PythonName, args=()) -> Any:
     """convenience to call `python_name` function. eg `module.submodule:funcname`."""
-    from importlib import import_module
+    from .manifest.utils import import_python_name
 
     if not python_name:  # pragma: no cover
         return None
 
-    match = _validators.PYTHON_NAME_PATTERN.match(python_name)
-    if not match:  # pragma: no cover
-        raise ValueError(f"Invalid python name: {python_name}")
-
-    module_name, funcname = match.groups()
-
-    mod = import_module(module_name)
-    func = getattr(mod, funcname, None)
+    func = import_python_name(python_name)
     if callable(func):
         return func(*args)
