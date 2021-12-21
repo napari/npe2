@@ -6,6 +6,8 @@ import pytest
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest.commands import CommandContribution
 
+SAMPLE_PLUGIN_NAME = "my-plugin"
+
 
 def test_writer_empty_layers():
     pm = PluginManager()
@@ -28,7 +30,7 @@ def test_writer_empty_layers():
 def test_writer_ranges(param, uses_sample_plugin, plugin_manager: PluginManager):
     layer_types, expected_count = param
     nwriters = sum(
-        w.command == "my_plugin.my_writer"
+        w.command == f"{SAMPLE_PLUGIN_NAME}.my_writer"
         for w in plugin_manager.iter_compatible_writers(layer_types)
     )
 
@@ -43,7 +45,7 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     result = next(
         result
         for result in PluginManifest.discover()
-        if result.manifest and result.manifest.name == "my_plugin"
+        if result.manifest and result.manifest.name == SAMPLE_PLUGIN_NAME
     )
     assert result.error is None
     assert result.manifest is not None
@@ -61,7 +63,7 @@ def test_writer_for_command(
     uses_sample_plugin, plugin_manager: PluginManager, tmp_path
 ):
     reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
-    assert reader.command == "my_plugin.some_reader"
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
@@ -69,24 +71,24 @@ def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
 
     widgets = list(plugin_manager.iter_widgets())
     assert len(widgets) == 2
-    assert widgets[0].command == "my_plugin.some_widget"
+    assert widgets[0].command == f"{SAMPLE_PLUGIN_NAME}.some_widget"
     w = widgets[0].exec()
     assert type(w).__name__ == "SomeWidget"
 
-    assert widgets[1].command == "my_plugin.some_function_widget"
+    assert widgets[1].command == f"{SAMPLE_PLUGIN_NAME}.some_function_widget"
     w = widgets[1].get_callable()
     assert isinstance(w, MagicFactory)
 
 
 def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     plugin, contribs = list(plugin_manager.iter_sample_data())[0]
-    assert plugin == "my_plugin"
+    assert plugin == SAMPLE_PLUGIN_NAME
     assert len(contribs) == 2
     ctrbA, ctrbB = contribs
     # ignoring types because .command and .uri come from different sample provider
     # types... they don't both have "command" or "uri"
-    assert ctrbA.command == "my_plugin.generate_random_data"
-    assert ctrbA.plugin_name == "my_plugin"
+    assert ctrbA.command == f"{SAMPLE_PLUGIN_NAME}.generate_random_data"
+    assert ctrbA.plugin_name == SAMPLE_PLUGIN_NAME
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)
@@ -94,7 +96,7 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
 
 def test_directory_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
     reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
-    assert reader.command == "my_plugin.some_reader"
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 def test_themes(uses_sample_plugin, plugin_manager: PluginManager):
