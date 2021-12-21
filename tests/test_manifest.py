@@ -6,11 +6,15 @@ from pydantic import ValidationError
 
 from npe2 import PluginManifest
 from npe2.manifest.package_metadata import PackageMetadata
+from npe2.manifest.schema import ENTRY_POINT
 
 try:
     from importlib import metadata
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
+
+SAMPLE_PLUGIN_NAME = "my-plugin"
+SAMPLE_MODULE_NAME = "my_plugin"
 
 
 def test_sample_plugin_valid(sample_manifest):
@@ -21,7 +25,7 @@ def test_discover_empty():
     # sanity check to make sure sample_plugin must be in path to be discovered
     results = PluginManifest.discover()
     manifests = [result.manifest.name for result in results if result.manifest]
-    assert "my_plugin" not in manifests
+    assert SAMPLE_PLUGIN_NAME not in manifests
 
 
 def test_schema():
@@ -36,9 +40,9 @@ def test_discover(uses_sample_plugin):
     discover_results = list(PluginManifest.discover())
     assert len(discover_results) == 1
     [(manifest, entrypoint, error)] = discover_results
-    assert manifest and manifest.name == "my_plugin"
-    assert entrypoint and entrypoint.group == "napari.manifest"
-    assert entrypoint.value == "my_plugin:napari.yaml"
+    assert manifest and manifest.name == SAMPLE_PLUGIN_NAME
+    assert entrypoint and entrypoint.group == "napari.manifest" == ENTRY_POINT
+    assert entrypoint.value == f"{SAMPLE_MODULE_NAME}:napari.yaml"
     assert error is None
 
 
@@ -50,7 +54,7 @@ def test_discover_errors(tmp_path: Path):
     a.mkdir()
     a_ep = a / "entry_points.txt"
     bad_value = "asdfsad:blahblahblah.yaml"
-    a_ep.write_text(f"[napari.manifest]\nmy_plugin = {bad_value}")
+    a_ep.write_text(f"[napari.manifest]\n{SAMPLE_PLUGIN_NAME} = {bad_value}")
 
     # package with proper `napari.manifest` entry_point, but invalid manifest
     b = tmp_path / "b"
@@ -88,8 +92,8 @@ def test_discover_errors(tmp_path: Path):
 
 
 def test_package_meta(uses_sample_plugin):
-    direct_meta = PackageMetadata.for_package("my_plugin")
-    assert direct_meta.name == "my_plugin"
+    direct_meta = PackageMetadata.for_package(SAMPLE_PLUGIN_NAME)
+    assert direct_meta.name == SAMPLE_PLUGIN_NAME
     assert direct_meta.version == "1.2.3"
     discover_results = list(PluginManifest.discover())
     [(manifest, *_)] = discover_results
@@ -129,9 +133,9 @@ def test_export_round_trip(sample_manifest, tmp_path, format):
 
 
 def test_from_distribution(uses_sample_plugin):
-    mf = PluginManifest.from_distribution("my_plugin")
-    assert mf.name == "my_plugin"
-    assert mf.package_metadata == PackageMetadata.for_package("my_plugin")
+    mf = PluginManifest.from_distribution(SAMPLE_PLUGIN_NAME)
+    assert mf.name == SAMPLE_PLUGIN_NAME
+    assert mf.package_metadata == PackageMetadata.for_package(SAMPLE_PLUGIN_NAME)
 
     with pytest.raises(metadata.PackageNotFoundError):
         _ = PluginManifest.from_distribution("not-an-installed-package")

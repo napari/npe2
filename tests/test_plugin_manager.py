@@ -6,6 +6,8 @@ from npe2._command_registry import CommandHandler, CommandRegistry
 from npe2._plugin_manager import PluginManager
 from npe2.manifest.schema import PluginManifest
 
+SAMPLE_PLUGIN_NAME = "my-plugin"
+
 
 @pytest.fixture
 def pm(sample_path):
@@ -22,27 +24,27 @@ def pm(sample_path):
 
 
 def test_plugin_manager(pm: PluginManager):
-    assert pm.get_command("my_plugin.hello_world")
+    assert pm.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
 
-    assert "my_plugin" not in pm._contexts
-    ctx = pm.activate("my_plugin")
-    assert "my_plugin" in pm._contexts
-    assert pm.get_manifest("my_plugin")
+    assert SAMPLE_PLUGIN_NAME not in pm._contexts
+    ctx = pm.activate(SAMPLE_PLUGIN_NAME)
+    assert SAMPLE_PLUGIN_NAME in pm._contexts
+    assert pm.get_manifest(SAMPLE_PLUGIN_NAME)
 
     # dual activation is prevented
-    assert pm.activate("my_plugin") is ctx
+    assert pm.activate(SAMPLE_PLUGIN_NAME) is ctx
 
-    assert pm.get_command("my_plugin.hello_world")
+    assert pm.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
 
     assert pm.get_submenu("mysubmenu")
     assert len(list(pm.iter_menu("/napari/layer_context"))) == 2
 
     # deactivation
-    assert "my_plugin" in pm._contexts
-    pm.deactivate("my_plugin")
-    assert "my_plugin" not in pm._contexts
-    pm.deactivate("my_plugin")  # second time is a no-op
-    assert "my_plugin" not in pm._contexts
+    assert SAMPLE_PLUGIN_NAME in pm._contexts
+    pm.deactivate(SAMPLE_PLUGIN_NAME)
+    assert SAMPLE_PLUGIN_NAME not in pm._contexts
+    pm.deactivate(SAMPLE_PLUGIN_NAME)  # second time is a no-op
+    assert SAMPLE_PLUGIN_NAME not in pm._contexts
 
 
 def test_plugin_manager_raises(pm: PluginManager):
@@ -51,10 +53,10 @@ def test_plugin_manager_raises(pm: PluginManager):
     with pytest.raises(KeyError):
         pm.activate("not a thing")
     with pytest.raises(KeyError):
-        pm.get_command("my_plugin.not_a_thing")
+        pm.get_command(f"{SAMPLE_PLUGIN_NAME}.not_a_thing")
     with pytest.raises(ValueError) as e:
-        pm.register(PluginManifest(name="my_plugin"))
-    assert "A manifest with name 'my_plugin' already exists." in str(e.value)
+        pm.register(PluginManifest(name=SAMPLE_PLUGIN_NAME))
+    assert f"A manifest with name {SAMPLE_PLUGIN_NAME!r} already" in str(e.value)
 
 
 def test_command_handler():

@@ -3,6 +3,8 @@ import pytest
 from npe2.io_utils import read, read_get_reader, write, write_get_writer
 from npe2.types import FullLayerData
 
+SAMPLE_PLUGIN_NAME = "my-plugin"
+
 
 def test_read(uses_sample_plugin):
     assert read("some.fzzy") == [(None,)]
@@ -17,7 +19,7 @@ def test_read_with_plugin(uses_sample_plugin):
 def test_read_return_reader(uses_sample_plugin):
     data, reader = read_get_reader("some.fzzy")
     assert data == [(None,)]
-    assert reader.command == "my_plugin.some_reader"
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 null_image: FullLayerData = ([], {}, "image")
@@ -30,7 +32,7 @@ def test_writer_exec(uses_sample_plugin):
 
     result, contrib = write_get_writer("test.tif", [null_image, null_image])
     assert result == ["test.tif"]
-    assert contrib.command == "my_plugin.my_writer"
+    assert contrib.command == f"{SAMPLE_PLUGIN_NAME}.my_writer"
 
 
 @pytest.mark.parametrize("layer_data", [[null_image, null_image], []])
