@@ -4,6 +4,7 @@ import inspect
 import json
 import re
 import sys
+from contextlib import contextmanager
 from functools import lru_cache
 from inspect import getsource
 from pathlib import Path
@@ -23,6 +24,24 @@ DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
 EXAMPLE_MANIFEST = PluginManifest.from_file(DOCS / "example_manifest.yaml")
+
+
+@contextmanager
+def _mocked_qtwidgets():
+    # just mocking a "qtpy.QtWidgets" so we don't need to include PyQt just to build
+    # documentation.
+    from types import ModuleType
+
+    mock = ModuleType("qtpy.QtWidgets")
+    mock.__dict__["QWidget"] = object
+    before, sys.modules["qtpy.QtWidgets"] = sys.modules.get("qtpy.QtWidgets"), mock
+    try:
+        yield
+    finally:
+        if before is not None:
+            sys.modules["qtpy.QtWidgets"] = mock
+        else:
+            del sys.modules["qtpy.QtWidgets"]
 
 
 @lru_cache
@@ -77,7 +96,9 @@ def _build_example(contrib: Executable) -> str:
     if not isinstance(contrib, Executable):
         return ""
 
-    func = contrib.get_callable()
+    with _mocked_qtwidgets():
+        func = contrib.get_callable()
+
     if not callable(func):
         return ""
     if isinstance(func, MagicFactory):

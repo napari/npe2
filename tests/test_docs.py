@@ -10,7 +10,7 @@ def test_example_manifest():
     assert PluginManifest.from_file(example)
 
 
-def test_render_docs(tmp_path, capsys):
+def test_render_docs(tmp_path, monkeypatch):
     from _docs.render import main
 
     assert not list(tmp_path.glob("*.md"))
