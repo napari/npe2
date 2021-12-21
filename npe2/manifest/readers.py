@@ -7,6 +7,17 @@ from .utils import Executable
 
 
 class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
+    """Contribute a file reader.
+
+    Readers may be associated with specific **filename_patterns** (e.g. "*.tif",
+    "*.zip") and are invoked whenever `viewer.open('some/path')` is used on the
+    command line, or when a user opens a file in the graphical user interface by
+    dropping a file into the canvas, or using `File -> Open...`
+
+    See the [Readers Guide](./guides.html#readers-contribution-guide) on how to create
+    a reader contribution.
+    """
+
     command: str = Field(
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
