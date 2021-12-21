@@ -153,7 +153,7 @@ class Version:
         return v
 
 
-def import_python_name(python_name: PythonName) -> object:
+def import_python_name(python_name: PythonName) -> Any:
     from importlib import import_module
 
     from ._validators import PYTHON_NAME_PATTERN

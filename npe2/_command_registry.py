@@ -3,12 +3,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from importlib import import_module
 from typing import Any, Callable, Dict, Optional, Union
 
 from psygnal import Signal
 
 from .manifest._validators import DOTTED_NAME_PATTERN
+from .manifest.utils import import_python_name
+from .types import PythonName
 
 PDisposable = Callable[[], None]
 
@@ -17,7 +18,7 @@ PDisposable = Callable[[], None]
 class CommandHandler:
     id: str
     function: Optional[Callable] = None
-    python_name: Optional[str] = None
+    python_name: Optional[PythonName] = None
 
     def resolve(self) -> Callable:
         if self.function is not None:
@@ -26,9 +27,7 @@ class CommandHandler:
             raise RuntimeError("cannot resolve command without python_name")
 
         try:
-            module_name, class_name = self.python_name.rsplit(":", 1)
-            module = import_module(module_name)
-            self.function = getattr(module, class_name)
+            self.function = import_python_name(self.python_name)
         except Exception as e:
             raise RuntimeError("Failed to import command at {self.python_name!r}: {e}")
         return self.function
@@ -77,7 +76,7 @@ class CommandRegistry:
                 raise ValueError(
                     "String command {command!r} is not a valid qualified python path."
                 )
-            cmd = CommandHandler(id, python_name=command)
+            cmd = CommandHandler(id, python_name=PythonName(command))
         elif not callable(command):
             raise TypeError(f"Cannot register non-callable command: {command}")
         else:
