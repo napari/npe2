@@ -1,27 +1,19 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
-from pydantic import BaseModel
-
+# to test various ways that this can be imported, since we're using static parsing.
 import npe2.implements
 import npe2.implements as impls
-from npe2 import PluginContext, implements
-
-if TYPE_CHECKING:
-    import napari.types
+from npe2 import implements
 
 
 @implements.on_activate
-def activate(context: PluginContext):
-    @context.register_command("my_plugin.hello_world")
-    def _hello():
-        ...
-
-    context.register_command("my_plugin.another_command", lambda: print("yo!"))
+def activate(ctx):
+    ...
 
 
 @implements.on_deactivate
-def deactivate(context: PluginContext):
-    """just here for tests"""
+def deactivate(ctx):
+    ...
 
 
 @implements.reader(
@@ -31,24 +23,14 @@ def deactivate(context: PluginContext):
     accepts_directories=True,
 )
 def get_reader(path: str):
-    if path.endswith(".fzzy"):
-
-        def read(path):
-            return [(None,)]
-
-        return read
+    ...
 
 
 @implements.reader(
     id="url_reader", title="URL Reader", filename_patterns=["http://*", "https://*"]
 )
 def url_reader(path: str):
-    if path.startswith("http"):
-
-        def read(path):
-            return [(None,)]
-
-        return read
+    ...
 
 
 @implements.writer(
@@ -64,15 +46,7 @@ def url_reader(path: str):
     layer_types=["points{1}", "surface+"],
 )
 def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
-    class Arg(BaseModel):
-        data: Any
-        meta: Dict
-        layer_type: str
-
-    for e in layer_data:
-        Arg(data=e[0], meta=e[1], layer_type=e[2])
-
-    return [path]
+    ...
 
 
 @implements.writer(
@@ -82,13 +56,7 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     layer_types=["labels"],
 )
 def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
-    class Arg(BaseModel):
-        data: Any
-        meta: Dict
-
-    Arg(data=layer_data, meta=meta)
-
-    return [path]
+    ...
 
 
 @npe2.implements.widget(
@@ -105,9 +73,7 @@ class SomeWidget:
     display_name="Some Random Data (512 x 512)",
 )
 def random_data():
-    import numpy as np
-
-    return [(np.random.rand(10, 10))]
+    ...
 
 
 @impls.widget(
@@ -115,5 +81,5 @@ def random_data():
     title="Create widget from my function",
     display_name="A Widget From a Function",
 )
-def make_widget_from_function(image: "napari.types.ImageData", threshold: int):
+def make_widget_from_function(x: int, threshold: int):
     ...
