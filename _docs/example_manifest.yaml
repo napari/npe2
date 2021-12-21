@@ -8,17 +8,17 @@ contributions:
       title: Read ".xyz" files
       python_name: example_plugin.some_module:get_reader
     - id: example-plugin.write_points
-      python_name: example_plugin.some_module:write_points
       title: Save points layer to csv
+      python_name: example_plugin.some_module:write_points
     - id: example-plugin.animation_wizard
-      python_name: example_plugin.some_module:AnimationWizard
       title: Open animation wizard
+      python_name: example_plugin.some_module:AnimationWizard
     - id: example-plugin.do_threshold
-      python_name: example_plugin.some_module:threshold
       title: Perform threshold on image, return new image
+      python_name: example_plugin.some_module:threshold
     - id: example-plugin.data.fractal
       title: Create fractal image
-      python_name: example_plugin._data:fractal
+      python_name: example_plugin.some_module:create_fractal
   readers:
     - command: example-plugin.read_xyz
       filename_patterns: ["*.xyz"]
@@ -49,9 +49,9 @@ contributions:
         warning: "#f92672"
         current: "#66d9ef"
   sample_data:
-    - display_name: Fractal
-      key: fractal
+    - key: fractal
+      display_name: Fractal
       command: example-plugin.data.fractal
-    - display_name: Tabueran Kiribati
-      key: napari
+    - key: napari
+      display_name: Tabueran Kiribati
       uri: https://en.wikipedia.org/wiki/Napari#/media/File:Tabuaeran_Kiribati.jpg

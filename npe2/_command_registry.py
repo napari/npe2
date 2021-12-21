@@ -29,7 +29,7 @@ class CommandHandler:
         try:
             self.function = import_python_name(self.python_name)
         except Exception as e:
-            raise RuntimeError("Failed to import command at {self.python_name!r}: {e}")
+            raise RuntimeError(f"Failed to import command at {self.python_name!r}: {e}")
         return self.function
 
 

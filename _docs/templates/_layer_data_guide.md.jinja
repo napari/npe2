@@ -1,0 +1,33 @@
+(layer-data-guide)=
+## The LayerData tuple
+
+When transfering data to and from plugins, napari does not pass `Layer` objects
+directly. Instead, it passes (mostly) pure-python and array-like types,
+deconstructed into a {class}`tuple` that we refer to as a `LayerDataTuple`.  This type shows
+up often in plugins and is explained here.
+
+Formally, the typing for `LayerData` looks like this:
+
+```python
+from typing import Literal, Protocol, Sequence
+
+LayerTypeName = Literal[
+    "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
+]
+LayerProps = Dict
+DataType = Union[ArrayLike, Sequence[ArrayLike]]
+FullLayerData = Tuple[DataType, LayerProps, LayerTypeName]
+
+LayerData = Union[Tuple[DataType], Tuple[DataType, LayerProps], FullLayerData]
+
+# where "ArrayLike" is very roughly ...
+class ArrayLike(Protocol):
+    shape: Tuple[int, ...]
+    ndim: int
+    dtype: np.dtype
+    def __array__(self) -> np.ndarray: ...
+    def __getitem__(self, key) -> ArrayLike: ...
+
+# the main point is that we're more concerned with structural
+# typing than literal array types (e.g. numpy, dask, xarray, etc...)
+```

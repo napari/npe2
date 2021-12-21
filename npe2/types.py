@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -21,7 +20,8 @@ if TYPE_CHECKING:
 
 # General types
 
-PathLike = Union[str, Path]
+# PathLike = Union[str, pathlib.Path]  # we really have to pick one
+PathLike = str
 PathOrPaths = Union[PathLike, Sequence[PathLike]]
 PythonName = NewType("PythonName", str)
 

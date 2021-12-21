@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from functools import lru_cache
 from inspect import getsource
 from pathlib import Path
@@ -9,34 +10,19 @@ from typing import Dict
 import yaml
 from jinja2 import Environment, PackageLoader, select_autoescape
 
+from npe2 import PluginManager
 from npe2.manifest import PluginManifest
 from npe2.manifest.contributions import ContributionPoints
+from npe2.manifest.schema import _temporary_path_additions
 from npe2.manifest.utils import Executable
 
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS / "_build"
-EXAMPLE = PluginManifest.from_file(DOCS / "example_manifest.yaml")
-
-
-def _iter_visible_contribution_points():
-    for field in ContributionPoints.__fields__.values():
-        if field.name not in getattr(ContributionPoints.__config__, "docs_exclude", {}):
-            yield field
-
-
-def _get_specs():
-    specs = {}
-    for field in _iter_visible_contribution_points():
-        field_type = field.type_
-        config = getattr(field_type, "__config__", None)
-        if not config:
-            continue
-        spec = getattr(config, "reference_spec", None)
-        if spec:
-
-            specs[field_type.__name__] = get_spec_source(spec)
-    return specs
+EXAMPLE_MANIFEST = PluginManifest.from_file(DOCS / "example_manifest.yaml")
+with _temporary_path_additions([str(DOCS.absolute())]):
+    pass
+PluginManager.instance().register(EXAMPLE_MANIFEST)
 
 
 @lru_cache
@@ -46,7 +32,7 @@ def type_strings() -> Dict[str, str]:
     type_strings = {}
     type_lines = getsource(_t).splitlines()
     for r, line in enumerate(type_lines):
-        if not line or line.startswith((" ", "#", "]", "if", "from")):
+        if not line or line.startswith((" ", "#", "]", ")", "if", "from")):
             continue
         end = 0
         if r + 1 >= len(type_lines):
@@ -69,14 +55,24 @@ def type_strings() -> Dict[str, str]:
     return type_strings
 
 
-def get_spec_source(spec) -> str:
+def _build_example(contrib) -> str:
     import inspect
 
-    source = inspect.getsource(spec)
-    for name in spec.__code__.co_names:
-        if name in spec.__globals__:
-            f = spec.__globals__[name]
-            source += "\n\n" + inspect.getsource(f)
+    from magicgui._magicgui import MagicFactory
+
+    if not hasattr(contrib, "get_callable"):
+        return ""
+    func = contrib.get_callable()
+    if not callable(func):
+        return ""
+    if isinstance(func, MagicFactory):
+        func = func.keywords["function"]
+    source = inspect.getsource(func)
+    if hasattr(func, "__code__"):
+        for name in func.__code__.co_names:
+            if name in func.__globals__:
+                f = func.__globals__[name]
+                source += "\n\n" + inspect.getsource(f)
 
     needed = _get_needed_types(source)
     lines = [v for k, v in type_strings().items() if k in needed]
@@ -86,17 +82,30 @@ def get_spec_source(spec) -> str:
     return "\n".join(lines)
 
 
-def _get_needed_types(source: str, so_far=set()):
+def example_implementation(contrib_name: str) -> str:
+
+    contrib = getattr(EXAMPLE_MANIFEST.contributions, contrib_name)
+    if isinstance(contrib, list):
+        return "\n\n".join([_build_example(x) for x in contrib]).strip()
+    return _build_example(contrib)
+
+
+def _get_needed_types(source: str, so_far=None):
+    so_far = so_far or set()
     for name, string in type_strings().items():
         # we treat LayerData specially
-        if name in source and name != "LayerData" and name not in so_far:
+        if (
+            name != "LayerData"
+            and name not in so_far
+            and re.search(fr"\W{name}\W", source)
+        ):
             so_far.add(name)
             so_far.update(_get_needed_types(string, so_far=so_far))
     return so_far
 
 
 def example_contribution(
-    contrib_name: str, format="yaml", manifest: PluginManifest = EXAMPLE
+    contrib_name: str, format="yaml", manifest: PluginManifest = EXAMPLE_MANIFEST
 ) -> str:
     """Get small example for just this `contrib_name`"""
     assert manifest.contributions
@@ -131,6 +140,7 @@ def main(dest: Path = _BUILD):
     this = Path(__file__).parent.name
     env = Environment(loader=PackageLoader(this), autoescape=select_autoescape())
     env.filters["example_contribution"] = example_contribution
+    env.filters["example_implementation"] = example_implementation
 
     dest.mkdir(exist_ok=True, parents=True)
     schema = PluginManifest.schema()
@@ -138,8 +148,9 @@ def main(dest: Path = _BUILD):
     context = {
         "schema": schema,
         "contributions": contributions,
-        "example": EXAMPLE,
-        "specs": _get_specs(),
+        "example": EXAMPLE_MANIFEST,
+        # "specs": _get_specs(),
+        "specs": {},
     }
     for t in TEMPLATES.glob("*.jinja"):
         template = env.get_template(t.name)
