@@ -104,4 +104,3 @@ ENV/
 # IDE settings
 .vscode/
 npe2/_version.py
-docs/
