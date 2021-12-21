@@ -9,7 +9,10 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
+from pydantic.error_wrappers import ErrorWrapper
+from pydantic.main import BaseModel, ModelMetaclass
 
+from ..types import PythonName
 from . import _validators
 from ._bases import ImportExportModel
 from .contributions import ContributionPoints
@@ -89,7 +92,7 @@ class PluginManifest(ImportExportModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    on_activate: Optional[str] = Field(
+    on_activate: Optional[PythonName] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "upon plugin activation (e.g. my_plugin._some_module:activate). The activate "
@@ -100,7 +103,7 @@ class PluginManifest(ImportExportModel):
     _validate_activate_func = validator("on_activate", allow_reuse=True)(
         _validators.python_name
     )
-    on_deactivate: Optional[str] = Field(
+    on_deactivate: Optional[PythonName] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "when a user deactivates a plugin (e.g. my_plugin._some_module:deactivate). "
@@ -338,6 +341,30 @@ class PluginManifest(ImportExportModel):
                     f"Could not find manifest for {package_or_filename!r} as either a "
                     "package name or a file.."
                 ) from e
+
+    def validate_imports(self):
+        from .utils import import_python_name
+
+        errors = []
+
+        def check_pynames(m: BaseModel, loc=()):
+            for name, value in m:
+                if not value:
+                    continue
+                if isinstance(value, BaseModel):
+                    return check_pynames(value, (*loc, name))
+                field = m.__fields__[name]
+                if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
+                    return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
+                if field.outer_type_ is PythonName:
+                    try:
+                        import_python_name(value)
+                    except (ImportError, AttributeError) as e:
+                        errors.append(ErrorWrapper(e, (*loc, name)))
+
+        check_pynames(self)
+        if errors:
+            raise ValidationError(errors, type(self))
 
     ValidationError = ValidationError  # for convenience of access
 

@@ -16,6 +16,8 @@ from typing import (
     Union,
 )
 
+from ..types import PythonName
+
 if TYPE_CHECKING:
     from typing_extensions import Protocol
 
@@ -147,3 +149,18 @@ class Version:
         if self.build:  # pragma: no cover
             v += str(self.build)
         return v
+
+
+def import_python_name(python_name: PythonName) -> object:
+    from importlib import import_module
+
+    from ._validators import PYTHON_NAME_PATTERN
+
+    match = PYTHON_NAME_PATTERN.match(python_name)
+    if not match:  # pragma: no cover
+        raise ValueError(f"Invalid python name: {python_name}")
+
+    module_name, funcname = match.groups()
+
+    mod = import_module(module_name)
+    return getattr(mod, funcname)

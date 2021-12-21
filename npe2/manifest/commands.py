@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Extra, Field, validator
 
+from ..types import PythonName
 from . import _validators
 
 if TYPE_CHECKING:
@@ -74,7 +75,7 @@ class CommandContribution(BaseModel):
     #     ),
     # )
 
-    python_name: Optional[str] = Field(
+    python_name: Optional[PythonName] = Field(
         None,
         description="(Optional) Fully qualified name to callable python object "
         "implementing this command. This usually takes the form of "

@@ -1,5 +1,15 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    NewType,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from typing_extensions import Literal, Protocol
 
@@ -13,7 +23,7 @@ if TYPE_CHECKING:
 
 PathLike = Union[str, Path]
 PathOrPaths = Union[PathLike, Sequence[PathLike]]
-
+PythonName = NewType("PythonName", str)
 
 # Layer-related types
 

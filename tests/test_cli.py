@@ -3,32 +3,40 @@ import sys
 import pytest
 from typer.testing import CliRunner
 
-from npe2.cli import app, main, validate
+from npe2.cli import app, main
 
 runner = CliRunner()
 
 
-def test_cli_validate(sample_path, capsys):
-    validate(sample_path / "my_plugin" / "napari.yaml")
-    captured = capsys.readouterr()
-    assert "✔ Manifest for 'My Plugin' valid!" in captured.out
+@pytest.mark.parametrize("debug", ["--debug", ""])
+@pytest.mark.parametrize("imports", ["--validate-imports", "--no-validate-imports"])
+def test_cli_validate_ok(sample_path, debug, imports, monkeypatch):
+    cmd = ["validate", str(sample_path / "my_plugin" / "napari.yaml"), imports]
+    if debug:
+        cmd += [debug]
+    with monkeypatch.context() as m:
+        m.setattr(sys, "path", sys.path + [str(sample_path)])
+        result = runner.invoke(app, cmd)
+    assert result.exit_code == 0
+    assert "✔ Manifest for 'My Plugin' valid!" in result.stdout
 
 
 def test_cli_validate_invalid(tmp_path, capsys):
     (tmp_path / "manifest.yaml").write_text("name: hi??\n")
-    validate(tmp_path / "manifest.yaml")
-    captured = capsys.readouterr()
-    assert "'hi??' is not a valid python package name." in captured.out
+    cmd = ["validate", str(tmp_path / "manifest.yaml")]
+    result = runner.invoke(app, cmd)
+    assert "'hi??' is not a valid python package name." in result.stdout
 
 
 def test_cli_validate_load_err(tmp_path):
-    result = runner.invoke(app, ["validate", str(tmp_path / "manifest.yaml")])
-    assert result.exit_code == 0
-    assert "🅇 Failed to load" in result.stdout
+    non_existent = str(tmp_path / "manifest.yaml")
+    result = runner.invoke(app, ["validate", non_existent])
+    assert result.exit_code == 1
+    assert "🅇 Unexpected error in" in result.stdout
+    assert "Could not find manifest for" in result.stdout
 
-    with pytest.raises(ValueError) as e:
-        validate(str(tmp_path / "manifest.yaml"), debug=True)
-    assert "Could not find manifest" in str(e.value)
+    result = runner.invoke(app, ["validate", non_existent, "--debug"])
+    assert "Could not find manifest for" in result.stdout
 
 
 def test_cli_parse(sample_path):
