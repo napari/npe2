@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from npe2 import PluginManifest
@@ -6,10 +7,11 @@ from npe2.manifest.contributions import ContributionPoints
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 SAMPLE_MODULE_NAME = "my_plugin"
+SAMPLE_DIR = Path(__file__).parent / "sample"
 
 
 def test_extract_manifest():
-    module_with_decorators = Path(__file__).parent / "sample" / "_with_decorators.py"
+    module_with_decorators = SAMPLE_DIR / "_with_decorators.py"
     output = compile(
         module_with_decorators,
         plugin_name=SAMPLE_PLUGIN_NAME,
@@ -37,3 +39,28 @@ def test_extract_manifest():
     assert sorted(extracted.writers, key=k) == sorted(expected.writers, key=k)
     assert sorted(extracted.widgets, key=k) == sorted(expected.widgets, key=k)
     assert sorted(extracted.sample_data, key=k) == sorted(expected.sample_data, key=k)
+
+
+def test_dynamic(monkeypatch):
+
+    with monkeypatch.context() as m:
+        m.setattr(sys, "path", sys.path + [str(SAMPLE_DIR)])
+        import _with_decorators
+
+        assert hasattr(_with_decorators.get_reader, "_npe2_ReaderContribution")
+        info = _with_decorators.get_reader._npe2_ReaderContribution
+        assert info == dict(
+            id="some_reader",
+            title="Some Reader",
+            filename_patterns=["*.fzy", "*.fzzy"],
+            accepts_directories=True,
+        )
+
+        # we can compile a module object as well as a string path
+        extracted = compile(
+            _with_decorators,
+            plugin_name=SAMPLE_PLUGIN_NAME,
+            module_name=SAMPLE_MODULE_NAME,
+        )
+
+        assert "commands" in extracted

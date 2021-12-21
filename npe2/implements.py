@@ -178,7 +178,9 @@ class PluginModuleVisitor(ast.NodeVisitor):
         return f"{self.module_name}:{obj_name}"
 
 
-def compile(path: Union[ModuleType, PathLike], plugin_name: str, module_name: str = ""):
+def compile(
+    path: Union[ModuleType, PathLike], plugin_name: str, module_name: str = ""
+) -> dict:
     if isinstance(path, ModuleType):
         assert path.__file__
         path = Path(path.__file__)
