@@ -116,9 +116,10 @@ def test_invalid_python_name(uses_sample_plugin):
     assert mf.contributions.commands[-1].python_name
 
     assert mf.validate_imports() is None
-    mf.contributions.commands[-1].python_name += "whoops"  # type: ignore
-    with pytest.raises(ValidationError):
+    mf.contributions.commands[-1].python_name += "_whoops"  # type: ignore
+    with pytest.raises(ValidationError) as e:
         mf.validate_imports()
+    assert "has no attribute 'make_widget_from_function_whoops'" in str(e.value)
 
 
 def _valid_mutator_no_contributions(data):
