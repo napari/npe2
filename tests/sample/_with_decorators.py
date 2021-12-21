@@ -1,3 +1,5 @@
+"""This module mimics all of the contributions my-plugin...
+but is used to reverse-engineer the manifest."""
 from typing import Any, Dict, List, Tuple
 
 # to test various ways that this can be imported, since we're using static parsing.
@@ -27,7 +29,10 @@ def get_reader(path: str):
 
 
 @implements.reader(
-    id="url_reader", title="URL Reader", filename_patterns=["http://*", "https://*"]
+    id="url_reader",
+    title="URL Reader",
+    filename_patterns=["http://*", "https://*"],
+    accepts_directories=False,
 )
 def url_reader(path: str):
     ...
@@ -67,7 +72,7 @@ class SomeWidget:
 
 
 @npe2.implements.sample_data_generator(
-    id="my_plugin.generate_random_data",
+    id="my-plugin.generate_random_data",  # the plugin-name is optional
     title="Generate uniform random data",
     key="random_data",
     display_name="Some Random Data (512 x 512)",
@@ -80,6 +85,7 @@ def random_data():
     id="some_function_widget",
     title="Create widget from my function",
     display_name="A Widget From a Function",
+    autogenerate=True,
 )
 def make_widget_from_function(x: int, threshold: int):
     ...

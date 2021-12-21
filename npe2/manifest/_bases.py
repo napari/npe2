@@ -46,7 +46,7 @@ class ImportExportModel(BaseModel):
         return yaml.safe_dump(self._serialized_data(**kwargs), sort_keys=False)
 
     @classmethod
-    def from_file(cls, path: Union[Path, str]) -> "ImportExportModel":
+    def from_file(cls, path: Union[Path, str]):
         """Parse model from a metadata file.
 
         Parameters

@@ -178,17 +178,17 @@ class PluginModuleVisitor(ast.NodeVisitor):
         return f"{self.module_name}:{obj_name}"
 
 
-def compile(path: Union[ModuleType, PathLike], plugin_name: str):
+def compile(path: Union[ModuleType, PathLike], plugin_name: str, module_name: str = ""):
     if isinstance(path, ModuleType):
         assert path.__file__
         path = Path(path.__file__)
 
     root = ast.parse(Path(path).read_text())
 
-    visitor = PluginModuleVisitor(plugin_name, module_name="my_plugin")
+    visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
     visitor.visit(root)
     if "commands" in visitor._contrib_points:
         compress = {tuple(i.items()) for i in visitor._contrib_points["commands"]}
         visitor._contrib_points["commands"] = [dict(i) for i in compress]
     contributions.ContributionPoints(**visitor._contrib_points)  # validate
-    return visitor
+    return visitor._contrib_points
