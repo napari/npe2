@@ -9,7 +9,7 @@ runner = CliRunner()
 
 
 @pytest.mark.parametrize("debug", ["--debug", ""])
-@pytest.mark.parametrize("imports", ["--validate-imports", "--no-validate-imports"])
+@pytest.mark.parametrize("imports", ["--imports", "--no-imports"])
 def test_cli_validate_ok(sample_path, debug, imports, monkeypatch):
     cmd = ["validate", str(sample_path / "my_plugin" / "napari.yaml"), imports]
     if debug:
@@ -17,8 +17,8 @@ def test_cli_validate_ok(sample_path, debug, imports, monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(sys, "path", sys.path + [str(sample_path)])
         result = runner.invoke(app, cmd)
-    assert result.exit_code == 0
     assert "✔ Manifest for 'My Plugin' valid!" in result.stdout
+    assert result.exit_code == 0
 
 
 def test_cli_validate_invalid(tmp_path, capsys):

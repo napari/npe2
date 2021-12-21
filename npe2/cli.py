@@ -38,7 +38,7 @@ def _pprint_exception(err: Exception):
 @app.command()
 def validate(
     name: str,
-    validate_imports: bool = typer.Option(
+    imports: bool = typer.Option(
         False,
         help="Validate all python_name entries by importing",
     ),
@@ -50,11 +50,11 @@ def validate(
 ):
     """Validate manifest for a distribution name or manifest filepath."""
 
-    err = None
+    err: Optional[Exception] = None
     try:
         pm = PluginManifest._from_package_or_name(name)
         msg = f"✔ Manifest for {(pm.display_name or pm.name)!r} valid!"
-        if validate_imports:
+        if imports:
             pm.validate_imports()
     except PluginManifest.ValidationError as e:
         msg = f"🅇 Invalid! {e}"
