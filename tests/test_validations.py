@@ -106,6 +106,21 @@ def test_invalid(mutator, uses_sample_plugin):
     assert mutator.__doc__ in str(excinfo.value)
 
 
+def test_invalid_python_name(uses_sample_plugin):
+    mf = next(
+        result
+        for result in PluginManifest.discover()
+        if result.manifest and result.manifest.name == SAMPLE_PLUGIN_NAME
+    ).manifest
+    assert mf and mf.contributions and mf.contributions.commands
+    assert mf.contributions.commands[-1].python_name
+
+    assert mf.validate_imports() is None
+    mf.contributions.commands[-1].python_name += "whoops"  # type: ignore
+    with pytest.raises(ValidationError):
+        mf.validate_imports()
+
+
 def _valid_mutator_no_contributions(data):
     """
     Contributions can be absent, in which case the Pydantic model will set the
