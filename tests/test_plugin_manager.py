@@ -5,6 +5,7 @@ import pytest
 from npe2._command_registry import CommandHandler, CommandRegistry
 from npe2._plugin_manager import PluginManager
 from npe2.manifest.schema import PluginManifest
+from npe2.types import PythonName
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
@@ -66,7 +67,7 @@ def test_command_handler():
 
     with pytest.raises(RuntimeError):
         # cannot resolve something without either a python_name or function
-        CommandHandler("hi", python_name="cannot.import.this").resolve()
+        CommandHandler("hi", python_name=PythonName("cannot.import.this")).resolve()
 
 
 def test_command_reg_register():
