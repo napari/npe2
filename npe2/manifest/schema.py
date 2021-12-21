@@ -342,7 +342,8 @@ class PluginManifest(ImportExportModel):
                     "package name or a file.."
                 ) from e
 
-    def validate_imports(self):
+    def validate_imports(self) -> None:
+        """Checks recursively that all `python_name` fields are actually importable."""
         from .utils import import_python_name
 
         errors = []
