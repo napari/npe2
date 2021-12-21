@@ -8,6 +8,8 @@ from npe2.manifest import _validators
 
 # the docstrings here are used to assert the validation error that is printed.
 
+SAMPLE_PLUGIN_NAME = "my-plugin"
+
 
 def _mutator_invalid_package_name(data):
     """'invalid??' is not a valid python package name."""
@@ -20,7 +22,7 @@ def _mutator_invalid_package_name2(data):
 
 
 def _mutator_command_not_begin_with_package_name(data):
-    """Commands identifiers must start with the current package name 'my_plugin'"""
+    """Commands identifiers must start with the current package name"""
     assert "contributions" in data
     c = data["contributions"]["commands"][0]["id"]
     data["contributions"]["commands"][0]["id"] = ".".join(
@@ -92,7 +94,7 @@ def test_invalid(mutator, uses_sample_plugin):
     result = next(
         result
         for result in PluginManifest.discover()
-        if result.manifest and result.manifest.name == "my_plugin"
+        if result.manifest and result.manifest.name == SAMPLE_PLUGIN_NAME
     )
     assert result.error is None
     assert result.manifest is not None
@@ -102,6 +104,22 @@ def test_invalid(mutator, uses_sample_plugin):
     with pytest.raises(ValidationError) as excinfo:
         PluginManifest(**data)
     assert mutator.__doc__ in str(excinfo.value)
+
+
+def test_invalid_python_name(uses_sample_plugin):
+    mf = next(
+        result
+        for result in PluginManifest.discover()
+        if result.manifest and result.manifest.name == SAMPLE_PLUGIN_NAME
+    ).manifest
+    assert mf and mf.contributions and mf.contributions.commands
+    assert mf.contributions.commands[-1].python_name
+
+    assert mf.validate_imports() is None
+    mf.contributions.commands[-1].python_name += "_whoops"  # type: ignore
+    with pytest.raises(ValidationError) as e:
+        mf.validate_imports()
+    assert "has no attribute 'make_widget_from_function_whoops'" in str(e.value)
 
 
 def _valid_mutator_no_contributions(data):
@@ -187,7 +205,7 @@ def test_writer_invalid_layer_type_expressions(expr, uses_sample_plugin):
     result = next(
         result
         for result in PluginManifest.discover()
-        if result.manifest and result.manifest.name == "my_plugin"
+        if result.manifest and result.manifest.name == SAMPLE_PLUGIN_NAME
     )
     assert result.error is None
     assert result.manifest is not None

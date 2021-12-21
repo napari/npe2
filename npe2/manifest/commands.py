@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Extra, Field, validator
 
+from ..types import PythonName
 from . import _validators
 
 if TYPE_CHECKING:
@@ -50,7 +51,7 @@ class CommandContribution(BaseModel):
         "for example, when searching in a command palette. Examples: 'Generate lily "
         "sample', 'Read tiff image', 'Open gaussian blur widget'. ",
     )
-    python_name: Optional[str] = Field(
+    python_name: Optional[PythonName] = Field(
         None,
         description="Fully qualified name to a callable python object "
         "implementing this command. This usually takes the form of "

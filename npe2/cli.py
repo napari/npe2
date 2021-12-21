@@ -21,23 +21,54 @@ def _pprint_yaml(string):  # pragma: no cover
         typer.echo(string)
 
 
+def _pprint_exception(err: Exception):
+    e_info = (type(err), err, err.__traceback__)
+    try:
+        from rich.console import Console
+        from rich.traceback import Traceback
+
+        trace = Traceback.extract(*e_info, show_locals=True)
+        Console().print(Traceback(trace))
+    except ImportError:
+        import traceback
+
+        typer.echo("\n" + "".join(traceback.format_exception(*e_info)))
+
+
 @app.command()
-def validate(name: str, debug: bool = False):
+def validate(
+    name: str,
+    imports: bool = typer.Option(
+        False,
+        help="Validate all python_name entries by importing",
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Just print manifest to stdout. Do not modify anything",
+    ),
+):
     """Validate manifest for a distribution name or manifest filepath."""
 
-    valid = False
+    err: Optional[Exception] = None
     try:
         pm = PluginManifest._from_package_or_name(name)
         msg = f"✔ Manifest for {(pm.display_name or pm.name)!r} valid!"
-        valid = True
-    except PluginManifest.ValidationError as err:
-        msg = f"🅇 Invalid! {err}"
-    except Exception as err:
-        msg = f"🅇 Failed to load {name!r}. {type(err).__name__}: {err}"
-        if debug:
-            raise
+        if imports:
+            pm.validate_imports()
+    except PluginManifest.ValidationError as e:
+        msg = f"🅇 Invalid! {e}"
+        err = e
+    except Exception as e:
+        msg = f"🅇 Unexpected error in {name!r}.\n{type(e).__name__}: {e}"
+        err = e
 
-    typer.secho(msg, fg=typer.colors.GREEN if valid else typer.colors.RED, bold=True)
+    typer.secho(msg, fg=typer.colors.RED if err else typer.colors.GREEN, bold=True)
+    if err is not None:
+        if debug:
+            _pprint_exception(err)
+
+        raise typer.Exit(1)
 
 
 @app.command()
