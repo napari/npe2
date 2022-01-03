@@ -16,6 +16,9 @@ contributions:
     - id: example-plugin.do_threshold
       title: Perform threshold on image, return new image
       python_name: example_plugin.some_module:threshold
+    - id: example-plugin.threshold_widget
+      title: Make threshold widget with magic_factory
+      python_name: example_plugin.some_module:widget_factory
     - id: example-plugin.data.fractal
       title: Create fractal image
       python_name: example_plugin.some_module:create_fractal
@@ -30,6 +33,8 @@ contributions:
   widgets:
     - command: example-plugin.animation_wizard
       display_name: Wizard
+    - command: example-plugin.threshold_widget
+      display_name: Threshold
     - command: example-plugin.do_threshold
       display_name: Threshold
       autogenerate: true

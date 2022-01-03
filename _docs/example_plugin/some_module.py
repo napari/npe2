@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
+from magicgui import magic_factory
 from qtpy.QtWidgets import QWidget
 
 from npe2.types import LayerData, PathOrPaths, ReaderFunction
@@ -11,9 +12,9 @@ if TYPE_CHECKING:
     import napari.viewer
 
 
-def write_points(path: str, layer_data: Any, properties: Dict[str, Any]) -> List[str]:
+def write_points(path: str, layer_data: Any, attributes: Dict[str, Any]) -> List[str]:
     with open(path, "w") as fh:
-        ...  # save layer_data and properties to file
+        ...  # save layer_data and attributes to file
 
     # return path to any file(s) that were successfully written
     return [path]
@@ -29,16 +30,28 @@ def get_reader(path: PathOrPaths) -> Optional[ReaderFunction]:
 
 def xyz_file_reader(path: PathOrPaths) -> List[LayerData]:
     data = ...  # somehow read data from path
-    layer_properties = {"name": "etc..."}
-    return [(data, layer_properties)]
+    layer_attributes = {"name": "etc..."}
+    return [(data, layer_attributes)]
 
 
 class AnimationWizard(QWidget):
-    """Any QWidget or magicgui widget subclass can be used."""
+    """Any QtWidgets.QWidget or magicgui.widgets.Widget subclass can be used."""
 
     def __init__(self, viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
         ...
+
+
+@magic_factory
+def widget_factory(
+    image: "napari.types.ImageData", threshold: int
+) -> "napari.types.LabelsData":
+    """Generate thresholded image.
+
+    This pattern uses magicgui.magic_factory directly to turn a function
+    into a callable that returns a widget.
+    """
+    return (image > threshold).astype(int)
 
 
 def threshold(
