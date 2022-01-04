@@ -122,9 +122,6 @@ class WriterContribution(BaseModel, Executable[List[str]]):
     `viewer.layers.save('some/path.ext')` is used on the command line, or when a user
     requests to save one or more layers in the graphical user interface with `File ->
     Save Selected Layer(s)...` or `Save All Layers...`
-
-
-    See the [Writer Guide]() on how to create a writer contribution.
     """
 
     command: str = Field(

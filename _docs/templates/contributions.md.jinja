@@ -7,7 +7,7 @@ Here is a list of all available **Contributions**:
 {# list all contributions first #}
 {%- for name, contrib in contributions.items() %}
 {%- if not contrib.hide_docs %}
-- [`{{ name }}`](#contributions-{{ name }})
+- [`{{ name }}`](#contributions-{{ name|replace('_', '-') }})
 {%- endif -%}
 {% endfor %}
 
@@ -38,6 +38,11 @@ This contribution accepts {{ type_names|length }} schema types
 {% set type = schema['definitions'][tname] %}
 {% if union %}##### {{loop.index}}. {{type.title}}{% endif %}
 {{ type.description }}
+
+{% if contrib_name|has_guide %}
+See the [{{ contrib_name.title()|replace('_', ' ') }} Guide](./guides.html#{{ contrib_name|replace('_', '-') }}-contribution-guide)
+for more details on implementing this contribution.
+{% endif %}
 
 {# Using bold instead of headers in this case to avoid right-side nav #}
 **Fields**

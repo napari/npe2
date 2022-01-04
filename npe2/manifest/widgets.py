@@ -24,8 +24,6 @@ class WidgetContribution(BaseModel, Executable[Widget]):
     [magicgui](https://napari.org/magicgui/)) from a command.  (In this case, the
     command needn't return a widget instance; it can be any function suitable as an
     argument to `magicgui.magicgui()`.)
-
-    See the [Widget Guide]() on how to create a widget contribution.
     """
 
     command: str = Field(

@@ -161,6 +161,11 @@ def example_contribution(
     raise ValueError("Invalid format: {format}.  Must be 'yaml', 'toml' or 'json'.")
 
 
+def has_guide(contrib_name: str) -> bool:
+    """Return true if a guide exists for this contribution."""
+    return (TEMPLATES / f"_{contrib_name}_guide.md.jinja").exists()
+
+
 def main(dest: Path = _BUILD):
     """Render all jinja docs in ./templates and output to `dest`"""
 
@@ -172,6 +177,7 @@ def main(dest: Path = _BUILD):
     env = Environment(loader=PackageLoader(this), autoescape=select_autoescape())
     env.filters["example_contribution"] = example_contribution
     env.filters["example_implementation"] = example_implementation
+    env.filters["has_guide"] = has_guide
 
     dest.mkdir(exist_ok=True, parents=True)
     schema = PluginManifest.schema()
