@@ -97,12 +97,6 @@ This writer would be considered when 1 or more `Image` layers and 0 or 1
 writer would *not* be selected when the user tries to save an `image`
 and a `vectors` layer, because `vectors` is not listed in the `layer_types`.
 
-```{note}
-Just because a writer declares compatibility with a layer type does
-not mean it actually writes that type. In the example above, the writer might
-accept a set of layers containing `image`s and `point`s, but the write command
-might just ignore the `point` layers.
-```
 
 ### Writer example
 
