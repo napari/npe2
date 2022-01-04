@@ -1,0 +1,8 @@
+format: jb-article
+root: index
+sections:
+- file: plugins/index
+  sections:
+  - file: plugins/guides
+  - file: plugins/manifest
+  - file: plugins/contributions
