@@ -187,7 +187,7 @@ def main(dest: Path = _BUILD):
     for t in TEMPLATES.glob("*.jinja"):
         template = env.get_template(t.name)
         _dest = dest / f"{t.stem}"
-        _dest.write_text(template.render(context))
+        _dest.write_text(template.render(context), encoding="utf-8")
         print(f"Rendered {_dest}")
 
 
