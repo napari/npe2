@@ -7,7 +7,7 @@ This document describes:
 
 - How to [build, run and publish a plugin](how-to-build-a-plugin).
 - Where to find [guides](./guides) and code samples to help get you started.
-- [Guidelines](best-practices) for writing plugins.
+- [Guidelines](./best-practices) for writing plugins.
 
 If you are looking for published plugins, head to the [napari hub][napari_hub].
 
@@ -18,6 +18,10 @@ We introduced a new plugin engine ([`npe2`][npe2]) in December 2021.
 
 Plugins targeting `napari-plugin-engine` will continue to work for at least the first half of 2022, but we recommend migrating to `npe2`. See the [migration
 guide](npe2-migration-guide) for details.
+
+For a guide on how to create a plugin using `napari-plugin-engine`, see
+{ref}`plugins-for-plugin-developers`. For _hook specifications_ reference,
+see the {ref}`hook-specifications-reference`.
 ```
 
 ## What can plugins do?
@@ -34,12 +38,7 @@ guide](npe2-migration-guide) for details.
 If you're just getting started with napari plugins, try our
 [Your First Plugin](./first_plugin) tutorial.
 
-New plugins should target `npe2`. See the {ref}`npe2-getting-started`.
-
-For a guide on how to create a plugin using `napari-plugin-engine`, see
-{ref}`plugins-for-plugin-developers`. For a complete list of _hook
-specifications_ that developers can implement, see the
-{ref}`hook-specifications-reference`.
+{# THIS SECTION NEEDS MORE #}
 
 For special considerations when building a napari plugin, see
 {ref}`best-practices`.
