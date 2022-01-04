@@ -107,9 +107,9 @@ packages = find:
 
 ## Add napari plugin files
 
-So far, we've done nothing napari-specific.  Let's create the actual plugin,
-which will be a widget with a single button that shows a "hello world!"
-message when clicked.
+So far, we've done nothing napari-specific.  Let's create the actual plugin.
+We're going to add a [Widget contribution](./contributions.html#contributions-widgets)
+with a single button that shows a "Hello, world!" message when clicked.
 
 ### The plugin functionality: `napari_hello/__init__.py`
 
@@ -123,8 +123,8 @@ def show_hello_message():
     show_info('Hello, world!')
 ```
 
-*(We're going to use napari's widget "autogeneration" capabilities to turn
-this function into a widget)*
+*(It doesn't look like a widget yet! We're going to use napari's widget
+"autogeneration" capabilities to turn this function into a widget)*
 
 
 ### The manifest: `napari.yaml`
@@ -240,4 +240,5 @@ cookiecutter https://github.com/napari/cookiecutter-napari-plugin
 
 Plugins can do a lot more than just say hi!  You can see the complete list
 of available contributions and their fields in the
-[Contributions Reference](./contributions), and learn more about each specific contribution type in the [Guides](./contributions).
+[Contributions Reference](./contributions), and learn more about each
+specific contribution type in the [Guides](./guides).
