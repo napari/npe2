@@ -116,7 +116,7 @@ class PluginManifest(ImportExportModel):
     contributions: Optional[ContributionPoints] = Field(
         None,
         description="An object describing the plugin's "
-        "[contributions](#contributions.md)",
+        "[contributions](./contributions)",
     )
 
     package_metadata: Optional[PackageMetadata] = Field(
