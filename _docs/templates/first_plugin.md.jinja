@@ -6,7 +6,9 @@ tutorial, we'll point you to a "cookiecutter" template repository that
 helps automate the creation of a new plugin, and adds a number of
 conveniences for testing and deploying your plugin.
 
-We assume you've set up a Python environment, and have _____
+We will assume you've set up a Python virtual environment.  If you are
+new to virtual environments, we recommend [installing miniconda][miniconda]
+and [creating a new environment with python][python_env]
 
 ## Create a new directory
 
@@ -72,12 +74,14 @@ Next, copy and paste the following text into `pyproject.toml` and `setup.cfg`
 
 ### `pyproject.toml`
 
+```{note}
 `pyproject.toml` is a relative recent standard file (introduced in
 [PEP518](https://www.python.org/dev/peps/pep-0518/), May 2016) that tells
 the python package installer [pip](https://pip.pypa.io/en/stable/) how to
 build your package. For more background, see
 [Clarifying PEP 518](https://snarky.ca/clarifying-pep-518/) and
 [What the heck is pyproject.toml?](https://snarky.ca/what-the-heck-is-pyproject-toml/).
+```
 
 Here, we declare we want to use [setuptools](https://setuptools.pypa.io/en/latest/)
 for packaging our plugin:
@@ -181,7 +185,7 @@ Lastly, let's make a few small changes to `setup.cfg`.
     Entry points are a standard python mechanism for an installed distribution to
     advertise components it provides to be discovered and used by other code.
 
-    See the [Entry points specification](https://packaging.python.org/en/latest/specifications/entry-points/) for details.
+    See the [Entry points specification][entry_points] for details.
     ```
 
 With the above changes, your final `setup.cfg` file should look like this:
@@ -204,12 +208,12 @@ napari.manifest =
     napari-hello = napari_hello:napari.yaml
 ```
 
-## Try it out!
+## Install your plugin and try it out!
 
 With that we're ready to go.  Let's install our package in the environment
 and then run napari.  Note: we're using `pip install -e .` here to install our
 package (in the current working directory) in
-["editable" mode](https://pip.pypa.io/en/stable/cli/pip_install/#editable-installs).
+["editable" mode][editable_mode].
 This means that changes we make to our package during development will be
 detected when we re-run napari, without having to run `pip install` again.
 
@@ -225,8 +229,7 @@ Once napari starts, select `napari-hello: Hello World` from the
 ## Get going quickly with cookiecutter
 
 Now that you've learned all of the critical steps for creating a plugin,
-you use our
-[cookiecutter template repository](https://github.com/napari/cookiecutter-napari-plugin)
+you can use our [cookiecutter template repository][cookiecutter]
 to get up and running quickly with each new plugin.
 This will ask you a few questions about your new plugin, and
 autogenerate a package structure much like the one above. It additionally
@@ -244,3 +247,9 @@ Plugins can do a lot more than just say hi!  You can see the complete list
 of available contributions and their fields in the
 [Contributions Reference](./contributions), and learn more about each
 specific contribution type in the [Guides](./guides).
+
+[miniconda]: https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html
+[python_env]: https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#managing-python
+[editable_mode]: https://pip.pypa.io/en/stable/cli/pip_install/#editable-installs
+[cookiecutter]: https://github.com/napari/cookiecutter-napari-plugin
+[entry_points]: https://packaging.python.org/en/latest/specifications/entry-points/

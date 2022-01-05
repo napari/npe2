@@ -31,7 +31,7 @@ contributions:
       filename_extensions: [".csv"]
       layer_types: ["points"]
   widgets:
-    - command: example-plugin.animation_wizard
+    - command: example-plugin.my_widget
       display_name: Wizard
     - command: example-plugin.threshold_widget
       display_name: Threshold
