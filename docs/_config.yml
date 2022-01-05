@@ -56,3 +56,6 @@ sphinx:
       magicgui:
         - "https://napari.org/magicgui/"
         - "https://napari.org/magicgui/objects.inv"
+      napari:
+        - "https://napari.org/"
+        - "https://napari.org/docs/dev/objects.inv"
