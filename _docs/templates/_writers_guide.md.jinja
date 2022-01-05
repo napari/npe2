@@ -15,12 +15,15 @@ specification from the first generation `napari_plugin_engine`.
 
 ### Writer plugin function signatures
 
-Writer plugins are *functions* that accept a destination path and
-data with attributes from one or more layers in the viewer, write that data
-to the path, and -- if successful -- return a list of strings containing
-the path(s) that were successfully written.  They must follow one of two
-calling conventions (where the convention used is determined by the provided
-[`layer_type` constraints](#layer-type-constraints)).
+Writer plugins are *functions* that:
+
+1. Accept a destination path and data from one or more layers in the viewer
+2. Write layer data and associated attributes to disk
+3. Return a list of strings containing the path(s) that were successfully written.
+
+They must follow one of two calling conventions (where the convention used
+is determined by the [`layer_type` constraints](#layer-type-constraints) provided
+by the corresponding writer contribution in the manifest).
 
 #### 1. single-layer writer
 
