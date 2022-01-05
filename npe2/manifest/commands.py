@@ -23,14 +23,14 @@ class CommandContribution(BaseModel):
 
     ```{admonition} Future Plans
     Command contributions will eventually include an **icon**, **category**, and
-    **enabled** state. Enablement is expressed with when clauses, that capture a
+    **enabled** state. Enablement is expressed with *when clauses*, that capture a
     conditional expression determining whether the command should be enabled or not,
     based on the current state of the program.  (i.e. "*If the active layer is a
     `Labels` layer*")
-    ```
 
-    Commands will show in a the Command Palette (⇧⌘P) but they can also show in other
-    menus.
+    Commands will eventually be availble in a Command Palette (accessible with a
+    hotkey) but they can also show in other menus.
+    ```
     """
 
     id: str = Field(
