@@ -22,7 +22,7 @@ from npe2.manifest.utils import Executable
 
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
-_BUILD = DOCS / "_build"
+_BUILD = DOCS.parent / "docs" / "plugins"
 EXAMPLE_MANIFEST = PluginManifest.from_file(DOCS / "example_manifest.yaml")
 
 
