@@ -171,7 +171,8 @@ Lastly, let's make a few small changes to `setup.cfg`.
    when it bundles our package for distribution, by adding it to the
    **`[options.package_data]`**
 
-3. In order for napari to "find" our plugin when it's installed in
+3. In order for napari to find our plugin when it's installed in
+   the environment, we need to add a `napari.manifest` entry to our
    the environment, we need to add a `napari.manifest` entry to our
    **`[options.entry_points]`** that directs napari to the `napari.yaml`
    file we added to the `napari_hello` module.
