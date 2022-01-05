@@ -10,9 +10,9 @@ contributions:
     - id: example-plugin.write_points
       title: Save points layer to csv
       python_name: example_plugin.some_module:write_points
-    - id: example-plugin.animation_wizard
-      title: Open animation wizard
-      python_name: example_plugin.some_module:AnimationWizard
+    - id: example-plugin.my_widget
+      title: Open my widget
+      python_name: example_plugin.some_module:MyWidget
     - id: example-plugin.do_threshold
       title: Perform threshold on image, return new image
       python_name: example_plugin.some_module:threshold

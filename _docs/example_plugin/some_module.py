@@ -34,7 +34,7 @@ def xyz_file_reader(path: PathOrPaths) -> List[LayerData]:
     return [(data, layer_attributes)]
 
 
-class AnimationWizard(QWidget):
+class MyWidget(QWidget):
     """Any QtWidgets.QWidget or magicgui.widgets.Widget subclass can be used."""
 
     def __init__(self, viewer: "napari.viewer.Viewer", parent=None):
