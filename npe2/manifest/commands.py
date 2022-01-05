@@ -11,57 +11,68 @@ if TYPE_CHECKING:
 
 
 class CommandContribution(BaseModel):
-    """Contribute a command.
+    """Contribute a **command** (a python callable) consisting of a unique `id`,
+    a `title` and (optionally) a `python_path` that points to a fully qualified python
+    callable.  If a `python_path` is not included in the manifest, it *must* be
+    registered during activation with `register_command`.
 
-    Contribute the UI for a command consisting of a title and (optionally) an
-    icon, category, and enabled state. Enablement is expressed with when
-    clauses. By default, commands show in the Command Palette (⇧⌘P) but they
-    can also show in other menus.
+    Note, some other contributions (e.g. `readers`, `writers` and `widgets`) will
+    *point* to a specific command.  The command itself (i.e. the callable python
+    object) will always appear in the `contributions.commands` section, but those
+    contribution types may add additional contribution-specific metadata.
 
-    Presentation of contributed commands depends on the containing menu. The
-    Command Palette, for instance, prefixes commands with their category,
-    allowing for easy grouping. However, the Command Palette doesn't show icons
-    nor disabled commands. The editor context menu, on the other hand, shows
-    disabled items but doesn't show the category label.
+    ```{admonition} Future Plans
+    Command contributions will eventually include an **icon**, **category**, and
+    **enabled** state. Enablement is expressed with *when clauses*, that capture a
+    conditional expression determining whether the command should be enabled or not,
+    based on the current state of the program.  (i.e. "*If the active layer is a
+    `Labels` layer*")
 
-    Note: When a command is invoked (from a key binding, from the Command
-    Palette, any other menu, or programmatically), VS Code will emit an
-    activationEvent onCommand:${command}.
+    Commands will eventually be availble in a Command Palette (accessible with a
+    hotkey) but they can also show in other menus.
+    ```
     """
 
     id: str = Field(
         ...,
         description=dedent(
-            """
-        Identifier of the command to execute
-
-        While this may looks a python fully qualified name this does not refer
-        to a python object.
-        This identifier is specific to Napari, and will be considered unique.
-        It follow the same rule as Python fully qualified name, with the extra
-        restriction as being limited to ascii"""
+            "A unique identifier used to reference this command. While this may look "
+            "like a python fully qualified name this does *not* refer to a python "
+            "object; this identifier is specific to napari.  It must begin with "
+            "the name of the package, and include only alphanumeric characters, plus "
+            "dashes and underscores."
         ),
     )
     _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
     title: str = Field(
         ...,
-        description="User facing title representing the command. Example: "
-        "'Apply gaussian blur' or 'Open my dock widget.",
+        description="User facing title representing the command. This might be used, "
+        "for example, when searching in a command palette. Examples: 'Generate lily "
+        "sample', 'Read tiff image', 'Open gaussian blur widget'. ",
     )
+    python_name: Optional[PythonName] = Field(
+        None,
+        description="Fully qualified name to a callable python object "
+        "implementing this command. This usually takes the form of "
+        "`{obj.__module__}:{obj.__qualname__} "
+        "(e.g. `my_package.a_module:some_function`)",
+    )
+    _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
+
     # short_title: Optional[str] = Field(
     #     None,
-    #     description="(Optional) Short title by which the command is "
+    #     description="Short title by which the command is "
     #     "represented in the UI",
     # )
     # category: Optional[str] = Field(
     #     None,
-    #     description="(Optional) Category string by the command is grouped in the UI",
+    #     description="Category string by the command is grouped in the UI",
     # )
     # icon: Optional[Union[str, Icon]] = Field(
     #     None,
     #     description=(
-    #         "(Optional) Icon which is used to represent the command in the UI."
+    #         "Icon which is used to represent the command in the UI."
     #         " Either a file path, an object with file paths for dark and light"
     #         "themes, or a theme icon references, like `$(zap)`"
     #     ),
@@ -69,22 +80,11 @@ class CommandContribution(BaseModel):
     # enablement: Optional[str] = Field(
     #     None,
     #     description=(
-    #         "(Optional) Condition which must be true to enable the command in the UI "
+    #         "Condition which must be true to enable the command in the UI "
     #         "(menu and keybindings). Does not prevent executing the command "
     #         "by other means, like the `executeCommand` api."
     #     ),
     # )
-
-    python_name: Optional[PythonName] = Field(
-        None,
-        description="(Optional) Fully qualified name to callable python object "
-        "implementing this command. This usually takes the form of "
-        "`{obj.__module__}:{obj.__qualname__} (e.g. "
-        "`my_package.a_module:some_function`). If provided, using `register_command` "
-        "in the plugin activate function is optional (but takes precedence).",
-    )
-
-    _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
     class Config:
         extra = Extra.forbid

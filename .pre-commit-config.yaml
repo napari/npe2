@@ -1,3 +1,4 @@
+exclude: _docs/example_plugin/some_module.py
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1

@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .commands import CommandContribution
 from .menus import MenusContribution
@@ -14,14 +14,17 @@ from .writers import WriterContribution
 
 class ContributionPoints(BaseModel):
     commands: Optional[List[CommandContribution]]
-    themes: Optional[List[ThemeContribution]]
     readers: Optional[List[ReaderContribution]]
     writers: Optional[List[WriterContribution]]
-    sample_data: Optional[List[SampleDataContribution]]
     widgets: Optional[List[WidgetContribution]]
+    sample_data: Optional[List[SampleDataContribution]]
+    themes: Optional[List[ThemeContribution]]
 
-    menus: Optional[MenusContribution]
-    submenus: Optional[List[SubmenuContribution]]
+    menus: Optional[MenusContribution] = Field(None, hide_docs=True)
+    submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
 
     # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]
+
+    class Config:
+        docs_exclude = {"menus", "submenus"}

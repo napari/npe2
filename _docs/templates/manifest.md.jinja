@@ -1,0 +1,63 @@
+# Manifest Reference
+
+```{important}
+Plugin manifests are a feature of the second generation napari plugin engine
+("npe2").  If you are still using the first generation `napari-plugin-engine`
+(i.e. the  `napari.plugin` entrypoint, along with `@napari_hook_implementation`
+decorators) then this page does not apply to your plugin.
+```
+
+Every napari plugin needs to ship a manifest file with their package. By
+convention, this file is called `napari.yaml` and it is placed in the top level
+module of the package, but it can be named anything and placed anywhere.
+
+You tell napari where to find your manifest by adding a `napari.manifest` [entry
+point](https://packaging.python.org/en/latest/specifications/entry-points/) to
+your package metadata:
+
+```ini
+# tell napari where to find to your manifest
+[options.entry_points]
+napari.manifest =
+    example-plugin = example_plugin:napari.yaml
+
+# make sure it gets included in your package
+[options.package_data]
+example-plugin = napari.yaml
+```
+
+## Fields
+
+All fields are optional except those in **bold**.
+
+| Name | Details |
+|------|---------|
+{%- for key, field in schema.properties.items() %}
+{%- if not field.hide_docs %}
+| {% if key in schema.required %} **`{{ key }}`** {%else%} `{{ key }}` {%endif%} | {{ field.description }}|
+{%- endif %}
+{%- endfor %}
+
+```{note}
+Standard python
+[package metadata](https://packaging.python.org/en/latest/specifications/core-metadata/)
+from your `setup.cfg` file will also be parsed for version, license, and other info.
+```
+
+## Example
+
+Here is a complete example of what the manifest of a plugin providing *all*
+contributions might look like. (Note: a plugin needn't implement
+more than a single contribution type).
+
+```{tip}
+Both [YAML](https://yaml.org/) and [TOML](https://toml.io/en/) are supported
+manifest formats, though YAML is the "default" and more common format.
+```
+{% for format in ['yaml', 'toml'] %}
+````{tabbed} {{format}}
+```{{format}}
+{{ example[format]() }}
+```
+````
+{% endfor -%}

@@ -114,12 +114,23 @@ class LayerTypeConstraint(BaseModel):
 
 
 class WriterContribution(BaseModel, Executable[List[str]]):
+    r"""Contribute a layer writer.
+
+    Writers accept data from one or more layers and write them to file. Writers declare
+    support for writing one or more **layer_types**, may be associated with specific
+    **filename_patterns** (e.g. "\*.tif", "\*.zip") and are invoked whenever
+    `viewer.layers.save('some/path.ext')` is used on the command line, or when a user
+    requests to save one or more layers in the graphical user interface with `File ->
+    Save Selected Layer(s)...` or `Save All Layers...`
+    """
+
     command: str = Field(
         ..., description="Identifier of the command providing a writer."
     )
     layer_types: List[str] = Field(
         ...,
-        description="List of layer type constraints.",
+        description="List of layer type constraints. These determine what "
+        "layers (or combinations thereof) this writer handles.",
     )
     # An empty filename_extensions list matches any file extension. Making the
     # default something like ['.*'] is tempting but we don't actually use
@@ -127,11 +138,16 @@ class WriterContribution(BaseModel, Executable[List[str]]):
     # code more complicated.
     filename_extensions: List[str] = Field(
         default_factory=list,
-        description="List of filename extensions compatible with this writer.",
+        description="List of filename extensions compatible with this writer. "
+        "The first entry is used as the default if necessary. Empty by default. "
+        "When empty, any filename extension is accepted.",
     )
     display_name: str = Field(
         default="",
-        description="Brief text used to describe this writer when presented.",
+        description="Brief text used to describe this writer when presented. "
+        "Empty by default. When present, this string is presented in the save dialog "
+        "along side the plugin name and may be used to distinguish the kind of "
+        "writer for the user. E.g. “lossy” or “lossless”.",
     )
 
     def layer_type_constraints(self) -> List[LayerTypeConstraint]:

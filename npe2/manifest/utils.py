@@ -35,6 +35,8 @@ R = TypeVar("R")
 
 # TODO: add ParamSpec when it's supported better by mypy
 class Executable(Generic[R]):
+    command: str
+
     def exec(
         self: ProvidesCommand,
         args: tuple = (),
