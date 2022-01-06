@@ -163,7 +163,7 @@ def example_contribution(
 
 def has_guide(contrib_name: str) -> bool:
     """Return true if a guide exists for this contribution."""
-    return (TEMPLATES / f"_{contrib_name}_guide.md.jinja").exists()
+    return (TEMPLATES / f"_npe2_{contrib_name}_guide.md.jinja").exists()
 
 
 def main(dest: Path = _BUILD):
