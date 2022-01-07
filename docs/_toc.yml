@@ -3,6 +3,6 @@ root: index
 sections:
 - file: plugins/index
   sections:
-  - file: plugins/guides
   - file: plugins/manifest
   - file: plugins/contributions
+  - file: plugins/guides
