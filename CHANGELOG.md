@@ -1,5 +1,30 @@
 # Changelog
 
+## [v0.1.1](https://github.com/napari/npe2/tree/v0.1.1) (2022-01-07)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.1.0...v0.1.1)
+
+**Implemented enhancements:**
+
+- Add option to validate python\_name imports [\#76](https://github.com/napari/npe2/pull/76) ([tlambert03](https://github.com/tlambert03))
+- Extract out ImportExport logic from PluginManifest, don't sort yaml fields alphabetically [\#72](https://github.com/napari/npe2/pull/72) ([tlambert03](https://github.com/tlambert03))
+
+**Tests & CI:**
+
+- Bring test coverage to 100%, reorganize tests [\#70](https://github.com/napari/npe2/pull/70) ([tlambert03](https://github.com/tlambert03))
+
+**Refactors:**
+
+- change sample plugin name from `my_plugin` to `my-plugin` [\#74](https://github.com/napari/npe2/pull/74) ([tlambert03](https://github.com/tlambert03))
+- split contributions/io into readers and writers [\#73](https://github.com/napari/npe2/pull/73) ([tlambert03](https://github.com/tlambert03))
+- remove SPDX licenses [\#71](https://github.com/napari/npe2/pull/71) ([tlambert03](https://github.com/tlambert03))
+- change engine to schema\_version [\#69](https://github.com/napari/npe2/pull/69) ([tlambert03](https://github.com/tlambert03))
+- Replace entry\_point with activate/deactive function [\#68](https://github.com/napari/npe2/pull/68) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- Autogen docs [\#77](https://github.com/napari/npe2/pull/77) ([tlambert03](https://github.com/tlambert03))
+
 ## [v0.1.0](https://github.com/napari/npe2/tree/v0.1.0) (2021-12-15)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.1.0rc1...v0.1.0)
