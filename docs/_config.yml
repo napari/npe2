@@ -34,6 +34,9 @@ html:
 sphinx:
   extra_extensions:
     - sphinx.ext.intersphinx
+    - sphinx.ext.napoleon
+    - sphinx.ext.autodoc
+    - sphinx_tabs.tabs
 
   config:
     autosummary_generate: True
@@ -41,6 +44,8 @@ sphinx:
     html_theme: furo
     html_theme_options: {}
     pygments_style: solarized-dark
+    suppress_warnings: ["myst.header"]
+    exclude_patterns: ['**/_*.md']  # includes
     templates_path:
         - '_templates'
     intersphinx_mapping:
