@@ -1,0 +1,762 @@
+{
+  "title": "PluginManifest",
+  "description": "Model mixin/base class that provides read/write from toml/yaml/json.\n\nTo force the inclusion of a given field in the exported toml/yaml use:\n\n    class MyModel(ImportExportModel):\n        some_field: str = Field(..., always_export=True)",
+  "type": "object",
+  "properties": {
+    "name": {
+      "title": "Name",
+      "description": "The name of the plugin. Though this field is mandatory, it *must* match the package `name` as defined in the python package metadata.",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "description": "User-facing text to display as the name of this plugin",
+      "default": "",
+      "type": "string"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "description": "A SemVer compatible version string matching the napari plugin schema version that the plugin is compatible with.",
+      "default": "0.1.0",
+      "always_export": true,
+      "type": "string"
+    },
+    "on_activate": {
+      "title": "On Activate",
+      "description": "Fully qualified python path to a function that will be called upon plugin activation (e.g. `'my_plugin.some_module:activate'`). The activate function can be used to connect command ids to python callables, or perform other side-effects. A plugin will be 'activated' when one of its contributions is requested by the user (such as a widget, or reader).",
+      "type": "string"
+    },
+    "on_deactivate": {
+      "title": "On Deactivate",
+      "description": "Fully qualified python path to a function that will be called when a user deactivates a plugin (e.g. `'my_plugin.some_module:deactivate'`). This is optional, and may be used to perform any plugin cleanup.",
+      "type": "string"
+    },
+    "contributions": {
+      "title": "Contributions",
+      "description": "An object describing the plugin's [contributions](./contributions)",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ContributionPoints"
+        }
+      ]
+    },
+    "package_metadata": {
+      "title": "Package Metadata",
+      "description": "Package metadata following https://packaging.python.org/specifications/core-metadata/. For normal (non-dynamic) plugins, this data will come from the package's setup.cfg",
+      "hide_docs": true,
+      "allOf": [
+        {
+          "$ref": "#/definitions/PackageMetadata"
+        }
+      ]
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "CommandContribution": {
+      "title": "CommandContribution",
+      "description": "Contribute a **command** (a python callable) consisting of a unique `id`,\na `title` and (optionally) a `python_path` that points to a fully qualified python\ncallable.  If a `python_path` is not included in the manifest, it *must* be\nregistered during activation with `register_command`.\n\nNote, some other contributions (e.g. `readers`, `writers` and `widgets`) will\n*point* to a specific command.  The command itself (i.e. the callable python\nobject) will always appear in the `contributions.commands` section, but those\ncontribution types may add additional contribution-specific metadata.\n\n```{admonition} Future Plans\nCommand contributions will eventually include an **icon**, **category**, and\n**enabled** state. Enablement is expressed with *when clauses*, that capture a\nconditional expression determining whether the command should be enabled or not,\nbased on the current state of the program.  (i.e. \"*If the active layer is a\n`Labels` layer*\")\n\nCommands will eventually be availble in a Command Palette (accessible with a\nhotkey) but they can also show in other menus.\n```",
+      "type": "object",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "description": "A unique identifier used to reference this command. While this may look like a python fully qualified name this does *not* refer to a python object; this identifier is specific to napari.  It must begin with the name of the package, and include only alphanumeric characters, plus dashes and underscores.",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "description": "User facing title representing the command. This might be used, for example, when searching in a command palette. Examples: 'Generate lily sample', 'Read tiff image', 'Open gaussian blur widget'. ",
+          "type": "string"
+        },
+        "python_name": {
+          "title": "Python Name",
+          "description": "Fully qualified name to a callable python object implementing this command. This usually takes the form of `{obj.__module__}:{obj.__qualname__} (e.g. `my_package.a_module:some_function`)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "ReaderContribution": {
+      "title": "ReaderContribution",
+      "description": "Contribute a file reader.\n\nReaders may be associated with specific **filename_patterns** (e.g. \"*.tif\",\n\"*.zip\") and are invoked whenever `viewer.open('some/path')` is used on the\ncommand line, or when a user opens a file in the graphical user interface by\ndropping a file into the canvas, or using `File -> Open...`",
+      "type": "object",
+      "properties": {
+        "command": {
+          "title": "Command",
+          "description": "Identifier of the command providing `napari_get_reader`.",
+          "type": "string"
+        },
+        "filename_patterns": {
+          "title": "Filename Patterns",
+          "description": "List of filename patterns (for fnmatch) that this reader can accept. Reader will be tried only if `fnmatch(filename, pattern) == True`. Use `['*']` to match all filenames.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "accepts_directories": {
+          "title": "Accepts Directories",
+          "description": "Whether this reader accepts directories",
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "command",
+        "filename_patterns"
+      ],
+      "additionalProperties": false
+    },
+    "WriterContribution": {
+      "title": "WriterContribution",
+      "description": "Contribute a layer writer.\n\nWriters accept data from one or more layers and write them to file. Writers declare\nsupport for writing one or more **layer_types**, may be associated with specific\n**filename_patterns** (e.g. \"\\*.tif\", \"\\*.zip\") and are invoked whenever\n`viewer.layers.save('some/path.ext')` is used on the command line, or when a user\nrequests to save one or more layers in the graphical user interface with `File ->\nSave Selected Layer(s)...` or `Save All Layers...`",
+      "type": "object",
+      "properties": {
+        "command": {
+          "title": "Command",
+          "description": "Identifier of the command providing a writer.",
+          "type": "string"
+        },
+        "layer_types": {
+          "title": "Layer Types",
+          "description": "List of layer type constraints. These determine what layers (or combinations thereof) this writer handles.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "filename_extensions": {
+          "title": "Filename Extensions",
+          "description": "List of filename extensions compatible with this writer. The first entry is used as the default if necessary. Empty by default. When empty, any filename extension is accepted.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "display_name": {
+          "title": "Display Name",
+          "description": "Brief text used to describe this writer when presented. Empty by default. When present, this string is presented in the save dialog along side the plugin name and may be used to distinguish the kind of writer for the user. E.g. \u201clossy\u201d or \u201clossless\u201d.",
+          "default": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "layer_types"
+      ],
+      "additionalProperties": false
+    },
+    "WidgetContribution": {
+      "title": "WidgetContribution",
+      "description": "Contribute a widget that can be added to the napari viewer.\n\nWidget contributions point to a **command** that, when called, returns a widget\n*instance*; this includes functions that return a widget instance, (e.g. those\ndecorated with `magicgui.magic_factory`) and subclasses of either\n[`QtWidgets.QWidget`](https://doc.qt.io/qt-5/qwidget.html) or\n[`magicgui.widgets.Widget`](https://napari.org/magicgui/api/_autosummary/magicgui.widgets._bases.Widget.html).\n\nOptionally, **autogenerate** may be used to create a widget (using\n[magicgui](https://napari.org/magicgui/)) from a command.  (In this case, the\ncommand needn't return a widget instance; it can be any function suitable as an\nargument to `magicgui.magicgui()`.)",
+      "type": "object",
+      "properties": {
+        "command": {
+          "title": "Command",
+          "description": "Identifier of a command that returns a widget instance.  Or, if `autogenerate` is `True`, any command suitable as an argument to `magicgui.magicgui()`.",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "description": "Name for the widget, as presented in the UI.",
+          "type": "string"
+        },
+        "autogenerate": {
+          "title": "Autogenerate",
+          "description": "If true, a widget will be autogenerated from the signature of the associated command using [magicgui](https://napari.org/magicgui/).",
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "command",
+        "display_name"
+      ],
+      "additionalProperties": false
+    },
+    "SampleDataGenerator": {
+      "title": "Sample Data Function",
+      "description": "Contribute a callable command that creates data on demand.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "title": "Key",
+          "description": "A unique key to identify this sample.",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "description": "String to show in the UI when referring to this sample",
+          "type": "string"
+        },
+        "command": {
+          "title": "Command",
+          "description": "Identifier of a command that returns layer data tuple.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "display_name",
+        "command"
+      ]
+    },
+    "SampleDataURI": {
+      "title": "Sample Data URI",
+      "description": "Contribute a URI to static local or remote data. This can be data included in\nthe plugin package, or a URL to remote data.  The URI must be readable by either\nnapari's builtin reader, or by a plugin that is included/required.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "title": "Key",
+          "description": "A unique key to identify this sample.",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "description": "String to show in the UI when referring to this sample",
+          "type": "string"
+        },
+        "uri": {
+          "title": "Uri",
+          "description": "Path or URL to a data resource. This URI should be a valid input to `io_utils.read`",
+          "type": "string"
+        },
+        "reader_plugin": {
+          "title": "Reader Plugin",
+          "description": "Name of plugin to use to open URI",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "display_name",
+        "uri"
+      ]
+    },
+    "ThemeColors": {
+      "title": "ThemeColors",
+      "type": "object",
+      "properties": {
+        "canvas": {
+          "title": "Canvas",
+          "type": "string",
+          "format": "color"
+        },
+        "console": {
+          "title": "Console",
+          "type": "string",
+          "format": "color"
+        },
+        "background": {
+          "title": "Background",
+          "type": "string",
+          "format": "color"
+        },
+        "foreground": {
+          "title": "Foreground",
+          "type": "string",
+          "format": "color"
+        },
+        "primary": {
+          "title": "Primary",
+          "type": "string",
+          "format": "color"
+        },
+        "secondary": {
+          "title": "Secondary",
+          "type": "string",
+          "format": "color"
+        },
+        "highlight": {
+          "title": "Highlight",
+          "type": "string",
+          "format": "color"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string",
+          "format": "color"
+        },
+        "icon": {
+          "title": "Icon",
+          "type": "string",
+          "format": "color"
+        },
+        "warning": {
+          "title": "Warning",
+          "type": "string",
+          "format": "color"
+        },
+        "current": {
+          "title": "Current",
+          "type": "string",
+          "format": "color"
+        }
+      }
+    },
+    "ThemeContribution": {
+      "title": "ThemeContribution",
+      "description": "Contribute a color theme to napari.\n\nYou must specify an **id**, **label**, and whether the theme is a dark theme or a\nlight theme **type** (such that the rest of napari changes to match your theme).\nAny color keys omitted from the theme contribution will use the default napari\ndark/light theme colors.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "description": "Identifier of the color theme as used in the user settings.",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "description": "Label of the color theme as shown in the UI.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Base theme type, used for icons and filling in unprovided colors. Must be either `'dark'` or ",
+          "anyOf": [
+            {
+              "enum": [
+                "dark"
+              ],
+              "type": "string"
+            },
+            {
+              "enum": [
+                "light"
+              ],
+              "type": "string"
+            }
+          ]
+        },
+        "colors": {
+          "title": "Colors",
+          "description": "Theme colors. Valid keys include: `canvas`, `console`, `background`, `foreground`, `primary`, `secondary`, `highlight`, `text`, `icon`, `warning`, `current`. All keys are optional. Color values can be defined via:\n   - name: `\"Black\"`, `\"azure\"`\n   - hexadecimal value: `\"0x000\"`, `\"#FFFFFF\"`, `\"7fffd4\"`\n   - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`\n   - RGB/RGBA strings: `\"rgb(255, 255, 255)\"`, `\"rgba(255, 255, 255, 0.5)`\"\n   - HSL strings: \"`hsl(270, 60%, 70%)\"`, `\"hsl(270, 60%, 70%, .5)`\"\n",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ThemeColors"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "type",
+        "colors"
+      ]
+    },
+    "MenuCommand": {
+      "title": "MenuCommand",
+      "type": "object",
+      "properties": {
+        "when": {
+          "title": "When",
+          "description": "Condition which must be true to show this item",
+          "type": "string"
+        },
+        "group": {
+          "title": "Group",
+          "description": "Group into which this item belongs",
+          "type": "string"
+        },
+        "command": {
+          "title": "Command",
+          "description": "Identifier of the command to execute. The command must be declared in the 'commands' section",
+          "type": "string"
+        },
+        "alt": {
+          "title": "Alt",
+          "description": "Identifier of an alternative command to execute. It will be shown and invoked when pressing Alt while opening a menu.The command must be declared in the 'commands' section",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    },
+    "Submenu": {
+      "title": "Submenu",
+      "type": "object",
+      "properties": {
+        "when": {
+          "title": "When",
+          "description": "Condition which must be true to show this item",
+          "type": "string"
+        },
+        "group": {
+          "title": "Group",
+          "description": "Group into which this item belongs",
+          "type": "string"
+        },
+        "submenu": {
+          "title": "Submenu",
+          "description": "Identifier of the submenu to display in this item.The submenu must be declared in the 'submenus' -section",
+          "type": "string"
+        }
+      },
+      "required": [
+        "submenu"
+      ]
+    },
+    "MenusContribution": {
+      "title": "MenusContribution",
+      "type": "object",
+      "properties": {
+        "command_pallete": {
+          "title": "Command Pallete",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MenuCommand"
+              },
+              {
+                "$ref": "#/definitions/Submenu"
+              }
+            ]
+          }
+        },
+        "layers__context": {
+          "title": "Layers  Context",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MenuCommand"
+              },
+              {
+                "$ref": "#/definitions/Submenu"
+              }
+            ]
+          }
+        },
+        "plugins__widgets": {
+          "title": "Plugins  Widgets",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MenuCommand"
+              },
+              {
+                "$ref": "#/definitions/Submenu"
+              }
+            ]
+          }
+        },
+        "test_menu": {
+          "title": "Test Menu",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MenuCommand"
+              },
+              {
+                "$ref": "#/definitions/Submenu"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Icon": {
+      "title": "Icon",
+      "type": "object",
+      "properties": {
+        "light": {
+          "title": "Light",
+          "type": "string"
+        },
+        "dark": {
+          "title": "Dark",
+          "type": "string"
+        }
+      }
+    },
+    "SubmenuContribution": {
+      "title": "SubmenuContribution",
+      "type": "object",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "description": "Identifier of the menu to display as a submenu.",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "description": "The label of the menu item which leads to this submenu.",
+          "type": "string"
+        },
+        "icon": {
+          "title": "Icon",
+          "description": "(Optional) Icon which is used to represent the command in the UI. Either a file path, an object with file paths for dark and lightthemes, or a theme icon references, like `$(zap)`",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Icon"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ]
+    },
+    "ContributionPoints": {
+      "title": "ContributionPoints",
+      "type": "object",
+      "properties": {
+        "commands": {
+          "title": "Commands",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CommandContribution"
+          }
+        },
+        "readers": {
+          "title": "Readers",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReaderContribution"
+          }
+        },
+        "writers": {
+          "title": "Writers",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WriterContribution"
+          }
+        },
+        "widgets": {
+          "title": "Widgets",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WidgetContribution"
+          }
+        },
+        "sample_data": {
+          "title": "Sample Data",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/SampleDataGenerator"
+              },
+              {
+                "$ref": "#/definitions/SampleDataURI"
+              }
+            ]
+          }
+        },
+        "themes": {
+          "title": "Themes",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ThemeContribution"
+          }
+        },
+        "menus": {
+          "title": "Menus",
+          "hide_docs": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/MenusContribution"
+            }
+          ]
+        },
+        "submenus": {
+          "title": "Submenus",
+          "hide_docs": true,
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubmenuContribution"
+          }
+        }
+      }
+    },
+    "PackageMetadata": {
+      "title": "PackageMetadata",
+      "description": "Pydantic model for standard python package metadata.\n\nhttps://www.python.org/dev/peps/pep-0566/\nhttps://packaging.python.org/specifications/core-metadata/\n\nThe `importlib.metadata` provides the `metadata()` function,\nbut it returns a somewhat awkward `email.message.Message` object.",
+      "type": "object",
+      "properties": {
+        "metadata_version": {
+          "title": "Metadata Version",
+          "description": "Version of the file format",
+          "enum": [
+            "1.0",
+            "1.1",
+            "1.2",
+            "2.0",
+            "2.1",
+            "2.2"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "description": "The name of the distribution. The name field is the primary identifier for a distribution.",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]$",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "description": "A string containing the distribution\u2019s version number. This field must be in the format specified in PEP 440.",
+          "type": "string"
+        },
+        "dynamic": {
+          "title": "Dynamic",
+          "description": "A string containing the name of another core metadata field. The field names Name and Version may not be specified in this field.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "platform": {
+          "title": "Platform",
+          "description": "A Platform specification describing an operating system supported by the distribution which is not listed in the \u201cOperating System\u201d Trove classifiers. See \u201cClassifier\u201d below.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supported_platform": {
+          "title": "Supported Platform",
+          "description": "Binary distributions containing a PKG-INFO file will use the Supported-Platform field in their metadata to specify the OS and CPU for which the binary distribution was compiled",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "A one-line summary of what the distribution does.",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "description": "A longer description of the distribution that can run to several paragraphs.",
+          "type": "string"
+        },
+        "description_content_type": {
+          "title": "Description Content Type",
+          "description": "A string stating the markup syntax (if any) used in the distribution\u2019s description, so that tools can intelligently render the description.",
+          "type": "string"
+        },
+        "keywords": {
+          "title": "Keywords",
+          "description": "A list of additional keywords, separated by commas, to be used to assist searching for the distribution in a larger catalog.",
+          "type": "string"
+        },
+        "home_page": {
+          "title": "Home Page",
+          "description": "A string containing the URL for the distribution\u2019s home page.",
+          "type": "string"
+        },
+        "download_url": {
+          "title": "Download Url",
+          "description": "A string containing the URL from which THIS version of the distribution can be downloaded.",
+          "type": "string"
+        },
+        "author": {
+          "title": "Author",
+          "description": "A string containing the author\u2019s name at a minimum; additional contact information may be provided.",
+          "type": "string"
+        },
+        "author_email": {
+          "title": "Author Email",
+          "description": "A string containing the author\u2019s e-mail address. It can contain a name and e-mail address in the legal forms for a RFC-822 From: header.",
+          "type": "string"
+        },
+        "maintainer": {
+          "title": "Maintainer",
+          "description": "A string containing the maintainer\u2019s name at a minimum; additional contact information may be provided.",
+          "type": "string"
+        },
+        "maintainer_email": {
+          "title": "Maintainer Email",
+          "description": "A string containing the maintainer\u2019s e-mail address. It can contain a name and e-mail address in the legal forms for a RFC-822 From: header.",
+          "type": "string"
+        },
+        "license": {
+          "title": "License",
+          "description": "Text indicating the license covering the distribution where the license is not a selection from the \u201cLicense\u201d Trove classifiers. See \u201cClassifier\u201d below. This field may also be used to specify a particular version of a license which is named via the Classifier field, or to indicate a variation or exception to such a license.",
+          "type": "string"
+        },
+        "classifier": {
+          "title": "Classifier",
+          "description": "Each entry is a string giving a single classification value for the distribution. Classifiers are described in PEP 301, and the Python Package Index publishes a dynamic list of currently defined classifiers.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires_dist": {
+          "title": "Requires Dist",
+          "description": "The field format specification was relaxed to accept the syntax used by popular publishing tools. Each entry contains a string naming some other distutils project required by this distribution.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires_python": {
+          "title": "Requires Python",
+          "description": "This field specifies the Python version(s) that the distribution is guaranteed to be compatible with. Installation tools may look at this when picking which version of a project to install. The value must be in the format specified in Version specifiers (PEP 440).",
+          "type": "string"
+        },
+        "requires_external": {
+          "title": "Requires External",
+          "description": "The field format specification was relaxed to accept the syntax used by popular publishing tools. Each entry contains a string describing some dependency in the system that the distribution is to be used. This field is intended to serve as a hint to downstream project maintainers, and has no semantics which are meaningful to the distutils distribution.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "project_url": {
+          "title": "Project Url",
+          "description": "A string containing a browsable URL for the project and a label for it, separated by a comma.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "provides_extra": {
+          "title": "Provides Extra",
+          "description": "A string containing the name of an optional feature. Must be a valid Python identifier. May be used to make a dependency conditional on whether the optional feature has been requested.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "provides_dist": {
+          "title": "Provides Dist",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "obsoletes_dist": {
+          "title": "Obsoletes Dist",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "metadata_version",
+        "name",
+        "version"
+      ]
+    }
+  }
+}
