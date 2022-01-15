@@ -12,7 +12,7 @@ from types import FunctionType
 from typing import Dict, Optional, Set
 
 import yaml
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
@@ -173,8 +173,9 @@ def main(dest: Path = _BUILD):
     sys.path.append(str(DOCS.absolute()))
     PluginManager.instance().register(EXAMPLE_MANIFEST)
 
-    this = Path(__file__).parent.name
-    env = Environment(loader=PackageLoader(this), autoescape=select_autoescape())
+    env = Environment(
+        loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape()
+    )
     env.filters["example_contribution"] = example_contribution
     env.filters["example_implementation"] = example_implementation
     env.filters["has_guide"] = has_guide
