@@ -212,11 +212,29 @@ class HookImplParser:
             )
 
     def napari_get_reader(self, impl: HookImplementation):
+        from inspect import getsource
+
+        patterns = ["*"]
+        # try to look at source code to guess file extensions
+        a, *b = getsource(impl.function).split("endswith(")
+        if b:
+            middle = b[0].split(")")[0]
+            if middle.startswith("("):
+                middle += ")"
+            try:
+                files = ast.literal_eval(middle)
+                if isinstance(files, str):
+                    files = [files]
+                if files:
+                    patterns = [f"*{f}" for f in files]
+            except Exception:
+                patterns = ["*"]
+
         self.contributions["readers"].append(
             {
                 "command": self.add_command(impl),
                 "accepts_directories": True,
-                "filename_patterns": ["<EDIT_ME>"],
+                "filename_patterns": patterns,
             }
         )
 
@@ -375,7 +393,7 @@ class HookImplParser:
                 "command": id,
                 "layer_types": [layer],
                 "display_name": layer,
-                "filename_extensions": ["<EDIT_ME>"],
+                "filename_extensions": [],
             }
         )
 

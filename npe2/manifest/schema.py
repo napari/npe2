@@ -6,7 +6,7 @@ from importlib import util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -24,20 +24,18 @@ try:
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
-if TYPE_CHECKING:
-    from importlib.metadata import EntryPoint
-
 
 logger = getLogger(__name__)
 
 
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
+NPE1_ENTRY_POINT = "napari.plugin"
 
 
 class DiscoverResults(NamedTuple):
     manifest: Optional[PluginManifest]
-    entrypoint: Optional[EntryPoint]
+    entrypoint: Optional[metadata.Distribution]
     error: Optional[Exception]
 
 
@@ -127,6 +125,7 @@ class PluginManifest(ImportExportModel):
         "setup.cfg",
         hide_docs=True,
     )
+    _npe1_entry_points: List[metadata.EntryPoint] = Field(default_factory=list)
 
     @property
     def license(self) -> Optional[str]:
@@ -204,12 +203,12 @@ class PluginManifest(ImportExportModel):
             If the manifest is not valid
         """
         dist = metadata.distribution(name)  # may raise PackageNotFoundError
-        for ep in dist.entry_points:
-            if ep.group == ENTRY_POINT:
-                return PluginManifest._from_entrypoint(ep, dist)
-        raise ValueError(
-            "Distribution {name!r} exists but does not provide a napari manifest"
-        )
+        pm = _from_dist(dist)
+        if not pm:
+            raise ValueError(
+                "Distribution {name!r} exists but does not provide a napari manifest"
+            )
+        return pm
 
     class Config:
         underscore_attrs_are_private = True
@@ -257,26 +256,24 @@ class PluginManifest(ImportExportModel):
         """
         with _temporary_path_additions(paths):
             for dist in metadata.distributions():
-                for ep in dist.entry_points:
-                    if ep.group != entry_point_group:
-                        continue
-                    try:
-                        pm = cls._from_entrypoint(ep, dist)
-                        yield DiscoverResults(pm, ep, None)
-                    except ValidationError as e:
-                        logger.warning(msg=f"Invalid schema {ep.value!r}")
-                        yield DiscoverResults(None, ep, e)
-                    except Exception as e:
-                        logger.error(
-                            "%s -> %r could not be imported: %s"
-                            % (entry_point_group, ep.value, e)
-                        )
-                        yield DiscoverResults(None, ep, e)
+                try:
+                    pm = _from_dist(dist, entry_point_group)
+                    if pm:
+                        yield DiscoverResults(pm, dist, None)
+                except ValidationError as e:
+                    logger.warning(msg=f"Invalid schema: {dist.metadata['Name']!r}")
+                    yield DiscoverResults(None, dist, e)
+                except Exception as e:
+                    logger.error(
+                        "%s -> %r could not be imported: %s"
+                        % (ENTRY_POINT, dist.metadata["Name"], e)
+                    )
+                    yield DiscoverResults(None, dist, e)
 
     @classmethod
     def _from_entrypoint(
         cls,
-        entry_point: EntryPoint,
+        entry_point: metadata.EntryPoint,
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
@@ -390,6 +387,31 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     finally:
         for p in paths:
             sys.path.remove(str(p))
+
+
+def _from_dist(
+    dist: metadata.Distribution, entry_point_group=ENTRY_POINT
+) -> Optional[PluginManifest]:
+    _npe1, _npe2 = [], None
+    for ep in dist.entry_points:
+        if ep.group == NPE1_ENTRY_POINT:
+            _npe1.append(ep)
+        elif ep.group == entry_point_group:
+            _npe2 = ep
+    if _npe2:
+        pm = PluginManifest._from_entrypoint(_npe2, dist)
+        pm._npe1_entry_points = _npe1
+        return pm
+    elif _npe1:
+        # has npe1 but not npe2
+        from ._npe1_adaptor import NPE1Adaptor
+
+        pm = NPE1Adaptor(name=dist.metadata["Name"])
+        pm._npe1_entry_points = _npe1
+        meta = PackageMetadata.from_dist_metadata(dist.metadata)
+        pm.package_metadata = meta
+        return pm
+    return None
 
 
 if __name__ == "__main__":

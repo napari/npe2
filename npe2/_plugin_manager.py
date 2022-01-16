@@ -25,7 +25,8 @@ from typing import (
 from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
-from .manifest import PluginManifest
+from .manifest._npe1_adaptor import NPE1Adaptor
+from .manifest.schema import PluginManifest
 from .manifest.writers import LayerType, WriterContribution
 from .types import PythonName
 
@@ -103,6 +104,7 @@ class PluginManager:
         self._command_registry = reg or CommandRegistry()
         self._contexts: Dict[PluginName, PluginContext] = {}
         self._manifests: Dict[PluginName, PluginManifest] = {}
+        self._adaptors: Dict[PluginName, NPE1Adaptor] = {}
         self.discover()  # TODO: should we be immediately discovering?
 
     @property
@@ -122,7 +124,10 @@ class PluginManager:
 
         for result in PluginManifest.discover(paths=paths):
             if result.manifest and result.manifest.name not in self._manifests:
-                self.register(result.manifest)
+                if isinstance(result.manifest, NPE1Adaptor):
+                    self._adaptors[result.manifest.name] = result.manifest
+                else:
+                    self.register(result.manifest)
 
     def register(self, manifest: PluginManifest) -> None:
         if manifest.name in self._manifests:
