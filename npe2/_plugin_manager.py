@@ -200,20 +200,9 @@ class PluginManager:
         ctx._dispose()
 
     def iter_compatible_readers(
-        self, paths: Sequence[Union[str, Path]]
+        self, paths: Union[str, Path, Sequence[Union[str, Path]]]
     ) -> Iterator[ReaderContribution]:
         from fnmatch import fnmatch
-
-        is_directory = False
-        if not isinstance(paths, list):
-            path = str(paths)  # needed in order to pass pre-commit hook
-            if os.path.isdir(path):
-                # This is a directory.  Get a list of all files in the directory.
-                is_directory = True
-                pathNames = list()
-                for (dirpath, dirnames, files) in os.walk(path):
-                    pathNames += [os.path.join(dirpath, file) for file in files]
-                paths = pathNames
 
         if isinstance(paths, list) and len(paths) > 1:
             assert all(
@@ -222,18 +211,18 @@ class PluginManager:
 
             path = paths[0]
         else:
-            path = str(paths)  # needed in order to pass pre-commit hook
-        seen: Set[str] = set()
-        for ext, readers in self._contrib._readers.items():
-            if ext and fnmatch(str(path), ext):
-                for r in readers:
-                    if is_directory and not r.accepts_directories:
-                        # if this reader does not accept a directory and
-                        # this is a directory then skip it.
-                        continue
-                    if r.command not in seen:
-                        seen.add(r.command)
-                        yield r
+            path = paths  # needed in order to pass pre-commit hook
+
+        if os.path.isdir(path):
+            yield from self._contrib._readers[""]
+        else:
+            seen: Set[str] = set()
+            for ext, readers in self._contrib._readers.items():
+                if ext and fnmatch(str(path), ext):
+                    for r in readers:
+                        if r.command not in seen:
+                            seen.add(r.command)
+                            yield r
 
     @classmethod
     def instance(cls) -> PluginManager:
