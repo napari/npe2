@@ -206,7 +206,7 @@ class PluginManager:
 
         is_directory = False
         if not isinstance(paths, list):
-            path = str(paths)
+            path = str(paths)  # needed in order to pass pre-commit hook
             if os.path.isdir(path):
                 # This is a directory.  Get a list of all files in the directory.
                 is_directory = True
@@ -222,7 +222,7 @@ class PluginManager:
 
             path = paths[0]
         else:
-            path = str(paths)
+            path = str(paths)  # needed in order to pass pre-commit hook
         seen: Set[str] = set()
         for ext, readers in self._contrib._readers.items():
             if ext and fnmatch(str(path), ext):
