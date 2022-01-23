@@ -211,7 +211,7 @@ class PluginManager:
 
             path = paths[0]
         else:
-            path = paths  # needed in order to pass pre-commit hook
+            path = paths
 
         if os.path.isdir(path):
             yield from self._contrib._readers[""]
