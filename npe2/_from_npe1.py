@@ -250,6 +250,7 @@ class HookImplParser:
 
     def napari_provide_sample_data(self, impl: HookImplementation):
         module = sys.modules[impl.function.__module__.split(".", 1)[0]]
+        assert module.__file__
         package_dir = module.__file__.rsplit("/", 1)[0]
 
         samples: Dict[str, Union[dict, str, Callable]] = impl.function()

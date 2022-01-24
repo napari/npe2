@@ -115,7 +115,7 @@ def test_invalid_python_name(uses_sample_plugin):
     assert mf and mf.contributions and mf.contributions.commands
     assert mf.contributions.commands[-1].python_name
 
-    assert mf.validate_imports() is None
+    mf.validate_imports()
     mf.contributions.commands[-1].python_name += "_whoops"  # type: ignore
     with pytest.raises(ValidationError) as e:
         mf.validate_imports()

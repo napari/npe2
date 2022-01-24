@@ -1,4 +1,3 @@
-import inspect
 from pathlib import Path
 
 from appdirs import user_cache_dir
@@ -8,10 +7,7 @@ from npe2.manifest.utils import Executable
 from . import contributions
 from .schema import PluginManifest
 
-COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
 HOOKIMPL_DECO = "napari_plugin_engine.napari_hook_implementation"
-
-
 CACHE = Path(user_cache_dir("npe1", "napari"))
 
 
@@ -64,7 +60,9 @@ class NPE1Adaptor(PluginManifest):
         info = mfs[0].dict(exclude={"contributions", "package_metadata"})
         info["display_name"] = self.name
         info["package_metadata"] = self.package_metadata
-        info["contributions"] = merge_contributions(*(m.contributions for m in mfs))
+        info["contributions"] = merge_contributions(
+            *(m.contributions for m in mfs if m.contributions)
+        )
 
         pm = PluginManifest(**info)
         yaml = pm.yaml(exclude={"package_metadata"})
@@ -73,4 +71,5 @@ class NPE1Adaptor(PluginManifest):
         return pm
 
     def _cache_key(self, ext=".yaml"):
-        return f"{self.name}_{self.package_metadata.version}{ext}"
+        v = self.package_metadata.version if self.package_metadata else ""
+        return f"{self.name}_{v}{ext}"
