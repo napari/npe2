@@ -197,16 +197,14 @@ def _import_npe1_shim(shim_name: str) -> Any:
 def import_python_name(python_name: Union[PythonName, str]) -> Any:
     from importlib import import_module
 
-    from ._validators import PYTHON_NAME_PATTERN
+    from . import _validators
 
     if python_name.startswith("__npe1shim__."):
         return _import_npe1_shim(python_name)
 
-    match = PYTHON_NAME_PATTERN.match(python_name)
-    if not match:  # pragma: no cover
-        raise ValueError(f"Invalid python name: {python_name}")
-
-    module_name, funcname = match.groups()
+    _validators.python_name(python_name)  # shows the best error message
+    match = _validators.PYTHON_NAME_PATTERN.match(python_name)
+    module_name, funcname = match.groups()  # type: ignore [union-attr]
 
     mod = import_module(module_name)
     return getattr(mod, funcname)

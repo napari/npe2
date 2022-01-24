@@ -422,15 +422,13 @@ def _safe_key(key: str) -> str:
     )
 
 
-def _python_name(
-    object: Any, shim=False, hook: Callable = None, idx: int = None
-) -> str:
-    """Get resolvable python name for `object`
+def _python_name(obj: Any, shim=False, hook: Callable = None, idx: int = None) -> str:
+    """Get resolvable python name for `obj`
 
     Parameters
     ----------
-    object : [type]
-        a python object
+    obj : [type]
+        a python obj
 
     Returns
     -------
@@ -442,22 +440,36 @@ def _python_name(
     AttributeError
         If a resolvable string cannot be found
     """
-    mod = inspect.getmodule(object) or inspect.getmodule(hook)
-    obj_name = getattr(object, "__name__", "")
-    if mod and not obj_name:
-        for local_name, obj in vars(mod).items():
-            if obj is object:
-                obj_name = local_name
+    obj_name, mod_name = None, None
+    if hasattr(hook, "__module__"):
+        hook_mod = sys.modules.get(hook.__module__)
+        if hook_mod:
+            for local_name, _obj in vars(hook_mod).items():
+                if _obj is obj:
+                    obj_name = local_name
+                    mod_name = hook_mod.__name__
+                    break
 
-    if not (mod and obj_name):
+    if not mod_name:
+        obj_name = getattr(obj, "__qualname__", "")
+        mod = inspect.getmodule(obj) or inspect.getmodule(hook)
+        if mod:
+            mod_name = mod.__name__
+            if not obj_name:
+                for local_name, _obj in vars(mod).items():
+                    if _obj is obj:
+                        obj_name = local_name
+                        break
+
+    if not (mod_name and obj_name):
         if shim and hook and idx is not None:
             return f"__npe1shim__.{_python_name(hook)}_{idx}"
         else:
-            raise AttributeError(f"could not get resolvable python name for {object}")
+            raise AttributeError(f"could not get resolvable python name for {obj}")
 
-    pyname = f"{mod.__name__}:{obj_name}"
-    if import_python_name(pyname) is not object:
-        raise AttributeError(f"could not get resolvable python name for {object}")
+    pyname = f"{mod_name}:{obj_name}"
+    if import_python_name(pyname) is not obj:
+        raise AttributeError(f"could not get resolvable python name for {obj}")
     return pyname
 
 

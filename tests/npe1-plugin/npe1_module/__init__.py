@@ -65,9 +65,12 @@ def napari_experimental_provide_theme():
     }
 
 
+factory = magic_factory(some_function)
+
+
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    return [MyWidget, (magic_factory(some_function), {"name": "My Other Widget"})]
+    return [MyWidget, (factory, {"name": "My Other Widget"})]
 
 
 @napari_hook_implementation
