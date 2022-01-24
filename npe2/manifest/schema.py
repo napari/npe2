@@ -35,7 +35,7 @@ NPE1_ENTRY_POINT = "napari.plugin"
 
 class DiscoverResults(NamedTuple):
     manifest: Optional[PluginManifest]
-    entrypoint: Optional[metadata.Distribution]
+    distribution: Optional[metadata.Distribution]
     error: Optional[Exception]
 
 
@@ -124,6 +124,7 @@ class PluginManifest(ImportExportModel):
         "For normal (non-dynamic) plugins, this data will come from the package's "
         "setup.cfg",
         hide_docs=True,
+        exclude=True,
     )
     _npe1_entry_points: List[metadata.EntryPoint] = Field(default_factory=list)
 

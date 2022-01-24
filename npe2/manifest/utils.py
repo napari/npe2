@@ -153,10 +153,54 @@ class Version:
         return v
 
 
-def import_python_name(python_name: PythonName) -> Any:
+def _import_npe1_shim(shim_name: str) -> Any:
+    """Import npe1 shimmed python_name
+
+    Some objects returned by npe1 hooks (such as locally defined partials or other
+    objects) don't have globally accessible python names. In such cases, we create
+    a "shim" python_name of the form:
+
+    `__npe1shim__.<hook_python_name>_<index>`
+
+    The implication is that the hook should be imported, called, and indexed to return
+    the corresponding item in the hook results.
+
+    Parameters
+    ----------
+    shim_name : str
+        A string in the form `__npe1shim__.<hook_python_name>_<index>`
+
+    Returns
+    -------
+    Any
+        The <index>th object returned from the callable <hook_python_name>.
+
+    Raises
+    ------
+    IndexError
+        If len(<hook_python_name>()) <= <index>
+    """
+    assert shim_name.startswith("__npe1shim__."), "Invalid shim name"
+    python_name, idx = shim_name[13:].rsplit("_", maxsplit=1)
+    index = int(idx)
+
+    hook = import_python_name(python_name)
+    result = hook()
+    if not isinstance(result, list):
+        result = [result]
+    try:
+        return result[index]
+    except IndexError:
+        raise IndexError(f"invalid npe1 shim index {index} for hook {hook}")
+
+
+def import_python_name(python_name: Union[PythonName, str]) -> Any:
     from importlib import import_module
 
     from ._validators import PYTHON_NAME_PATTERN
+
+    if python_name.startswith("__npe1shim__."):
+        return _import_npe1_shim(python_name)
 
     match = PYTHON_NAME_PATTERN.match(python_name)
     if not match:  # pragma: no cover

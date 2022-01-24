@@ -1,4 +1,5 @@
 import ast
+import inspect
 import itertools
 import re
 import sys
@@ -30,6 +31,7 @@ from napari_plugin_engine import (
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
+from npe2.manifest.utils import import_python_name
 from npe2.manifest.widgets import WidgetContribution
 
 try:
@@ -153,7 +155,7 @@ def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> s
 
 
 def manifest_from_npe1(
-    plugin_name: Optional[str] = None, module: Any = None
+    plugin_name: Optional[str] = None, module: Any = None, shim=False
 ) -> PluginManifest:
     """Return manifest object given npe1 plugin_name or package name.
 
@@ -172,17 +174,40 @@ def manifest_from_npe1(
     _module = plugin_manager.plugins[plugin_name]
     package = ensure_package_name(plugin_name) if module is None else "dynamic"
 
-    parser = HookImplParser(package, plugin_name)
+    parser = HookImplParser(package, plugin_name, shim=shim)
     parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
-
-    return PluginManifest(name=package, contributions=dict(parser.contributions))
+    return parser.manifest()
 
 
 class HookImplParser:
-    def __init__(self, package: str, plugin_name: str) -> None:
+    def __init__(self, package: str, plugin_name: str, shim: bool = False) -> None:
+        """A visitor class to convert npe1 hookimpls to a npe2 manifest
+
+        Parameters
+        ----------
+        package : str
+            [description]
+        plugin_name : str
+            [description]
+        shim : bool, optional
+            If True, the resulting manifest will be used internally by NPE1Adaptor, but
+            is NOT necessarily suitable for export as npe2 manifest. This will handle
+            cases of locally defined functions and partials that don't have global
+            python_names that are not supported natively by npe2. by default False
+
+        Examples
+        --------
+        >>> parser = HookImplParser(package, plugin_name, shim=shim)
+        >>> parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
+        >>> mf = PluginManifest(name=package, contributions=dict(parser.contributions))
+        """
         self.package = package
         self.plugin_name = plugin_name
         self.contributions: DefaultDict[str, list] = DefaultDict(list)
+        self.shim = shim
+
+    def manifest(self) -> PluginManifest:
+        return PluginManifest(name=self.package, contributions=dict(self.contributions))
 
     def parse_callers(self, callers: Iterable[HookCaller]):
         for caller in callers:
@@ -212,23 +237,8 @@ class HookImplParser:
             )
 
     def napari_get_reader(self, impl: HookImplementation):
-        from inspect import getsource
 
-        patterns = ["*"]
-        # try to look at source code to guess file extensions
-        a, *b = getsource(impl.function).split("endswith(")
-        if b:
-            middle = b[0].split(")")[0]
-            if middle.startswith("("):
-                middle += ")"
-            try:
-                files = ast.literal_eval(middle)
-                if isinstance(files, str):
-                    files = [files]
-                if files:
-                    patterns = [f"*{f}" for f in files]
-            except Exception:
-                patterns = ["*"]
+        patterns = _guess_fname_patterns(impl.function)
 
         self.contributions["readers"].append(
             {
@@ -318,7 +328,11 @@ class HookImplParser:
                 continue
 
             try:
-                self._create_widget_contrib(impl, wdg_creator, kwargs)
+                func_name = getattr(wdg_creator, "__name__", "")
+                wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
+                self._create_widget_contrib(
+                    wdg_creator, display_name=wdg_name, idx=idx, hook=impl.function
+                )
             except Exception as e:  # pragma: no cover
                 msg = (
                     f"Error converting dock widget [{idx}] "
@@ -326,29 +340,14 @@ class HookImplParser:
                 )
                 warnings.warn(msg)
 
-    def _create_widget_contrib(self, impl, wdg_creator, kwargs, is_function=False):
-        # Get widget name
-        func_name = getattr(wdg_creator, "__name__", "")
-        wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
-
-        # in some cases, like partials and magic_factories, there might not be an
-        # easily accessible python name (from __module__.__qualname__)...
-        # so first we look for this object in the module namespace
-        py_name = None
-        cmd = None
-        for local_name, val in impl.function.__globals__.items():
-            if val is wdg_creator:
-                py_name = f"{impl.function.__module__}:{local_name}"
-                cmd = f"{self.package}.{local_name}"
-                break
-        else:
-            try:
-                py_name = _python_name(wdg_creator)
-                cmd = (
-                    f"{self.package}.{func_name or wdg_name.lower().replace(' ', '_')}"
-                )
-            except AttributeError:  # pragma: no cover
-                pass
+    def _create_widget_contrib(
+        self,
+        wdg_creator,
+        display_name: str,
+        idx: int,
+        hook: Callable,
+    ):
+        py_name = _python_name(wdg_creator, self.shim, hook, idx)
 
         if not py_name:  # pragma: no cover
             raise ValueError(
@@ -356,11 +355,14 @@ class HookImplParser:
                 "Is this a locally defined function or partial?"
             )
 
+        func_name = getattr(wdg_creator, "__name__", "")
+        cmd = f"{self.package}.{func_name or display_name.lower().replace(' ', '_')}"
+
         # let these raise exceptions here immediately if they don't validate
         cmd_contrib = CommandContribution(
-            id=cmd, python_name=py_name, title=f"Create {wdg_name}"
+            id=cmd, python_name=py_name, title=f"Create {display_name}"
         )
-        wdg_contrib = WidgetContribution(command=cmd, display_name=wdg_name)
+        wdg_contrib = WidgetContribution(command=cmd, display_name=display_name)
         self.contributions["commands"].append(cmd_contrib)
         self.contributions["widgets"].append(wdg_contrib)
 
@@ -420,8 +422,43 @@ def _safe_key(key: str) -> str:
     )
 
 
-def _python_name(object):
-    return f"{object.__module__}:{object.__qualname__}"
+def _python_name(
+    object: Any, shim=False, hook: Callable = None, idx: int = None
+) -> str:
+    """Get resolvable python name for `object`
+
+    Parameters
+    ----------
+    object : [type]
+        a python object
+
+    Returns
+    -------
+    str
+       a string that can be imported with npe2.manifest.utils.import_python_name
+
+    Raises
+    ------
+    AttributeError
+        If a resolvable string cannot be found
+    """
+    mod = inspect.getmodule(object) or inspect.getmodule(hook)
+    obj_name = getattr(object, "__name__", "")
+    if mod and not obj_name:
+        for local_name, obj in vars(mod).items():
+            if obj is object:
+                obj_name = local_name
+
+    if not (mod and obj_name):
+        if shim and hook and idx is not None:
+            return f"__npe1shim__.{_python_name(hook)}_{idx}"
+        else:
+            raise AttributeError(f"could not get resolvable python name for {object}")
+
+    pyname = f"{mod.__name__}:{obj_name}"
+    if import_python_name(pyname) is not object:
+        raise AttributeError(f"could not get resolvable python name for {object}")
+    return pyname
 
 
 def _luma(r, g, b):
@@ -584,3 +621,24 @@ class _SetupVisitor(ast.NodeVisitor):
                             self._entry_points.append(
                                 [i.strip() for i in item.split("=")]
                             )
+
+
+def _guess_fname_patterns(func):
+    """Try to guess filename extension patterns from source code.  Fallback to "*"."""
+
+    patterns = ["*"]
+    # try to look at source code to guess file extensions
+    a, *b = inspect.getsource(func).split("endswith(")
+    if b:
+        middle = b[0].split(")")[0]
+        if middle.startswith("("):
+            middle += ")"
+        try:
+            files = ast.literal_eval(middle)
+            if isinstance(files, str):
+                files = [files]
+            if files:
+                patterns = [f"*{f}" for f in files]
+        except Exception:
+            patterns = ["*"]
+    return patterns
