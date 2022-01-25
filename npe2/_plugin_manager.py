@@ -25,7 +25,7 @@ from typing import (
 from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
-from .manifest.schema import PluginManifest
+from .manifest.schema import NPE1Shim, PluginManifest
 from .manifest.writers import LayerType, WriterContribution
 from .types import PythonName
 
@@ -74,7 +74,10 @@ class _ContributionsIndex:
             str, List[WriterContribution]
         ] = DefaultDict(list)
 
-    def index_contributions(self, ctrb: ContributionPoints, key: PluginName):
+    def index_contributions(self, ctrb: Optional[ContributionPoints], key: PluginName):
+        if not ctrb:
+            return
+
         if ctrb.sample_data:
             self._samples[key] = ctrb.sample_data
         for cmd in ctrb.commands or []:
@@ -104,6 +107,7 @@ class PluginManager:
         self._contexts: Dict[PluginName, PluginContext] = {}
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self._contrib = _ContributionsIndex()
+        self._shims: List[NPE1Shim] = []
         self.discover()  # TODO: should we be immediately discovering?
 
     @property
@@ -129,8 +133,15 @@ class PluginManager:
         if manifest.name in self._manifests:
             raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
         self._manifests[manifest.name] = manifest
-        if manifest.contributions:
+        if isinstance(manifest, NPE1Shim):
+            self._shims.append(manifest)
+        else:
             self._contrib.index_contributions(manifest.contributions, manifest.name)
+
+    def _import_shims(self):
+        while self._shims:
+            shim = self._shims.pop()
+            self._contrib.index_contributions(shim.contributions, shim.name)
 
     def get_manifest(self, key: str) -> PluginManifest:
         key = str(key).split(".")[0]
