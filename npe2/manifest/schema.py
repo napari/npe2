@@ -6,7 +6,7 @@ from importlib import util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -40,6 +40,9 @@ class DiscoverResults(NamedTuple):
 
 
 class PluginManifest(ImportExportModel):
+    class Config:
+        underscore_attrs_are_private = True
+        extra = Extra.forbid
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
@@ -126,7 +129,7 @@ class PluginManifest(ImportExportModel):
         hide_docs=True,
         exclude=True,
     )
-    _npe1_entry_points: List[metadata.EntryPoint] = Field(default_factory=list)
+    _is_npe1_shim: bool = False
 
     @property
     def license(self) -> Optional[str]:
@@ -211,15 +214,9 @@ class PluginManifest(ImportExportModel):
             )
         return pm
 
-    class Config:
-        underscore_attrs_are_private = True
-        extra = Extra.forbid
-
     @classmethod
     def discover(
-        cls,
-        entry_point_group: str = ENTRY_POINT,
-        paths: Sequence[Union[str, Path]] = (),
+        cls, paths: Sequence[Union[str, Path]] = ()
     ) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
@@ -245,8 +242,6 @@ class PluginManifest(ImportExportModel):
 
         Parameters
         ----------
-        entry_point_group : str, optional
-            name of entry point group to discover, by default 'napari.manifest'
         paths : Sequence[str], optional
             paths to add to sys.path while discovering.
 
@@ -258,7 +253,7 @@ class PluginManifest(ImportExportModel):
         with _temporary_path_additions(paths):
             for dist in metadata.distributions():
                 try:
-                    pm = _from_dist(dist, entry_point_group)
+                    pm = _from_dist(dist)
                     if pm:
                         yield DiscoverResults(pm, dist, None)
                 except ValidationError as e:
@@ -351,6 +346,10 @@ class PluginManifest(ImportExportModel):
                     "package name or a file.."
                 ) from e
 
+    def _serialized_data(self, **kwargs):
+        kwargs.setdefault("exclude", {"package_metadata"})
+        return super()._serialized_data(**kwargs)
+
     def validate_imports(self) -> None:
         """Checks recursively that all `python_name` fields are actually importable."""
         from .utils import import_python_name
@@ -379,6 +378,20 @@ class PluginManifest(ImportExportModel):
     ValidationError = ValidationError  # for convenience of access
 
 
+def _noop(*_, **__):
+    return []
+
+
+@contextmanager
+def discovery_blocked():
+    orig = PluginManifest.discover
+    setattr(PluginManifest, "discover", _noop)
+    try:
+        yield
+    finally:
+        setattr(PluginManifest, "discover", orig)
+
+
 @contextmanager
 def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     for p in reversed(paths):
@@ -390,27 +403,76 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
             sys.path.remove(str(p))
 
 
-def _from_dist(
-    dist: metadata.Distribution, entry_point_group=ENTRY_POINT
-) -> Optional[PluginManifest]:
+def _npe1_cache_path(dist: metadata.Distribution):
+    """Return cache path for manifest corresponding to distribution."""
+    from appdirs import user_cache_dir
+
+    CACHE = Path(user_cache_dir("npe1", "napari"))
+    name = dist.metadata["Name"]
+    version = dist.metadata["Version"]
+    return CACHE / f"{name}_{version}.yaml"
+
+
+def get_npe1_shim_manifest(dist: metadata.Distribution) -> PluginManifest:
+
+    # get the expected cache_path
+    cache_path = _npe1_cache_path(dist)
+    package_meta = PackageMetadata.from_dist_metadata(dist.metadata)
+
+    # if we have a cached manifest, just retrieve it
+    if cache_path.exists():
+        pm = PluginManifest.from_file(cache_path)
+    else:
+        # otherwise build one
+        pm = _build_npe1_shim(dist, save_to=cache_path)
+
+    pm.package_metadata = package_meta
+    pm._is_npe1_shim = True
+    return pm
+
+
+def _build_npe1_shim(
+    dist: metadata.Distribution, save_to: Optional[Path] = None
+) -> PluginManifest:
+    """Build a shim manifest for distribution.  Optionally save to `save_to`."""
+    from .._from_npe1 import manifest_from_npe1
+    from .utils import merge_contributions
+
+    with discovery_blocked():
+        mfs = [
+            manifest_from_npe1(ep.name, shim=True)
+            for ep in dist.entry_points
+            if ep.group == NPE1_ENTRY_POINT
+        ]
+    assert mfs, "No npe1 entry points found in distribution {name}"
+
+    contribs = merge_contributions(*(m.contributions for m in mfs if m.contributions))
+    pm = PluginManifest(
+        **mfs[0].dict(exclude={"contributions", "package_metadata", "display_name"}),
+        display_name=dist.metadata["Name"],
+        contributions=contribs,
+    )
+    pm._is_npe1_shim = True
+
+    if save_to is not None:
+        save_to.parent.mkdir(exist_ok=True, parents=True)
+        save_to.write_text(pm.yaml())
+    return pm
+
+
+def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
     _npe1, _npe2 = [], None
     for ep in dist.entry_points:
         if ep.group == NPE1_ENTRY_POINT:
             _npe1.append(ep)
-        elif ep.group == entry_point_group:
+        elif ep.group == ENTRY_POINT:
             _npe2 = ep
     if _npe2:
         pm = PluginManifest._from_entrypoint(_npe2, dist)
-        pm._npe1_entry_points = _npe1
         return pm
     elif _npe1:
         # has npe1 but not npe2
-        from ._npe1_adaptor import NPE1Adaptor
-
-        pm = NPE1Adaptor(name=dist.metadata["Name"])
-        pm._npe1_entry_points = _npe1
-        meta = PackageMetadata.from_dist_metadata(dist.metadata)
-        pm.package_metadata = meta
+        pm = get_npe1_shim_manifest(dist)
         return pm
     return None
 

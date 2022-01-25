@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from typing_extensions import Protocol
 
     from .._command_registry import CommandRegistry
+    from .contributions import ContributionPoints
 
     class ProvidesCommand(Protocol):
         command: str
@@ -208,3 +209,36 @@ def import_python_name(python_name: Union[PythonName, str]) -> Any:
 
     mod = import_module(module_name)
     return getattr(mod, funcname)
+
+
+def deep_update(dct: dict, merge_dct: dict, copy=True) -> dict:
+    """Merge possibly nested dicts"""
+    _dct = dct.copy() if copy else dct
+    for k, v in merge_dct.items():
+        if k in _dct and isinstance(dct[k], dict) and isinstance(v, dict):
+            deep_update(_dct[k], v, copy=False)
+        elif isinstance(v, list):
+            if k not in _dct:
+                _dct[k] = []
+            _dct[k].extend(v)
+        else:
+            _dct[k] = v
+    return _dct
+
+
+def merge_contributions(*contribs: ContributionPoints) -> dict:
+    if not contribs:
+        return {}
+
+    out = contribs[0].dict(exclude_unset=True)
+    if len(contribs) > 1:
+        for n, c in enumerate(contribs[1:]):
+            for cmd in c.commands or ():
+                cmd.id += f"_{n + 2}"
+            for name, val in c:
+                if isinstance(val, list):
+                    for item in val:
+                        if isinstance(item, Executable):
+                            item.command += f"_{n + 2}"
+            deep_update(out, c.dict(exclude_unset=True))
+    return out
