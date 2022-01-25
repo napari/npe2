@@ -8,6 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Iterator, NamedTuple, Optional, Sequence, Union
 
+from appdirs import user_cache_dir
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
 from pydantic.main import BaseModel, ModelMetaclass
@@ -31,6 +32,7 @@ logger = getLogger(__name__)
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
+NPE2_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2"
 
 
 class DiscoverResults(NamedTuple):
@@ -129,7 +131,12 @@ class PluginManifest(ImportExportModel):
         hide_docs=True,
         exclude=True,
     )
-    _is_npe1_shim: bool = False
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.package_metadata is None and self.name:
+            meta = metadata.distribution(self.name).metadata
+            self.package_metadata = PackageMetadata.from_dist_metadata(meta)
 
     @property
     def license(self) -> Optional[str]:
@@ -403,61 +410,50 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
             sys.path.remove(str(p))
 
 
-def _npe1_cache_path(dist: metadata.Distribution):
+def _npe2_cache_path(name: str, version: str) -> Path:
     """Return cache path for manifest corresponding to distribution."""
-    from appdirs import user_cache_dir
-
-    CACHE = Path(user_cache_dir("npe1", "napari"))
-    name = dist.metadata["Name"]
-    version = dist.metadata["Version"]
-    return CACHE / f"{name}_{version}.yaml"
+    return NPE2_CACHE / f"{name}_{version}.yaml"
 
 
-def get_npe1_shim_manifest(dist: metadata.Distribution) -> PluginManifest:
+class NPE1Shim(PluginManifest):
+    def __getattribute__(self, __name: str):
+        if __name == "contributions" and not super().__getattribute__(__name):
+            self._load_contributions()
+        return super().__getattribute__(__name)
 
-    # get the expected cache_path
-    cache_path = _npe1_cache_path(dist)
-    package_meta = PackageMetadata.from_dist_metadata(dist.metadata)
+    def _load_contributions(self) -> None:
+        """imports and inspects package using npe1 plugin manager"""
+        from .._from_npe1 import manifest_from_npe1
+        from .utils import merge_contributions
 
-    # if we have a cached manifest, just retrieve it
-    if cache_path.exists():
-        pm = PluginManifest.from_file(cache_path)
-    else:
-        # otherwise build one
-        pm = _build_npe1_shim(dist, save_to=cache_path)
+        if self._cache_path().exists():
+            mf = PluginManifest.from_file(self._cache_path())
+            self.contributions = mf.contributions
+            return
 
-    pm.package_metadata = package_meta
-    pm._is_npe1_shim = True
-    return pm
+        with discovery_blocked():
+            dist = metadata.distribution(self.name)
+            mfs = [
+                manifest_from_npe1(ep.name, shim=True)
+                for ep in dist.entry_points
+                if ep.group == NPE1_ENTRY_POINT
+            ]
+            assert mfs, "No npe1 entry points found in distribution {name}"
 
+            contribs = merge_contributions(
+                *(m.contributions for m in mfs if m.contributions)
+            )
+            self.contributions = ContributionPoints(**contribs)
+            self._save_to_cache()
 
-def _build_npe1_shim(
-    dist: metadata.Distribution, save_to: Optional[Path] = None
-) -> PluginManifest:
-    """Build a shim manifest for distribution.  Optionally save to `save_to`."""
-    from .._from_npe1 import manifest_from_npe1
-    from .utils import merge_contributions
+    def _save_to_cache(self):
+        cache_path = self._cache_path()
+        cache_path.parent.mkdir(exist_ok=True, parents=True)
+        cache_path.write_text(self.yaml())
 
-    with discovery_blocked():
-        mfs = [
-            manifest_from_npe1(ep.name, shim=True)
-            for ep in dist.entry_points
-            if ep.group == NPE1_ENTRY_POINT
-        ]
-    assert mfs, "No npe1 entry points found in distribution {name}"
-
-    contribs = merge_contributions(*(m.contributions for m in mfs if m.contributions))
-    pm = PluginManifest(
-        **mfs[0].dict(exclude={"contributions", "package_metadata", "display_name"}),
-        display_name=dist.metadata["Name"],
-        contributions=contribs,
-    )
-    pm._is_npe1_shim = True
-
-    if save_to is not None:
-        save_to.parent.mkdir(exist_ok=True, parents=True)
-        save_to.write_text(pm.yaml())
-    return pm
+    def _cache_path(self) -> Path:
+        """Return cache path for manifest corresponding to distribution."""
+        return _npe2_cache_path(self.name, self.package_version or "")
 
 
 def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
@@ -468,12 +464,9 @@ def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
         elif ep.group == ENTRY_POINT:
             _npe2 = ep
     if _npe2:
-        pm = PluginManifest._from_entrypoint(_npe2, dist)
-        return pm
+        return PluginManifest._from_entrypoint(_npe2, dist)
     elif _npe1:
-        # has npe1 but not npe2
-        pm = get_npe1_shim_manifest(dist)
-        return pm
+        return NPE1Shim(name=dist.metadata["Name"])
     return None
 
 

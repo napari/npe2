@@ -189,10 +189,16 @@ def _import_npe1_shim(shim_name: str) -> Any:
     result = hook()
     if not isinstance(result, list):
         result = [result]
+
     try:
-        return result[index]
+        out = result[index]
     except IndexError:
         raise IndexError(f"invalid npe1 shim index {index} for hook {hook}")
+
+    if "dock_widget" in python_name and isinstance(out, tuple):
+        return out[0]
+
+    return out
 
 
 def import_python_name(python_name: Union[PythonName, str]) -> Any:
