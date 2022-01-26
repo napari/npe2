@@ -7,31 +7,25 @@ import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
 from functools import lru_cache
+from importlib import import_module
 from pathlib import Path
+from types import ModuleType
 from typing import (
     Any,
     Callable,
     DefaultDict,
     Dict,
-    Iterable,
+    Iterator,
     List,
     Optional,
     Tuple,
     Union,
-    cast,
-)
-
-from napari_plugin_engine import (
-    HookCaller,
-    HookImplementation,
-    PluginManager,
-    napari_hook_specification,
 )
 
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
-from npe2.manifest.utils import import_python_name
+from npe2.manifest.utils import import_python_name, merge_manifests
 from npe2.manifest.widgets import WidgetContribution
 
 try:
@@ -41,28 +35,41 @@ except ImportError:
 
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
+NPE1_IMPL_TAG = "napari_impl"  # same as HookImplementation.format_tag("napari")
 
 
-# fmt: off
-class HookSpecs:
-    def napari_provide_sample_data(): ...  # type: ignore  # noqa: E704
-    def napari_get_reader(path): ...  # noqa: E704
-    def napari_get_writer(path, layer_types): ...  # noqa: E704
-    def napari_write_image(path, data, meta): ...  # noqa: E704
-    def napari_write_labels(path, data, meta): ...  # noqa: E704
-    def napari_write_points(path, data, meta): ...  # noqa: E704
-    def napari_write_shapes(path, data, meta): ...  # noqa: E704
-    def napari_write_surface(path, data, meta): ...  # noqa: E704
-    def napari_write_vectors(path, data, meta): ...  # noqa: E704
-    def napari_experimental_provide_function(): ...  # type: ignore  # noqa: E704
-    def napari_experimental_provide_dock_widget(): ...  # type: ignore  # noqa: E704
-    def napari_experimental_provide_theme(): ...  # type: ignore  # noqa: E704
-# fmt: on
+class HookImplementation:
+    def __init__(
+        self,
+        function: Callable,
+        plugin: Optional[ModuleType] = None,
+        plugin_name: Optional[str] = None,
+        **kwargs,
+    ):
+        self.function = function
+        self.plugin = plugin
+        self.plugin_name = plugin_name
+        self._specname = kwargs.get("specname")
+
+    def __repr__(self) -> str:
+        return (
+            f"<HookImplementation plugin={self.plugin_name!r} spec={self.specname!r}>"
+        )
+
+    @property
+    def specname(self) -> str:
+        return self._specname or self.function.__name__
 
 
-for m in dir(HookSpecs):
-    if m.startswith("napari"):
-        setattr(HookSpecs, m, napari_hook_specification(getattr(HookSpecs, m)))
+def iter_hookimpls(
+    module: ModuleType, plugin_name: Optional[str] = None
+) -> Iterator[HookImplementation]:
+    # yield all routines in module that have "{self.project_name}_impl" attr
+    for method in vars(module).values():
+        if hasattr(method, NPE1_IMPL_TAG) and inspect.isroutine(method):
+            hookimpl_opts = getattr(method, NPE1_IMPL_TAG)
+            if isinstance(hookimpl_opts, dict):
+                yield HookImplementation(method, module, plugin_name, **hookimpl_opts)
 
 
 @dataclass
@@ -100,60 +107,6 @@ def plugin_packages() -> List[PluginPackage]:
     return packages
 
 
-def ensure_package_name(name: str):
-    """Try all the tricks we know to find a package name given a plugin name."""
-    for attr in ("package_name", "ep_name", "top_module"):
-        for p in plugin_packages():
-            if name == getattr(p, attr):
-                return p.package_name
-    raise KeyError(  # pragma: no cover
-        f"Unable to find a locally installed package for plugin {name!r}"
-    )
-
-
-@lru_cache()
-def npe1_plugin_manager() -> Tuple[PluginManager, Tuple[int, list]]:
-    pm = PluginManager("napari", discover_entry_point=NPE1_EP)
-    pm.add_hookspecs(HookSpecs)
-    result = pm.discover()
-    return pm, result
-
-
-def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> str:
-    """Try all the things we know to detect something called `plugin_name`."""
-    plugin_manager, (_, errors) = npe1_plugin_manager()
-
-    # directly providing a module is mostly for testing.
-    if module is not None:
-        if plugin_name:  # pragma: no cover
-            warnings.warn("module provided, plugin_name ignored")
-        plugin_name = getattr(module, "__name__", "dynamic_plugin")
-        if not plugin_manager.is_registered(plugin_name):
-            plugin_manager.register(module, plugin_name)
-        return cast(str, plugin_name)
-
-    if plugin_name in plugin_manager.plugins:
-        return cast(str, plugin_name)
-
-    for pkg in plugin_packages():
-        for a, b in pkg.name_pairs:
-            if plugin_name == a and b in plugin_manager.plugins:
-                return b
-
-    # we couldn't find it:
-    for e in errors:  # pragma: no cover
-        if module and e.plugin == module:
-            raise type(e)(e.format())
-        for pkg in plugin_packages():
-            if plugin_name in (pkg.ep_name, pkg.package_name, pkg.top_module):
-                raise type(e)(e.format())
-
-    msg = f"We tried hard! but could not detect a plugin named {plugin_name!r}."
-    if plugin_manager.plugins:
-        msg += f" Plugins found include: {list(plugin_manager.plugins)}"
-    raise metadata.PackageNotFoundError(msg)
-
-
 def manifest_from_npe1(
     plugin_name: Optional[str] = None, module: Any = None, shim=False
 ) -> PluginManifest:
@@ -164,19 +117,45 @@ def manifest_from_npe1(
     Parameters
     ----------
     plugin_name : str
-        Name of package/plugin to convert, by default None
+        Name of package/plugin to convert.  This function should be prepared to accept
+        both the name of the package, and the name of a `napari.plugin` entry_point.
+        by default None
     module : Module
         namespace object, to directly import (mostly for testing.), by default None
+    shim : bool
+        If True, the resulting manifest will be used internally by NPE1Adaptor, but
+        is NOT necessarily suitable for export as npe2 manifest. This will handle
+        cases of locally defined functions and partials that don't have global
+        python_names that are not supported natively by npe2. by default False
     """
-    plugin_manager, _ = npe1_plugin_manager()
-    plugin_name = norm_plugin_name(plugin_name, module)
+    if module is not None:
+        modules: List[str] = [module.__name__]
+        package_name = "dynamic"
+        plugin_name = getattr(module, "__name__", "dynamic_plugin")
+    elif plugin_name:
+        modules = []
+        for pp in plugin_packages():
+            if plugin_name in (pp.ep_name, pp.package_name):
+                modules.append(pp.ep_value)
+                package_name = pp.package_name
+        if not modules:
+            _avail = [f"  {p.package_name} ({p.ep_name})" for p in plugin_packages()]
+            avail = "\n".join(_avail)
+            raise ValueError(
+                f"No package or entry point found with name {plugin_name!r}: "
+                f"\nFound packages (entry_point):\n{avail}"
+            )
+    else:
+        raise ValueError("one of plugin_name or module must be provided")
 
-    _module = plugin_manager.plugins[plugin_name]
-    package = ensure_package_name(plugin_name) if module is None else "dynamic"
+    manifests: List[PluginManifest] = []
+    for _module in modules:
+        parser = HookImplParser(package_name, plugin_name or "", shim=shim)
+        parser.parse_module(import_module(_module))
+        manifests.append(parser.manifest())
 
-    parser = HookImplParser(package, plugin_name, shim=shim)
-    parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
-    return parser.manifest()
+    assert manifests, "No npe1 entry points found in distribution {name}"
+    return merge_manifests(manifests)
 
 
 class HookImplParser:
@@ -209,11 +188,9 @@ class HookImplParser:
     def manifest(self) -> PluginManifest:
         return PluginManifest(name=self.package, contributions=dict(self.contributions))
 
-    def parse_callers(self, callers: Iterable[HookCaller]):
-        for caller in callers:
-            for impl in caller.get_hookimpls():
-                if self.plugin_name and impl.plugin_name != self.plugin_name:
-                    continue  # pragma: no cover
+    def parse_module(self, module: ModuleType):
+        for impl in iter_hookimpls(module, plugin_name=self.plugin_name):
+            if impl.plugin_name == self.plugin_name:
                 # call the corresponding hookimpl parser
                 try:
                     getattr(self, impl.specname)(impl)

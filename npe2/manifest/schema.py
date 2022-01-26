@@ -440,9 +440,7 @@ class NPE1Shim(PluginManifest):
             ]
             assert mfs, "No npe1 entry points found in distribution {name}"
 
-            contribs = merge_contributions(
-                *(m.contributions for m in mfs if m.contributions)
-            )
+            contribs = merge_contributions([m.contributions for m in mfs])
             self.contributions = ContributionPoints(**contribs)
             self._save_to_cache()
 

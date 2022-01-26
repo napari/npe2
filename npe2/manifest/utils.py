@@ -10,11 +10,15 @@ from typing import (
     Dict,
     Generic,
     Optional,
+    Sequence,
     SupportsInt,
     Tuple,
     TypeVar,
     Union,
 )
+
+if TYPE_CHECKING:
+    from npe2.manifest.schema import PluginManifest
 
 from ..types import PythonName
 
@@ -232,19 +236,43 @@ def deep_update(dct: dict, merge_dct: dict, copy=True) -> dict:
     return _dct
 
 
-def merge_contributions(*contribs: ContributionPoints) -> dict:
-    if not contribs:
+def merge_manifests(manifests: Sequence[PluginManifest]):
+    from npe2.manifest.schema import PluginManifest
+
+    if not manifests:
+        raise ValueError("Cannot merge empty sequence of manifests")
+    if len(manifests) == 1:
+        return manifests[0]
+
+    assert len({mf.name for mf in manifests}) == 1, "All manifests must have same name"
+    assert (
+        len({mf.package_version for mf in manifests}) == 1
+    ), "All manifests must have same version"
+    assert (
+        len({mf.display_name for mf in manifests}) == 1
+    ), "All manifests must have same display_name"
+
+    mf0 = manifests[0]
+    info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
+    info["contributions"] = merge_contributions([m.contributions for m in manifests])
+    return PluginManifest(**info)
+
+
+def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dict:
+    _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
+    if not _contribs:
         return {}
 
-    out = contribs[0].dict(exclude_unset=True)
-    if len(contribs) > 1:
-        for n, c in enumerate(contribs[1:]):
-            for cmd in c.commands or ():
-                cmd.id += f"_{n + 2}"
-            for name, val in c:
+    out = _contribs[0].dict(exclude_unset=True)
+    if len(_contribs) > 1:
+        for n, ctrb in enumerate(_contribs[1:]):
+            c = ctrb.dict(exclude_unset=True)
+            for cmd in c.get("commands", ()):
+                cmd["id"] = cmd["id"] + f"_{n + 2}"
+            for name, val in c.items():
                 if isinstance(val, list):
                     for item in val:
-                        if isinstance(item, Executable):
-                            item.command += f"_{n + 2}"
-            deep_update(out, c.dict(exclude_unset=True))
+                        if "command" in item:
+                            item["command"] = item["command"] + f"_{n + 2}"
+            out = deep_update(out, c)
     return out
