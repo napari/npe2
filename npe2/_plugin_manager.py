@@ -204,7 +204,7 @@ class PluginManager:
     ) -> Iterator[ReaderContribution]:
         from fnmatch import fnmatch
 
-        if isinstance(paths, list) and len(paths) > 1:
+        if isinstance(paths, list) and len(paths):
             assert all(
                 [idx.endswith(paths[0].split(".")[-1]) is True for idx in paths]
             ), "All paths in the stack list must have the same extension."
