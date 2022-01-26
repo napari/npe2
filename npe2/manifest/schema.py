@@ -135,8 +135,11 @@ class PluginManifest(ImportExportModel):
     def __init__(self, **data):
         super().__init__(**data)
         if self.package_metadata is None and self.name:
-            meta = metadata.distribution(self.name).metadata
-            self.package_metadata = PackageMetadata.from_dist_metadata(meta)
+            try:
+                meta = metadata.distribution(self.name).metadata
+                self.package_metadata = PackageMetadata.from_dist_metadata(meta)
+            except metadata.PackageNotFoundError:
+                pass
 
     @property
     def license(self) -> Optional[str]:

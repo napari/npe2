@@ -74,23 +74,39 @@ def npe1_plugin_module(npe1_repo):
 
 @pytest.fixture
 def mock_npe1_pm():
-    from napari_plugin_engine import PluginManager
+    from napari_plugin_engine import PluginManager, napari_hook_specification
 
-    from npe2._from_npe1 import HookSpecs
+    # fmt: off
+    class HookSpecs:
+        def napari_provide_sample_data(): ...  # type: ignore  # noqa: E704
+        def napari_get_reader(path): ...  # noqa: E704
+        def napari_get_writer(path, layer_types): ...  # noqa: E704
+        def napari_write_image(path, data, meta): ...  # noqa: E704
+        def napari_write_labels(path, data, meta): ...  # noqa: E704
+        def napari_write_points(path, data, meta): ...  # noqa: E704
+        def napari_write_shapes(path, data, meta): ...  # noqa: E704
+        def napari_write_surface(path, data, meta): ...  # noqa: E704
+        def napari_write_vectors(path, data, meta): ...  # noqa: E704
+        def napari_experimental_provide_function(): ...  # type: ignore  # noqa: E704
+        def napari_experimental_provide_dock_widget(): ...  # type: ignore  # noqa: E704
+        def napari_experimental_provide_theme(): ...  # type: ignore  # noqa: E704
+    # fmt: on
+
+    for m in dir(HookSpecs):
+        if m.startswith("napari"):
+            setattr(HookSpecs, m, napari_hook_specification(getattr(HookSpecs, m)))
 
     pm = PluginManager("napari")
     pm.add_hookspecs(HookSpecs)
 
-    with patch("npe2._from_npe1.npe1_plugin_manager", new=lambda: (pm, (1, []))):
-        yield pm
+    yield pm
 
 
 @pytest.fixture
-def mock_npe1_pm_with_plugin(npe1_repo, mock_npe1_pm, npe1_plugin_module):
+def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
     """Mocks a fully installed local repository"""
     from npe2._from_npe1 import metadata, plugin_packages
 
-    mock_npe1_pm.register(npe1_plugin_module, "npe1-plugin")
     mock_dist = metadata.PathDistribution(npe1_repo / "npe1-plugin-0.0.1.dist-info")
 
     def _dists():

@@ -65,7 +65,8 @@ def iter_hookimpls(
     module: ModuleType, plugin_name: Optional[str] = None
 ) -> Iterator[HookImplementation]:
     # yield all routines in module that have "{self.project_name}_impl" attr
-    for method in vars(module).values():
+    for name in dir(module):
+        method = getattr(module, name)
         if hasattr(method, NPE1_IMPL_TAG) and inspect.isroutine(method):
             hookimpl_opts = getattr(method, NPE1_IMPL_TAG)
             if isinstance(hookimpl_opts, dict):
@@ -129,7 +130,7 @@ def manifest_from_npe1(
         python_names that are not supported natively by npe2. by default False
     """
     if module is not None:
-        modules: List[str] = [module.__name__]
+        modules: List[str] = [module]
         package_name = "dynamic"
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
     elif plugin_name:
@@ -141,7 +142,7 @@ def manifest_from_npe1(
         if not modules:
             _avail = [f"  {p.package_name} ({p.ep_name})" for p in plugin_packages()]
             avail = "\n".join(_avail)
-            raise ValueError(
+            raise metadata.PackageNotFoundError(
                 f"No package or entry point found with name {plugin_name!r}: "
                 f"\nFound packages (entry_point):\n{avail}"
             )
@@ -149,9 +150,10 @@ def manifest_from_npe1(
         raise ValueError("one of plugin_name or module must be provided")
 
     manifests: List[PluginManifest] = []
-    for _module in modules:
+    for mod_name in modules:
         parser = HookImplParser(package_name, plugin_name or "", shim=shim)
-        parser.parse_module(import_module(_module))
+        _mod = import_module(mod_name) if isinstance(mod_name, str) else mod_name
+        parser.parse_module(_mod)
         manifests.append(parser.manifest())
 
     assert manifests, "No npe1 entry points found in distribution {name}"
