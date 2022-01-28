@@ -69,11 +69,6 @@ jobs:
         with:
           files: schema.json
 
-      - uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: example_outputs/macos_push.txt
-
       - name: Build and publish
         run: twine upload dist/*
         env:
