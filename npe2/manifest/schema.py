@@ -393,4 +393,4 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
 
 
 if __name__ == "__main__":
-    print(PluginManifest.schema_json())
+    print(PluginManifest.schema_json(indent=2))
