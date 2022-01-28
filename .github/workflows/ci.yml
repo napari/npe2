@@ -58,11 +58,9 @@ jobs:
         run: |
           git tag
           pip install -U pip
-          pip install -U setuptools setuptools_scm wheel twine build
+          pip install -U twine build
+          python -m npe2.manifest.schema > schema.json
           python -m build .
-
-      - name: twine check
-        run: |
           twine check dist/*
           ls -lh dist
 
@@ -71,3 +69,9 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TWINE_API_KEY }}
+
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          generate_release_notes: true
+          files: schema.json
