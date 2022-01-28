@@ -59,10 +59,14 @@ jobs:
           git tag
           pip install -U pip
           pip install -U twine build
-          python -m npe2.manifest.schema > schema.json
           python -m build .
           twine check dist/*
           ls -lh dist
+
+      - name: write schema
+        run: |
+          pip install -e .
+          python -m npe2.manifest.schema > schema.json
 
       - name: Build and publish
         run: twine upload dist/*
