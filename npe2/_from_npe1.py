@@ -490,6 +490,9 @@ def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
     if "options.package_data" not in p.sections():
         p.add_section("options.package_data")
     p.set("options.package_data", info.top_module, mf_name)
+    if "options" not in p.sections():
+        p.add_section("options")
+    p.set("options", "include_package_data", "True")
     p.remove_option("options.entry_points", NPE1_EP)
     with open(info.setup_cfg, "w") as fh:
         p.write(fh)
