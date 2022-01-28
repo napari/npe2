@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.1.2](https://github.com/napari/npe2/tree/v0.1.2) (2022-01-28)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.1.1...v0.1.2)
+
+**Fixed bugs:**
+
+- add include\_package\_data to setup.cfg in npe2 convert [\#89](https://github.com/napari/npe2/pull/89) ([tlambert03](https://github.com/tlambert03))
+- Handle list of paths in iter\_compatible\_reader [\#87](https://github.com/napari/npe2/pull/87) ([ppwadhwa](https://github.com/ppwadhwa))
+
+**Tests & CI:**
+
+- update gh release action to include schema [\#90](https://github.com/napari/npe2/pull/90) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- use latest release schema for docs [\#85](https://github.com/napari/npe2/pull/85) ([tlambert03](https://github.com/tlambert03))
+- Better way to find templates folder when building docs [\#84](https://github.com/napari/npe2/pull/84) ([tlambert03](https://github.com/tlambert03))
+- Move some \_docs files [\#78](https://github.com/napari/npe2/pull/78) ([tlambert03](https://github.com/tlambert03))
+
 ## [v0.1.1](https://github.com/napari/npe2/tree/v0.1.1) (2022-01-07)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.1.0...v0.1.1)
