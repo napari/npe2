@@ -176,6 +176,9 @@ class PluginManifest(ImportExportModel):
                 )
             )
 
+        if not values.get("display_name"):
+            values["display_name"] = mf_name
+
         return values
 
     @classmethod
