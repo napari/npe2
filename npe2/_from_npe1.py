@@ -565,6 +565,8 @@ class _SetupVisitor(ast.NodeVisitor):
                 eps: dict = ast.literal_eval(kw.value)
                 for k, v in eps.items():
                     if k == NPE1_EP:
+                        if type(v) is str:
+                            v = [v]
                         for item in v:
                             self._entry_points.append(
                                 [i.strip() for i in item.split("=")]
