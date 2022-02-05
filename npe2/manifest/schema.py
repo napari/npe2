@@ -8,7 +8,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Iterator, NamedTuple, Optional, Sequence, Union
 
-from appdirs import user_cache_dir
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
 from pydantic.main import BaseModel, ModelMetaclass
@@ -32,7 +31,6 @@ logger = getLogger(__name__)
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
-NPE2_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2"
 
 
 class DiscoverResults(NamedTuple):
@@ -416,50 +414,6 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
             sys.path.remove(str(p))
 
 
-def _npe2_cache_path(name: str, version: str) -> Path:
-    """Return cache path for manifest corresponding to distribution."""
-    return NPE2_CACHE / f"{name}_{version}.yaml"
-
-
-class NPE1Shim(PluginManifest):
-    def __getattribute__(self, __name: str):
-        if __name == "contributions" and not super().__getattribute__(__name):
-            self._load_contributions()
-        return super().__getattribute__(__name)
-
-    def _load_contributions(self) -> None:
-        """imports and inspects package using npe1 plugin manager"""
-        from .._from_npe1 import manifest_from_npe1
-        from .utils import merge_contributions
-
-        if self._cache_path().exists():
-            mf = PluginManifest.from_file(self._cache_path())
-            self.contributions = mf.contributions
-            return
-
-        with discovery_blocked():
-            dist = metadata.distribution(self.name)
-            mfs = [
-                manifest_from_npe1(ep.name, shim=True)
-                for ep in dist.entry_points
-                if ep.group == NPE1_ENTRY_POINT
-            ]
-            assert mfs, "No npe1 entry points found in distribution {name}"
-
-            contribs = merge_contributions([m.contributions for m in mfs])
-            self.contributions = ContributionPoints(**contribs)
-            self._save_to_cache()
-
-    def _save_to_cache(self):
-        cache_path = self._cache_path()
-        cache_path.parent.mkdir(exist_ok=True, parents=True)
-        cache_path.write_text(self.yaml())
-
-    def _cache_path(self) -> Path:
-        """Return cache path for manifest corresponding to distribution."""
-        return _npe2_cache_path(self.name, self.package_version or "")
-
-
 def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
     _npe1, _npe2 = [], None
     for ep in dist.entry_points:
@@ -470,6 +424,8 @@ def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
     if _npe2:
         return PluginManifest._from_entrypoint(_npe2, dist)
     elif _npe1:
+        from ._npe1_shim import NPE1Shim
+
         return NPE1Shim(name=dist.metadata["Name"])
     return None
 

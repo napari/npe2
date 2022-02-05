@@ -24,7 +24,8 @@ from typing import (
 from intervaltree import IntervalTree
 
 from ._command_registry import CommandRegistry
-from .manifest.schema import NPE1Shim, PluginManifest
+from .manifest._npe1_shim import NPE1Shim
+from .manifest.schema import PluginManifest
 from .manifest.writers import LayerType, WriterContribution
 from .types import PathLike, PythonName
 

@@ -1,11 +1,17 @@
+import builtins
 import warnings
 from pathlib import Path
 from textwrap import indent
-from typing import Optional
+from typing import List, Optional
 
 import typer
 
 from npe2 import PluginManifest
+
+try:
+    from importlib.metadata import distribution
+except ImportError:
+    from importlib_metadata import distribution  # type: ignore
 
 app = typer.Typer()
 
@@ -136,6 +142,55 @@ def convert(
             fg=typer.colors.GREEN,
             bold=False,
         )
+
+
+@app.command()
+def cache(
+    delete: Optional[bool] = typer.Option(
+        False, "--delete", "-d", help="Clear the npe1 shim manifest cache"
+    ),
+    names: List[str] = typer.Argument(
+        None, help="Name(s) of distributions to list/delete"
+    ),
+    list: Optional[bool] = typer.Option(
+        False, "--list", "-l", help="List cached manifests"
+    ),
+    verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="verbose"),
+):
+    """Cache utils"""
+    from npe2.manifest._npe1_shim import SHIM_CACHE
+
+    if delete:
+        from shutil import rmtree
+
+        if SHIM_CACHE.exists():
+            if names:
+                for f in SHIM_CACHE.glob("*.yaml"):
+                    if any(f.name.startswith(f"{n}_") for n in names):
+                        f.unlink()
+                        typer.secho(f"{f.name} deleted", fg=typer.colors.RED)
+            else:
+                rmtree(SHIM_CACHE)
+                typer.secho("cache cleared")
+        else:
+            typer.secho("(there was no cache)")
+
+        typer.Exit()
+    if list:
+        files = builtins.list(SHIM_CACHE.glob("*.yaml"))
+        if names:
+            files = [f for f in files if any(f.name.startswith(n) for n in names)]
+
+        if not files:
+            typer.secho("nothing cached")
+            typer.Exit()
+        for fname in files:
+            mf = PluginManifest.from_file(fname)
+            if verbose:
+                _pprint_yaml(mf.yaml())
+            else:
+                d = distribution(mf.name)
+                typer.secho(f"{mf.name}: {d.version}", fg=typer.colors.GREEN)
 
 
 def main():
