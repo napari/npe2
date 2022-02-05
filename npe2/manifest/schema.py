@@ -189,6 +189,9 @@ class PluginManifest(ImportExportModel):
                 )
             )
 
+        if not values.get("display_name"):
+            values["display_name"] = mf_name
+
         return values
 
     @classmethod
@@ -472,4 +475,4 @@ def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
 
 
 if __name__ == "__main__":
-    print(PluginManifest.schema_json())
+    print(PluginManifest.schema_json(indent=2))

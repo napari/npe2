@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-__all__ = ["PluginContext", "PluginManager"]
-
 import os
 from collections import Counter
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -27,7 +26,7 @@ from intervaltree import IntervalTree
 from ._command_registry import CommandRegistry
 from .manifest.schema import NPE1Shim, PluginManifest
 from .manifest.writers import LayerType, WriterContribution
-from .types import PythonName
+from .types import PathLike, PythonName
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
@@ -54,6 +53,7 @@ if TYPE_CHECKING:
             ...
 
 
+__all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
 
 
@@ -212,12 +212,18 @@ class PluginManager:
         ctx._dispose()
 
     def iter_compatible_readers(
-        self, path: Union[str, Path]
+        self, path: Union[PathLike, List[PathLike]]
     ) -> Iterator[ReaderContribution]:
-        from fnmatch import fnmatch
+        if not path:
+            return
 
         if isinstance(path, list):
-            return NotImplemented  # pragma: no cover
+            if len({Path(i).suffix for i in path}) > 1:
+                raise ValueError(
+                    "All paths in the stack list must have the same extension."
+                )
+            path = path[0]
+
         if os.path.isdir(path):
             yield from self._contrib._readers[""]
         else:

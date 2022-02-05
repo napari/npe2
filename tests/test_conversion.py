@@ -78,6 +78,24 @@ setup(
     assert "npe1-plugin = npe1_module:napari.yaml" in str(msg)
 
 
+def test_conversion_entry_point_string(npe1_repo, mock_npe1_pm_with_plugin):
+    (npe1_repo / "setup.cfg").unlink()
+    (npe1_repo / "setup.py").write_text(
+        """from setuptools import setup
+
+setup(
+    name='npe1-plugin',
+    entry_points={"napari.plugin": "npe1-plugin = npe1_module"}
+)
+"""
+    )
+    with pytest.warns(UserWarning) as record:
+        convert_repository(npe1_repo)
+    msg = record[0].message
+    assert "Cannot auto-update setup.py, please edit setup.py as follows" in str(msg)
+    assert "npe1-plugin = npe1_module:napari.yaml" in str(msg)
+
+
 def test_conversion_missing():
     with pytest.raises(ModuleNotFoundError), pytest.warns(UserWarning):
         manifest_from_npe1("does-not-exist-asdf6as987")

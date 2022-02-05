@@ -107,3 +107,4 @@ npe2/_version.py
 
 # ignore everything that gets rendered from _docs
 docs/plugins/*.md
+schema.json

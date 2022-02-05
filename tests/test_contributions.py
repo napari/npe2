@@ -59,11 +59,16 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     PluginManifest(**data)
 
 
-def test_writer_for_command(
-    uses_sample_plugin, plugin_manager: PluginManager, tmp_path
-):
+def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
+    assert list(plugin_manager.iter_compatible_readers("")) == []
     reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+    reader = list(plugin_manager.iter_compatible_readers([tmp_path, tmp_path]))[0]
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+    with pytest.raises(ValueError):
+        list(plugin_manager.iter_compatible_readers(["a.tif", "b.jpg"]))
 
 
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
