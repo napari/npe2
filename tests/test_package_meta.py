@@ -13,3 +13,7 @@ def test_package_metadata_version():
         description_content_type="text/markdown",
     )
     assert pm3.metadata_version == "2.1"
+
+
+def test_hashable():
+    hash(PackageMetadata(name="test", version="1.0"))

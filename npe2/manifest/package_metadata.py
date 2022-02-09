@@ -205,6 +205,9 @@ class PackageMetadata(BaseModel):
                 d[key] = value
         return cls.parse_obj(d)
 
+    def __hash__(self) -> int:
+        return id(self)
+
 
 def _norm(string: str) -> str:
     return string.replace("-", "_").replace(" ", "_").lower()
