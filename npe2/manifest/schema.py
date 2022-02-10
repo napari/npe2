@@ -128,6 +128,9 @@ class PluginManifest(ImportExportModel):
         hide_docs=True,
     )
 
+    def __hash__(self):
+        return hash(self.name) + hash(self.package_version)
+
     @property
     def license(self) -> Optional[str]:
         return self.package_metadata.license if self.package_metadata else None
