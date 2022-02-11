@@ -22,7 +22,7 @@ def write_points(path: str, layer_data: Any, attributes: Dict[str, Any]) -> List
 
 def get_reader(path: PathOrPaths) -> Optional[ReaderFunction]:
     # If we recognize the format, we return the actual reader function
-    if isinstance(path, str) and path.endswith("*.xyz"):
+    if isinstance(path, str) and path.endswith(".xyz"):
         return xyz_file_reader
     # otherwise we return None.
     return None
