@@ -170,3 +170,12 @@ def test_enable_disable(uses_sample_plugin, plugin_manager: PluginManager, tmp_p
     plugin_manager.enable(SAMPLE_PLUGIN_NAME)
     mock.assert_called_once_with({SAMPLE_PLUGIN_NAME}, {})  # enabled, disabled
     _assert_sample_enabled(plugin_manager)
+
+
+def test_warn_on_register_disabled(uses_sample_plugin, plugin_manager: PluginManager):
+    assert SAMPLE_PLUGIN_NAME in plugin_manager
+    mf = plugin_manager[SAMPLE_PLUGIN_NAME]
+    plugin_manager.disable(SAMPLE_PLUGIN_NAME)
+    plugin_manager._manifests.pop(SAMPLE_PLUGIN_NAME)  # NOT good way to "unregister"
+    with pytest.warns(UserWarning):
+        plugin_manager.register(mf)
