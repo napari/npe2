@@ -246,21 +246,6 @@ class PluginManager:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._contrib.get_command(command_id)
 
-    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        for mf in self._manifests.values():
-            for subm in mf.contributions.submenus or ():
-                if submenu_id == subm.id:
-                    return subm
-        raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
-
-    def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
-        for mf in self._manifests.values():
-            yield from getattr(mf.contributions.menus, menu_key, ())
-
-    def iter_themes(self) -> Iterator[ThemeContribution]:
-        for mf in self._manifests.values():
-            yield from mf.contributions.themes or ()
-
     def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.
 
@@ -330,6 +315,26 @@ class PluginManager:
         self._contrib.remove_contributions(key)
         self.enablement_changed({}, {key})
 
+    def _iter_enabled_manifests(self) -> Iterator[PluginManifest]:
+        for key, mf in self._manifests.items():
+            if key not in self._disabled_plugins:
+                yield mf
+
+    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
+        for mf in self._iter_enabled_manifests():
+            for subm in mf.contributions.submenus or ():
+                if submenu_id == subm.id:
+                    return subm
+        raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
+
+    def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
+        for mf in self._iter_enabled_manifests():
+            yield from getattr(mf.contributions.menus, menu_key, ())
+
+    def iter_themes(self) -> Iterator[ThemeContribution]:
+        for mf in self._iter_enabled_manifests():
+            yield from mf.contributions.themes or ()
+
     def iter_compatible_readers(
         self, path: Union[PathLike, List[PathLike]]
     ) -> Iterator[ReaderContribution]:
@@ -339,12 +344,12 @@ class PluginManager:
         self,
     ) -> Iterator[Tuple[PluginName, List[SampleDataContribution]]]:
         """Iterates over (plugin_name, [sample_contribs])."""
-        for name, mf in self._manifests.items():
+        for mf in self._iter_enabled_manifests():
             if mf.contributions.sample_data:
-                yield name, mf.contributions.sample_data
+                yield mf.name, mf.contributions.sample_data
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
-        for mf in self._manifests.values():
+        for mf in self._iter_enabled_manifests():
             yield from mf.contributions.widgets or ()
 
     def iter_compatible_writers(

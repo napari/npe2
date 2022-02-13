@@ -72,48 +72,6 @@ def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tm
         list(plugin_manager.iter_compatible_readers(["a.tif", "b.jpg"]))
 
 
-def test_disable_enable(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
-    def _assert_enabled():
-        # command
-        assert plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
-        # reader
-        cmds = [r.command for r in plugin_manager.iter_compatible_readers(tmp_path)]
-        assert f"{SAMPLE_PLUGIN_NAME}.some_reader" in cmds
-        # writer
-        cmds = [
-            r.command for r in plugin_manager.iter_compatible_writers(["image"] * 2)
-        ]
-        assert f"{SAMPLE_PLUGIN_NAME}.my_writer" in cmds
-
-        assert SAMPLE_PLUGIN_NAME in plugin_manager._contrib._indexed
-
-    _assert_enabled()
-
-    # Do disable
-    mock = Mock()
-    plugin_manager.enablement_changed.connect(mock)
-    plugin_manager.disable(SAMPLE_PLUGIN_NAME)
-    mock.assert_called_once_with({}, {SAMPLE_PLUGIN_NAME})  # enabled, disabled
-
-    assert SAMPLE_PLUGIN_NAME not in plugin_manager._contrib._indexed
-
-    # command
-    with pytest.raises(KeyError):
-        plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
-    # reader
-    cmds = [r.command for r in plugin_manager.iter_compatible_readers(tmp_path)]
-    assert f"{SAMPLE_PLUGIN_NAME}.some_reader" not in cmds
-    # writer
-    cmds = [r.command for r in plugin_manager.iter_compatible_writers(["image"] * 2)]
-    assert f"{SAMPLE_PLUGIN_NAME}.my_writer" not in cmds
-
-    # re-enable
-    mock.reset_mock()
-    plugin_manager.enable(SAMPLE_PLUGIN_NAME)
-    mock.assert_called_once_with({SAMPLE_PLUGIN_NAME}, {})  # enabled, disabled
-    _assert_enabled()
-
-
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
     from magicgui._magicgui import MagicFactory
 
@@ -151,7 +109,7 @@ def test_directory_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp
 
 def test_themes(uses_sample_plugin, plugin_manager: PluginManager):
     theme = list(plugin_manager.iter_themes())[0]
-    assert theme.label == "Monokai"
+    assert theme.label == "SampleTheme"
 
 
 def test_command_exec():
