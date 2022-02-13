@@ -32,7 +32,6 @@ from .types import PathLike, PythonName
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
-    from .manifest.contributions import ContributionPoints
     from .manifest.menus import MenuItem
     from .manifest.readers import ReaderContribution
     from .manifest.sample_data import SampleDataContribution
@@ -54,6 +53,9 @@ if TYPE_CHECKING:
         def __getitem__(self, index: Union[int, slice]) -> Set[Interval[T]]:
             ...
 
+        def __iter__(self) -> Iterator[Interval[T]]:
+            ...
+
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
@@ -62,55 +64,50 @@ PluginName = str  # this is `PluginManifest.name`
 class _ContributionsIndex:
     def __init__(self) -> None:
         self._indexed: Set[str] = set()
-        self._submenus: Dict[str, SubmenuContribution] = {}
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._themes: Dict[str, ThemeContribution] = {}
-        self._widgets: List[WidgetContribution] = []
         self._readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
-        self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(
-            list
-        )
-        self._writers_by_type: DefaultDict[
+        self._writers: DefaultDict[
             LayerType, TypedIntervalTree[WriterContribution]
         ] = DefaultDict(IntervalTree)
-        self._writers_by_command: DefaultDict[
-            str, List[WriterContribution]
-        ] = DefaultDict(list)
 
-    def remove_contributions(self, key: PluginName):
-        self._indexed.remove(key)
-
-    def index_contributions(self, ctrb: Optional[ContributionPoints], key: PluginName):
-        if ctrb is None or key in self._indexed:
+    def index_contributions(self, manifest: PluginManifest):
+        ctrb = manifest.contributions
+        if not ctrb or manifest.name in self._indexed:
             return
-        self._indexed.add(key)
-        if ctrb.sample_data:
-            self._samples[key] = ctrb.sample_data
-        for cmd in ctrb.commands or []:
-            self._commands[cmd.id] = cmd, key
-        for subm in ctrb.submenus or []:
-            self._submenus[subm.id] = subm
-        for theme in ctrb.themes or []:
-            self._themes[theme.id] = theme
-        self._widgets.extend(ctrb.widgets or [])
-        for reader in ctrb.readers or []:
+
+        self._indexed.add(manifest.name)
+        for cmd in ctrb.commands or ():
+            self._commands[cmd.id] = cmd, manifest.name
+        for reader in ctrb.readers or ():
             for pattern in reader.filename_patterns:
                 self._readers[pattern].append(reader)
             if reader.accepts_directories:
                 self._readers[""].append(reader)
-        for writer in ctrb.writers or []:
-            self._writers_by_command[writer.command].append(writer)
+        for writer in ctrb.writers or ():
             for c in writer.layer_type_constraints():
-                self._writers_by_type[c.layer_type].addi(*c.bounds, writer)
+                self._writers[c.layer_type].addi(*c.bounds, writer)
+
+    def remove_contributions(self, key: PluginName) -> None:
+        """This must completely remove everything added by `index_contributions`."""
+        if key not in self._indexed:
+            return
+
+        for cmd_id, (_, plugin) in list(self._commands.items()):
+            if key == plugin:
+                del self._commands[cmd_id]
+        for contribs in self._readers.values():
+            for i, ctrb in reversed(list(enumerate(contribs))):
+                if ctrb.plugin_name == key:
+                    contribs.pop(i)
+        for tree in self._writers.values():
+            for interval in list(tree):  # not sure why, but using list loses typing
+                if interval.data.plugin_name == key:
+                    tree.discard(interval)
+
+        self._indexed.remove(key)
 
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
-
-    def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        return self._submenus[submenu_id]
-
-    def iter_themes(self) -> Iterator[ThemeContribution]:
-        yield from self._themes.values()
 
     def iter_compatible_readers(
         self, path: Union[PathLike, List[PathLike]]
@@ -136,13 +133,6 @@ class _ContributionsIndex:
                             seen.add(r.command)
                             yield r
 
-    def iter_sample_data(self) -> Iterator[Tuple[str, List[SampleDataContribution]]]:
-        """Iterates over (plugin_name, [sample_contribs])."""
-        yield from self._samples.items()
-
-    def iter_widgets(self) -> Iterator[WidgetContribution]:
-        yield from self._widgets
-
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
@@ -156,7 +146,7 @@ class _ContributionsIndex:
         counts = Counter(layer_types)
 
         def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
-            return {v.data for v in self._writers_by_type[lt][counts[lt]] or []}
+            return {v.data for v in self._writers[lt][counts[lt]] or []}
 
         types = iter(LayerType)
         candidates = _get_candidates(next(types))
@@ -238,7 +228,7 @@ class PluginManager:
 
         self._manifests[manifest.name] = manifest
         if manifest.name not in self._disabled_plugins:
-            self._contrib.index_contributions(manifest.contributions, manifest.name)
+            self._contrib.index_contributions(manifest)
         self.plugins_registered.emit({manifest})
 
     def get_manifest(self, key: str) -> PluginManifest:
@@ -253,15 +243,19 @@ class PluginManager:
         return self._contrib.get_command(command_id)
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        return self._contrib.get_submenu(submenu_id)
+        for mf in self._manifests.values():
+            for subm in mf.contributions.submenus or ():
+                if submenu_id == subm.id:
+                    return subm
+        raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self._manifests.values():
-            if mf.contributions:
-                yield from getattr(mf.contributions.menus, menu_key, [])
+            yield from getattr(mf.contributions.menus, menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
-        return self._contrib.iter_themes()
+        for mf in self._manifests.values():
+            yield from mf.contributions.themes or ()
 
     def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.
@@ -323,7 +317,7 @@ class PluginManager:
         self._disabled_plugins.remove(key)
         mf = self._manifests.get(key)
         if mf is not None:
-            self._contrib.index_contributions(mf.contributions, mf.name)
+            self._contrib.index_contributions(mf)
         self.enablement_changed({key}, {})
 
     def disable(self, key: PluginName) -> None:
@@ -337,12 +331,17 @@ class PluginManager:
     ) -> Iterator[ReaderContribution]:
         return self._contrib.iter_compatible_readers(path)
 
-    def iter_sample_data(self) -> Iterator[Tuple[str, List[SampleDataContribution]]]:
+    def iter_sample_data(
+        self,
+    ) -> Iterator[Tuple[PluginName, List[SampleDataContribution]]]:
         """Iterates over (plugin_name, [sample_contribs])."""
-        return self._contrib.iter_sample_data()
+        for name, mf in self._manifests.items():
+            if mf.contributions.sample_data:
+                yield name, mf.contributions.sample_data
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
-        return self._contrib.iter_widgets()
+        for mf in self._manifests.values():
+            yield from mf.contributions.widgets or ()
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]

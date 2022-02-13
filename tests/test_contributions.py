@@ -1,10 +1,11 @@
 import json
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 import pytest
 
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest.commands import CommandContribution
+from npe2.manifest.sample_data import SampleDataGenerator, SampleDataURI
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
@@ -60,7 +61,7 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
 
 
 def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
-    assert list(plugin_manager.iter_compatible_readers("")) == []
+    assert not list(plugin_manager.iter_compatible_readers(""))
     reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
@@ -69,6 +70,48 @@ def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tm
 
     with pytest.raises(ValueError):
         list(plugin_manager.iter_compatible_readers(["a.tif", "b.jpg"]))
+
+
+def test_disable_enable(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
+    def _assert_enabled():
+        # command
+        assert plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
+        # reader
+        cmds = [r.command for r in plugin_manager.iter_compatible_readers(tmp_path)]
+        assert f"{SAMPLE_PLUGIN_NAME}.some_reader" in cmds
+        # writer
+        cmds = [
+            r.command for r in plugin_manager.iter_compatible_writers(["image"] * 2)
+        ]
+        assert f"{SAMPLE_PLUGIN_NAME}.my_writer" in cmds
+
+        assert SAMPLE_PLUGIN_NAME in plugin_manager._contrib._indexed
+
+    _assert_enabled()
+
+    # Do disable
+    mock = Mock()
+    plugin_manager.enablement_changed.connect(mock)
+    plugin_manager.disable(SAMPLE_PLUGIN_NAME)
+    mock.assert_called_once_with({}, {SAMPLE_PLUGIN_NAME})  # enabled, disabled
+
+    assert SAMPLE_PLUGIN_NAME not in plugin_manager._contrib._indexed
+
+    # command
+    with pytest.raises(KeyError):
+        plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
+    # reader
+    cmds = [r.command for r in plugin_manager.iter_compatible_readers(tmp_path)]
+    assert f"{SAMPLE_PLUGIN_NAME}.some_reader" not in cmds
+    # writer
+    cmds = [r.command for r in plugin_manager.iter_compatible_writers(["image"] * 2)]
+    assert f"{SAMPLE_PLUGIN_NAME}.my_writer" not in cmds
+
+    # re-enable
+    mock.reset_mock()
+    plugin_manager.enable(SAMPLE_PLUGIN_NAME)
+    mock.assert_called_once_with({SAMPLE_PLUGIN_NAME}, {})  # enabled, disabled
+    _assert_enabled()
 
 
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
@@ -92,8 +135,10 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     ctrbA, ctrbB = contribs
     # ignoring types because .command and .uri come from different sample provider
     # types... they don't both have "command" or "uri"
+    assert isinstance(ctrbA, SampleDataGenerator)
     assert ctrbA.command == f"{SAMPLE_PLUGIN_NAME}.generate_random_data"
     assert ctrbA.plugin_name == SAMPLE_PLUGIN_NAME
+    assert isinstance(ctrbB, SampleDataURI)
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)
@@ -117,7 +162,7 @@ def test_command_exec():
         cmd = CommandContribution(id=cmd_id, title="a title")
         mf = PluginManifest(name="pkg", contributions={"commands": [cmd]})
         pm.register(mf)
-        some_func = MagicMock()
+        some_func = Mock()
         pm._command_registry.register(cmd_id, some_func)
         cmd.exec(args=("hi!",))
         some_func.assert_called_once_with("hi!")
