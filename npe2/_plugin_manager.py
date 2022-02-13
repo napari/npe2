@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from collections import Counter
 from fnmatch import fnmatch
 from pathlib import Path
@@ -23,7 +24,7 @@ from typing import (
 )
 
 from intervaltree import IntervalTree
-from psygnal import Signal
+from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
@@ -177,28 +178,45 @@ class _ContributionsIndex:
         )
 
 
+class PluginManagerEvents(SignalGroup):
+    plugins_registered = Signal(
+        set,
+        description="Emitted with a set of PluginManifest instances "
+        "whenever new plugins are registered. 'Registered' means that a "
+        "manifest has been provided or discovered.",
+    )
+    activation_changed = Signal(
+        set,
+        set,
+        description="Emitted with two arguments: a set names of plugins "
+        "(strings) that were activated, and a set of names that were "
+        "deactivate. 'Activated' means the plugin has been *imported*, it's "
+        "`on_activate` function called.",
+    )
+    enablement_changed = Signal(
+        set,
+        set,
+        description="Emitted with two arguments: a set names of plugins "
+        "(strings) that were enabled, and a set of names that were "
+        "disabled. 'Disabled' means the plugin remains installed, but it "
+        "cannot be activated, and its contributions will not be indexed.",
+    )
+
+
 class PluginManager:
     __instance: Optional[PluginManager] = None  # a global instance
     _contrib: _ContributionsIndex
-
-    # "registered" means we're aware of the existence of the plugin and its manifest
-    plugins_registered = Signal(set)
-    # "activated" means the plugin has been imported, its "on_activate" function
-    # called, and any commands with python_names have been imported
-    activation_changed = Signal(set, set)  # activated / deactivated
-    # "enabled/disabled" means the user has opted for a plugin to be "available" or
-    # "unavailable" for use.  A disabled plugin remains installed, but it will not be
-    # activated, and its contributions will not be indexed.
-    enablement_changed = Signal(set, set)  # enabled / disabled
+    events: PluginManagerEvents
 
     def __init__(
-        self, reg: Optional[CommandRegistry] = None, disable: Iterable[str] = ()
+        self, *, disable: Iterable[str] = (), reg: Optional[CommandRegistry] = None
     ) -> None:
         self._disabled_plugins: Set[PluginName] = set(disable)
         self._command_registry = reg or CommandRegistry()
         self._contexts: Dict[PluginName, PluginContext] = {}
         self._contrib = _ContributionsIndex()
         self._manifests: Dict[PluginName, PluginManifest] = {}
+        self.events = PluginManagerEvents(self)
 
     @property
     def commands(self) -> CommandRegistry:
@@ -210,30 +228,43 @@ class PluginManager:
         Parameters
         ----------
         paths : Sequence[str]
-            Optional list of strings to insert at front of sys.path when discovering.
+            Optional list of strings to insert at front of sys.path when
+            discovering.
         clear : bool
-            Clear and re-index the environment.  If `False` (the default), calling
-            discover again will only register and index newly discovered plugins.
-            (Existing manifests will not be re-indexed)
+            Clear and re-index the environment.  If `False` (the default),
+            calling discover again will only register and index newly
+            discovered plugins. (Existing manifests will not be re-indexed)
         """
         if clear:
             self._contrib = _ContributionsIndex()
             self._manifests.clear()
 
-        with self.plugins_registered.paused(lambda a, b: (a[0] | b[0],)):
+        with self.events.plugins_registered.paused(lambda a, b: (a[0] | b[0],)):
             for result in PluginManifest.discover(paths=paths):
                 if result.manifest and result.manifest.name not in self._manifests:
-                    self.register(result.manifest)
+                    self.register(result.manifest, warn_disabled=False)
 
-    def register(self, manifest: PluginManifest) -> None:
+    def register(self, manifest: PluginManifest, warn_disabled=True) -> None:
         """Register a plugin manifest"""
         if manifest.name in self._manifests:
             raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
 
         self._manifests[manifest.name] = manifest
-        if manifest.name not in self._disabled_plugins:
+        if manifest.name in self._disabled_plugins:
+            if warn_disabled:
+                warnings.warn(
+                    f"Disabled plugin {manifest.name!r} was registered, but will not "
+                    "be indexed. Use `warn_disabled=False` to suppress this message."
+                )
+        else:
             self._contrib.index_contributions(manifest)
-        self.plugins_registered.emit({manifest})
+        self.events.plugins_registered.emit({manifest})
+
+    def __contains__(self, name: str) -> bool:
+        return name in self._manifests
+
+    def __getitem__(self, name: str) -> PluginManifest:
+        return self.get_manifest(name)
 
     def get_manifest(self, key: str) -> PluginManifest:
         key = str(key).split(".")[0]
@@ -283,7 +314,7 @@ class PluginManager:
                     self.commands.register(cmd.id, cmd.python_name)
 
         ctx._activated = True
-        self.activation_changed({mf.name}, {})
+        self.events.activation_changed({mf.name}, {})
         return ctx
 
     def deactivate(self, key: PluginName) -> None:
@@ -296,7 +327,7 @@ class PluginManager:
             _call_python_name(mf.on_deactivate, args=(ctx,))
         ctx._activated = False
         ctx._dispose()
-        self.activation_changed({}, {mf.name})
+        self.events.activation_changed({}, {mf.name})
 
     def enable(self, key: PluginName) -> None:
         """Enable a plugin"""
@@ -307,13 +338,13 @@ class PluginManager:
         mf = self._manifests.get(key)
         if mf is not None:
             self._contrib.index_contributions(mf)
-        self.enablement_changed({key}, {})
+        self.events.enablement_changed({key}, {})
 
     def disable(self, key: PluginName) -> None:
         """Disabled a plugin"""
         self._disabled_plugins.add(key)
         self._contrib.remove_contributions(key)
-        self.enablement_changed({}, {key})
+        self.events.enablement_changed({}, {key})
 
     def _iter_enabled_manifests(self) -> Iterator[PluginManifest]:
         for key, mf in self._manifests.items():

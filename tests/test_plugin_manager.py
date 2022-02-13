@@ -28,14 +28,17 @@ def pm(sample_path):
 def test_discover_clear(uses_sample_plugin):
     pm = PluginManager.instance()
     assert SAMPLE_PLUGIN_NAME in pm._manifests
-
-    with patch.object(pm, "register") as mock:
+    reg_mock = Mock()
+    pm.events.plugins_registered.connect(reg_mock)
+    with patch.object(pm, "register", wraps=pm.register) as mock:
         pm.discover()
         mock.assert_not_called()  # nothing new to register
+        reg_mock.assert_not_called()
 
         mock.reset_mock()
         pm.discover(clear=True)  # clear forces reregister
         mock.assert_called_once()
+        reg_mock.assert_called_once_with({pm._manifests[SAMPLE_PLUGIN_NAME]})
 
 
 def test_plugin_manager(pm: PluginManager):
@@ -152,7 +155,7 @@ def test_enable_disable(uses_sample_plugin, plugin_manager: PluginManager, tmp_p
 
     # Do disable
     mock = Mock()
-    plugin_manager.enablement_changed.connect(mock)
+    plugin_manager.events.enablement_changed.connect(mock)
     plugin_manager.disable(SAMPLE_PLUGIN_NAME)
     mock.assert_called_once_with({}, {SAMPLE_PLUGIN_NAME})  # enabled, disabled
 
