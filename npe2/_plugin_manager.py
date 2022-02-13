@@ -73,7 +73,7 @@ class _ContributionsIndex:
     def index_contributions(self, manifest: PluginManifest):
         ctrb = manifest.contributions
         if not ctrb or manifest.name in self._indexed:
-            return
+            return  # pragma: no cover
 
         self._indexed.add(manifest.name)
         for cmd in ctrb.commands or ():
@@ -90,7 +90,7 @@ class _ContributionsIndex:
     def remove_contributions(self, key: PluginName) -> None:
         """This must completely remove everything added by `index_contributions`."""
         if key not in self._indexed:
-            return
+            return  # pragma: no cover
 
         for cmd_id, (_, plugin) in list(self._commands.items()):
             if key == plugin:
@@ -199,7 +199,6 @@ class PluginManager:
         self._contexts: Dict[PluginName, PluginContext] = {}
         self._contrib = _ContributionsIndex()
         self._manifests: Dict[PluginName, PluginManifest] = {}
-        # self.discover()  # TODO: should we be immediately discovering?
 
     @property
     def commands(self) -> CommandRegistry:
@@ -210,8 +209,12 @@ class PluginManager:
 
         Parameters
         ----------
-        paths : Sequence[str], optional
+        paths : Sequence[str]
             Optional list of strings to insert at front of sys.path when discovering.
+        clear : bool
+            Clear and re-index the environment.  If `False` (the default), calling
+            discover again will only register and index newly discovered plugins.
+            (Existing manifests will not be re-indexed)
         """
         if clear:
             self._contrib = _ContributionsIndex()
@@ -223,6 +226,7 @@ class PluginManager:
                     self.register(result.manifest)
 
     def register(self, manifest: PluginManifest) -> None:
+        """Register a plugin manifest"""
         if manifest.name in self._manifests:
             raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
 
@@ -312,7 +316,7 @@ class PluginManager:
     def enable(self, key: PluginName) -> None:
         """Enable a plugin"""
         if key not in self._disabled_plugins:
-            return
+            return  # pragma: no cover
 
         self._disabled_plugins.remove(key)
         mf = self._manifests.get(key)

@@ -1,4 +1,5 @@
 import sys
+from unittest.mock import patch
 
 import pytest
 
@@ -22,6 +23,19 @@ def pm(sample_path):
         yield pm
     finally:
         sys.path.remove(str(sample_path))
+
+
+def test_discover_clear(uses_sample_plugin):
+    pm = PluginManager.instance()
+    assert SAMPLE_PLUGIN_NAME in pm._manifests
+
+    with patch.object(pm, "register") as mock:
+        pm.discover()
+        mock.assert_not_called()  # nothing new to register
+
+        mock.reset_mock()
+        pm.discover(clear=True)  # clear forces reregister
+        mock.assert_called_once()
 
 
 def test_plugin_manager(pm: PluginManager):
