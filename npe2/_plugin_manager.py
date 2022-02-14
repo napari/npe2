@@ -250,7 +250,7 @@ class PluginManager:
             raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
 
         self._manifests[manifest.name] = manifest
-        if manifest.name in self._disabled_plugins:
+        if self.is_disabled(manifest.name):
             if warn_disabled:
                 warnings.warn(
                     f"Disabled plugin {manifest.name!r} was registered, but will not "
@@ -291,7 +291,7 @@ class PluginManager:
         if key not in self._manifests:
             raise KeyError(f"Cannot activate unrecognized plugin: {key!r}")
 
-        if key in self._disabled_plugins:
+        if self.is_disabled(key):
             raise ValueError(f"Cannot activate disabled plugin: {key!r}")
 
         # create the context that will be with this plugin for its lifetime.
@@ -331,7 +331,7 @@ class PluginManager:
 
     def enable(self, key: PluginName) -> None:
         """Enable a plugin"""
-        if key not in self._disabled_plugins:
+        if not self.is_disabled(key):
             return  # pragma: no cover
 
         self._disabled_plugins.remove(key)
@@ -346,9 +346,12 @@ class PluginManager:
         self._contrib.remove_contributions(key)
         self.events.enablement_changed({}, {key})
 
+    def is_disabled(self, name: str) -> bool:
+        return name in self._disabled_plugins
+
     def _iter_enabled_manifests(self) -> Iterator[PluginManifest]:
         for key, mf in self._manifests.items():
-            if key not in self._disabled_plugins:
+            if not self.is_disabled(key):
                 yield mf
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
