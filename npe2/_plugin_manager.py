@@ -353,19 +353,34 @@ class PluginManager:
 
     # Getting manifests
 
-    def get_manifest(self, key: str) -> PluginManifest:
-        key = str(key).split(".")[0]
+    def get_manifest(self, plugin_name: str) -> PluginManifest:
+        """Gen manifest for `plugin_name`"""
+        key = str(plugin_name).split(".")[0]
         try:
             return self._manifests[key]
         except KeyError as e:
             msg = f"Manifest key {key!r} not found in {list(self._manifests)}"
             raise KeyError(msg) from e
 
-    def iter_manifests(self, enabled=None) -> Iterator[PluginManifest]:
+    def iter_manifests(
+        self, disabled: Optional[bool] = None
+    ) -> Iterator[PluginManifest]:
+        """Iterate through registered manifests.
+
+        Parameters
+        ----------
+        disabled : Optional[bool]
+            If `False`, yield only enabled manifests.  If `True`, yield only disabled
+            manifests.  If `None` (the default), yield all manifests.
+
+        Yields
+        ------
+        PluginManifest
+        """
         for key, mf in self._manifests.items():
-            if enabled is True and self.is_disabled(key):
+            if disabled is True and not self.is_disabled(key):
                 continue
-            elif enabled is False and not self.is_disabled(key):
+            elif disabled is False and self.is_disabled(key):
                 continue
             yield mf
 
@@ -381,18 +396,18 @@ class PluginManager:
         return self._contrib.get_command(command_id)
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        for mf in self.iter_manifests(enabled=True):
+        for mf in self.iter_manifests(disabled=False):
             for subm in mf.contributions.submenus or ():
                 if submenu_id == subm.id:
                     return subm
         raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
-        for mf in self.iter_manifests(enabled=True):
+        for mf in self.iter_manifests(disabled=False):
             yield from getattr(mf.contributions.menus, menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
-        for mf in self.iter_manifests(enabled=True):
+        for mf in self.iter_manifests(disabled=False):
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
@@ -406,14 +421,14 @@ class PluginManager:
         return self._contrib.iter_compatible_writers(layer_types)
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
-        for mf in self.iter_manifests(enabled=True):
+        for mf in self.iter_manifests(disabled=False):
             yield from mf.contributions.widgets or ()
 
     def iter_sample_data(
         self,
     ) -> Iterator[Tuple[PluginName, List[SampleDataContribution]]]:
         """Iterates over (plugin_name, [sample_contribs])."""
-        for mf in self.iter_manifests(enabled=True):
+        for mf in self.iter_manifests(disabled=False):
             if mf.contributions.sample_data:
                 yield mf.name, mf.contributions.sample_data
 
