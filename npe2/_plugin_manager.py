@@ -363,12 +363,11 @@ class PluginManager:
 
     def iter_manifests(self, enabled=None) -> Iterator[PluginManifest]:
         for key, mf in self._manifests.items():
-            if enabled is True and self.is_disabled(mf.name):
+            if enabled is True and self.is_disabled(key):
                 continue
-            elif enabled is False and not self.is_disabled(mf.name):
+            elif enabled is False and not self.is_disabled(key):
                 continue
-            if not self.is_disabled(key):
-                yield mf
+            yield mf
 
     def __contains__(self, name: str) -> bool:
         return name in self._manifests
