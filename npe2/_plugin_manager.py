@@ -218,9 +218,18 @@ class PluginManager:
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
 
+    @classmethod
+    def instance(cls) -> PluginManager:
+        """Singleton instance."""
+        if cls.__instance is None:
+            cls.__instance = cls()
+        return cls.__instance
+
     @property
     def commands(self) -> CommandRegistry:
         return self._command_registry
+
+    # Discovery, activation, enablement
 
     def discover(self, paths: Sequence[str] = (), clear=False) -> None:
         """Discover and index plugin manifests in the environment.
@@ -259,23 +268,6 @@ class PluginManager:
         else:
             self._contrib.index_contributions(manifest)
         self.events.plugins_registered.emit({manifest})
-
-    def __contains__(self, name: str) -> bool:
-        return name in self._manifests
-
-    def __getitem__(self, name: str) -> PluginManifest:
-        return self.get_manifest(name)
-
-    def get_manifest(self, key: str) -> PluginManifest:
-        key = str(key).split(".")[0]
-        try:
-            return self._manifests[key]
-        except KeyError as e:
-            msg = f"Manifest key {key!r} not found in {list(self._manifests)}"
-            raise KeyError(msg) from e
-
-    def get_command(self, command_id: str) -> CommandContribution:
-        return self._contrib.get_command(command_id)
 
     def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.
@@ -317,56 +309,91 @@ class PluginManager:
         self.events.activation_changed({mf.name}, {})
         return ctx
 
-    def deactivate(self, key: PluginName) -> None:
-        """Call the plugins on_deactivate function."""
-        if key not in self._contexts:
+    def get_context(self, plugin_name: PluginName) -> PluginContext:
+        """Return PluginContext for plugin_name"""
+        if plugin_name not in self._contexts:
+            self._contexts[plugin_name] = PluginContext(plugin_name, reg=self.commands)
+        return self._contexts[plugin_name]
+
+    def deactivate(self, plugin_name: PluginName) -> None:
+        """Call the plugin's `on_deactivate` function."""
+        if plugin_name not in self._contexts:
             return
-        mf = self._manifests[key]
-        ctx = self._contexts.pop(key)
+        mf = self._manifests[plugin_name]
+        ctx = self._contexts.pop(plugin_name)
         if mf.on_deactivate:
             _call_python_name(mf.on_deactivate, args=(ctx,))
         ctx._activated = False
         ctx._dispose()
         self.events.activation_changed({}, {mf.name})
 
-    def enable(self, key: PluginName) -> None:
-        """Enable a plugin"""
-        if not self.is_disabled(key):
+    def enable(self, plugin_name: PluginName) -> None:
+        """Enable a plugin (which mostly means just `un-disable` it.
+
+        This is a no-op if the plugin wasn't already disabled.
+        """
+        if not self.is_disabled(plugin_name):
             return  # pragma: no cover
 
-        self._disabled_plugins.remove(key)
-        mf = self._manifests.get(key)
+        self._disabled_plugins.remove(plugin_name)
+        mf = self._manifests.get(plugin_name)
         if mf is not None:
             self._contrib.index_contributions(mf)
-        self.events.enablement_changed({key}, {})
+        self.events.enablement_changed({plugin_name}, {})
 
-    def disable(self, key: PluginName) -> None:
-        """Disabled a plugin"""
-        self._disabled_plugins.add(key)
-        self._contrib.remove_contributions(key)
-        self.events.enablement_changed({}, {key})
+    def disable(self, plugin_name: PluginName) -> None:
+        """Disable a plugin"""
+        self._disabled_plugins.add(plugin_name)
+        self._contrib.remove_contributions(plugin_name)
+        self.events.enablement_changed({}, {plugin_name})
 
-    def is_disabled(self, name: str) -> bool:
-        return name in self._disabled_plugins
+    def is_disabled(self, plugin_name: str) -> bool:
+        """Return `True` if plugin_name is disabled."""
+        return plugin_name in self._disabled_plugins
 
-    def _iter_enabled_manifests(self) -> Iterator[PluginManifest]:
+    # Getting manifests
+
+    def get_manifest(self, key: str) -> PluginManifest:
+        key = str(key).split(".")[0]
+        try:
+            return self._manifests[key]
+        except KeyError as e:
+            msg = f"Manifest key {key!r} not found in {list(self._manifests)}"
+            raise KeyError(msg) from e
+
+    def iter_manifests(self, enabled=None) -> Iterator[PluginManifest]:
         for key, mf in self._manifests.items():
+            if enabled is True and self.is_disabled(mf.name):
+                continue
+            elif enabled is False and not self.is_disabled(mf.name):
+                continue
             if not self.is_disabled(key):
                 yield mf
 
+    def __contains__(self, name: str) -> bool:
+        return name in self._manifests
+
+    def __getitem__(self, name: str) -> PluginManifest:
+        return self.get_manifest(name)
+
+    # Accessing Contributions
+
+    def get_command(self, command_id: str) -> CommandContribution:
+        return self._contrib.get_command(command_id)
+
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
-        for mf in self._iter_enabled_manifests():
+        for mf in self.iter_manifests(enabled=True):
             for subm in mf.contributions.submenus or ():
                 if submenu_id == subm.id:
                     return subm
         raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
-        for mf in self._iter_enabled_manifests():
+        for mf in self.iter_manifests(enabled=True):
             yield from getattr(mf.contributions.menus, menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
-        for mf in self._iter_enabled_manifests():
+        for mf in self.iter_manifests(enabled=True):
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
@@ -374,34 +401,22 @@ class PluginManager:
     ) -> Iterator[ReaderContribution]:
         return self._contrib.iter_compatible_readers(path)
 
-    def iter_sample_data(
-        self,
-    ) -> Iterator[Tuple[PluginName, List[SampleDataContribution]]]:
-        """Iterates over (plugin_name, [sample_contribs])."""
-        for mf in self._iter_enabled_manifests():
-            if mf.contributions.sample_data:
-                yield mf.name, mf.contributions.sample_data
-
-    def iter_widgets(self) -> Iterator[WidgetContribution]:
-        for mf in self._iter_enabled_manifests():
-            yield from mf.contributions.widgets or ()
-
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
         return self._contrib.iter_compatible_writers(layer_types)
 
-    @classmethod
-    def instance(cls) -> PluginManager:
-        """Singleton instance."""
-        if cls.__instance is None:
-            cls.__instance = cls()
-        return cls.__instance
+    def iter_widgets(self) -> Iterator[WidgetContribution]:
+        for mf in self.iter_manifests(enabled=True):
+            yield from mf.contributions.widgets or ()
 
-    def get_context(self, plugin_key: PluginName) -> PluginContext:
-        if plugin_key not in self._contexts:
-            self._contexts[plugin_key] = PluginContext(plugin_key, reg=self.commands)
-        return self._contexts[plugin_key]
+    def iter_sample_data(
+        self,
+    ) -> Iterator[Tuple[PluginName, List[SampleDataContribution]]]:
+        """Iterates over (plugin_name, [sample_contribs])."""
+        for mf in self.iter_manifests(enabled=True):
+            if mf.contributions.sample_data:
+                yield mf.name, mf.contributions.sample_data
 
     def get_writer(
         self, path: str, layer_types: Sequence[str], plugin_name: Optional[str] = None
