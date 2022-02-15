@@ -188,10 +188,10 @@ class PluginManagerEvents(SignalGroup):
     activation_changed = Signal(
         set,
         set,
-        description="Emitted with two arguments: a set names of plugins "
-        "(strings) that were activated, and a set of names that were "
-        "deactivate. 'Activated' means the plugin has been *imported*, it's "
-        "`on_activate` function called.",
+        description="Emitted with two arguments: a set of plugin "
+        "names that were activated, and a set of names that were "
+        "deactivated. 'Activated' means the plugin has been *imported*, it's "
+        "`on_activate` function was called.",
     )
     enablement_changed = Signal(
         set,
