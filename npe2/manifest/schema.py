@@ -267,7 +267,13 @@ class PluginManifest(ImportExportModel):
                         pm = cls._from_entrypoint(ep, dist)
                         yield DiscoverResults(pm, ep, None)
                     except ValidationError as e:
-                        logger.warning(msg=f"Invalid schema {ep.value!r}")
+                        module_name, filename = ep.value.split(":")
+                        logger.warning(
+                            "Invalid schema for package %r, please run"
+                            " 'npe2 validate %s' to check for manifest errors.",
+                            module_name,
+                            module_name,
+                        )
                         yield DiscoverResults(None, ep, e)
                     except Exception as e:
                         logger.error(
