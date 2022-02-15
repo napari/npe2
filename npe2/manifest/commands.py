@@ -55,7 +55,7 @@ class CommandContribution(BaseModel):
         None,
         description="Fully qualified name to a callable python object "
         "implementing this command. This usually takes the form of "
-        "`{obj.__module__}:{obj.__qualname__} "
+        "`{obj.__module__}:{obj.__qualname__}` "
         "(e.g. `my_package.a_module:some_function`)",
     )
     _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
