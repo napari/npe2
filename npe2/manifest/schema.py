@@ -129,7 +129,7 @@ class PluginManifest(ImportExportModel):
     )
 
     def __hash__(self):
-        return hash(self.name) + hash(self.package_version)
+        return hash((self.name,self.package_version))
 
     @property
     def license(self) -> Optional[str]:
