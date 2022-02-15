@@ -196,8 +196,8 @@ class PluginManagerEvents(SignalGroup):
     enablement_changed = Signal(
         set,
         set,
-        description="Emitted with two arguments: a set names of plugins "
-        "(strings) that were enabled, and a set of names that were "
+        description="Emitted with two arguments: a set of plugin names "
+        "that were enabled, and a set of names that were "
         "disabled. 'Disabled' means the plugin remains installed, but it "
         "cannot be activated, and its contributions will not be indexed.",
     )
