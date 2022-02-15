@@ -71,8 +71,8 @@ contributions:
     - id: mysubmenu
       label: My SubMenu
   themes:
-    - label: "Monokai"
-      id: "monokai"
+    - label: "SampleTheme"
+      id: "sample_theme"
       type: "dark"
       colors:
         canvas: "#000000"
