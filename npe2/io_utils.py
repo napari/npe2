@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union, overload
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, overload
 
 from typing_extensions import Literal
 
 from . import PluginManager
-from .types import FullLayerData, LayerData, PathLike
+from .types import FullLayerData, LayerData, PathLike, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
     from .manifest.readers import ReaderContribution
@@ -41,6 +41,7 @@ def read_get_reader(
     path: Union[str, Sequence[str]], *, plugin_name: Optional[str] = None
 ) -> Tuple[List[LayerData], ReaderContribution]:
     """Variant of `read` that also returns the `ReaderContribution` used."""
+    _ensure_str_or_seq_str(path)
     return _read(path, plugin_name=plugin_name, return_reader=True)
 
 
@@ -91,7 +92,7 @@ def write_get_writer(
 
 @overload
 def _read(
-    path_or_paths: PathOrPaths,
+    path_or_paths: Union[str, Sequence[str]],
     *,
     plugin_name: Optional[str] = None,
     return_reader: Literal[False] = False,
@@ -102,7 +103,7 @@ def _read(
 
 @overload
 def _read(
-    path_or_paths: PathOrPaths,
+    path_or_paths: Union[str, Sequence[str]],
     *,
     plugin_name: Optional[str] = None,
     return_reader: Literal[True],
@@ -112,7 +113,7 @@ def _read(
 
 
 def _read(
-    path_or_paths: PathOrPaths,
+    path_or_paths: Union[str, Sequence[str]],
     *,
     plugin_name: Optional[str] = None,
     return_reader: bool = False,

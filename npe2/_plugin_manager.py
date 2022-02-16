@@ -29,7 +29,7 @@ from psygnal import Signal, SignalGroup
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
 from .manifest.writers import LayerType, WriterContribution
-from .types import PathLike, PythonName
+from .types import PathLike, PythonName, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
@@ -111,8 +111,9 @@ class _ContributionsIndex:
         return self._commands[command_id][0]
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, path: Union[str, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
+        _ensure_str_or_seq_str(path)
         if not path:
             return
 
