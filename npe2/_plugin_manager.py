@@ -414,7 +414,7 @@ class PluginManager:
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, path: Union[PathLike, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
         return self._contrib.iter_compatible_readers(path)
 

@@ -29,7 +29,8 @@ def get_reader(path: PathOrPaths):
             return [(None,)]
 
         return read
-    elif path.endswith(".fzzy"):  # types: ignore
+    assert isinstance(path, str)  # please mypy.
+    if path.endswith(".fzzy"):
 
         def read(path):
             assert isinstance(path, str)
