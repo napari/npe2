@@ -38,7 +38,7 @@ def read(path: PathLike, *, plugin_name: Optional[str] = None) -> List[LayerData
 
 
 def read_get_reader(
-    path: PathLike, *, plugin_name: Optional[str] = None
+    path: Union[str, Sequence[str]], *, plugin_name: Optional[str] = None
 ) -> Tuple[List[LayerData], ReaderContribution]:
     """Variant of `read` that also returns the `ReaderContribution` used."""
     return _read(path, plugin_name=plugin_name, return_reader=True)
@@ -91,7 +91,7 @@ def write_get_writer(
 
 @overload
 def _read(
-    path: PathLike,
+    path_or_paths: PathOrPaths,
     *,
     plugin_name: Optional[str] = None,
     return_reader: Literal[False] = False,
@@ -102,7 +102,7 @@ def _read(
 
 @overload
 def _read(
-    path: PathLike,
+    path_or_paths: PathOrPaths,
     *,
     plugin_name: Optional[str] = None,
     return_reader: Literal[True],
@@ -112,7 +112,7 @@ def _read(
 
 
 def _read(
-    path: PathLike,
+    path_or_paths: PathOrPaths,
     *,
     plugin_name: Optional[str] = None,
     return_reader: bool = False,
@@ -122,16 +122,16 @@ def _read(
     if _pm is None:
         _pm = PluginManager.instance()
 
-    for rdr in _pm.iter_compatible_readers(path):
+    for rdr in _pm.iter_compatible_readers(path_or_paths):
         if plugin_name and not rdr.command.startswith(plugin_name):
             continue
-        read_func = rdr.exec(kwargs={"path": path})
+        read_func = rdr.exec(kwargs={"path": path_or_paths})
         if read_func is not None:
             # if the reader function raises an exception here, we don't try to catch it
-            layer_data = read_func(path)
+            layer_data = read_func(path_or_paths)
             if layer_data:
                 return (layer_data, rdr) if return_reader else layer_data
-    raise ValueError(f"No readers returned data for {path!r}")
+    raise ValueError(f"No readers returned data for {path_or_paths!r}")
 
 
 @overload

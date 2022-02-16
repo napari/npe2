@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 from pydantic import BaseModel
 
 from npe2 import PluginContext
+from npe2.types import PathOrPaths
 
 if TYPE_CHECKING:
     import napari.types
@@ -20,13 +21,23 @@ def deactivate(context: PluginContext):
     """just here for tests"""
 
 
-def get_reader(path: str):
-    if path.endswith(".fzzy"):
+def get_reader(path: PathOrPaths):
+    if isinstance(path, list):
 
-        def read(path):
+        def read(paths):
+            assert isinstance(paths, list)
             return [(None,)]
 
         return read
+    elif path.endswith(".fzzy"):
+
+        def read(path):
+            assert isinstance(path, str)
+            return [(None,)]
+
+        return read
+    else:
+        raise ValueError("Test plugin should not receive unknown data")
 
 
 def url_reader(path: str):
