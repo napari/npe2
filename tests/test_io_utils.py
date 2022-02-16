@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import pytest
 
 from npe2.io_utils import read, read_get_reader, write, write_get_writer
-from npe2.types import FullLayerData
+from npe2.types import FullLayerData, _ensure_str_or_seq_str
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
@@ -24,8 +26,8 @@ def test_read_return_reader(uses_sample_plugin):
 
 def test_read_list(uses_sample_plugin):
     data, reader = read_get_reader(["some.fzzy", "other.fzzy"])
-    # assert data == [(None,)]
-    # assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+    assert data == [(None,)]
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 null_image: FullLayerData = ([], {}, "image")
@@ -58,3 +60,8 @@ def test_writer_single_layer_api_exec(uses_sample_plugin):
     # This writer doesn't do anything but type check.
     paths = write("test/path", [([], {}, "labels")])
     assert len(paths) == 1
+
+
+def test_ensure_coverage():
+    with pytest.warns(UserWarning):
+        _ensure_str_or_seq_str(Path("."))
