@@ -24,12 +24,12 @@ def deactivate(context: PluginContext):
 def get_reader(path: PathOrPaths):
     if isinstance(path, list):
 
-        def read(paths):
-            assert isinstance(paths, list)
+        def read(path):
+            assert isinstance(path, list)
             return [(None,)]
 
         return read
-    elif path.endswith(".fzzy"):
+    elif path.endswith(".fzzy"):  # types: ignore
 
         def read(path):
             assert isinstance(path, str)

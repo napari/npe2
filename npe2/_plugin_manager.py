@@ -124,6 +124,8 @@ class _ContributionsIndex:
                 )
             path = path[0]
 
+        assert isinstance(path, str)
+
         if os.path.isdir(path):
             yield from self._readers[""]
         else:
