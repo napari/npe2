@@ -183,6 +183,8 @@ def main(dest: Path = _BUILD):
 
     dest.mkdir(exist_ok=True, parents=True)
     schema = PluginManifest.schema()
+    # this does not work offline.
+    # it should also likely not rely on latest release, should it ?
     with urlopen(SCHEMA_URL) as response:
         schema = json.load(response)
 

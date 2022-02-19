@@ -30,3 +30,6 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
 
     class Config:
         extra = Extra.forbid
+
+    def __hash__(self):
+        return hash((self.command, tuple(self.filename_patterns), self.accepts_directories))
