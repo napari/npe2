@@ -135,9 +135,8 @@ class _ContributionsIndex:
                 if l == lt and (min_ <= counts[lt] < max_)
             }
 
-        types = iter(LayerType)
-        candidates = _get_candidates(next(types))
-        for lt in types:
+        candidates = {w for _,_,_,w in self._writers}
+        for lt in LayerType:
             if candidates:
                 candidates &= _get_candidates(lt)
             else:
