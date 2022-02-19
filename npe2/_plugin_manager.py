@@ -23,7 +23,6 @@ from typing import (
     Union,
 )
 
-from intervaltree import IntervalTree
 from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
@@ -40,24 +39,6 @@ if TYPE_CHECKING:
     from .manifest.themes import ThemeContribution
     from .manifest.widgets import WidgetContribution
 
-    T = TypeVar("T")
-
-    class Interval(tuple, Generic[T]):
-        begin: int
-        end: int
-        data: T
-
-    class TypedIntervalTree(IntervalTree, Generic[T]):
-        def addi(self, begin: int, end: int, data: T) -> None:
-            ...
-
-        def __getitem__(self, index: Union[int, slice]) -> Set[Interval[T]]:
-            ...
-
-        def __iter__(self) -> Iterator[Interval[T]]:
-            ...
-
-
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
 
@@ -67,9 +48,7 @@ class _ContributionsIndex:
         self._indexed: Set[str] = set()
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
         self._readers: List[Tuple(str, ReaderContribution)] = list()
-        self._writers: DefaultDict[
-            LayerType, TypedIntervalTree[WriterContribution]
-        ] = DefaultDict(IntervalTree)
+        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
 
     def index_contributions(self, manifest: PluginManifest):
         ctrb = manifest.contributions
@@ -86,7 +65,7 @@ class _ContributionsIndex:
                 self._readers.append(("", reader))
         for writer in ctrb.writers or ():
             for c in writer.layer_type_constraints():
-                self._writers[c.layer_type].addi(*c.bounds, writer)
+                self._writers.append((c.layer_type, *c.bounds, writer))
 
     def remove_contributions(self, key: PluginName) -> None:
         """This must completely remove everything added by `index_contributions`."""
@@ -102,10 +81,12 @@ class _ContributionsIndex:
             for pattern, reader in self._readers
             if reader.plugin_name != key
         ]
-        for tree in self._writers.values():
-            for interval in list(tree):  # not sure why, but using list loses typing
-                if interval.data.plugin_name == key:
-                    tree.discard(interval)
+
+        self._writers = [
+            (layer_type, min_, max_, writer)
+            for layer_types, min_, max_, writer in self._writers
+            if writer.plugin_name != key
+        ]
 
         self._indexed.remove(key)
 
@@ -135,7 +116,6 @@ class _ContributionsIndex:
             # it's easy to make an iterable version if we wish, or use more-itertools.
             yield from {r for pattern, r in self._readers if fnmatch(path, pattern)}
 
-
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
@@ -149,7 +129,11 @@ class _ContributionsIndex:
         counts = Counter(layer_types)
 
         def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
-            return {v.data for v in self._writers[lt][counts[lt]] or []}
+            return {
+                w
+                for l, min_, max_, w in self._writers
+                if l == lt and (min_ <= counts[lt] < max_)
+            }
 
         types = iter(LayerType)
         candidates = _get_candidates(next(types))
