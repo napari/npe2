@@ -9,9 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    DefaultDict,
     Dict,
-    Generic,
     Iterable,
     Iterator,
     List,
@@ -19,7 +17,6 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    TypeVar,
     Union,
 )
 
@@ -47,7 +44,7 @@ class _ContributionsIndex:
     def __init__(self) -> None:
         self._indexed: Set[str] = set()
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._readers: List[Tuple(str, ReaderContribution)] = list()
+        self._readers: List[Tuple[str, ReaderContribution]] = list()
         self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
 
     def index_contributions(self, manifest: PluginManifest):
@@ -84,7 +81,7 @@ class _ContributionsIndex:
 
         self._writers = [
             (layer_type, min_, max_, writer)
-            for layer_types, min_, max_, writer in self._writers
+            for layer_type, min_, max_, writer in self._writers
             if writer.plugin_name != key
         ]
 
@@ -131,11 +128,11 @@ class _ContributionsIndex:
         def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
             return {
                 w
-                for l, min_, max_, w in self._writers
-                if l == lt and (min_ <= counts[lt] < max_)
+                for layer, min_, max_, w in self._writers
+                if layer == lt and (min_ <= counts[lt] < max_)
             }
 
-        candidates = {w for _,_,_,w in self._writers}
+        candidates = {w for _, _, _, w in self._writers}
         for lt in LayerType:
             if candidates:
                 candidates &= _get_candidates(lt)
