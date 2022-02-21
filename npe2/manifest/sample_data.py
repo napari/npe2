@@ -65,7 +65,7 @@ class SampleDataURI(_SampleDataContribution):
     def open(self, *args, **kwargs) -> List[LayerData]:
         from ..io_utils import read
 
-        return read(self.uri, plugin_name=self.reader_plugin, stack=False)
+        return read([self.uri], plugin_name=self.reader_plugin, stack=False)
 
     class Config:
         title = "Sample Data URI"

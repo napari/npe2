@@ -49,7 +49,7 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         @wraps(callable_)
         def npe1_compat(paths, *, stack):
             path = v2_to_v1(paths, stack)
-            return callable_(path)
+            return callable_(path) # type: ignore
 
         return npe1_compat
 

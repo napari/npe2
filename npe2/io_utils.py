@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 
 
 def read(
-    path: PathLike, *, stack: bool, plugin_name: Optional[str] = None
+    paths: List[str], *, stack: bool, plugin_name: Optional[str] = None
 ) -> List[LayerData]:
-    """Try to read file at `path`, with plugins offering a ReaderContribution.
+    """Try to read file at `paths`, with plugins offering a ReaderContribution.
 
     Parameters
     ----------
-    path : str or Path
+    paths : str or Path
         Path to the file or resource being read.
     stack : bool
         Should the readers stack the read files.
@@ -39,7 +39,9 @@ def read(
     ValueError
         If no readers are found or none return data
     """
-    return _read([path], plugin_name=plugin_name, stack=stack)
+    from pathlib import Path
+    assert isinstance(paths, list)
+    return _read(paths, plugin_name=plugin_name, stack=stack)
 
 
 def read_get_reader(
