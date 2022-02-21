@@ -84,7 +84,7 @@ def _get_needed_types(source: str, so_far: Optional[Set[str]] = None) -> Set[str
         if (
             name != "LayerData"
             and name not in so_far
-            and re.search(fr"\W{name}\W", source)
+            and re.search(rf"\W{name}\W", source)
         ):
             so_far.add(name)
             so_far.update(_get_needed_types(string, so_far=so_far))
