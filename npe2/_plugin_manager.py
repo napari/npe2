@@ -111,17 +111,17 @@ class _ContributionsIndex:
         return self._commands[command_id][0]
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, paths: List[str]
     ) -> Iterator[ReaderContribution]:
-        if not path:
+        if not paths:
             return
 
-        if isinstance(path, list):
-            if len({Path(i).suffix for i in path}) > 1:
-                raise ValueError(
-                    "All paths in the stack list must have the same extension."
-                )
-            path = path[0]
+        assert isinstance(paths, list)
+        if len({Path(i).suffix for i in paths}) > 1:
+            raise ValueError(
+                "All paths in the stack list must have the same extension."
+            )
+        path = paths[0]
 
         if os.path.isdir(path):
             yield from self._readers[""]
@@ -413,7 +413,9 @@ class PluginManager:
     def iter_compatible_readers(
         self, path: Union[PathLike, List[PathLike]]
     ) -> Iterator[ReaderContribution]:
-        return self._contrib.iter_compatible_readers(path)
+        if not isinstance(path, list):
+            path = [path]
+        return self._contrib.iter_compatible_readers([str(p) for p in path])
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]

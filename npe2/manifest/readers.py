@@ -1,9 +1,10 @@
 from typing import List, Optional
 
 from pydantic import BaseModel, Extra, Field
+from functools import wraps
 
 from ..types import ReaderFunction
-from .utils import Executable
+from .utils import Executable, v2_to_v1, v1_to_v2
 
 
 class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
@@ -27,6 +28,31 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
     accepts_directories: bool = Field(
         False, description="Whether this reader accepts directories"
     )
+
+    def exec(self,*, kwargs):
+        """
+        We are trying to simplify internal npe2 logic to always deal with a
+        (list[str], bool) pair instead of Union[PathLike, Seq[Pathlike]]. We
+        thus wrap the Reader Contributions to still give them the old api. Later
+        on we could add a "if manifest.version == 2" or similar to not have this
+        backward-compatibility logic for new plugins.
+        """
+        kwargs = kwargs.copy()
+        stack = kwargs.pop('stack', None)
+        assert stack is not None
+        kwargs['path'] = v2_to_v1( kwargs['path'], stack)
+        callable_ = super().exec(kwargs=kwargs)
+
+        @wraps(callable_)
+        def npe1_compat(paths, *, stack):
+            path = v2_to_v1(paths, stack)
+            return callable_(path)
+        return npe1_compat 
+            
+        
+        
+
+
 
     class Config:
         extra = Extra.forbid

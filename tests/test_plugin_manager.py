@@ -136,7 +136,7 @@ def _assert_sample_enabled(plugin_manager: PluginManager, enabled=True):
             assert plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
 
     # reader
-    cmds = [r.command for r in plugin_manager.iter_compatible_readers("*.fzy")]
+    cmds = [r.command for r in plugin_manager.iter_compatible_readers(["*.fzy"])]
     b = f"{SAMPLE_PLUGIN_NAME}.some_reader" in cmds
     assert b if enabled else not b, f"Reader should {_not}be enabled"
 

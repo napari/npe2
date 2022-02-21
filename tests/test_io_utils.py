@@ -7,13 +7,13 @@ SAMPLE_PLUGIN_NAME = "my-plugin"
 
 
 def test_read(uses_sample_plugin):
-    assert read("some.fzzy") == [(None,)]
+    assert read(["some.fzzy"], stack=False) == [(None,)]
 
 
 def test_read_with_plugin(uses_sample_plugin):
     # no such plugin name.... but skips over the sample plugin
     with pytest.raises(ValueError):
-        read("some.fzzy", plugin_name="nope")
+        read(["some.fzzy"], plugin_name="nope", stack=False)
 
 
 def test_read_return_reader(uses_sample_plugin):
