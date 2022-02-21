@@ -110,9 +110,7 @@ class _ContributionsIndex:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
 
-    def iter_compatible_readers(
-        self, paths: List[str]
-    ) -> Iterator[ReaderContribution]:
+    def iter_compatible_readers(self, paths: List[str]) -> Iterator[ReaderContribution]:
         if not paths:
             return
 

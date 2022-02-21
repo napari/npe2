@@ -39,12 +39,14 @@ def v1_to_v2(path):
     else:
         return [path], False
 
+
 def v2_to_v1(paths, stack):
     if stack:
         return paths
     else:
         assert len(paths) == 1
         return paths[0]
+
 
 # TODO: add ParamSpec when it's supported better by mypy
 class Executable(Generic[R]):

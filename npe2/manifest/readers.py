@@ -29,7 +29,7 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         False, description="Whether this reader accepts directories"
     )
 
-    def exec(self,*, kwargs):
+    def exec(self, *, kwargs):
         """
         We are trying to simplify internal npe2 logic to always deal with a
         (list[str], bool) pair instead of Union[PathLike, Seq[Pathlike]]. We
@@ -38,21 +38,20 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         backward-compatibility logic for new plugins.
         """
         kwargs = kwargs.copy()
-        stack = kwargs.pop('stack', None)
+        stack = kwargs.pop("stack", None)
         assert stack is not None
-        kwargs['path'] = v2_to_v1( kwargs['path'], stack)
+        kwargs["path"] = v2_to_v1(kwargs["path"], stack)
         callable_ = super().exec(kwargs=kwargs)
+
+        if callable_ is None:
+            return None
 
         @wraps(callable_)
         def npe1_compat(paths, *, stack):
             path = v2_to_v1(paths, stack)
             return callable_(path)
-        return npe1_compat 
-            
-        
-        
 
-
+        return npe1_compat
 
     class Config:
         extra = Extra.forbid

@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from .manifest.writers import WriterContribution
 
 
-def read(path: PathLike, *, stack:bool, plugin_name: Optional[str] = None) -> List[LayerData]:
+def read(
+    path: PathLike, *, stack: bool, plugin_name: Optional[str] = None
+) -> List[LayerData]:
     """Try to read file at `path`, with plugins offering a ReaderContribution.
 
     Parameters
@@ -37,11 +39,11 @@ def read(path: PathLike, *, stack:bool, plugin_name: Optional[str] = None) -> Li
     ValueError
         If no readers are found or none return data
     """
-    return _read(path, plugin_name=plugin_name, stack=stack)
+    return _read([path], plugin_name=plugin_name, stack=stack)
 
 
 def read_get_reader(
-        path: PathLike, *, plugin_name: Optional[str] = None, stack:bool=None
+    path: PathLike, *, plugin_name: Optional[str] = None, stack: bool = None
 ) -> Tuple[List[LayerData], ReaderContribution]:
     """Variant of `read` that also returns the `ReaderContribution` used."""
 
@@ -49,13 +51,14 @@ def read_get_reader(
         # "npe1" old path
         # Napari 0.4.15 and older, hopefully we can drop this and make stack mandatory
         new_path, new_stack = v1_to_v2(path)
-        return _read(new_path, plugin_name=plugin_name, return_reader=True, stack=new_stack)
+        return _read(
+            new_path, plugin_name=plugin_name, return_reader=True, stack=new_stack
+        )
     else:
         assert isinstance(path, list)
         for p in path:
             assert isinstance(p, str)
         return _read(path, plugin_name=plugin_name, return_reader=True, stack=stack)
-
 
 
 def write(
@@ -105,9 +108,9 @@ def write_get_writer(
 
 @overload
 def _read(
-    paths: Sequence[str],
+    paths: List[str],
     *,
-    stack:bool,
+    stack: bool,
     plugin_name: Optional[str] = None,
     return_reader: Literal[False] = False,
     _pm=None,
@@ -117,9 +120,9 @@ def _read(
 
 @overload
 def _read(
-    paths: Sequence[str],
+    paths: List[str],
     *,
-    stack:bool,
+    stack: bool,
     plugin_name: Optional[str] = None,
     return_reader: Literal[True],
     _pm=None,
@@ -127,13 +130,10 @@ def _read(
     ...
 
 
-
-
-
 def _read(
-    paths: Sequence[str],
+    paths: List[str],
     *,
-    stack:bool,
+    stack: bool,
     plugin_name: Optional[str] = None,
     return_reader: bool = False,
     _pm: Optional[PluginManager] = None,
@@ -145,7 +145,7 @@ def _read(
     for rdr in _pm.iter_compatible_readers(paths):
         if plugin_name and not rdr.command.startswith(plugin_name):
             continue
-        read_func = rdr.exec(kwargs={"path": paths, "stack":stack})
+        read_func = rdr.exec(kwargs={"path": paths, "stack": stack})
         if read_func is not None:
             # if the reader function raises an exception here, we don't try to catch it
             layer_data = read_func(paths, stack=stack)
