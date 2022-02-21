@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request: {}
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Schema Sync
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: []
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Make sure Schema is up-to-date
+        run : |
+          # cmp make sure files are identical, -L follow redirects.
+          cmp <(curl -L https://github.com/napari/npe2/releases/latest/download/schema.json) _docs/schema.json

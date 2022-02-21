@@ -10,7 +10,6 @@ from inspect import getsource
 from pathlib import Path
 from types import FunctionType
 from typing import Dict, Optional, Set
-from urllib.request import urlopen
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -20,7 +19,6 @@ from npe2 import PluginManager, PluginManifest
 from npe2.manifest.contributions import ContributionPoints
 from npe2.manifest.utils import Executable
 
-SCHEMA_URL = "https://github.com/napari/npe2/releases/latest/download/schema.json"
 DOCS = Path(__file__).parent
 TEMPLATES = DOCS / "templates"
 _BUILD = DOCS.parent / "docs" / "plugins"
@@ -182,9 +180,8 @@ def main(dest: Path = _BUILD):
     env.filters["has_guide"] = has_guide
 
     dest.mkdir(exist_ok=True, parents=True)
-    schema = PluginManifest.schema()
-    with urlopen(SCHEMA_URL) as response:
-        schema = json.load(response)
+
+    schema = json.loads((DOCS / "schema.json").read_text())
 
     contributions = schema["definitions"]["ContributionPoints"]["properties"]
     context = {
