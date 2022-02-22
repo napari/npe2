@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union, overload
 from typing_extensions import Literal
 
 from . import PluginManager
-from .types import FullLayerData, LayerData, PathLike
 from .manifest.utils import v1_to_v2
+from .types import FullLayerData, LayerData, PathLike
 
 if TYPE_CHECKING:
     from .manifest.readers import ReaderContribution
@@ -39,7 +39,6 @@ def read(
     ValueError
         If no readers are found or none return data
     """
-    from pathlib import Path
     assert isinstance(paths, list)
     return _read(paths, plugin_name=plugin_name, stack=stack)
 

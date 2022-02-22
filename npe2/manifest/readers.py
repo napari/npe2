@@ -1,10 +1,10 @@
+from functools import wraps
 from typing import List, Optional
 
 from pydantic import BaseModel, Extra, Field
-from functools import wraps
 
 from ..types import ReaderFunction
-from .utils import Executable, v2_to_v1, v1_to_v2
+from .utils import Executable, v2_to_v1
 
 
 class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
@@ -49,7 +49,7 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         @wraps(callable_)
         def npe1_compat(paths, *, stack):
             path = v2_to_v1(paths, stack)
-            return callable_(path) # type: ignore
+            return callable_(path)  # type: ignore
 
         return npe1_compat
 
