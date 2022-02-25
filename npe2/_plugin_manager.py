@@ -9,9 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    DefaultDict,
     Dict,
-    Generic,
     Iterable,
     Iterator,
     List,
@@ -19,11 +17,9 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    TypeVar,
     Union,
 )
 
-from intervaltree import IntervalTree
 from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
@@ -40,24 +36,6 @@ if TYPE_CHECKING:
     from .manifest.themes import ThemeContribution
     from .manifest.widgets import WidgetContribution
 
-    T = TypeVar("T")
-
-    class Interval(tuple, Generic[T]):
-        begin: int
-        end: int
-        data: T
-
-    class TypedIntervalTree(IntervalTree, Generic[T]):
-        def addi(self, begin: int, end: int, data: T) -> None:
-            ...
-
-        def __getitem__(self, index: Union[int, slice]) -> Set[Interval[T]]:
-            ...
-
-        def __iter__(self) -> Iterator[Interval[T]]:
-            ...
-
-
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
 
@@ -66,10 +44,8 @@ class _ContributionsIndex:
     def __init__(self) -> None:
         self._indexed: Set[str] = set()
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._readers: DefaultDict[str, List[ReaderContribution]] = DefaultDict(list)
-        self._writers: DefaultDict[
-            LayerType, TypedIntervalTree[WriterContribution]
-        ] = DefaultDict(IntervalTree)
+        self._readers: List[Tuple[str, ReaderContribution]] = list()
+        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
 
     def index_contributions(self, manifest: PluginManifest):
         ctrb = manifest.contributions
@@ -81,12 +57,12 @@ class _ContributionsIndex:
             self._commands[cmd.id] = cmd, manifest.name
         for reader in ctrb.readers or ():
             for pattern in reader.filename_patterns:
-                self._readers[pattern].append(reader)
+                self._readers.append((pattern, reader))
             if reader.accepts_directories:
-                self._readers[""].append(reader)
+                self._readers.append(("", reader))
         for writer in ctrb.writers or ():
             for c in writer.layer_type_constraints():
-                self._writers[c.layer_type].addi(*c.bounds, writer)
+                self._writers.append((c.layer_type, *c.bounds, writer))
 
     def remove_contributions(self, key: PluginName) -> None:
         """This must completely remove everything added by `index_contributions`."""
@@ -96,14 +72,18 @@ class _ContributionsIndex:
         for cmd_id, (_, plugin) in list(self._commands.items()):
             if key == plugin:
                 del self._commands[cmd_id]
-        for contribs in self._readers.values():
-            for i, ctrb in reversed(list(enumerate(contribs))):
-                if ctrb.plugin_name == key:
-                    contribs.pop(i)
-        for tree in self._writers.values():
-            for interval in list(tree):  # not sure why, but using list loses typing
-                if interval.data.plugin_name == key:
-                    tree.discard(interval)
+
+        self._readers = [
+            (pattern, reader)
+            for pattern, reader in self._readers
+            if reader.plugin_name != key
+        ]
+
+        self._writers = [
+            (layer_type, min_, max_, writer)
+            for layer_type, min_, max_, writer in self._writers
+            if writer.plugin_name != key
+        ]
 
         self._indexed.remove(key)
 
@@ -122,17 +102,16 @@ class _ContributionsIndex:
                     "All paths in the stack list must have the same extension."
                 )
             path = path[0]
+        path = str(path)
 
         if os.path.isdir(path):
-            yield from self._readers[""]
+            yield from (r for pattern, r in self._readers if pattern == "")
         else:
-            seen: Set[str] = set()
-            for ext, readers in self._readers.items():
-                if ext and fnmatch(str(path), ext):
-                    for r in readers:
-                        if r.command not in seen:
-                            seen.add(r.command)
-                            yield r
+            # not sure about the set logic as it won't be lazy anymore,
+            # but would we yield duplicate anymore.
+            # above does not have have the unseen check either.
+            # it's easy to make an iterable version if we wish, or use more-itertools.
+            yield from {r for pattern, r in self._readers if fnmatch(path, pattern)}
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
@@ -147,11 +126,14 @@ class _ContributionsIndex:
         counts = Counter(layer_types)
 
         def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
-            return {v.data for v in self._writers[lt][counts[lt]] or []}
+            return {
+                w
+                for layer, min_, max_, w in self._writers
+                if layer == lt and (min_ <= counts[lt] < max_)
+            }
 
-        types = iter(LayerType)
-        candidates = _get_candidates(next(types))
-        for lt in types:
+        candidates = {w for _, _, _, w in self._writers}
+        for lt in LayerType:
             if candidates:
                 candidates &= _get_candidates(lt)
             else:
