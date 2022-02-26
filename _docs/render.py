@@ -188,7 +188,10 @@ def main(dest: Path = _BUILD):
         with urlopen(SCHEMA_URL) as response:
             schema = json.load(response)
     except URLError:
-        print(f"Using local schema as a fallback. Failed to retrieve: {SCHEMA_URL}", file=sys.stderr)
+        print(
+            f"Using local schema as a fallback. Failed to retrieve: {SCHEMA_URL}",
+            file=sys.stderr,
+        )
 
     contributions = schema["definitions"]["ContributionPoints"]["properties"]
     context = {
