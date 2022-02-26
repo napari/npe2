@@ -183,8 +183,11 @@ def main(dest: Path = _BUILD):
 
     dest.mkdir(exist_ok=True, parents=True)
     schema = PluginManifest.schema()
-    with urlopen(SCHEMA_URL) as response:
-        schema = json.load(response)
+    try:
+        with urlopen(SCHEMA_URL) as response:
+            schema = json.load(response)
+    except:
+        print(f"Using local schema as a fallback. Failed to retrieve: {SCHEMA_URL}")
 
     contributions = schema["definitions"]["ContributionPoints"]["properties"]
     context = {
