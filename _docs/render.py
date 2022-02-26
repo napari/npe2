@@ -10,6 +10,7 @@ from inspect import getsource
 from pathlib import Path
 from types import FunctionType
 from typing import Dict, Optional, Set
+from urllib.error import URLError
 from urllib.request import urlopen
 
 import yaml
@@ -186,7 +187,7 @@ def main(dest: Path = _BUILD):
     try:
         with urlopen(SCHEMA_URL) as response:
             schema = json.load(response)
-    except:
+    except URLError:
         print(f"Using local schema as a fallback. Failed to retrieve: {SCHEMA_URL}")
 
     contributions = schema["definitions"]["ContributionPoints"]["properties"]
