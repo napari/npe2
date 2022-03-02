@@ -14,8 +14,9 @@ that accepts a path (`str`) or a list of paths and:
 The `ReaderFunction` will be passed the same path (or list of paths) and
 is expected to return a list of {ref}`LayerData tuples <layer-data-tuples>`.
 
-In the rare case that a reader plugin would like to "claim" a file, but not
-actually add any data to the viewer, it may return the special value `[(None,)]`
+In the rare case that a reader plugin would like to "claim" a file, but *not*
+actually add any data to the viewer, the `ReaderFunction` may return
+the special value `[(None,)]`.
 
 ```{admonition} Accepting directories
 A reader may indicate that it accepts directories by
