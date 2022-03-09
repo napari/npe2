@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    DefaultDict,
     Dict,
     Iterable,
     Iterator,
@@ -47,6 +48,11 @@ class _ContributionsIndex:
         self._readers: List[Tuple[str, ReaderContribution]] = list()
         self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
 
+        # DEPRECATED: only here for napari <= 0.4.15 compat.
+        self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(
+            list
+        )
+
     def index_contributions(self, manifest: PluginManifest):
         ctrb = manifest.contributions
         if not ctrb or manifest.name in self._indexed:
@@ -63,6 +69,10 @@ class _ContributionsIndex:
         for writer in ctrb.writers or ():
             for c in writer.layer_type_constraints():
                 self._writers.append((c.layer_type, *c.bounds, writer))
+
+        # DEPRECATED: only here for napari <= 0.4.15 compat.
+        if ctrb.sample_data:
+            self._samples[manifest.name] = ctrb.sample_data
 
     def remove_contributions(self, key: PluginName) -> None:
         """This must completely remove everything added by `index_contributions`."""
@@ -86,6 +96,9 @@ class _ContributionsIndex:
         ]
 
         self._indexed.remove(key)
+
+        # DEPRECATED: only here for napari <= 0.4.15 compat.
+        self._samples.pop(key, None)
 
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
