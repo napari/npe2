@@ -9,7 +9,7 @@ except ImportError:
 
 
 @pytest.mark.filterwarnings("ignore:The distutils package is deprecated")
-@pytest.mark.filterwarnings("ignore:Failed to convert napari_get_writer")
+@pytest.mark.filterwarnings("ignore:Found a multi-layer writer, but it's not")
 @pytest.mark.parametrize("package", ["svg"])
 def test_conversion(package):
     assert manifest_from_npe1(package)
