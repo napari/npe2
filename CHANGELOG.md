@@ -42,10 +42,6 @@
 - DOC: typo missing backtick [\#102](https://github.com/napari/npe2/pull/102) ([Carreau](https://github.com/Carreau))
 - Fix some typos and dead links [\#99](https://github.com/napari/npe2/pull/99) ([andy-sweet](https://github.com/andy-sweet))
 
-**Merged pull requests:**
-
-- add v0.2.0 changelog [\#119](https://github.com/napari/npe2/pull/119) ([tlambert03](https://github.com/tlambert03))
-
 ## [v0.1.2](https://github.com/napari/npe2/tree/v0.1.2) (2022-01-28)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.1.1...v0.1.2)
