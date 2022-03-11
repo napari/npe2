@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.1](https://github.com/napari/npe2/tree/v0.2.1) (2022-03-11)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.0...v0.2.1)
+
+**Fixed bugs:**
+
+- Fix auto-discovery of plugins for napari \<= 0.4.15 [\#120](https://github.com/napari/npe2/pull/120) ([tlambert03](https://github.com/tlambert03))
+
 ## [v0.2.0](https://github.com/napari/npe2/tree/v0.2.0) (2022-03-10)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.1.2...v0.2.0)
