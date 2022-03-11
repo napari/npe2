@@ -222,9 +222,9 @@ class PluginManager:
         # so if we're running on an older version of napari, we need to discover
         try:
             nv = metadata.version("napari")
-        except metadata.PackageNotFoundError:
+        except metadata.PackageNotFoundError:  # pragma: no cover
             pass
-        else:
+        else:  # pragma: no cover
             if tuple(nv.split(".")[:3]) < ("0", "4", "16"):
                 self.discover()
 
