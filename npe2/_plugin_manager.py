@@ -40,6 +40,11 @@ if TYPE_CHECKING:
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
 
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata  # type: ignore
+
 
 class _ContributionsIndex:
     def __init__(self) -> None:
@@ -212,6 +217,22 @@ class PluginManager:
         self._contrib = _ContributionsIndex()
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
+
+        # up to napari 0.4.15, discovery happened in the init here
+        # so if we're running on an older version of napari, we need to discover
+        try:
+            nv = metadata.version("napari")
+        except metadata.PackageNotFoundError:  # pragma: no cover
+            pass
+        else:  # pragma: no cover
+            vsplit = nv.split(".")[:4]
+            if (
+                "dev" in nv
+                and vsplit < ["0", "4", "16", "dev4"]
+                or "dev" not in nv
+                and vsplit < ["0", "4", "16"]
+            ):
+                self.discover()
 
     @classmethod
     def instance(cls) -> PluginManager:
