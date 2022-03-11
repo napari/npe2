@@ -62,7 +62,7 @@ jobs:
           python -m pip install -e ./napari-from-github
           python -m pip install -e .
           # bare minimum required to test napari/plugins
-          python -m pip install pytest scikit-image[data] zarr xarray hypothesis
+          python -m pip install pytest scikit-image[data] zarr xarray hypothesis matplotlib
 
       - name: Run napari plugin headless tests
         run: pytest napari/plugins napari/settings napari/layers napari/components
