@@ -225,7 +225,13 @@ class PluginManager:
         except metadata.PackageNotFoundError:  # pragma: no cover
             pass
         else:  # pragma: no cover
-            if tuple(nv.split(".")[:3]) < ("0", "4", "16"):
+            vsplit = nv.split(".")[:4]
+            if (
+                "dev" in nv
+                and vsplit < ["0", "4", "16", "dev4"]
+                or "dev" not in nv
+                and vsplit < ["0", "4", "16"]
+            ):
                 self.discover()
 
     @classmethod
