@@ -64,8 +64,8 @@ jobs:
           # bare minimum required to test napari/plugins
           python -m pip install pytest scikit-image[data]
 
-      - name: Run napari plugin tests
-        run: pytest napari/plugins -v --color=yes
+      - name: Run napari plugin headless tests
+        run: pytest napari/plugins napari/settings napari/layers napari/components
         working-directory: napari-from-github
 
   deploy:
