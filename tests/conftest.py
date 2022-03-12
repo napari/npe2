@@ -74,6 +74,7 @@ def uses_npe1_plugin(npe1_repo):
                 return [
                     metadata.PathDistribution(npe1_repo / "npe1-plugin-0.0.1.dist-info")
                 ]
+            return []
 
     sys.meta_path.append(Importer())
     sys.path.append(str(npe1_repo))
