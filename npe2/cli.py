@@ -158,23 +158,15 @@ def cache(
     verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="verbose"),
 ):
     """Cache utils"""
-    from npe2.manifest._npe1_shim import SHIM_CACHE
+    from npe2.manifest._npe1_shim import SHIM_CACHE, clear_cache
 
     if clear:
-        from shutil import rmtree
-
-        if SHIM_CACHE.exists():
-            if names:
-                for f in SHIM_CACHE.glob("*.yaml"):
-                    if any(f.name.startswith(f"{n}_") for n in names):
-                        f.unlink()
-                        typer.secho(f"{f.name} deleted", fg=typer.colors.RED)
-            else:
-                nf = "\n".join(f" - {i.name}" for i in SHIM_CACHE.iterdir())
-                rmtree(SHIM_CACHE)
-                typer.secho(f"Cleared these files from cache:\n{nf}")
+        if _cleared := clear_cache(names):
+            nf = "\n".join(f" - {i.name}" for i in _cleared)
+            typer.secho("Cleared these files from cache:")
+            typer.secho(nf, fg=typer.colors.RED)
         else:
-            typer.secho("(there was no cache)")
+            typer.secho("(Nothing to clear)")
 
         typer.Exit()
     if list_:

@@ -1,6 +1,8 @@
+import logging
 from pathlib import Path
+from shutil import rmtree
 from site import getsitepackages, getusersitepackages
-from typing import Union
+from typing import List, Sequence, Union
 
 from appdirs import user_cache_dir
 
@@ -15,12 +17,34 @@ except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
 
+logger = logging.getLogger(__name__)
 SHIM_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2" / "shims"
 
 
-def _cached_shim_path(name: str, version: str) -> Path:
-    """Return cache path for manifest corresponding to distribution."""
-    return SHIM_CACHE / f"{name}_{version}.yaml"
+def clear_cache(names: Sequence[str] = ()) -> List[Path]:
+    """Clear cached npe1 shim files
+
+    Parameters
+    ----------
+    names : Sequence[str], optional
+        selection of plugin names to clear, by default, all will be cleared
+
+    Returns
+    -------
+    List[Path]
+        List of filepaths cleared
+    """
+    _cleared: List[Path] = []
+    if SHIM_CACHE.exists():
+        if names:
+            for f in SHIM_CACHE.glob("*.yaml"):
+                if any(f.name.startswith(f"{n}_") for n in names):
+                    f.unlink()
+                    _cleared.append(f)
+        else:
+            _cleared = list(SHIM_CACHE.iterdir())
+            rmtree(SHIM_CACHE)
+    return _cleared
 
 
 class NPE1Shim(PluginManifest):
@@ -38,6 +62,7 @@ class NPE1Shim(PluginManifest):
             mf = PluginManifest.from_file(self._cache_path())
             self.contributions = mf.contributions
             self._is_loaded = True
+            logger.debug("%r npe1 shim loaded from cache", self.name)
             return
 
         dist = metadata.distribution(self.name)
@@ -51,9 +76,10 @@ class NPE1Shim(PluginManifest):
 
             contribs = merge_contributions([m.contributions for m in mfs])
             self.contributions = ContributionPoints(**contribs)
+            logger.debug("%r npe1 shim imported", self.name)
 
         self._is_loaded = True
-        if not is_editable_install(dist):
+        if not _is_editable_install(dist):
             self._save_to_cache()
 
     def _save_to_cache(self):
@@ -66,7 +92,12 @@ class NPE1Shim(PluginManifest):
         return _cached_shim_path(self.name, self.package_version or "")
 
 
-def is_editable_install(dist: Union[str, metadata.Distribution]) -> bool:
+def _cached_shim_path(name: str, version: str) -> Path:
+    """Return cache path for manifest corresponding to distribution."""
+    return SHIM_CACHE / f"{name}_{version}.yaml"
+
+
+def _is_editable_install(dist: Union[str, metadata.Distribution]) -> bool:
     """Return True if dist or distname is installed as editable.
 
     i.e: if the package isn't in site-packages or user site-packages.
