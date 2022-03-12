@@ -243,8 +243,8 @@ class HookImplParser:
 
     def napari_provide_sample_data(self, impl: HookImplementation):
         module = sys.modules[impl.function.__module__.split(".", 1)[0]]
-        hook = impl.function
-        samples: Dict[str, Union[dict, str, Callable]] = hook()
+
+        samples: Dict[str, Union[dict, str, Callable]] = impl.function()
         for idx, (key, sample) in enumerate(samples.items()):
             _sample: Union[str, Callable]
             if isinstance(sample, dict):
@@ -259,12 +259,12 @@ class HookImplParser:
             if callable(_sample):
                 # let these raise exceptions here immediately if they don't validate
                 id = f"{self.package}.data.{_key}"
-                pyname = _python_name(
-                    _sample, hook, shim_idx=idx if self.shim else None
+                py_name = _python_name(
+                    _sample, impl.function, shim_idx=idx if self.shim else None
                 )
                 cmd_contrib = CommandContribution(
                     id=id,
-                    python_name=pyname,
+                    python_name=py_name,
                     title=f"{key} sample",
                 )
                 self.contributions["commands"].append(cmd_contrib)
@@ -284,7 +284,9 @@ class HookImplParser:
             try:
 
                 cmd = f"{self.package}.{item.__name__}"
-                py_name = _python_name(item)
+                py_name = _python_name(
+                    item, impl.function, shim_idx=idx if self.shim else None
+                )
 
                 docsum = item.__doc__.splitlines()[0] if item.__doc__ else None
                 cmd_contrib = CommandContribution(
