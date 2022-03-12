@@ -114,8 +114,8 @@ class PluginManifest(ImportExportModel):
         _validators.python_name
     )
 
-    contributions: Optional[ContributionPoints] = Field(
-        None,
+    contributions: ContributionPoints = Field(
+        default_factory=ContributionPoints,
         description="An object describing the plugin's "
         "[contributions](./contributions)",
     )
@@ -139,6 +139,9 @@ class PluginManifest(ImportExportModel):
             except metadata.PackageNotFoundError:
                 pass
 
+    def __hash__(self):
+        return hash((self.name, self.package_version))
+
     @property
     def license(self) -> Optional[str]:
         return self.package_metadata.license if self.package_metadata else None
@@ -154,6 +157,10 @@ class PluginManifest(ImportExportModel):
     @property
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
+
+    @validator("contributions", pre=True)
+    def _coerce_none_contributions(cls, value):
+        return [] if value is None else value
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
@@ -268,8 +275,14 @@ class PluginManifest(ImportExportModel):
                     if pm:
                         yield DiscoverResults(pm, dist, None)
                 except ValidationError as e:
-                    logger.warning(msg=f"Invalid schema: {dist.metadata['Name']!r}")
+                    logger.warning(
+                        "Invalid schema for package %r, please run"
+                        " 'npe2 validate %s' to check for manifest errors.",
+                        dist.metadata["Name"],
+                        dist.metadata["Name"],
+                    )
                     yield DiscoverResults(None, dist, e)
+
                 except Exception as e:
                     logger.error(
                         "%s -> %r could not be imported: %s"

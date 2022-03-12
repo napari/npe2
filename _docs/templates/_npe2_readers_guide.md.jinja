@@ -7,12 +7,16 @@ command line, or when a user opens a file in the graphical user interface by
 dropping a file into the canvas, or using `File -> Open...`
 
 The `command` provided by a reader contribution is expected to be a function
-that accepts a path or a sequence of paths and either returns `None` (if it
-does not want to accept the given path) or returns a *new function*
-(a `ReaderFunction`) that is capable of doing the reading.
+that accepts a path (`str`) or a list of paths and:
+* returns `None` (if it does not want to accept the given path)
+* returns a *new function* (a `ReaderFunction`) that is capable of doing the reading.
 
 The `ReaderFunction` will be passed the same path (or list of paths) and
 is expected to return a list of {ref}`LayerData tuples <layer-data-tuples>`.
+
+In the rare case that a reader plugin would like to "claim" a file, but *not*
+actually add any data to the viewer, the `ReaderFunction` may return
+the special value `[(None,)]`.
 
 ```{admonition} Accepting directories
 A reader may indicate that it accepts directories by
@@ -48,7 +52,7 @@ This demonstrates the now-deprecated `napari-plugin-engine` pattern.
 
 **python implementation**
 
-[hook specificiation](https://napari.org/plugins/stable/hook_specifications.html#napari.plugins.hook_specifications.napari_get_reader)
+[hook specification](https://napari.org/plugins/stable/npe1.html#napari.plugins.hook_specifications.napari_get_reader)
 
 ```python
 from napari_plugin_engine import napari_hook_implementation
@@ -57,7 +61,7 @@ from napari_plugin_engine import napari_hook_implementation
 @napari_hook_implementation
 def napari_get_reader(path: PathOrPaths) -> Optional[ReaderFunction]:
     # If we recognize the format, we return the actual reader function
-    if isinstance(path, str) and path.endswith("*.xyz"):
+    if isinstance(path, str) and path.endswith(".xyz"):
         return xyz_file_reader
     # otherwise we return None.
     return None

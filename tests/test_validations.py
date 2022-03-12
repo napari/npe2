@@ -125,16 +125,27 @@ def test_invalid_python_name(uses_sample_plugin):
 def _valid_mutator_no_contributions(data):
     """
     Contributions can be absent, in which case the Pydantic model will set the
-    default value to None, and not the empty list, make sure that works.
+    default value to an empty Contributions model
     """
     del data["contributions"]
 
 
+def _valid_mutator_no_contributions_empty(data):
+    """
+    Contributions can be an empty list, in which case the Pydantic model will set the
+    default value to an empty Contributions model
+    """
+    data["contributions"] = []
+
+
 def _valid_mutator_no_contributions_None(data):
     """
-    Contributions can be absent, in which case the Pydantic model will set the
+    Contributions can be None, in which case the Pydantic model will set the
     default value to None, and not the empty list, make sure that works.
     """
+    # This is no longer recommended.  A missing contributions is fine, and an empty
+    # list is fine.  We preserve this for backwards compatibility,
+    # but providing None explicitly shouldn't be used
     data["contributions"] = None
 
 

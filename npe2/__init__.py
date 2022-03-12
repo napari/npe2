@@ -8,11 +8,13 @@ __email__ = "talley.lambert@gmail.com"
 from ._plugin_manager import PluginContext, PluginManager
 from .io_utils import read, write
 from .manifest import PluginManifest
+from .manifest.package_metadata import PackageMetadata
 
 __all__ = [
     "PluginManifest",
     "PluginManager",
     "PluginContext",
+    "PackageMetadata",
     "write",
     "read",
 ]

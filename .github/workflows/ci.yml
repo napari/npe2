@@ -32,6 +32,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[docs,testing]
 
+      - name: Test Main docs build
+        run: pytest --color yes -m github_main_only
       - name: Test
         run: pytest --color yes --cov npe2 --cov-report xml --cov-report term-missing
 
@@ -39,6 +41,32 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           fail_ci_if_error: true
+
+  test_napari:
+    name: napari tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: napari/napari
+          path: napari-from-github
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./napari-from-github
+          python -m pip install -e .
+          # bare minimum required to test napari/plugins
+          python -m pip install pytest scikit-image[data] zarr xarray hypothesis matplotlib
+
+      - name: Run napari plugin headless tests
+        run: pytest napari/plugins napari/settings napari/layers napari/components
+        working-directory: napari-from-github
 
   deploy:
     name: Deploy
