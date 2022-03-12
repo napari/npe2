@@ -428,6 +428,10 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
 
 
 def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
+    """Return PluginManifest or NPE1Shim for a metadata.Distribution object.
+
+    ...depending on which entry points are available.
+    """
     _npe1, _npe2 = [], None
     for ep in dist.entry_points:
         if ep.group == NPE1_ENTRY_POINT:
@@ -439,7 +443,7 @@ def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
     elif _npe1:
         from ._npe1_shim import NPE1Shim
 
-        return NPE1Shim(name=dist.metadata["Name"])
+        return NPE1Shim(dist=dist)
     return None
 
 

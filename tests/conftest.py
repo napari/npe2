@@ -20,10 +20,12 @@ def sample_manifest(sample_path):
 @pytest.fixture
 def uses_sample_plugin(sample_path):
     sys.path.append(str(sample_path))
-    pm = PluginManager.instance()
-    pm.discover()
-    yield
-    sys.path.remove(str(sample_path))
+    try:
+        pm = PluginManager.instance()
+        pm.discover()
+        yield
+    finally:
+        sys.path.remove(str(sample_path))
 
 
 @pytest.fixture
@@ -53,6 +55,19 @@ def mock_discover():
 @pytest.fixture
 def npe1_repo():
     return Path(__file__).parent / "npe1-plugin"
+
+
+@pytest.fixture
+def uses_npe1_plugin(npe1_repo):
+    import site
+
+    sys.path.append(str(npe1_repo))
+    try:
+        pkgs = site.getsitepackages() + [str(npe1_repo)]
+        with patch("site.getsitepackages", return_value=pkgs):
+            yield
+    finally:
+        sys.path.remove(str(npe1_repo))
 
 
 @pytest.fixture

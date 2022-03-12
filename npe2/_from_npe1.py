@@ -109,19 +109,21 @@ def plugin_packages() -> List[PluginPackage]:
 
 
 def manifest_from_npe1(
-    plugin_name: Optional[str] = None, module: Any = None, shim=False
+    plugin: Union[str, metadata.Distribution, None] = None,
+    module: Any = None,
+    shim=False,
 ) -> PluginManifest:
-    """Return manifest object given npe1 plugin_name or package name.
+    """Return manifest object given npe1 plugin or package name.
 
-    One of `plugin_name` or `module` must be provide.
+    One of `plugin` or `module` must be provide.
 
     Parameters
     ----------
-    plugin_name : str
-        Name of package/plugin to convert.  This function should be prepared to accept
-        both the name of the package, and the name of a `napari.plugin` entry_point.
-        by default None
-    module : Module
+    plugin : Union[str, metadata.Distribution, None]
+        Name of package/plugin to convert.  Or a `metadata.Distribution` object.
+        If a string, this function should be prepared to accept both the name of the
+        package, and the name of an npe1 `napari.plugin` entry_point. by default None
+    module : Optional[Module]
         namespace object, to directly import (mostly for testing.), by default None
     shim : bool
         If True, the resulting manifest will be used internally by NPE1Adaptor, but
@@ -133,21 +135,30 @@ def manifest_from_npe1(
         modules: List[str] = [module]
         package_name = "dynamic"
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
-    elif plugin_name:
+    elif isinstance(plugin, str):
+
         modules = []
+        plugin_name = plugin
         for pp in plugin_packages():
-            if plugin_name in (pp.ep_name, pp.package_name):
+            if plugin in (pp.ep_name, pp.package_name):
                 modules.append(pp.ep_value)
                 package_name = pp.package_name
         if not modules:
             _avail = [f"  {p.package_name} ({p.ep_name})" for p in plugin_packages()]
             avail = "\n".join(_avail)
             raise metadata.PackageNotFoundError(
-                f"No package or entry point found with name {plugin_name!r}: "
+                f"No package or entry point found with name {plugin!r}: "
                 f"\nFound packages (entry_point):\n{avail}"
             )
+    elif isinstance(plugin, metadata.Distribution):
+        NPE1_ENTRY_POINT = "napari.plugin"
+        plugin_name = package_name = plugin.metadata["Name"]
+        modules = [
+            ep.value for ep in plugin.entry_points if ep.group == NPE1_ENTRY_POINT
+        ]
+        assert modules, f"No npe1 entry points found in distribution {plugin_name!r}"
     else:
-        raise ValueError("one of plugin_name or module must be provided")
+        raise ValueError("one of plugin or module must be provided")
 
     manifests: List[PluginManifest] = []
     for mod_name in modules:

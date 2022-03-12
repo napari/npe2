@@ -1,15 +1,14 @@
 import logging
+import site
 from pathlib import Path
 from shutil import rmtree
-from site import getsitepackages, getusersitepackages
-from typing import List, Sequence, Union
+from typing import List, Sequence
 
 from appdirs import user_cache_dir
 
 from .._from_npe1 import manifest_from_npe1
-from .contributions import ContributionPoints
-from .schema import NPE1_ENTRY_POINT, PluginManifest, discovery_blocked
-from .utils import merge_contributions
+from .package_metadata import PackageMetadata
+from .schema import PluginManifest, discovery_blocked
 
 try:
     from importlib import metadata
@@ -49,6 +48,12 @@ def clear_cache(names: Sequence[str] = ()) -> List[Path]:
 
 class NPE1Shim(PluginManifest):
     _is_loaded: bool = False
+    _dist: metadata.Distribution
+
+    def __init__(self, dist: metadata.Distribution):
+        meta = PackageMetadata.from_dist_metadata(dist.metadata)
+        super().__init__(name=dist.metadata["Name"], package_metadata=meta)
+        self._dist = dist
 
     def __getattribute__(self, __name: str):
         if __name == "contributions" and not self._is_loaded:
@@ -65,21 +70,13 @@ class NPE1Shim(PluginManifest):
             logger.debug("%r npe1 shim loaded from cache", self.name)
             return
 
-        dist = metadata.distribution(self.name)
         with discovery_blocked():
-            mfs = [
-                manifest_from_npe1(ep.name, shim=True)
-                for ep in dist.entry_points
-                if ep.group == NPE1_ENTRY_POINT
-            ]
-            assert mfs, "No npe1 entry points found in distribution {name}"
-
-            contribs = merge_contributions([m.contributions for m in mfs])
-            self.contributions = ContributionPoints(**contribs)
+            mf = manifest_from_npe1(self._dist, shim=True)
+            self.contributions = mf.contributions
             logger.debug("%r npe1 shim imported", self.name)
 
         self._is_loaded = True
-        if not _is_editable_install(dist):
+        if not _is_editable_install(self._dist):
             self._save_to_cache()
 
     def _save_to_cache(self):
@@ -97,14 +94,11 @@ def _cached_shim_path(name: str, version: str) -> Path:
     return SHIM_CACHE / f"{name}_{version}.yaml"
 
 
-def _is_editable_install(dist: Union[str, metadata.Distribution]) -> bool:
-    """Return True if dist or distname is installed as editable.
+def _is_editable_install(dist: metadata.Distribution) -> bool:
+    """Return True if dist is installed as editable.
 
     i.e: if the package isn't in site-packages or user site-packages.
     """
-    if isinstance(dist, str):
-        dist = metadata.distribution(dist)
-
     root = str(dist.locate_file(""))
-    installed_paths = getsitepackages() + [getusersitepackages()]
+    installed_paths = site.getsitepackages() + [site.getusersitepackages()]
     return all(loc not in root for loc in installed_paths)
