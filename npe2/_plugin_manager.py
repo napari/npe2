@@ -46,8 +46,8 @@ class _ContributionsIndex:
     def __init__(self) -> None:
         self._indexed: Set[str] = set()
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._readers: List[Tuple[str, ReaderContribution]] = list()
-        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
+        self._readers: List[Tuple[str, ReaderContribution]] = []
+        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = []
 
         # DEPRECATED: only here for napari <= 0.4.15 compat.
         self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(

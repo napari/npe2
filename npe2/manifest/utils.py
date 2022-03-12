@@ -40,9 +40,11 @@ class Executable(Generic[R]):
     def exec(
         self: ProvidesCommand,
         args: tuple = (),
-        kwargs: dict = {},
+        kwargs: dict = None,
         _registry: Optional[CommandRegistry] = None,
     ) -> R:
+        if kwargs is None:
+            kwargs = {}
         return self.get_callable(_registry)(*args, **kwargs)
 
     def get_callable(

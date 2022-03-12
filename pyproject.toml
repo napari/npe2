@@ -11,3 +11,4 @@ ignore = ["npe2/_version.py", ".pre-commit-config.yaml", ".github_changelog_gene
 
 [tool.black]
 target-version = ['py38', 'py39', 'py310']
+line-length=88
