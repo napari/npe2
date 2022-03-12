@@ -273,8 +273,7 @@ class PluginManager:
 
     def index_npe1_shims(self):
         while self._shims:
-            shim = self._shims.pop()
-            self._contrib.index_contributions(shim)
+            self._contrib.index_contributions(self._shims.pop())
 
     def register(self, manifest: PluginManifest, warn_disabled=True) -> None:
         """Register a plugin manifest"""

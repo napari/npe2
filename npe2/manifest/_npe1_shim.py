@@ -24,8 +24,10 @@ def _cached_shim_path(name: str, version: str) -> Path:
 
 
 class NPE1Shim(PluginManifest):
+    _is_loaded: bool = False
+
     def __getattribute__(self, __name: str):
-        if __name == "contributions" and not super().__getattribute__(__name):
+        if __name == "contributions" and not self._is_loaded:
             self._load_contributions()
         return super().__getattribute__(__name)
 
@@ -35,6 +37,7 @@ class NPE1Shim(PluginManifest):
         if self._cache_path().exists():
             mf = PluginManifest.from_file(self._cache_path())
             self.contributions = mf.contributions
+            self._is_loaded = True
             return
 
         dist = metadata.distribution(self.name)
@@ -49,6 +52,7 @@ class NPE1Shim(PluginManifest):
             contribs = merge_contributions([m.contributions for m in mfs])
             self.contributions = ContributionPoints(**contribs)
 
+        self._is_loaded = True
         if not is_editable_install(dist):
             self._save_to_cache()
 

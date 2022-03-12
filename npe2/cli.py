@@ -146,13 +146,13 @@ def convert(
 
 @app.command()
 def cache(
-    delete: Optional[bool] = typer.Option(
-        False, "--delete", "-d", help="Clear the npe1 shim manifest cache"
+    clear: Optional[bool] = typer.Option(
+        False, "--clear", "-d", help="Clear the npe1 shim manifest cache"
     ),
     names: List[str] = typer.Argument(
         None, help="Name(s) of distributions to list/delete"
     ),
-    list: Optional[bool] = typer.Option(
+    list_: Optional[bool] = typer.Option(
         False, "--list", "-l", help="List cached manifests"
     ),
     verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="verbose"),
@@ -160,7 +160,7 @@ def cache(
     """Cache utils"""
     from npe2.manifest._npe1_shim import SHIM_CACHE
 
-    if delete:
+    if clear:
         from shutil import rmtree
 
         if SHIM_CACHE.exists():
@@ -170,13 +170,14 @@ def cache(
                         f.unlink()
                         typer.secho(f"{f.name} deleted", fg=typer.colors.RED)
             else:
+                nf = "\n".join(f" - {i.name}" for i in SHIM_CACHE.iterdir())
                 rmtree(SHIM_CACHE)
-                typer.secho("cache cleared")
+                typer.secho(f"Cleared these files from cache:\n{nf}")
         else:
             typer.secho("(there was no cache)")
 
         typer.Exit()
-    if list:
+    if list_:
         files = builtins.list(SHIM_CACHE.glob("*.yaml"))
         if names:
             files = [f for f in files if any(f.name.startswith(n) for n in names)]
