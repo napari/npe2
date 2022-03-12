@@ -232,7 +232,9 @@ def import_python_name(python_name: Union[PythonName, str]) -> Any:
 
 def deep_update(dct: dict, merge_dct: dict, copy=True) -> dict:
     """Merge possibly nested dicts"""
-    _dct = dct.copy() if copy else dct
+    from copy import deepcopy
+
+    _dct = deepcopy(dct) if copy else dct
     for k, v in merge_dct.items():
         if k in _dct and isinstance(dct[k], dict) and isinstance(v, dict):
             deep_update(_dct[k], v, copy=False)

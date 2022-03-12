@@ -3,7 +3,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 from npe2 import PluginManager
 from npe2.manifest import _npe1_shim, utils
@@ -14,13 +13,6 @@ def test_shim_no_npe1():
     pm = PluginManager()
     pm.discover()
     assert not pm._shims
-
-
-@pytest.fixture
-def mock_cache(tmp_path, monkeypatch):
-    with monkeypatch.context() as m:
-        m.setattr(_npe1_shim, "SHIM_CACHE", tmp_path)
-        yield tmp_path
 
 
 def test_npe1_shim(uses_npe1_plugin, mock_cache: Path):

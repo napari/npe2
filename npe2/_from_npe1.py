@@ -466,7 +466,7 @@ def _python_name(
             mod_name = mod.__name__
             if not obj_name:
                 for local_name, _obj in vars(mod).items():
-                    if _obj is obj:
+                    if _obj is obj:  # pragma: no cover
                         obj_name = local_name
                         break
 

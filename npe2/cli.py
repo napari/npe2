@@ -176,7 +176,7 @@ def cache(
             files = [f for f in files if any(f.name.startswith(n) for n in names)]
 
         if not files:
-            typer.secho("nothing cached")
+            typer.secho("Nothing cached")
             typer.Exit()
         for fname in files:
             mf = PluginManifest.from_file(fname)

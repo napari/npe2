@@ -403,7 +403,7 @@ class PluginManifest(ImportExportModel):
 
 
 def _noop(*_, **__):
-    return []
+    return []  # pragma: no cover
 
 
 @contextmanager

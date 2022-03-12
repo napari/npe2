@@ -1,7 +1,7 @@
 import pytest
 
 from npe2.manifest.schema import PluginManifest
-from npe2.manifest.utils import Version, merge_manifests
+from npe2.manifest.utils import Version, deep_update, merge_manifests
 
 
 def test_version():
@@ -60,3 +60,14 @@ def test_merge_manifests():
 
     assert merge_manifests([pm1]) is pm1
     assert merge_manifests([pm1, pm2]) == expected_merge
+
+
+def test_deep_update():
+    a = {"a": {"b": 1, "c": 2}, "e": 2}
+    b = {"a": {"d": 4, "c": 3}, "f": 0}
+    c = deep_update(a, b, copy=True)
+    assert c == {"a": {"b": 1, "d": 4, "c": 3}, "e": 2, "f": 0}
+    assert a == {"a": {"b": 1, "c": 2}, "e": 2}
+
+    deep_update(a, b, copy=False)
+    assert a == {"a": {"b": 1, "d": 4, "c": 3}, "e": 2, "f": 0}

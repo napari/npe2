@@ -1,10 +1,17 @@
 import sys
+from importlib import abc
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from npe2 import PluginManager, PluginManifest
+from npe2.manifest import _npe1_shim
+
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata  # type: ignore
 
 
 @pytest.fixture
@@ -61,6 +68,14 @@ def npe1_repo():
 def uses_npe1_plugin(npe1_repo):
     import site
 
+    class Importer(abc.MetaPathFinder):
+        def find_distributions(self, ctx, **k):
+            if ctx.name == "npe1-plugin":
+                return [
+                    metadata.PathDistribution(npe1_repo / "npe1-plugin-0.0.1.dist-info")
+                ]
+
+    sys.meta_path.append(Importer())
     sys.path.append(str(npe1_repo))
     try:
         pkgs = site.getsitepackages() + [str(npe1_repo)]
@@ -147,3 +162,10 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
                     new_manifest.unlink()
                 if (npe1_repo / "setup.py").exists():
                     (npe1_repo / "setup.py").unlink()
+
+
+@pytest.fixture
+def mock_cache(tmp_path, monkeypatch):
+    with monkeypatch.context() as m:
+        m.setattr(_npe1_shim, "SHIM_CACHE", tmp_path)
+        yield tmp_path
