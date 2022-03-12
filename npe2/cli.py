@@ -161,7 +161,8 @@ def cache(
     from npe2.manifest._npe1_shim import SHIM_CACHE, clear_cache
 
     if clear:
-        if _cleared := clear_cache(names):
+        _cleared = clear_cache(names)
+        if _cleared:
             nf = "\n".join(f" - {i.name}" for i in _cleared)
             typer.secho("Cleared these files from cache:")
             typer.secho(nf, fg=typer.colors.RED)
