@@ -291,8 +291,8 @@ class PluginManifest(ImportExportModel):
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
-        match = entry_point.pattern.match(entry_point.value)  # type: ignore
-        module = match.group("module")
+        match = entry_point.pattern.match(entry_point.value)
+        module = match.group("module")  # type: ignore [union-attr]
 
         spec = util.find_spec(module or "")
         if not spec:  # pragma: no cover
@@ -301,8 +301,8 @@ class PluginManifest(ImportExportModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        match = entry_point.pattern.match(entry_point.value)  # type: ignore
-        fname = match.group("attr")
+        match = entry_point.pattern.match(entry_point.value)
+        fname = match.group("attr")  # type: ignore [union-attr]
 
         for loc in spec.submodule_search_locations or []:
             mf_file = Path(loc) / fname
