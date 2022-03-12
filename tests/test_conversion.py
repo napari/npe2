@@ -9,12 +9,13 @@ except ImportError:
 
 
 @pytest.mark.filterwarnings("ignore:The distutils package is deprecated")
-@pytest.mark.filterwarnings("ignore:Found a multi-layer writer, but it's not")
+@pytest.mark.filterwarnings("ignore:Found a multi-layer writer in")
 @pytest.mark.parametrize("package", ["svg"])
 def test_conversion(package):
     assert manifest_from_npe1(package)
 
 
+@pytest.mark.filterwarnings("ignore:Failed to convert napari_provide_sample_data")
 def test_conversion_from_module(mock_npe1_pm, npe1_plugin_module):
     mf = manifest_from_npe1(module=npe1_plugin_module)
     assert isinstance(mf.dict(), dict)
@@ -39,6 +40,7 @@ def test_conversion_from_obj_with_locals(mock_npe1_pm):
     assert isinstance(mf.dict(), dict)
 
 
+@pytest.mark.filterwarnings("ignore:Failed to convert napari_provide_sample_data")
 def test_conversion_from_package(npe1_repo, mock_npe1_pm_with_plugin):
     setup_cfg = npe1_repo / "setup.cfg"
     before = setup_cfg.read_text()
