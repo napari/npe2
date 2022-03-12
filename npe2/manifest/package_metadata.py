@@ -1,8 +1,4 @@
-try:
-    from importlib.metadata import metadata
-except ImportError:
-    from importlib_metadata import metadata  # type: ignore
-
+from importlib.metadata import metadata
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, constr, root_validator

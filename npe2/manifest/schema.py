@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from contextlib import contextmanager
-from importlib import util
+from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
@@ -18,11 +18,6 @@ from ._bases import ImportExportModel
 from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 from .utils import Version
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint

@@ -4,6 +4,7 @@ import os
 import warnings
 from collections import Counter
 from fnmatch import fnmatch
+from importlib import metadata
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -39,11 +40,6 @@ if TYPE_CHECKING:
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 
 class _ContributionsIndex:

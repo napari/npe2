@@ -6,6 +6,7 @@ import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
 from functools import lru_cache
+from importlib import metadata
 from pathlib import Path
 from typing import (
     Any,
@@ -31,11 +32,6 @@ from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
 from npe2.manifest.widgets import WidgetContribution
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
@@ -77,7 +73,7 @@ class PluginPackage:
         return itertools.product(names, repeat=2)
 
 
-@lru_cache()
+@lru_cache
 def plugin_packages() -> List[PluginPackage]:
     """List of all packages with napari entry points.
 
@@ -109,7 +105,7 @@ def ensure_package_name(name: str):
     )
 
 
-@lru_cache()
+@lru_cache
 def npe1_plugin_manager() -> Tuple[PluginManager, Tuple[int, list]]:
     pm = PluginManager("napari", discover_entry_point=NPE1_EP)
     pm.add_hookspecs(HookSpecs)
