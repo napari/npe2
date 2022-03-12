@@ -1,6 +1,5 @@
 import ast
 import inspect
-import itertools
 import re
 import sys
 import warnings
@@ -52,7 +51,7 @@ class HookImplementation:
         self.plugin_name = plugin_name
         self._specname = kwargs.get("specname")
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return (
             f"<HookImplementation plugin={self.plugin_name!r} spec={self.specname!r}>"
         )
@@ -81,11 +80,6 @@ class PluginPackage:
     ep_value: str
     top_module: str
     setup_cfg: Optional[Path] = None
-
-    @property
-    def name_pairs(self):
-        names = (self.ep_name, self.package_name, self.top_module)
-        return itertools.product(names, repeat=2)
 
 
 @lru_cache()
@@ -159,7 +153,7 @@ def manifest_from_npe1(
         ]
         assert modules, f"No npe1 entry points found in distribution {plugin_name!r}"
     else:
-        raise ValueError("one of plugin or module must be provided")
+        raise ValueError("one of plugin or module must be provided")  # pragma: no cover
 
     manifests: List[PluginManifest] = []
     for mod_name in modules:
@@ -432,15 +426,18 @@ def _python_name(
 ) -> str:
     """Get resolvable python name for `obj`
 
-
     Parameters
     ----------
     obj : Any
         a python obj
     hook : Callable, optional
-        _description_, by default None
+        the npe1 hook implementation that returned `obj`, by default None.
+        This is used both to search the module namespace for `obj`, and also
+        in the shim python name if `obj` cannot be found.
     shim_idx : int, optional
-        _description_, by default None
+        If `obj` cannot be found and `shim_idx` is not None, then a shim name.
+        of the form "__npe1shim__.{_python_name(hook)}_{shim_idx}" will be returned.
+        by default None.
 
     Returns
     -------
@@ -482,7 +479,7 @@ def _python_name(
             raise AttributeError(f"could not get resolvable python name for {obj}")
 
     pyname = f"{mod_name}:{obj_name}"
-    if import_python_name(pyname) is not obj:
+    if import_python_name(pyname) is not obj:  # pragma: no cover
         raise AttributeError(f"could not get resolvable python name for {obj}")
     return pyname
 
@@ -659,17 +656,18 @@ def _guess_fname_patterns(func):
 
     patterns = ["*"]
     # try to look at source code to guess file extensions
-    a, *b = inspect.getsource(func).split("endswith(")
+    _, *b = inspect.getsource(func).split("endswith(")
     if b:
-        middle = b[0].split(")")[0]
-        if middle.startswith("("):
-            middle += ")"
         try:
+            middle = b[0].split(")")[0]
+            if middle.startswith("("):
+                middle += ")"
             files = ast.literal_eval(middle)
             if isinstance(files, str):
                 files = [files]
             if files:
                 patterns = [f"*{f}" for f in files]
-        except Exception:
-            patterns = ["*"]
+        except Exception:  # pragma: no cover
+            # couldn't do it... just accept all filename patterns
+            pass
     return patterns

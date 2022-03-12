@@ -42,6 +42,10 @@ def napari_provide_sample_data():
             "display_name": "Some Random Data (512 x 512)",
             "data": gen_data,
         },
+        "local_ones": {
+            "display_name": "Some local ones",
+            "data": partial(np.ones, (4, 4)),
+        },
     }
 
 

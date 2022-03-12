@@ -99,7 +99,7 @@ def test_npe1_shim_cache(uses_npe1_plugin, mock_cache: Path):
         assert not mf._cache_path().exists()
 
 
-def test_shim_pyname(uses_npe1_plugin, mock_cache):
+def test_shim_pyname_sample_data(uses_npe1_plugin, mock_cache):
     """Test that objects defined locally in npe1 hookspecs can be retrieved."""
     pm = PluginManager.instance()
     pm.discover()
@@ -111,9 +111,15 @@ def test_shim_pyname(uses_npe1_plugin, mock_cache):
     sample_generator = next(s for s in samples if s.key == "local_data")
     assert isinstance(sample_generator, SampleDataGenerator)
 
+    ONES = np.ones((4, 4))
     with patch.object(utils, "_import_npe1_shim", wraps=utils._import_npe1_shim) as m:
         func = sample_generator.get_callable()
         assert isinstance(func, partial)  # this is how it was defined in npe1-plugin
         pyname = "__npe1shim__.npe1_module:napari_provide_sample_data_1"
         m.assert_called_once_with(pyname)
-        assert np.array_equal(func(), np.ones((4, 4)))
+        assert np.array_equal(func(), ONES)
+
+    # test nested sample data too
+    sample_generator = next(s for s in samples if s.display_name == "Some local ones")
+    func = sample_generator.get_callable()
+    assert np.array_equal(func(), ONES)

@@ -198,15 +198,18 @@ def _import_npe1_shim(shim_name: str) -> Any:
         # "idxth" item in the dict (assumes ordered dict, which is safe now)
         result = list(result.values())
     if not isinstance(result, list):
-        result = [result]
+        result = [result]  # pragma: no cover
 
     try:
         out = result[index]
-    except IndexError as e:
+    except IndexError as e:  # pragma: no cover
         raise IndexError(f"invalid npe1 shim index {index} for hook {hook}") from e
 
     if "dock_widget" in python_name and isinstance(out, tuple):
         return out[0]
+    if "sample_data" in python_name and isinstance(out, dict):
+        # this was a nested sample data
+        return out.get("data")
 
     return out
 
