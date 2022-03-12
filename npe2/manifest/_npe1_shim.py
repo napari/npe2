@@ -1,4 +1,5 @@
 import logging
+import os
 import site
 from pathlib import Path
 from shutil import rmtree
@@ -18,6 +19,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 SHIM_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2" / "shims"
+NPE2_NOCACHE = "NPE2_NOCACHE"
 
 
 def clear_cache(names: Sequence[str] = ()) -> List[Path]:
@@ -63,7 +65,7 @@ class NPE1Shim(PluginManifest):
     def _load_contributions(self) -> None:
         """imports and inspects package using npe1 plugin manager"""
 
-        if self._cache_path().exists():
+        if self._cache_path().exists() and not os.getenv(NPE2_NOCACHE):
             mf = PluginManifest.from_file(self._cache_path())
             self.contributions = mf.contributions
             self._is_loaded = True

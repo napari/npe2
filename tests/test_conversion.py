@@ -73,9 +73,13 @@ setup(
     )
     with pytest.warns(UserWarning) as record:
         convert_repository(npe1_repo)
-    msg = record[0].message
-    assert "Cannot auto-update setup.py, please edit setup.py as follows" in str(msg)
-    assert "npe1-plugin = npe1_module:napari.yaml" in str(msg)
+
+    msg = str(record[0].message)
+    assert "Failed to convert napari_provide_sample_data in 'npe1-plugin'" in msg
+    assert "could not get resolvable python name" in msg
+    msg = str(record[1].message)
+    assert "Cannot auto-update setup.py, please edit setup.py as follows" in msg
+    assert "npe1-plugin = npe1_module:napari.yaml" in msg
 
 
 def test_conversion_entry_point_string(npe1_repo, mock_npe1_pm_with_plugin):
@@ -91,9 +95,13 @@ setup(
     )
     with pytest.warns(UserWarning) as record:
         convert_repository(npe1_repo)
-    msg = record[0].message
-    assert "Cannot auto-update setup.py, please edit setup.py as follows" in str(msg)
-    assert "npe1-plugin = npe1_module:napari.yaml" in str(msg)
+
+    msg = str(record[0].message)
+    assert "Failed to convert napari_provide_sample_data in 'npe1-plugin'" in msg
+    assert "could not get resolvable python name" in msg
+    msg = str(record[1].message)
+    assert "Cannot auto-update setup.py, please edit setup.py as follows" in msg
+    assert "npe1-plugin = npe1_module:napari.yaml" in msg
 
 
 def test_conversion_missing():

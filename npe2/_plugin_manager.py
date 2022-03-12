@@ -272,8 +272,10 @@ class PluginManager:
                     self.register(result.manifest, warn_disabled=False)
 
     def index_npe1_shims(self):
-        while self._shims:
-            self._contrib.index_contributions(self._shims.pop())
+        with warnings.catch_warnings():
+            warnings.showwarning = lambda e, *_: print(str(e).split(" Please add")[0])
+            while self._shims:
+                self._contrib.index_contributions(self._shims.pop())
 
     def register(self, manifest: PluginManifest, warn_disabled=True) -> None:
         """Register a plugin manifest"""

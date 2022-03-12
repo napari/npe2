@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
 
 R = TypeVar("R")
+SHIM_NAME_PREFIX = "__npe1shim__."
 
 
 # TODO: add ParamSpec when it's supported better by mypy
@@ -185,19 +186,24 @@ def _import_npe1_shim(shim_name: str) -> Any:
     IndexError
         If len(<hook_python_name>()) <= <index>
     """
-    assert shim_name.startswith("__npe1shim__."), "Invalid shim name"
-    python_name, idx = shim_name[13:].rsplit("_", maxsplit=1)
+
+    assert shim_name.startswith(SHIM_NAME_PREFIX), f"Invalid shim name: {shim_name}"
+    python_name, idx = shim_name[13:].rsplit("_", maxsplit=1)  # TODO, make a function
     index = int(idx)
 
     hook = import_python_name(python_name)
     result = hook()
+    if isinstance(result, dict):
+        # things like sample_data hookspec return a dict, in which case we want the
+        # "idxth" item in the dict (assumes ordered dict, which is safe now)
+        result = list(result.values())
     if not isinstance(result, list):
         result = [result]
 
     try:
         out = result[index]
-    except IndexError:
-        raise IndexError(f"invalid npe1 shim index {index} for hook {hook}")
+    except IndexError as e:
+        raise IndexError(f"invalid npe1 shim index {index} for hook {hook}") from e
 
     if "dock_widget" in python_name and isinstance(out, tuple):
         return out[0]
@@ -210,7 +216,7 @@ def import_python_name(python_name: Union[PythonName, str]) -> Any:
 
     from . import _validators
 
-    if python_name.startswith("__npe1shim__."):
+    if python_name.startswith(SHIM_NAME_PREFIX):
         return _import_npe1_shim(python_name)
 
     _validators.python_name(python_name)  # shows the best error message
@@ -261,7 +267,7 @@ def merge_manifests(manifests: Sequence[PluginManifest]):
 def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dict:
     _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
     if not _contribs:
-        return {}
+        return {}  # pragma: no cover
 
     out = _contribs[0].dict(exclude_unset=True)
     if len(_contribs) > 1:

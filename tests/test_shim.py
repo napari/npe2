@@ -1,10 +1,13 @@
+from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 
 from npe2 import PluginManager
-from npe2.manifest import _npe1_shim
+from npe2.manifest import _npe1_shim, utils
+from npe2.manifest.sample_data import SampleDataGenerator
 
 
 def test_shim_no_npe1():
@@ -94,3 +97,23 @@ def test_npe1_shim_cache(uses_npe1_plugin, mock_cache: Path):
         assert mf._cache_path().exists()
         _npe1_shim.clear_cache(names=["npe1-plugin"])
         assert not mf._cache_path().exists()
+
+
+def test_shim_pyname(uses_npe1_plugin, mock_cache):
+    """Test that objects defined locally in npe1 hookspecs can be retrieved."""
+    pm = PluginManager.instance()
+    pm.discover()
+    pm.index_npe1_shims()
+    mf = pm.get_manifest("npe1-plugin")
+    assert isinstance(mf, _npe1_shim.NPE1Shim)
+    samples = mf.contributions.sample_data
+    assert samples
+    sample_generator = next(s for s in samples if s.key == "local_data")
+    assert isinstance(sample_generator, SampleDataGenerator)
+
+    with patch.object(utils, "_import_npe1_shim", wraps=utils._import_npe1_shim) as m:
+        func = sample_generator.get_callable()
+        assert isinstance(func, partial)  # this is how it was defined in npe1-plugin
+        pyname = "__npe1shim__.npe1_module:napari_provide_sample_data_1"
+        m.assert_called_once_with(pyname)
+        assert np.array_equal(func(), np.ones((4, 4)))

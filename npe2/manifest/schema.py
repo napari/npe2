@@ -418,6 +418,8 @@ def discovery_blocked():
 
 @contextmanager
 def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
+    if paths and (not isinstance(paths, Sequence) or isinstance(paths, str)):
+        raise TypeError("paths must be a sequence of strings")  # pragma: no cover
     for p in reversed(paths):
         sys.path.insert(0, str(p))
     try:

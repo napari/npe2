@@ -25,8 +25,9 @@ from typing import (
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
-from npe2.manifest.utils import import_python_name, merge_manifests
+from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
 from npe2.manifest.widgets import WidgetContribution
+from npe2.types import WidgetCreator
 
 try:
     from importlib import metadata
@@ -208,7 +209,9 @@ class HookImplParser:
                 try:
                     getattr(self, impl.specname)(impl)
                 except Exception as e:  # pragma: no cover
-                    warnings.warn(f"Failed to convert {impl.specname}: {e}")
+                    warnings.warn(
+                        f"Failed to convert {impl.specname} in {self.package!r}: {e}"
+                    )
 
     def napari_experimental_provide_theme(self, impl: HookImplementation):
         ThemeDict = Dict[str, Union[str, Tuple, List]]
@@ -240,9 +243,9 @@ class HookImplParser:
 
     def napari_provide_sample_data(self, impl: HookImplementation):
         module = sys.modules[impl.function.__module__.split(".", 1)[0]]
-
-        samples: Dict[str, Union[dict, str, Callable]] = impl.function()
-        for key, sample in samples.items():
+        hook = impl.function
+        samples: Dict[str, Union[dict, str, Callable]] = hook()
+        for idx, (key, sample) in enumerate(samples.items()):
             _sample: Union[str, Callable]
             if isinstance(sample, dict):
                 display_name = sample.get("display_name")
@@ -256,9 +259,12 @@ class HookImplParser:
             if callable(_sample):
                 # let these raise exceptions here immediately if they don't validate
                 id = f"{self.package}.data.{_key}"
+                pyname = _python_name(
+                    _sample, hook, shim_idx=idx if self.shim else None
+                )
                 cmd_contrib = CommandContribution(
                     id=id,
-                    python_name=_python_name(_sample),
+                    python_name=pyname,
                     title=f"{key} sample",
                 )
                 self.contributions["commands"].append(cmd_contrib)
@@ -306,6 +312,8 @@ class HookImplParser:
         if not isinstance(items, list):
             items = [items]  # pragma: no cover
 
+        # "wdg_creator" will be the function given by the plugin that returns a widget
+        # while `impl` is the hook implementation that returned all the `wdg_creators`
         for idx, item in enumerate(items):
             if isinstance(item, tuple):
                 wdg_creator = item[0]
@@ -333,12 +341,16 @@ class HookImplParser:
 
     def _create_widget_contrib(
         self,
-        wdg_creator,
+        wdg_creator: WidgetCreator,
         display_name: str,
         idx: int,
         hook: Callable,
     ):
-        py_name = _python_name(wdg_creator, self.shim, hook, idx)
+        # we provide both the wdg_creator object itself, as well as the hook impl that
+        # returned it... In the case that we can't get an absolute python name to the
+        # wdg_creator itself (e.g. it's defined in a local scope), then the py_name
+        # will use the hookimpl itself, and the index of the object returned.
+        py_name = _python_name(wdg_creator, hook, shim_idx=idx if self.shim else None)
 
         if not py_name:  # pragma: no cover
             raise ValueError(
@@ -359,8 +371,8 @@ class HookImplParser:
 
     def napari_get_writer(self, impl: HookImplementation):
         warnings.warn(
-            "Found a multi-layer writer, but it's not convertable. "
-            "Please add the writer manually."
+            f"Found a multi-layer writer in {self.package!r} - {impl.specname!r}, "
+            "but it's not convertable. Please add the writer manually."
         )
         return NotImplemented  # pragma: no cover
 
@@ -413,13 +425,20 @@ def _safe_key(key: str) -> str:
     )
 
 
-def _python_name(obj: Any, shim=False, hook: Callable = None, idx: int = None) -> str:
+def _python_name(
+    obj: Any, hook: Callable = None, shim_idx: Optional[int] = None
+) -> str:
     """Get resolvable python name for `obj`
+
 
     Parameters
     ----------
-    obj : [type]
+    obj : Any
         a python obj
+    hook : Callable, optional
+        _description_, by default None
+    shim_idx : int, optional
+        _description_, by default None
 
     Returns
     -------
@@ -453,8 +472,10 @@ def _python_name(obj: Any, shim=False, hook: Callable = None, idx: int = None) -
                         break
 
     if not (mod_name and obj_name):
-        if shim and hook and idx is not None:
-            return f"__npe1shim__.{_python_name(hook)}_{idx}"
+        # we weren't able to resolve an absolute name... if we are shimming, then we
+        # can create a special py_name of the form `__npe1shim__.hookfunction_idx`
+        if hook and shim_idx is not None:
+            return f"{SHIM_NAME_PREFIX}{_python_name(hook)}_{shim_idx}"
         else:
             raise AttributeError(f"could not get resolvable python name for {obj}")
 
