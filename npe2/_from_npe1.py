@@ -552,10 +552,8 @@ class _SetupVisitor(ast.NodeVisitor):
             return  # pragma: no cover
         for kw in node.keywords:
             if kw.arg == "name":
-                self._name = (
-                    getattr(kw.value, "value", "")
-                    or getattr(kw.value, "id", "")
-                    or getattr(kw.value, "s", "")  # py3.7
+                self._name = getattr(kw.value, "value", "") or getattr(
+                    kw.value, "id", ""
                 )
 
             if kw.arg == "entry_points":
