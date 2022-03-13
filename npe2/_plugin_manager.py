@@ -285,6 +285,14 @@ class PluginManager:
             self._contrib.index_contributions(manifest)
         self.events.plugins_registered.emit({manifest})
 
+    def unregister(self, key: PluginName):
+        if key not in self._manifests:
+            raise ValueError(f"No registered plugin named {key!r}")
+        self.deactivate(key)
+        self._contrib.remove_contributions(key)
+        self._manifests.pop(key)
+        # self.events.registration_changed.emit({}, {key})
+
     def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.
 

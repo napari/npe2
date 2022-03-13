@@ -6,6 +6,7 @@ __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
 
 from ._plugin_manager import PluginContext, PluginManager
+from ._tmp_plugin import TemporaryPlugin
 from .io_utils import read, write
 from .manifest import PluginManifest
 from .manifest.package_metadata import PackageMetadata
@@ -15,6 +16,7 @@ __all__ = [
     "PluginManager",
     "PluginContext",
     "PackageMetadata",
+    "TemporaryPlugin",
     "write",
     "read",
 ]
