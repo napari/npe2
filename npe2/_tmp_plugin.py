@@ -192,6 +192,23 @@ class ContributionDecorators:
 
 
 class TemporaryPlugin:
+    """A context manager that creates and modifies temporary plugin contributions.
+
+    Parameters
+    ----------
+    name : str
+        _description_, by default "temp-plugin"
+    plugin_manager : Optional[PluginManager]
+        A plugin manager instance with which to associate this plugin. If `None` (the
+        default), the global `PluginManager.instance()` will be used.
+
+    Examples
+    --------
+    >>> with TemporaryPlugin('name') as p:
+    >>>     @p.contribute.sample_data
+    >>>     def make_data() -> np.ndarray: ...
+    """
+
     def __init__(
         self,
         name: str = "temp-plugin",
@@ -201,15 +218,15 @@ class TemporaryPlugin:
         self.contribute = ContributionDecorators(self)
         self._pm = plugin_manager
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Remove this plugin from its plugin manager"""
         self.plugin_manager.unregister(self.manifest.name)
 
-    def register(self):
+    def register(self) -> None:
         """Remove this plugin from its plugin manager"""
         self.plugin_manager.register(self.manifest)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear contributions."""
         self.plugin_manager._contrib.remove_contributions(self.manifest.name)
         self.manifest.contributions = ContributionPoints()
@@ -223,7 +240,7 @@ class TemporaryPlugin:
         return self._pm or PluginManager.instance()
 
     @plugin_manager.setter
-    def plugin_manager(self, pm: Optional[PluginManager]):
+    def plugin_manager(self, pm: Optional[PluginManager]) -> None:
         """Set the plugin manager this plugin is registered in."""
         if pm is self._pm:  # pragma: no cover
             return
@@ -239,9 +256,9 @@ class TemporaryPlugin:
         for k, v in my_cmds.items():
             self.plugin_manager.commands.register(k, v)
 
-    def __enter__(self):
+    def __enter__(self) -> TemporaryPlugin:
         self.register()
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_) -> None:
         self.cleanup()
