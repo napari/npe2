@@ -18,12 +18,11 @@ from typing import (
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Literal
 
-from npe2.manifest.contributions import ContributionPoints
-
 from ._plugin_manager import PluginManager
 from .manifest.commands import CommandContribution
+from .manifest.contributions import ContributionPoints
 from .manifest.readers import ReaderContribution
-from .manifest.sample_data import SampleDataGenerator, SampleDataURI
+from .manifest.sample_data import SampleDataGenerator
 from .manifest.schema import PluginManifest
 from .manifest.widgets import WidgetContribution
 from .manifest.writers import WriterContribution
@@ -32,15 +31,14 @@ C = TypeVar("C", bound=BaseModel)
 T = TypeVar("T", bound=Callable[..., Any])
 
 COMMAND_PARAMS = inspect.signature(CommandContribution).parameters
-# TODO: pull this map from ContributionPoints
-CONTRIB_NAMES: Dict[Type[BaseModel], str] = {
-    CommandContribution: "commands",
-    ReaderContribution: "readers",
-    WriterContribution: "writers",
-    WidgetContribution: "widgets",
-    SampleDataGenerator: "sample_data",
-    SampleDataURI: "sample_data",
-}
+# a mapping of contribution type to string name in the ContributionPoints
+# e.g. {ReaderContribution: 'readers'}
+CONTRIB_NAMES = {v.type_: k for k, v in ContributionPoints.__fields__.items()}
+for key in list(CONTRIB_NAMES):
+    if getattr(key, "__origin__", "") is Union:
+        v = CONTRIB_NAMES.pop(key)
+        for t in key.__args__:
+            CONTRIB_NAMES[t] = v
 
 
 class TemporaryPlugin:
