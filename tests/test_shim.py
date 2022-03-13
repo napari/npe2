@@ -1,4 +1,5 @@
 from functools import partial
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -15,7 +16,7 @@ def test_shim_no_npe1():
     assert not pm._shims
 
 
-def test_npe1_shim(uses_npe1_plugin):
+def test_npe1_shim(uses_npe1_plugin, mock_cache: Path):
     """Test that the plugin manager detects npe1 plugins, and can index contribs"""
     pm = PluginManager()
     pm.discover()
@@ -29,6 +30,8 @@ def test_npe1_shim(uses_npe1_plugin):
     assert mf.package_metadata.name == "npe1-plugin"
 
     # it's currently unindexed and unstored
+    assert not mf._cache_path().exists()
+    assert not list(mock_cache.iterdir())
 
     with patch.object(
         _npe1_shim,
@@ -38,12 +41,55 @@ def test_npe1_shim(uses_npe1_plugin):
         pm.index_npe1_shims()
         # the shim has been cleared by the indexing
         assert len(pm._shims) == 0
-        # manifest_from_npe1 was called
+        # manifest_from_npe1 was called and the result was cached
         mock.assert_called_once_with(mf._dist, shim=True)
+        assert mf._cache_path().exists()
         # NOTE: accessing the `.contributions` object would have also triggered
         # importing, like pm.index_npe1_shims() above, but it would not have
         # injected the contributions into the pm._contrib object.
         assert mf.contributions.sample_data
+
+        mock.reset_mock()
+        # clear and rediscover... this time we expect the cache to kick in
+        pm.discover(clear=True)
+        assert len(pm._shims) == 1
+        pm.index_npe1_shims()
+        assert len(pm._shims) == 0
+        mock.assert_not_called()
+
+
+def test_npe1_shim_cache(uses_npe1_plugin, mock_cache: Path):
+    """Test that we can clear cache, etc.."""
+    pm = PluginManager()
+    pm.discover()
+
+    with patch.object(
+        _npe1_shim,
+        "manifest_from_npe1",
+        wraps=_npe1_shim.manifest_from_npe1,  # type: ignore
+    ) as mock:
+
+        # if we clear the cache, it should import again
+        mf = pm.get_manifest("npe1-plugin")
+        assert isinstance(mf, _npe1_shim.NPE1Shim)
+        pm.index_npe1_shims()
+        mock.assert_called_once_with(mf._dist, shim=True)
+        assert mf._cache_path().exists()
+
+        _npe1_shim.clear_cache()
+        assert not mf._cache_path().exists()
+
+        mock.reset_mock()
+        pm.discover(clear=True)
+        pm.index_npe1_shims()
+        mf = pm.get_manifest("npe1-plugin")
+        assert isinstance(mf, _npe1_shim.NPE1Shim)
+        mock.assert_called_once_with(mf._dist, shim=True)
+        assert mf._cache_path().exists()
+        _npe1_shim.clear_cache(names=["not-our-plugin"])
+        assert mf._cache_path().exists()
+        _npe1_shim.clear_cache(names=["npe1-plugin"])
+        assert not mf._cache_path().exists()
 
 
 def _get_mf() -> _npe1_shim.NPE1Shim:
@@ -55,7 +101,7 @@ def _get_mf() -> _npe1_shim.NPE1Shim:
     return mf
 
 
-def test_shim_pyname_sample_data(uses_npe1_plugin):
+def test_shim_pyname_sample_data(uses_npe1_plugin, mock_cache):
     """Test that objects defined locally in npe1 hookspecs can be retrieved."""
     mf = _get_mf()
     samples = mf.contributions.sample_data
@@ -77,7 +123,7 @@ def test_shim_pyname_sample_data(uses_npe1_plugin):
     assert np.array_equal(func(), ONES)
 
 
-def test_shim_pyname_dock_widget(uses_npe1_plugin):
+def test_shim_pyname_dock_widget(uses_npe1_plugin, mock_cache):
     """Test that objects defined locally in npe1 hookspecs can be retrieved."""
     mf = _get_mf()
     widgets = mf.contributions.widgets
