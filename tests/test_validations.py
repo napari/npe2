@@ -36,6 +36,12 @@ def _mutator_python_name_no_colon(data):
     data["contributions"]["commands"][0]["python_name"] = "this.has.no.colon"
 
 
+def _mutator_python_name_locals(data):
+    """functions defined in local scopes are not yet supported"""
+    assert "contributions" in data
+    data["contributions"]["commands"][0]["python_name"] = "mod:func.<locals>.another"
+
+
 def _mutator_python_name_starts_with_number(data):
     """'1starts_with_number' is not a valid python_name."""
     assert "contributions" in data
@@ -81,6 +87,7 @@ def _mutator_schema_version_too_high(data):
         _mutator_invalid_package_name2,
         _mutator_command_not_begin_with_package_name,
         _mutator_python_name_no_colon,
+        _mutator_python_name_locals,
         _mutator_python_name_starts_with_number,
         _mutator_no_contributes_extra_field,
         _mutator_writer_requires_non_empty_layer_types,

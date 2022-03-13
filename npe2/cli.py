@@ -167,7 +167,10 @@ def cache(
             typer.secho("Cleared these files from cache:")
             typer.secho(nf, fg=typer.colors.RED)
         else:
-            typer.secho("(Nothing to clear)")
+            msg = "Nothing to clear"
+            if names:
+                msg += f" for plugins: {','.join(names)}"
+            typer.secho(msg, fg=typer.colors.RED)
 
         typer.Exit()
     if list_:
@@ -176,12 +179,15 @@ def cache(
             files = [f for f in files if any(f.name.startswith(n) for n in names)]
 
         if not files:
-            typer.secho("Nothing cached")
+            if names:
+                typer.secho(f"Nothing cached for plugins: {','.join(names)}")
+            else:
+                typer.secho("Nothing cached")
             typer.Exit()
         for fname in files:
             mf = PluginManifest.from_file(fname)
             if verbose:
-                _pprint_yaml(mf.yaml())
+                _pprint_yaml(mf.yaml())  # pragma: no cover
             else:
                 d = distribution(mf.name)
                 typer.secho(f"{mf.name}: {d.version}", fg=typer.colors.GREEN)

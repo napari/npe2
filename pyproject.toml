@@ -12,6 +12,4 @@ ignore = ["npe2/_version.py", ".pre-commit-config.yaml", ".github_changelog_gene
 [tool.pytest.ini_options]
 filterwarnings = [
     "error",
-    # still not working?
-    'ignore:MetaPathFinder.find_module\(\) is deprecated:DeprecationWarning',
 ]

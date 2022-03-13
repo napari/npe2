@@ -96,14 +96,21 @@ def test_cli_cache_list_empty(mock_cache):
 
 def test_cli_cache_list_full(uses_npe1_plugin, mock_cache):
     (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
-    result = runner.invoke(app, ["cache", "--list"], catch_exceptions=False)
+    result = runner.invoke(app, ["cache", "--list"])
     assert result.stdout == "npe1-plugin: 0.1.0\n"
+    assert result.exit_code == 0
+
+
+def test_cli_cache_list_named(uses_npe1_plugin, mock_cache):
+    (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
+    result = runner.invoke(app, ["cache", "--list", "not-a-plugin"])
+    assert result.stdout == "Nothing cached for plugins: not-a-plugin\n"
     assert result.exit_code == 0
 
 
 def test_cli_cache_clear_empty(mock_cache):
     result = runner.invoke(app, ["cache", "--clear"])
-    assert "(Nothing to clear)" in result.stdout
+    assert "Nothing to clear" in result.stdout
     assert result.exit_code == 0
 
 
@@ -112,4 +119,11 @@ def test_cli_cache_clear_full(mock_cache):
     result = runner.invoke(app, ["cache", "--clear"])
     assert "Cleared these files from cache" in result.stdout
     assert "- npe1-plugin.yaml" in result.stdout
+    assert result.exit_code == 0
+
+
+def test_cli_cache_clear_named(mock_cache):
+    (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
+    result = runner.invoke(app, ["cache", "--clear", "not-a-plugin"])
+    assert result.stdout == "Nothing to clear for plugins: not-a-plugin\n"
     assert result.exit_code == 0

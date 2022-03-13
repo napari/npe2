@@ -69,6 +69,9 @@ def uses_npe1_plugin(npe1_repo):
     import site
 
     class Importer(abc.MetaPathFinder):
+        def find_spec(self, *_, **__):
+            return None
+
         def find_distributions(self, ctx, **k):
             if ctx.name == "npe1-plugin":
                 pth = npe1_repo / "npe1-plugin-0.0.1.dist-info"

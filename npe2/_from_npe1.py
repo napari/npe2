@@ -25,7 +25,7 @@ from typing import (
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
-from npe2.manifest.utils import SHIM_NAME_PREFIX, merge_manifests
+from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
 from npe2.manifest.widgets import WidgetContribution
 from npe2.types import WidgetCreator
 
@@ -276,8 +276,7 @@ class HookImplParser:
 
     def napari_experimental_provide_function(self, impl: HookImplementation):
         items: Union[Callable, List[Callable]] = impl.function()
-        if not isinstance(items, list):
-            items = [items]
+        items = [items] if not isinstance(items, list) else items
 
         for idx, item in enumerate(items):
             try:
@@ -428,7 +427,7 @@ def _safe_key(key: str) -> str:
 def _python_name(
     obj: Any, hook: Callable = None, shim_idx: Optional[int] = None
 ) -> str:
-    """Get resolvable python name for `obj`
+    """Get resolvable python name for `obj` returned from an npe1 `hook` implentation.
 
     Parameters
     ----------
@@ -456,7 +455,7 @@ def _python_name(
     obj_name: Optional[str] = None
     mod_name: Optional[str] = None
     # first, check the global namespace of the module where the hook was declared
-    # if we find `obj` itself
+    # if we find `obj` itself, we can just use it.
     if hasattr(hook, "__module__"):
         hook_mod = sys.modules.get(hook.__module__)
         if hook_mod:
@@ -466,32 +465,28 @@ def _python_name(
                     mod_name = hook_mod.__name__
                     break
 
-    # if that didn't work
+    # if that didn't work get the qualname of the object
+    # and, if it's not a locally defined qualname, get the name of the module
+    # in which it is defined
     if not (mod_name and obj_name):
         obj_name = getattr(obj, "__qualname__", "")
-        if obj_name and "<locals>" in obj_name:
-            obj_name = None
-        else:
+        if obj_name and "<locals>" not in obj_name:
             mod = inspect.getmodule(obj) or inspect.getmodule(hook)
             if mod:
                 mod_name = mod.__name__
-                if not obj_name:
-                    for local_name, _obj in vars(mod).items():
-                        if _obj is obj:  # pragma: no cover
-                            obj_name = local_name
-                            break
 
-    if not (mod_name and obj_name):
+    if not (mod_name and obj_name) and (hook and shim_idx is not None):
         # we weren't able to resolve an absolute name... if we are shimming, then we
         # can create a special py_name of the form `__npe1shim__.hookfunction_idx`
-        if hook and shim_idx is not None:
-            return f"{SHIM_NAME_PREFIX}{_python_name(hook)}_{shim_idx}"
-        else:
-            raise AttributeError(f"could not get resolvable python name for {obj}")
+        return f"{SHIM_NAME_PREFIX}{_python_name(hook)}_{shim_idx}"
 
+    if obj_name and "<locals>" in obj_name:
+        raise ValueError("functions defined in local scopes are not yet supported.")
+    if not mod_name:
+        raise AttributeError(f"could not get resolvable python name for {obj}")
     pyname = f"{mod_name}:{obj_name}"
-    # if import_python_name(pyname) is not obj:  # pragma: no cover
-    # raise AttributeError(f"could not get resolvable python name for {obj}")
+    if import_python_name(pyname) is not obj:  # pragma: no cover
+        raise AttributeError(f"could not get resolvable python name for {obj}")
     return pyname
 
 
