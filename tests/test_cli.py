@@ -63,7 +63,7 @@ def test_cli_convert_repo_dry_run(npe1_repo, mock_npe1_pm_with_plugin):
 def test_cli_convert_svg():
     result = runner.invoke(app, ["convert", "napari-svg"])
     assert "Some issues occured:" in result.stdout
-    assert "Found a multi-layer writer, but it's not convertable" in result.stdout
+    assert "Found a multi-layer writer in 'napari-svg'" in result.stdout
     assert result.exit_code == 0
 
 

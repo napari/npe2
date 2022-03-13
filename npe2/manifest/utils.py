@@ -10,11 +10,15 @@ from typing import (
     Dict,
     Generic,
     Optional,
+    Sequence,
     SupportsInt,
     Tuple,
     TypeVar,
     Union,
 )
+
+if TYPE_CHECKING:
+    from npe2.manifest.schema import PluginManifest
 
 from ..types import PythonName
 
@@ -22,6 +26,7 @@ if TYPE_CHECKING:
     from typing_extensions import Protocol
 
     from .._command_registry import CommandRegistry
+    from .contributions import ContributionPoints
 
     class ProvidesCommand(Protocol):
         command: str
@@ -31,6 +36,7 @@ if TYPE_CHECKING:
 
 
 R = TypeVar("R")
+SHIM_NAME_PREFIX = "__npe1shim__."
 
 
 # TODO: add ParamSpec when it's supported better by mypy
@@ -153,16 +159,131 @@ class Version:
         return v
 
 
-def import_python_name(python_name: PythonName) -> Any:
+def _import_npe1_shim(shim_name: str) -> Any:
+    """Import npe1 shimmed python_name
+
+    Some objects returned by npe1 hooks (such as locally defined partials or other
+    objects) don't have globally accessible python names. In such cases, we create
+    a "shim" python_name of the form:
+
+    `__npe1shim__.<hook_python_name>_<index>`
+
+    The implication is that the hook should be imported, called, and indexed to return
+    the corresponding item in the hook results.
+
+    Parameters
+    ----------
+    shim_name : str
+        A string in the form `__npe1shim__.<hook_python_name>_<index>`
+
+    Returns
+    -------
+    Any
+        The <index>th object returned from the callable <hook_python_name>.
+
+    Raises
+    ------
+    IndexError
+        If len(<hook_python_name>()) <= <index>
+    """
+
+    assert shim_name.startswith(SHIM_NAME_PREFIX), f"Invalid shim name: {shim_name}"
+    python_name, idx = shim_name[13:].rsplit("_", maxsplit=1)  # TODO, make a function
+    index = int(idx)
+
+    hook = import_python_name(python_name)
+    result = hook()
+    if isinstance(result, dict):
+        # things like sample_data hookspec return a dict, in which case we want the
+        # "idxth" item in the dict (assumes ordered dict, which is safe now)
+        result = list(result.values())
+    if not isinstance(result, list):
+        result = [result]  # pragma: no cover
+
+    try:
+        out = result[index]
+    except IndexError as e:  # pragma: no cover
+        raise IndexError(f"invalid npe1 shim index {index} for hook {hook}") from e
+
+    if "dock_widget" in python_name and isinstance(out, tuple):
+        return out[0]
+    if "sample_data" in python_name and isinstance(out, dict):
+        # this was a nested sample data
+        return out.get("data")
+
+    return out
+
+
+def import_python_name(python_name: Union[PythonName, str]) -> Any:
     from importlib import import_module
 
-    from ._validators import PYTHON_NAME_PATTERN
+    from . import _validators
 
-    match = PYTHON_NAME_PATTERN.match(python_name)
-    if not match:  # pragma: no cover
-        raise ValueError(f"Invalid python name: {python_name}")
+    if python_name.startswith(SHIM_NAME_PREFIX):
+        return _import_npe1_shim(python_name)
 
-    module_name, funcname = match.groups()
+    _validators.python_name(python_name)  # shows the best error message
+    match = _validators.PYTHON_NAME_PATTERN.match(python_name)
+    module_name, funcname = match.groups()  # type: ignore [union-attr]
 
     mod = import_module(module_name)
     return getattr(mod, funcname)
+
+
+def deep_update(dct: dict, merge_dct: dict, copy=True) -> dict:
+    """Merge possibly nested dicts"""
+    from copy import deepcopy
+
+    _dct = deepcopy(dct) if copy else dct
+    for k, v in merge_dct.items():
+        if k in _dct and isinstance(dct[k], dict) and isinstance(v, dict):
+            deep_update(_dct[k], v, copy=False)
+        elif isinstance(v, list):
+            if k not in _dct:
+                _dct[k] = []
+            _dct[k].extend(v)
+        else:
+            _dct[k] = v
+    return _dct
+
+
+def merge_manifests(manifests: Sequence[PluginManifest]):
+    from npe2.manifest.schema import PluginManifest
+
+    if not manifests:
+        raise ValueError("Cannot merge empty sequence of manifests")
+    if len(manifests) == 1:
+        return manifests[0]
+
+    assert len({mf.name for mf in manifests}) == 1, "All manifests must have same name"
+    assert (
+        len({mf.package_version for mf in manifests}) == 1
+    ), "All manifests must have same version"
+    assert (
+        len({mf.display_name for mf in manifests}) == 1
+    ), "All manifests must have same display_name"
+
+    mf0 = manifests[0]
+    info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
+    info["contributions"] = merge_contributions([m.contributions for m in manifests])
+    return PluginManifest(**info)
+
+
+def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dict:
+    _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
+    if not _contribs:
+        return {}  # pragma: no cover
+
+    out = _contribs[0].dict(exclude_unset=True)
+    if len(_contribs) > 1:
+        for n, ctrb in enumerate(_contribs[1:]):
+            c = ctrb.dict(exclude_unset=True)
+            for cmd in c.get("commands", ()):
+                cmd["id"] = cmd["id"] + f"_{n + 2}"
+            for name, val in c.items():
+                if isinstance(val, list):
+                    for item in val:
+                        if "command" in item:
+                            item["command"] = item["command"] + f"_{n + 2}"
+            out = deep_update(out, c)
+    return out
