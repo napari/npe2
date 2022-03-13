@@ -43,6 +43,137 @@ CONTRIB_NAMES: Dict[Type[BaseModel], str] = {
 }
 
 
+class TemporaryPlugin:
+    """A context manager that creates and modifies temporary plugin contributions.
+
+    Parameters
+    ----------
+    name : str
+        _description_, by default "temp-plugin"
+    plugin_manager : Optional[PluginManager]
+        A plugin manager instance with which to associate this plugin. If `None` (the
+        default), the global `PluginManager.instance()` will be used.
+
+    Examples
+    --------
+    >>> with TemporaryPlugin('name') as p:
+    >>>     @p.contribute.sample_data
+    >>>     def make_data() -> np.ndarray: ...
+    """
+
+    def __init__(
+        self,
+        name: str = "temp-plugin",
+        plugin_manager: Optional[PluginManager] = None,
+    ) -> None:
+        self.manifest = PluginManifest(name=name)
+        self.contribute = ContributionDecorators(self)
+        self._pm = plugin_manager
+
+    def cleanup(self) -> None:
+        """Remove this plugin from its plugin manager"""
+        self.plugin_manager.unregister(self.manifest.name)
+
+    def register(self) -> None:
+        """Remove this plugin from its plugin manager"""
+        self.plugin_manager.register(self.manifest)
+
+    def clear(self) -> None:
+        """Clear contributions."""
+        self.plugin_manager._contrib.remove_contributions(self.manifest.name)
+        self.manifest.contributions = ContributionPoints()
+
+    @property
+    def plugin_manager(self) -> PluginManager:
+        """Return the plugin manager this plugin is registered in.
+
+        If unset, will use the global plugin manager instance.
+        """
+        return self._pm or PluginManager.instance()
+
+    @plugin_manager.setter
+    def plugin_manager(self, pm: Optional[PluginManager]) -> None:
+        """Set the plugin manager this plugin is registered in."""
+        if pm is self._pm:  # pragma: no cover
+            return
+
+        my_cmds: Dict[str, Callable] = {
+            k: v.function
+            for k, v in self.plugin_manager.commands._commands.items()
+            if k.startswith(self.manifest.name) and v.function
+        }
+        self.cleanup()
+        self._pm = pm
+        self.register()
+        for k, v in my_cmds.items():
+            self.plugin_manager.commands.register(k, v)
+
+    def __enter__(self) -> TemporaryPlugin:
+        self.register()
+        return self
+
+    def __exit__(self, *_) -> None:
+        self.cleanup()
+
+
+class ContributionDecorator(Generic[C]):
+    """Descriptor of a contribution decorator bound to a specific contribution type."""
+
+    def __init__(self, contrib_type: Type[C]) -> None:
+        self.contrib_type = contrib_type
+        self._name: Optional[str] = None
+
+    def __set_name__(self, owner: Type[Any], name: str) -> None:
+        if self._name is None:
+            self._name = name
+
+    @overload
+    def __get__(
+        self, decos: None, owner: Optional[Type[ContributionDecorators]] = None
+    ) -> ContributionDecorator:
+        ...
+
+    @overload
+    def __get__(
+        self,
+        decos: ContributionDecorators,
+        owner: Optional[Type[ContributionDecorators]] = None,
+    ) -> ContribDecoInstance:
+        ...
+
+    def __get__(
+        self,
+        decos: Optional[ContributionDecorators],
+        owner: Optional[Type[ContributionDecorators]] = None,
+    ) -> Union[ContributionDecorator, ContribDecoInstance]:
+        if decos is None:  # pragma: no cover
+            return self
+        inst = ContribDecoInstance(decos.plugin, self.contrib_type)
+        setattr(decos, cast(str, self._name), inst)
+        return inst
+
+
+class ContributionDecorators:
+    """A set of decorators that facilitate adding contributions to a TemporaryPlugin.
+
+    Examples
+    --------
+    >>> with TemporaryPlugin('name') as p:
+    >>>     @p.contribute.sample_data
+    >>>     def make_data() -> np.ndarray: ...
+    >>>
+    """
+
+    command = ContributionDecorator(CommandContribution)
+    reader = ContributionDecorator(ReaderContribution)
+    writer = ContributionDecorator(WriterContribution)
+    widget = ContributionDecorator(WidgetContribution)
+    sample_data = ContributionDecorator(SampleDataGenerator)
+
+    def __init__(self, plugin: TemporaryPlugin) -> None:
+        self.plugin = plugin
+
+
 class ContribDecoInstance(Generic[C]):
     """An actual instance of a contribution decorator.
 
@@ -131,134 +262,3 @@ class ContribDecoInstance(Generic[C]):
         if not self._mf.contributions.commands:
             self._mf.contributions.commands = []
         return self._mf.contributions.commands
-
-
-class ContributionDecorator(Generic[C]):
-    """Contribution decorator bound to a specific contribution type."""
-
-    def __init__(self, contrib_type: Type[C]) -> None:
-        self.contrib_type = contrib_type
-        self._name: Optional[str] = None
-
-    def __set_name__(self, owner: Type[Any], name: str) -> None:
-        if self._name is None:
-            self._name = name
-
-    @overload
-    def __get__(
-        self, decos: None, owner: Optional[Type[ContributionDecorators]] = None
-    ) -> ContributionDecorator:
-        ...
-
-    @overload
-    def __get__(
-        self,
-        decos: ContributionDecorators,
-        owner: Optional[Type[ContributionDecorators]] = None,
-    ) -> ContribDecoInstance:
-        ...
-
-    def __get__(
-        self,
-        decos: Optional[ContributionDecorators],
-        owner: Optional[Type[ContributionDecorators]] = None,
-    ) -> Union[ContributionDecorator, ContribDecoInstance]:
-        if decos is None:  # pragma: no cover
-            return self
-        inst = ContribDecoInstance(decos.plugin, self.contrib_type)
-        setattr(decos, cast(str, self._name), inst)
-        return inst
-
-
-class ContributionDecorators:
-    """A set of decorators that facilitate adding contributions to a TemporaryPlugin.
-
-    Examples
-    --------
-    >>> with TemporaryPlugin('name') as p:
-    >>>     @p.contribute.sample_data
-    >>>     def make_data() -> np.ndarray: ...
-    >>>
-    """
-
-    command = ContributionDecorator(CommandContribution)
-    reader = ContributionDecorator(ReaderContribution)
-    writer = ContributionDecorator(WriterContribution)
-    widget = ContributionDecorator(WidgetContribution)
-    sample_data = ContributionDecorator(SampleDataGenerator)
-
-    def __init__(self, plugin: TemporaryPlugin) -> None:
-        self.plugin = plugin
-
-
-class TemporaryPlugin:
-    """A context manager that creates and modifies temporary plugin contributions.
-
-    Parameters
-    ----------
-    name : str
-        _description_, by default "temp-plugin"
-    plugin_manager : Optional[PluginManager]
-        A plugin manager instance with which to associate this plugin. If `None` (the
-        default), the global `PluginManager.instance()` will be used.
-
-    Examples
-    --------
-    >>> with TemporaryPlugin('name') as p:
-    >>>     @p.contribute.sample_data
-    >>>     def make_data() -> np.ndarray: ...
-    """
-
-    def __init__(
-        self,
-        name: str = "temp-plugin",
-        plugin_manager: Optional[PluginManager] = None,
-    ) -> None:
-        self.manifest = PluginManifest(name=name)
-        self.contribute = ContributionDecorators(self)
-        self._pm = plugin_manager
-
-    def cleanup(self) -> None:
-        """Remove this plugin from its plugin manager"""
-        self.plugin_manager.unregister(self.manifest.name)
-
-    def register(self) -> None:
-        """Remove this plugin from its plugin manager"""
-        self.plugin_manager.register(self.manifest)
-
-    def clear(self) -> None:
-        """Clear contributions."""
-        self.plugin_manager._contrib.remove_contributions(self.manifest.name)
-        self.manifest.contributions = ContributionPoints()
-
-    @property
-    def plugin_manager(self) -> PluginManager:
-        """Return the plugin manager this plugin is registered in.
-
-        If unset, will use the global plugin manager instance.
-        """
-        return self._pm or PluginManager.instance()
-
-    @plugin_manager.setter
-    def plugin_manager(self, pm: Optional[PluginManager]) -> None:
-        """Set the plugin manager this plugin is registered in."""
-        if pm is self._pm:  # pragma: no cover
-            return
-
-        my_cmds: Dict[str, Callable] = {
-            k: v.function
-            for k, v in self.plugin_manager.commands._commands.items()
-            if k.startswith(self.manifest.name) and v.function
-        }
-        self.cleanup()
-        self._pm = pm
-        self.register()
-        for k, v in my_cmds.items():
-            self.plugin_manager.commands.register(k, v)
-
-    def __enter__(self) -> TemporaryPlugin:
-        self.register()
-        return self
-
-    def __exit__(self, *_) -> None:
-        self.cleanup()
