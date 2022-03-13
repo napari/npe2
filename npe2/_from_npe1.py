@@ -25,7 +25,7 @@ from typing import (
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
-from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
+from npe2.manifest.utils import SHIM_NAME_PREFIX, merge_manifests
 from npe2.manifest.widgets import WidgetContribution
 from npe2.types import WidgetCreator
 
@@ -278,6 +278,7 @@ class HookImplParser:
         items: Union[Callable, List[Callable]] = impl.function()
         if not isinstance(items, list):
             items = [items]
+
         for idx, item in enumerate(items):
             try:
 
@@ -285,7 +286,6 @@ class HookImplParser:
                 py_name = _python_name(
                     item, impl.function, shim_idx=idx if self.shim else None
                 )
-
                 docsum = item.__doc__.splitlines()[0] if item.__doc__ else None
                 cmd_contrib = CommandContribution(
                     id=cmd, python_name=py_name, title=docsum or item.__name__
@@ -453,7 +453,10 @@ def _python_name(
     AttributeError
         If a resolvable string cannot be found
     """
-    obj_name, mod_name = None, None
+    obj_name: Optional[str] = None
+    mod_name: Optional[str] = None
+    # first, check the global namespace of the module where the hook was declared
+    # if we find `obj` itself
     if hasattr(hook, "__module__"):
         hook_mod = sys.modules.get(hook.__module__)
         if hook_mod:
@@ -463,16 +466,20 @@ def _python_name(
                     mod_name = hook_mod.__name__
                     break
 
-    if not mod_name:
+    # if that didn't work
+    if not (mod_name and obj_name):
         obj_name = getattr(obj, "__qualname__", "")
-        mod = inspect.getmodule(obj) or inspect.getmodule(hook)
-        if mod:
-            mod_name = mod.__name__
-            if not obj_name:
-                for local_name, _obj in vars(mod).items():
-                    if _obj is obj:  # pragma: no cover
-                        obj_name = local_name
-                        break
+        if obj_name and "<locals>" in obj_name:
+            obj_name = None
+        else:
+            mod = inspect.getmodule(obj) or inspect.getmodule(hook)
+            if mod:
+                mod_name = mod.__name__
+                if not obj_name:
+                    for local_name, _obj in vars(mod).items():
+                        if _obj is obj:  # pragma: no cover
+                            obj_name = local_name
+                            break
 
     if not (mod_name and obj_name):
         # we weren't able to resolve an absolute name... if we are shimming, then we
@@ -483,8 +490,8 @@ def _python_name(
             raise AttributeError(f"could not get resolvable python name for {obj}")
 
     pyname = f"{mod_name}:{obj_name}"
-    if import_python_name(pyname) is not obj:  # pragma: no cover
-        raise AttributeError(f"could not get resolvable python name for {obj}")
+    # if import_python_name(pyname) is not obj:  # pragma: no cover
+    # raise AttributeError(f"could not get resolvable python name for {obj}")
     return pyname
 
 

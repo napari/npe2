@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
+from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
 from npe2.manifest import _npe1_shim, utils
@@ -91,13 +92,18 @@ def test_npe1_shim_cache(uses_npe1_plugin, mock_cache: Path):
         assert not mf._cache_path().exists()
 
 
-def test_shim_pyname_sample_data(uses_npe1_plugin, mock_cache):
-    """Test that objects defined locally in npe1 hookspecs can be retrieved."""
+def _get_mf() -> _npe1_shim.NPE1Shim:
     pm = PluginManager.instance()
     pm.discover()
     pm.index_npe1_shims()
     mf = pm.get_manifest("npe1-plugin")
     assert isinstance(mf, _npe1_shim.NPE1Shim)
+    return mf
+
+
+def test_shim_pyname_sample_data(uses_npe1_plugin, mock_cache):
+    """Test that objects defined locally in npe1 hookspecs can be retrieved."""
+    mf = _get_mf()
     samples = mf.contributions.sample_data
     assert samples
     sample_generator = next(s for s in samples if s.key == "local_data")
@@ -115,3 +121,28 @@ def test_shim_pyname_sample_data(uses_npe1_plugin, mock_cache):
     sample_generator = next(s for s in samples if s.display_name == "Some local ones")
     func = sample_generator.get_callable()
     assert np.array_equal(func(), ONES)
+
+
+def test_shim_pyname_dock_widget(uses_npe1_plugin, mock_cache):
+    """Test that objects defined locally in npe1 hookspecs can be retrieved."""
+    mf = _get_mf()
+    widgets = mf.contributions.widgets
+    assert widgets
+    wdg_contrib = next(w for w in widgets if w.display_name == "Local Widget")
+
+    with patch.object(utils, "_import_npe1_shim", wraps=utils._import_npe1_shim) as m:
+        caller = wdg_contrib.get_callable()
+        assert isinstance(caller, MagicFactory)
+        assert "<locals>.local_widget" in caller.keywords["function"].__qualname__
+        pyname = "__npe1shim__.npe1_module:napari_experimental_provide_dock_widget_2"
+        m.assert_called_once_with(pyname)
+
+        m.reset_mock()
+        wdg_contrib2 = next(
+            w for w in widgets if w.display_name == "local function" and w.autogenerate
+        )
+        caller2 = wdg_contrib2.get_callable()
+        assert isinstance(caller2, MagicFactory)
+        assert "<locals>.local_function" in caller2.keywords["function"].__qualname__
+        pyname = "__npe1shim__.npe1_module:napari_experimental_provide_function_1"
+        m.assert_called_once_with(pyname)
