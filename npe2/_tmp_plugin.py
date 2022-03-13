@@ -16,14 +16,15 @@ from typing import (
 )
 
 from pydantic import BaseModel, ValidationError
+from typing_extensions import Literal
 
-from npe2 import PluginManager, PluginManifest
-from npe2.manifest.commands import CommandContribution
-from npe2.manifest.contributions import ContributionPoints
-from npe2.manifest.readers import ReaderContribution
-from npe2.manifest.sample_data import SampleDataGenerator, SampleDataURI
-from npe2.manifest.widgets import WidgetContribution
-from npe2.manifest.writers import WriterContribution
+from ._plugin_manager import PluginManager
+from .manifest.commands import CommandContribution
+from .manifest.readers import ReaderContribution
+from .manifest.sample_data import SampleDataGenerator, SampleDataURI
+from .manifest.schema import PluginManifest
+from .manifest.widgets import WidgetContribution
+from .manifest.writers import WriterContribution
 
 C = TypeVar("C", bound=BaseModel)
 T = TypeVar("T", bound=Callable[..., Any])
@@ -54,6 +55,15 @@ class ContribDecoInstance(Generic[C]):
 
     # This is the actual decorator used when one calls, eg.
     # @npe2plugin.contribute.reader
+
+    @overload
+    def __call__(self, func: T, **kwargs) -> T:
+        ...
+
+    @overload
+    def __call__(self, func: Literal[None] = None, **kwargs) -> Callable[[T], T]:
+        ...
+
     def __call__(
         self, func: Optional[T] = None, **kwargs
     ) -> Union[T, Callable[[T], T]]:
@@ -62,10 +72,12 @@ class ContribDecoInstance(Generic[C]):
                 self._set_defaults(_func, _kwargs)
                 _kwargs = self._store_command(_func, _kwargs)
                 self._store_contrib(_kwargs)
+                self.plugin.plugin_manager._contrib.reindex(self._mf)
             except ValidationError as e:
+                # cleanup any added commands
                 if "command" in _kwargs:
                     new = [c for c in self.commands if c.id != _kwargs["command"]]
-                    self._contributions.commands = new
+                    self._mf.contributions.commands = new
                     self.plugin.plugin_manager.commands.unregister(_kwargs["command"])
                 raise AssertionError(
                     f"Invalid decorator for {self.contrib_type.__name__}.\n{e}"
@@ -87,7 +99,8 @@ class ContribDecoInstance(Generic[C]):
 
     def _store_contrib(self, kwargs: dict) -> None:
         """Store the new contribution in the manifest"""
-        self.contribution_list.append(self.contrib_type(**kwargs))
+        if self.contrib_type is not CommandContribution:
+            self.contribution_list.append(self.contrib_type(**kwargs))
 
     def _store_command(self, func: T, kwargs: dict) -> dict:
         """Create a new command contribution for `func`"""
@@ -101,21 +114,21 @@ class ContribDecoInstance(Generic[C]):
         return kwargs
 
     @property
-    def _contributions(self) -> ContributionPoints:
+    def _mf(self) -> PluginManifest:
         """Return all contributions in currently in the temporary plugin"""
-        return self.plugin.manifest.contributions
+        return self.plugin.manifest
 
     @property
     def contribution_list(self) -> List[C]:
-        if not getattr(self._contributions, self._contrib_name):
-            setattr(self._contributions, self._contrib_name, [])
-        return getattr(self._contributions, self._contrib_name)
+        if not getattr(self._mf.contributions, self._contrib_name):
+            setattr(self._mf.contributions, self._contrib_name, [])
+        return getattr(self._mf.contributions, self._contrib_name)
 
     @property
     def commands(self) -> List[CommandContribution]:
-        if not self._contributions.commands:
-            self._contributions.commands = []
-        return self._contributions.commands
+        if not self._mf.contributions.commands:
+            self._mf.contributions.commands = []
+        return self._mf.contributions.commands
 
 
 class ContributionDecorator(Generic[C]):
@@ -148,7 +161,7 @@ class ContributionDecorator(Generic[C]):
         decos: Optional[ContributionDecorators],
         owner: Optional[Type[ContributionDecorators]] = None,
     ) -> Union[ContributionDecorator, ContribDecoInstance]:
-        if decos is None:
+        if decos is None:  # pragma: no cover
             return self
         inst = ContribDecoInstance(decos.plugin, self.contrib_type)
         setattr(decos, cast(str, self._name), inst)
@@ -166,6 +179,7 @@ class ContributionDecorators:
     >>>
     """
 
+    command = ContributionDecorator(CommandContribution)
     reader = ContributionDecorator(ReaderContribution)
     writer = ContributionDecorator(WriterContribution)
     widget = ContributionDecorator(WidgetContribution)
@@ -204,10 +218,17 @@ class TemporaryPlugin:
     @plugin_manager.setter
     def plugin_manager(self, pm: Optional[PluginManager]):
         """Set the plugin manager this plugin is registered in."""
-        if pm is not self._pm:
-            self.cleanup()
-            self._pm = pm
-            self.register()
+        if pm is self._pm:
+            return
+        old_reg = self.plugin_manager._command_registry
+        self.cleanup()
+        self._pm = pm
+        self.register()
+        for id in list(old_reg._commands):
+            if id.startswith(self.manifest.name):
+                cmd = old_reg._commands.pop(id)
+                if cmd.function:
+                    self.plugin_manager.commands.register(id, cmd.function)
 
     def __enter__(self):
         self.register()

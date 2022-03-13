@@ -58,6 +58,10 @@ class _ContributionsIndex:
             list
         )
 
+    def reindex(self, manifest):
+        self.remove_contributions(manifest.name)
+        self.index_contributions(manifest)
+
     def index_contributions(self, manifest: PluginManifest):
         ctrb = manifest.contributions
         if not ctrb or manifest.name in self._indexed:
