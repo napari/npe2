@@ -97,3 +97,6 @@ def test_temporary_plugin_change_pm(tmp_plugin: TemporaryPlugin):
 
     assert "tmp.some_command" not in start_pm.commands
     assert "tmp.some_command" in new_pm.commands
+
+    tmp_plugin.clear()
+    assert not tmp_plugin.manifest.contributions.commands

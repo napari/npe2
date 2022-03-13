@@ -18,6 +18,8 @@ from typing import (
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Literal
 
+from npe2.manifest.contributions import ContributionPoints
+
 from ._plugin_manager import PluginManager
 from .manifest.commands import CommandContribution
 from .manifest.readers import ReaderContribution
@@ -207,6 +209,10 @@ class TemporaryPlugin:
         """Remove this plugin from its plugin manager"""
         self.plugin_manager.register(self.manifest)
 
+    def clear(self):
+        """Clear contributions."""
+        self.manifest.contributions = ContributionPoints()
+
     @property
     def plugin_manager(self) -> PluginManager:
         """Return the plugin manager this plugin is registered in.
@@ -218,7 +224,7 @@ class TemporaryPlugin:
     @plugin_manager.setter
     def plugin_manager(self, pm: Optional[PluginManager]):
         """Set the plugin manager this plugin is registered in."""
-        if pm is self._pm:
+        if pm is self._pm:  # pragma: no cover
             return
         old_reg = self.plugin_manager._command_registry
         self.cleanup()
