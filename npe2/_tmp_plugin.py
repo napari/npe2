@@ -211,6 +211,7 @@ class TemporaryPlugin:
 
     def clear(self):
         """Clear contributions."""
+        self.plugin_manager._contrib.remove_contributions(self.manifest.name)
         self.manifest.contributions = ContributionPoints()
 
     @property
@@ -226,15 +227,17 @@ class TemporaryPlugin:
         """Set the plugin manager this plugin is registered in."""
         if pm is self._pm:  # pragma: no cover
             return
-        old_reg = self.plugin_manager._command_registry
+
+        my_cmds: Dict[str, Callable] = {
+            k: v.function
+            for k, v in self.plugin_manager.commands._commands.items()
+            if k.startswith(self.manifest.name) and v.function
+        }
         self.cleanup()
         self._pm = pm
         self.register()
-        for id in list(old_reg._commands):
-            if id.startswith(self.manifest.name):
-                cmd = old_reg._commands.pop(id)
-                if cmd.function:
-                    self.plugin_manager.commands.register(id, cmd.function)
+        for k, v in my_cmds.items():
+            self.plugin_manager.commands.register(k, v)
 
     def __enter__(self):
         self.register()
