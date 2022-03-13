@@ -19,6 +19,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from npe2.manifest import PluginManifest
@@ -145,7 +146,10 @@ def manifest_from_npe1(
                 f"No package or entry point found with name {plugin!r}: "
                 f"\nFound packages (entry_point):\n{avail}"
             )
-    elif isinstance(plugin, metadata.Distribution):
+    elif hasattr(plugin, "entry_points") and hasattr(plugin, "metadata"):
+        plugin = cast(metadata.Distribution, plugin)
+        # don't use isinstance(Distribution), setuptools monkeypatches sys.meta_path:
+        # https://github.com/pypa/setuptools/issues/3169
         NPE1_ENTRY_POINT = "napari.plugin"
         plugin_name = package_name = plugin.metadata["Name"]
         modules = [

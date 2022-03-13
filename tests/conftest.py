@@ -71,10 +71,9 @@ def uses_npe1_plugin(npe1_repo):
     class Importer(abc.MetaPathFinder):
         def find_distributions(self, ctx, **k):
             if ctx.name == "npe1-plugin":
-                return [
-                    metadata.PathDistribution(npe1_repo / "npe1-plugin-0.0.1.dist-info")
-                ]
-            return []
+                pth = npe1_repo / "npe1-plugin-0.0.1.dist-info"
+                yield metadata.PathDistribution(pth)
+            return
 
     sys.meta_path.append(Importer())
     sys.path.append(str(npe1_repo))

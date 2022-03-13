@@ -8,3 +8,10 @@ write_to = "npe2/_version.py"
 
 [tool.check-manifest]
 ignore = ["npe2/_version.py", ".pre-commit-config.yaml", ".github_changelog_generator"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    # still not working?
+    'ignore:MetaPathFinder.find_module\(\) is deprecated:DeprecationWarning',
+]
