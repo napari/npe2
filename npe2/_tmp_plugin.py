@@ -131,27 +131,27 @@ class ContributionDecorator(Generic[C]):
 
     @overload
     def __get__(
-        self, fix_contribs: None, owner: Optional[Type[ContributionDecorators]] = None
+        self, decos: None, owner: Optional[Type[ContributionDecorators]] = None
     ) -> ContributionDecorator:
         ...
 
     @overload
     def __get__(
         self,
-        fix_contribs: ContributionDecorators,
+        decos: ContributionDecorators,
         owner: Optional[Type[ContributionDecorators]] = None,
     ) -> ContribDecoInstance:
         ...
 
     def __get__(
         self,
-        fix_contribs: Optional[ContributionDecorators],
+        decos: Optional[ContributionDecorators],
         owner: Optional[Type[ContributionDecorators]] = None,
     ) -> Union[ContributionDecorator, ContribDecoInstance]:
-        if fix_contribs is None:
+        if decos is None:
             return self
-        inst = ContribDecoInstance(fix_contribs.plugin, self.contrib_type)
-        setattr(fix_contribs, cast(str, self._name), inst)
+        inst = ContribDecoInstance(decos.plugin, self.contrib_type)
+        setattr(decos, cast(str, self._name), inst)
         return inst
 
 
