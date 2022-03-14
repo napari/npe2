@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from .._from_npe1 import manifest_from_npe1
 from .package_metadata import PackageMetadata
@@ -31,8 +32,14 @@ class NPE1Shim(PluginManifest):
         """imports and inspects package using npe1 plugin manager"""
 
         with discovery_blocked():
-            mf = manifest_from_npe1(self._dist, shim=True)
+            self._is_loaded = True  # if we fail once, we still don't try again.
+            try:
+                mf = manifest_from_npe1(self._dist, shim=True)
+            except Exception as e:
+                warnings.warn(
+                    f"Failed to detect contributions for np1e plugin {self.name!r}: {e}"
+                )
+                return
+
             self.contributions = mf.contributions
             logger.debug("%r npe1 shim imported", self.name)
-
-        self._is_loaded = True
