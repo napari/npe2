@@ -43,6 +43,7 @@ class PluginManifest(ImportExportModel):
     class Config:
         underscore_attrs_are_private = True
         extra = Extra.forbid
+        validate_assignment = True
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
@@ -53,6 +54,7 @@ class PluginManifest(ImportExportModel):
         ...,
         description="The name of the plugin. Though this field is mandatory, it *must*"
         " match the package `name` as defined in the python package metadata.",
+        allow_mutation=False,
     )
     _validate_name = validator("name", pre=True, allow_reuse=True)(
         _validators.package_name
