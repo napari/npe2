@@ -27,7 +27,7 @@ from psygnal import Signal, SignalGroup
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
 from .manifest.writers import LayerType, WriterContribution
-from .types import PathLike, PythonName
+from .types import PathLike, PythonName, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
@@ -53,6 +53,10 @@ class _ContributionsIndex:
         self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(
             list
         )
+
+    def reindex(self, manifest):
+        self.remove_contributions(manifest.name)
+        self.index_contributions(manifest)
 
     def index_contributions(self, manifest: PluginManifest):
         ctrb = manifest.contributions
@@ -105,8 +109,9 @@ class _ContributionsIndex:
         return self._commands[command_id][0]
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, path: Union[str, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
+        _ensure_str_or_seq_str(path)
         if not path:
             return
 
@@ -117,6 +122,8 @@ class _ContributionsIndex:
                 )
             path = path[0]
         path = str(path)
+
+        assert isinstance(path, str)
 
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
@@ -281,6 +288,13 @@ class PluginManager:
             self._contrib.index_contributions(manifest)
         self.events.plugins_registered.emit({manifest})
 
+    def unregister(self, key: PluginName):
+        if key not in self._manifests:
+            raise ValueError(f"No registered plugin named {key!r}")  # pragma: no cover
+        self.deactivate(key)
+        self._contrib.remove_contributions(key)
+        self._manifests.pop(key)
+
     def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.
 
@@ -290,6 +304,7 @@ class PluginManager:
             - bails if it's already activated
             - otherwise calls the plugin's activate() function, passing the Context.
             - imports any commands that were declared as python_name:
+            - emits an event
         """
         # TODO: this is an important function... should be carefully considered
         if key not in self._manifests:
@@ -312,11 +327,7 @@ class PluginManager:
             self._contexts.pop(key, None)
             raise type(e)(f"Activating plugin {key!r} failed: {e}") from e
 
-        if mf.contributions and mf.contributions.commands:
-            for cmd in mf.contributions.commands:
-                if cmd.python_name and cmd.id not in self.commands:
-                    self.commands.register(cmd.id, cmd.python_name)
-
+        self.commands.register_manifest(mf)
         ctx._activated = True
         self.events.activation_changed({mf.name}, {})
         return ctx
@@ -328,10 +339,18 @@ class PluginManager:
         return self._contexts[plugin_name]
 
     def deactivate(self, plugin_name: PluginName) -> None:
-        """Call the plugin's `on_deactivate` function."""
+        """Deactivate `plugin_name`
+
+        This does the following:
+            - unregisters all commands from the associated manifest
+            - calls the plugin's on_deactivate() func, passing the Context.
+            - calls and cleanup functions in the context's `_dispose` method.
+            - emits an event
+        """
+        mf = self._manifests[plugin_name]
+        self.commands.unregister_manifest(mf)
         if plugin_name not in self._contexts:
             return
-        mf = self._manifests[plugin_name]
         ctx = self._contexts.pop(plugin_name)
         if mf.on_deactivate:
             _call_python_name(mf.on_deactivate, args=(ctx,))
@@ -423,7 +442,7 @@ class PluginManager:
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, path: Union[PathLike, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
         return self._contrib.iter_compatible_readers(path)
 

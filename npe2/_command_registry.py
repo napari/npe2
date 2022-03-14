@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
 
 from psygnal import Signal
 
@@ -12,6 +12,9 @@ from .manifest.utils import import_python_name
 from .types import PythonName
 
 PDisposable = Callable[[], None]
+
+if TYPE_CHECKING:
+    from .manifest.schema import PluginManifest
 
 
 @dataclass
@@ -98,6 +101,20 @@ class CommandRegistry:
         if id in self._commands:
             del self._commands[id]
             self.command_unregistered.emit(id)
+
+    def register_manifest(self, mf: PluginManifest) -> None:
+        """Register all commands in a manifest"""
+        if mf.contributions and mf.contributions.commands:
+            for cmd in mf.contributions.commands:
+                if cmd.python_name and cmd.id not in self:
+                    self.register(cmd.id, cmd.python_name)
+
+    def unregister_manifest(self, mf: PluginManifest) -> None:
+        """Unregister all commands in a manifest"""
+        if mf.contributions and mf.contributions.commands:
+            for cmd in mf.contributions.commands:
+                if cmd.id in self:
+                    self.unregister(cmd.id)
 
     def get(self, id: str) -> Callable:
         """Get callable object for command `id`."""
