@@ -61,6 +61,7 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
 
 
 def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
+    tmp_path = str(tmp_path)
     assert not list(plugin_manager.iter_compatible_readers(""))
     reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
@@ -103,7 +104,7 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
 
 
 def test_directory_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
-    reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
+    reader = list(plugin_manager.iter_compatible_readers(str(tmp_path)))[0]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
