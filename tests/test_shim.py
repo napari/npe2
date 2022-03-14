@@ -3,11 +3,17 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
+import pytest
 from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
 from npe2.manifest import _npe1_shim, utils
 from npe2.manifest.sample_data import SampleDataGenerator
+
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata  # type: ignore
 
 
 def test_shim_no_npe1():
@@ -146,3 +152,23 @@ def test_shim_pyname_dock_widget(uses_npe1_plugin, mock_cache):
         assert "<locals>.local_function" in caller2.keywords["function"].__qualname__
         pyname = "__npe1shim__.npe1_module:napari_experimental_provide_function_1"
         m.assert_called_once_with(pyname)
+
+
+def test_shim_error_on_import():
+    class FakeDist(metadata.Distribution):
+        def read_text(self, filename):
+            if filename == "METADATA":
+                return "Name: fake-plugin\nVersion: 0.1.0\n"
+
+        def locate_file(self, *_):
+            ...
+
+    shim = _npe1_shim.NPE1Shim(FakeDist())
+
+    def err():
+        raise ImportError("No package found.")
+
+    with pytest.warns(UserWarning) as record:
+        with patch.object(_npe1_shim, "manifest_from_npe1", wraps=err):
+            shim.contributions
+    assert "Failed to detect contributions" in str(record[0])
