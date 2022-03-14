@@ -18,13 +18,15 @@ from pydantic import BaseModel, ValidationError
 from typing_extensions import Literal
 
 from ._plugin_manager import PluginManager
-from .manifest.commands import CommandContribution
-from .manifest.contributions import ContributionPoints
-from .manifest.readers import ReaderContribution
-from .manifest.sample_data import SampleDataGenerator
+from .manifest.contributions import (
+    CommandContribution,
+    ContributionPoints,
+    ReaderContribution,
+    SampleDataGenerator,
+    WidgetContribution,
+    WriterContribution,
+)
 from .manifest.schema import PluginManifest
-from .manifest.widgets import WidgetContribution
-from .manifest.writers import WriterContribution
 
 C = TypeVar("C", bound=BaseModel)
 T = TypeVar("T", bound=Callable[..., Any])
