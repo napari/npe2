@@ -1,6 +1,7 @@
 import logging
 import os
 import site
+import warnings
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Sequence
@@ -65,19 +66,25 @@ class NPE1Shim(PluginManifest):
     def _load_contributions(self) -> None:
         """imports and inspects package using npe1 plugin manager"""
 
+        self._is_loaded = True  # if we fail once, we still don't try again.
         if self._cache_path().exists() and not os.getenv(NPE2_NOCACHE):
             mf = PluginManifest.from_file(self._cache_path())
             self.contributions = mf.contributions
-            self._is_loaded = True
             logger.debug("%r npe1 shim loaded from cache", self.name)
             return
 
         with discovery_blocked():
-            mf = manifest_from_npe1(self._dist, shim=True)
+            try:
+                mf = manifest_from_npe1(self._dist, shim=True)
+            except Exception as e:
+                warnings.warn(
+                    f"Failed to detect contributions for np1e plugin {self.name!r}: {e}"
+                )
+                return
+
             self.contributions = mf.contributions
             logger.debug("%r npe1 shim imported", self.name)
 
-        self._is_loaded = True
         if not _is_editable_install(self._dist):
             self._save_to_cache()
 
