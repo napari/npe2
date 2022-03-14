@@ -27,7 +27,7 @@ from ._command_registry import CommandRegistry
 from .manifest._npe1_shim import NPE1Shim
 from .manifest.schema import PluginManifest
 from .manifest.writers import LayerType, WriterContribution
-from .types import PathLike, PythonName
+from .types import PathLike, PythonName, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
     from .manifest.commands import CommandContribution
@@ -110,8 +110,9 @@ class _ContributionsIndex:
         return self._commands[command_id][0]
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, path: Union[str, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
+        _ensure_str_or_seq_str(path)
         if not path:
             return
 
@@ -122,6 +123,8 @@ class _ContributionsIndex:
                 )
             path = path[0]
         path = str(path)
+
+        assert isinstance(path, str)
 
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
@@ -437,7 +440,7 @@ class PluginManager:
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, List[PathLike]]
+        self, path: Union[PathLike, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
         return self._contrib.iter_compatible_readers(path)
 
