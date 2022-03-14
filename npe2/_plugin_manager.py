@@ -298,7 +298,6 @@ class PluginManager:
         self.deactivate(key)
         self._contrib.remove_contributions(key)
         self._manifests.pop(key)
-        # self.events.registration_changed.emit({}, {key})
 
     def activate(self, key: PluginName) -> PluginContext:
         """Activate plugin with `key`.

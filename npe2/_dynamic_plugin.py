@@ -11,7 +11,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -41,7 +40,7 @@ for key in list(CONTRIB_NAMES):
             CONTRIB_NAMES[t] = v
 
 
-class TemporaryPlugin:
+class DynamicPlugin:
     """A context manager that creates and modifies temporary plugin contributions.
 
     Parameters
@@ -78,6 +77,7 @@ class TemporaryPlugin:
 
     def clear(self) -> None:
         """Clear contributions."""
+        self.plugin_manager.deactivate(self.manifest.name)
         self.plugin_manager._contrib.remove_contributions(self.manifest.name)
         self.manifest.contributions = ContributionPoints()
 
@@ -106,49 +106,12 @@ class TemporaryPlugin:
         for k, v in my_cmds.items():
             self.plugin_manager.commands.register(k, v)
 
-    def __enter__(self) -> TemporaryPlugin:
+    def __enter__(self) -> DynamicPlugin:
         self.register()
         return self
 
     def __exit__(self, *_) -> None:
         self.cleanup()
-
-
-class ContributionDecorator(Generic[C]):
-    """Descriptor of a contribution decorator bound to a specific contribution type."""
-
-    def __init__(self, contrib_type: Type[C]) -> None:
-        self.contrib_type = contrib_type
-        self._name: Optional[str] = None
-
-    def __set_name__(self, owner: Type[Any], name: str) -> None:
-        if self._name is None:
-            self._name = name
-
-    @overload
-    def __get__(
-        self, decos: None, owner: Optional[Type[ContributionDecorators]] = None
-    ) -> ContributionDecorator:
-        ...
-
-    @overload
-    def __get__(
-        self,
-        decos: ContributionDecorators,
-        owner: Optional[Type[ContributionDecorators]] = None,
-    ) -> ContribDecoInstance:
-        ...
-
-    def __get__(
-        self,
-        decos: Optional[ContributionDecorators],
-        owner: Optional[Type[ContributionDecorators]] = None,
-    ) -> Union[ContributionDecorator, ContribDecoInstance]:
-        if decos is None:  # pragma: no cover
-            return self
-        inst = ContribDecoInstance(decos.plugin, self.contrib_type)
-        setattr(decos, cast(str, self._name), inst)
-        return inst
 
 
 class ContributionDecorators:
@@ -162,30 +125,26 @@ class ContributionDecorators:
     >>>
     """
 
-    command = ContributionDecorator(CommandContribution)
-    reader = ContributionDecorator(ReaderContribution)
-    writer = ContributionDecorator(WriterContribution)
-    widget = ContributionDecorator(WidgetContribution)
-    sample_data = ContributionDecorator(SampleDataGenerator)
-
-    def __init__(self, plugin: TemporaryPlugin) -> None:
+    def __init__(self, plugin: DynamicPlugin) -> None:
         self.plugin = plugin
+        self.command = ContributionDecorator(plugin, CommandContribution)
+        self.reader = ContributionDecorator(plugin, ReaderContribution)
+        self.writer = ContributionDecorator(plugin, WriterContribution)
+        self.widget = ContributionDecorator(plugin, WidgetContribution)
+        self.sample_data = ContributionDecorator(plugin, SampleDataGenerator)
 
 
-class ContribDecoInstance(Generic[C]):
+class ContributionDecorator(Generic[C]):
     """An actual instance of a contribution decorator.
 
     This holds the logic for actually adding a decorated function as a contribution
     of a specific `contrib_type` to a temporary plugin.
     """
 
-    def __init__(self, plugin: TemporaryPlugin, contrib_type: Type[C]) -> None:
+    def __init__(self, plugin: DynamicPlugin, contrib_type: Type[C]) -> None:
         self.plugin = plugin
         self.contrib_type = contrib_type
         self._contrib_name = CONTRIB_NAMES[self.contrib_type]
-
-    # This is the actual decorator used when one calls, eg.
-    # @npe2plugin.contribute.reader
 
     @overload
     def __call__(self, func: T, **kwargs) -> T:
@@ -198,6 +157,14 @@ class ContribDecoInstance(Generic[C]):
     def __call__(
         self, func: Optional[T] = None, **kwargs
     ) -> Union[T, Callable[[T], T]]:
+        """Decorate function as providing this contrubtion type.
+
+        This is the actual decorator used when one calls, eg.
+        >>> @npe2plugin.contribute.reader
+        >>> def some_func(path):
+        >>>     ...
+        """
+
         def _mark_contribution(_func: T, _kwargs=kwargs) -> T:
             try:
                 self._set_defaults(_func, _kwargs)
@@ -218,8 +185,8 @@ class ContribDecoInstance(Generic[C]):
 
         return _mark_contribution if func is None else _mark_contribution(func)
 
-    def _set_defaults(self, _func: T, kwargs: dict):
-        """populate contribution kwargs with reasonable type-specific defaults"""
+    def _set_defaults(self, _func: T, kwargs: dict) -> None:
+        """Populate contribution kwargs with reasonable type-specific defaults"""
         if self.contrib_type is ReaderContribution:
             kwargs.setdefault("filename_patterns", ["*"])
         if self.contrib_type is SampleDataGenerator:
@@ -251,12 +218,14 @@ class ContribDecoInstance(Generic[C]):
 
     @property
     def contribution_list(self) -> List[C]:
+        """Return contributions of this type in the associated manifest."""
         if not getattr(self._mf.contributions, self._contrib_name):
             setattr(self._mf.contributions, self._contrib_name, [])
         return getattr(self._mf.contributions, self._contrib_name)
 
     @property
     def commands(self) -> List[CommandContribution]:
+        """Return the CommandContributions in the associated manifest."""
         if not self._mf.contributions.commands:
             self._mf.contributions.commands = []
         return self._mf.contributions.commands

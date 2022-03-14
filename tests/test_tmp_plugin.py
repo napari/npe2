@@ -1,6 +1,6 @@
 import pytest
 
-from npe2 import PluginManager, TemporaryPlugin
+from npe2 import DynamicPlugin, PluginManager
 from npe2.manifest.sample_data import SampleDataGenerator
 
 TMP = "tmp"
@@ -9,13 +9,13 @@ TMP = "tmp"
 @pytest.fixture
 def tmp_plugin():
     local_pm = PluginManager()
-    with TemporaryPlugin(TMP, plugin_manager=local_pm) as tp:
+    with DynamicPlugin(TMP, plugin_manager=local_pm) as tp:
         assert TMP in local_pm  # make sure it registered
         yield tp
     assert TMP not in local_pm  # make sure it cleaned up
 
 
-def test_temporary_plugin(tmp_plugin: TemporaryPlugin):
+def test_temporary_plugin(tmp_plugin: DynamicPlugin):
     """Test that we can use tmp_plugin to register commands for testing"""
     # everything is empty to begin with
     pm = tmp_plugin.plugin_manager
@@ -78,7 +78,7 @@ def test_temporary_plugin(tmp_plugin: TemporaryPlugin):
     assert cmd.exec(_registry=pm.commands) == "hi!"
 
 
-def test_temporary_plugin_change_pm(tmp_plugin: TemporaryPlugin):
+def test_temporary_plugin_change_pm(tmp_plugin: DynamicPlugin):
     """We can change the plugin manager we're assigned to.
 
     Probably not necessary, but perhaps useful in tests.
