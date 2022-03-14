@@ -8,8 +8,7 @@ from . import PluginManager
 from .types import FullLayerData, LayerData, PathLike, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
-    from .manifest.readers import ReaderContribution
-    from .manifest.writers import WriterContribution
+    from .manifest.contributions import ReaderContribution, WriterContribution
 
 
 def read(path: PathLike, *, plugin_name: Optional[str] = None) -> List[LayerData]:

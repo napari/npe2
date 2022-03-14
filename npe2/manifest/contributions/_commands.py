@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from ..types import PythonName
-from . import _validators
+from ...types import PythonName
+from .. import _validators
 
 if TYPE_CHECKING:
-    from .._command_registry import CommandRegistry
+    from ..._command_registry import CommandRegistry
 
 
 class CommandContribution(BaseModel):
@@ -96,7 +96,7 @@ class CommandContribution(BaseModel):
         _registry: Optional["CommandRegistry"] = None,
     ) -> Any:
         if _registry is None:
-            from .._plugin_manager import PluginManager
+            from ..._plugin_manager import PluginManager
 
             _registry = PluginManager.instance().commands
         return _registry.execute(self.id, args, kwargs)

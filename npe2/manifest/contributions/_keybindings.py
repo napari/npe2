@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 from pydantic.fields import Field
 
-from .utils import Executable
+from ..utils import Executable
 
 
 # the existence of the command is not validated at registration-time,

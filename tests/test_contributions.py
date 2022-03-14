@@ -4,8 +4,11 @@ from unittest.mock import Mock
 import pytest
 
 from npe2 import PluginManager, PluginManifest
-from npe2.manifest.commands import CommandContribution
-from npe2.manifest.sample_data import SampleDataGenerator, SampleDataURI
+from npe2.manifest.contributions import (
+    CommandContribution,
+    SampleDataGenerator,
+    SampleDataURI,
+)
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 

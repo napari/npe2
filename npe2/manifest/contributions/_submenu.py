@@ -3,7 +3,7 @@ from typing import Optional, Union
 from pydantic import BaseModel
 from pydantic.fields import Field
 
-from .icon import Icon
+from ._icon import Icon
 
 
 class SubmenuContribution(BaseModel):

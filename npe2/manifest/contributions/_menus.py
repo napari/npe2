@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
-from .utils import Executable
+from ..utils import Executable
 
 # # napari provides these
 # class Menu(BaseModel):

@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from npe2 import PluginManifest
-from npe2.manifest.package_metadata import PackageMetadata
+from npe2.manifest import PackageMetadata
 from npe2.manifest.schema import ENTRY_POINT
 
 try:

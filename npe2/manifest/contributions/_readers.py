@@ -2,8 +2,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Extra, Field
 
-from ..types import ReaderFunction
-from .utils import Executable
+from ...types import ReaderFunction
+from ..utils import Executable
 
 
 class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
