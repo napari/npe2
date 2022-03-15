@@ -75,7 +75,6 @@ def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tm
         list(plugin_manager.iter_compatible_readers(["a.tif", "b.jpg"]))
 
 
-
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
     from magicgui._magicgui import MagicFactory
 

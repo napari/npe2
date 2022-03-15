@@ -32,7 +32,6 @@ def test_read_list(uses_sample_plugin):
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
-
 null_image: FullLayerData = ([], {}, "image")
 
 
