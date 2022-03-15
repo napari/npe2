@@ -1,0 +1,62 @@
+name: example-plugin
+display_name: Example Plugin
+contributions:
+  commands:
+    - id: example-plugin.hello_world
+      title: Hello World
+    - id: example-plugin.read_xyz
+      title: Read ".xyz" files
+      python_name: example_plugin.some_module:get_reader
+    - id: example-plugin.write_points
+      title: Save points layer to csv
+      python_name: example_plugin.some_module:write_points
+    - id: example-plugin.my_widget
+      title: Open my widget
+      python_name: example_plugin.some_module:MyWidget
+    - id: example-plugin.do_threshold
+      title: Perform threshold on image, return new image
+      python_name: example_plugin.some_module:threshold
+    - id: example-plugin.threshold_widget
+      title: Make threshold widget with magic_factory
+      python_name: example_plugin.some_module:widget_factory
+    - id: example-plugin.data.fractal
+      title: Create fractal image
+      python_name: example_plugin.some_module:create_fractal
+  readers:
+    - command: example-plugin.read_xyz
+      filename_patterns: ["*.xyz"]
+      accepts_directories: false
+  writers:
+    - command: example-plugin.write_points
+      filename_extensions: [".csv"]
+      layer_types: ["points"]
+  widgets:
+    - command: example-plugin.my_widget
+      display_name: Wizard
+    - command: example-plugin.threshold_widget
+      display_name: Threshold
+    - command: example-plugin.do_threshold
+      display_name: Threshold
+      autogenerate: true
+  themes:
+    - label: "Monokai"
+      id: "monokai"
+      type: "dark"
+      colors:
+        canvas: "#000000"
+        console: "#000000"
+        background: "#272822"
+        foreground: "#75715e"
+        primary: "#cfcfc2"
+        secondary: "#f8f8f2"
+        highlight: "#e6db74"
+        text: "#a1ef34"
+        warning: "#f92672"
+        current: "#66d9ef"
+  sample_data:
+    - key: fractal
+      display_name: Fractal
+      command: example-plugin.data.fractal
+    - key: napari
+      display_name: Tabueran Kiribati
+      uri: https://en.wikipedia.org/wiki/Napari#/media/File:Tabuaeran_Kiribati.jpg

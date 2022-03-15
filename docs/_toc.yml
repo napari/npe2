@@ -1,0 +1,14 @@
+format: jb-article
+root: index
+sections:
+# this is meant to match the plugins toc at napari
+- file: plugins/index
+  sections:
+  - file: plugins/first_plugin
+  - file: plugins/manifest
+  - file: plugins/contributions
+  - file: plugins/guides
+  - file: plugins/test_deploy
+  - file: plugins/best_practices
+  - file: plugins/npe2_migration_guide
+  - file: plugins/npe1

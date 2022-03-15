@@ -9,7 +9,7 @@ except ImportError:
 
 
 @pytest.mark.filterwarnings("ignore:The distutils package is deprecated")
-@pytest.mark.filterwarnings("ignore:Failed to convert napari_get_writer")
+@pytest.mark.filterwarnings("ignore:Found a multi-layer writer, but it's not")
 @pytest.mark.parametrize("package", ["svg"])
 def test_conversion(package):
     assert manifest_from_npe1(package)
@@ -68,6 +68,24 @@ def test_conversion_from_package_setup_py(npe1_repo, mock_npe1_pm_with_plugin):
 setup(
     name='npe1-plugin',
     entry_points={"napari.plugin": ["npe1-plugin = npe1_module"]}
+)
+"""
+    )
+    with pytest.warns(UserWarning) as record:
+        convert_repository(npe1_repo)
+    msg = record[0].message
+    assert "Cannot auto-update setup.py, please edit setup.py as follows" in str(msg)
+    assert "npe1-plugin = npe1_module:napari.yaml" in str(msg)
+
+
+def test_conversion_entry_point_string(npe1_repo, mock_npe1_pm_with_plugin):
+    (npe1_repo / "setup.cfg").unlink()
+    (npe1_repo / "setup.py").write_text(
+        """from setuptools import setup
+
+setup(
+    name='npe1-plugin',
+    entry_points={"napari.plugin": "npe1-plugin = npe1_module"}
 )
 """
     )

@@ -1,5 +1,16 @@
+import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    NewType,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from typing_extensions import Literal, Protocol
 
@@ -11,11 +22,25 @@ if TYPE_CHECKING:
 
 # General types
 
-PathLike = Union[str, Path]
+# PathLike = Union[str, pathlib.Path]  # we really have to pick one
+PathLike = str
 PathOrPaths = Union[PathLike, Sequence[PathLike]]
-
+PythonName = NewType("PythonName", str)
 
 # Layer-related types
+
+
+def _ensure_str_or_seq_str(path):
+    if isinstance(path, Path) or (
+        isinstance(path, (list, tuple)) and any([isinstance(p, Path) for p in path])
+    ):
+        warnings.warn(
+            "Npe2 receive a `Path` or a list of `Path`s, instead of `str`,"
+            " this will  become an error in the future and is likely a"
+            " napari bug. Please fill and issue.",
+            UserWarning,
+            stacklevel=3,
+        )
 
 
 class ArrayLike(Protocol):
@@ -27,14 +52,8 @@ class ArrayLike(Protocol):
         ...  # pragma: no cover
 
 
-LayerName = Union[
-    Literal["image"],
-    Literal["labels"],
-    Literal["points"],
-    Literal["shapes"],
-    Literal["surface"],
-    Literal["tracks"],
-    Literal["vectors"],
+LayerName = Literal[
+    "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
 ]
 Metadata = Dict
 DataType = Union[ArrayLike, Sequence[ArrayLike]]
@@ -49,7 +68,8 @@ WidgetCreator = Callable[..., Widget]
 
 # ReaderContribution.command must point to a ReaderGetter
 ReaderFunction = Callable[[PathOrPaths], List[LayerData]]
-ReaderGetter = Callable[[Union[str, List[str]]], Optional[ReaderFunction]]
+ReaderGetter = Callable[[PathOrPaths], Optional[ReaderFunction]]
+
 
 # SampleDataGenerator.command must point to a SampleDataCreator
 SampleDataCreator = Callable[..., List[LayerData]]

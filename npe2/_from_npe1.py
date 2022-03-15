@@ -222,7 +222,6 @@ class HookImplParser:
 
     def napari_provide_sample_data(self, impl: HookImplementation):
         module = sys.modules[impl.function.__module__.split(".", 1)[0]]
-        package_dir = module.__file__.rsplit("/", 1)[0]
 
         samples: Dict[str, Union[dict, str, Callable]] = impl.function()
         for key, sample in samples.items():
@@ -247,6 +246,8 @@ class HookImplParser:
                 self.contributions["commands"].append(cmd_contrib)
                 s["command"] = id
             else:
+                assert module.__file__
+                package_dir = module.__file__.rsplit("/", 1)[0]
                 s["uri"] = str(_sample).replace(package_dir, r"${package}")
 
             self.contributions["sample_data"].append(s)
@@ -490,6 +491,9 @@ def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
     if "options.package_data" not in p.sections():
         p.add_section("options.package_data")
     p.set("options.package_data", info.top_module, mf_name)
+    if "options" not in p.sections():
+        p.add_section("options")
+    p.set("options", "include_package_data", "True")
     p.remove_option("options.entry_points", NPE1_EP)
     with open(info.setup_cfg, "w") as fh:
         p.write(fh)
@@ -562,6 +566,8 @@ class _SetupVisitor(ast.NodeVisitor):
                 eps: dict = ast.literal_eval(kw.value)
                 for k, v in eps.items():
                     if k == NPE1_EP:
+                        if type(v) is str:
+                            v = [v]
                         for item in v:
                             self._entry_points.append(
                                 [i.strip() for i in item.split("=")]

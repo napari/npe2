@@ -1,0 +1,67 @@
+# Contributions Reference
+
+**Contributions** are a set of static declarations that you make in the
+`contributions` field of the [Plugin Manifest](./manifest). Your extension registers
+**Contributions** to extend various functionalities within napari.
+Here is a list of all available **Contributions**:
+{# list all contributions first #}
+{%- for name, contrib in contributions.items() %}
+{%- if not contrib.hide_docs %}
+- [`{{ name }}`](#contributions-{{ name|replace('_', '-') }})
+{%- endif -%}
+{% endfor %}
+
+You may add as many contributions as you'd like to a single manifest. For
+clarity, the following examples include only the specific contribution that
+is being discussed.
+
+{# now, iterate through all contributions and show fields and #}
+{%- for contrib_name, contrib in contributions.items() -%}
+{% if not contrib.hide_docs -%}
+(contributions-{{contrib_name}})=
+## `contributions.{{contrib_name}}`
+{# check if this is a single type, or a union #}
+{%- if contrib['items']['anyOf'] is defined %}
+{%- set type_names = contrib['items']['anyOf']|map(attribute='$ref')|map("replace", "#/definitions/", "")|list  %}
+{%- set union = True %}
+{%- else %}
+{%- set type_names = [contrib['items']['$ref']|replace("#/definitions/", "")] %}
+{%- set union = False %}
+{%- endif -%}
+{%- if union %}
+```{tip}
+This contribution accepts {{ type_names|length }} schema types
+```
+{%- endif -%}
+
+{%- for tname in type_names -%}
+{% set type = schema['definitions'][tname] %}
+{% if union %}##### {{loop.index}}. {{type.title}}{% endif %}
+{{ type.description }}
+
+{% if contrib_name|has_guide %}
+See the [{{ contrib_name.title()|replace('_', ' ') }} Guide](./guides.html#{{ contrib_name|replace('_', '-') }}-contribution-guide)
+for more details on implementing this contribution.
+{% endif %}
+
+{# Using bold instead of headers in this case to avoid right-side nav #}
+**Fields**
+{%- for field_name, field_props in type.properties.items() -%}
+{% set required = field_name in type.required %}
+- **`{{contrib_name}}.{{field_name}}`** : {% if not required %}
+*(Optional: default={{ field_props.default if field_props.default is not undefined else 'None' }}).*
+{% endif -%}
+{{- field_props.description -}}
+{% endfor -%}
+{% endfor %}
+
+### {{ contrib_name.title()|replace("_", " ") }} example
+{% for format in ['yaml', 'toml'] %}
+````{tabbed} {{format}}
+```{{format}}
+{{ contrib_name|example_contribution(format) }}
+```
+````
+{% endfor -%}
+{% endif %}
+{% endfor %}

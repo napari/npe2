@@ -104,4 +104,7 @@ ENV/
 # IDE settings
 .vscode/
 npe2/_version.py
-docs/
+
+# ignore everything that gets rendered from _docs
+docs/plugins/*.md
+schema.json

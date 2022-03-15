@@ -1,10 +1,13 @@
 import json
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 import pytest
 
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest.commands import CommandContribution
+from npe2.manifest.sample_data import SampleDataGenerator, SampleDataURI
+
+SAMPLE_PLUGIN_NAME = "my-plugin"
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
@@ -59,11 +62,18 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     PluginManifest(**data)
 
 
-def test_writer_for_command(
-    uses_sample_plugin, plugin_manager: PluginManager, tmp_path
-):
+def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
+    tmp_path = str(tmp_path)
+    assert not list(plugin_manager.iter_compatible_readers(""))
     reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+    reader = list(plugin_manager.iter_compatible_readers([tmp_path, tmp_path]))[0]
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+    with pytest.raises(ValueError):
+        list(plugin_manager.iter_compatible_readers(["a.tif", "b.jpg"]))
+
 
 
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
@@ -87,21 +97,24 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     ctrbA, ctrbB = contribs
     # ignoring types because .command and .uri come from different sample provider
     # types... they don't both have "command" or "uri"
+
+    assert isinstance(ctrbA, SampleDataGenerator)
     assert ctrbA.command == f"{SAMPLE_PLUGIN_NAME}.generate_random_data"
     assert ctrbA.plugin_name == SAMPLE_PLUGIN_NAME
+    assert isinstance(ctrbB, SampleDataURI)
     assert ctrbB.uri == "https://picsum.photos/1024"
     assert isinstance(ctrbA.open(), list)
     assert isinstance(ctrbB.open(), list)
 
 
 def test_directory_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
-    reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
+    reader = list(plugin_manager.iter_compatible_readers(str(tmp_path)))[0]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 def test_themes(uses_sample_plugin, plugin_manager: PluginManager):
     theme = list(plugin_manager.iter_themes())[0]
-    assert theme.label == "Monokai"
+    assert theme.label == "SampleTheme"
 
 
 def test_command_exec():
@@ -112,7 +125,7 @@ def test_command_exec():
         cmd = CommandContribution(id=cmd_id, title="a title")
         mf = PluginManifest(name="pkg", contributions={"commands": [cmd]})
         pm.register(mf)
-        some_func = MagicMock()
+        some_func = Mock()
         pm._command_registry.register(cmd_id, some_func)
         cmd.exec(args=("hi!",))
         some_func.assert_called_once_with("hi!")

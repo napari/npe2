@@ -1,10 +1,14 @@
 import sys
+from unittest.mock import Mock, patch
 
 import pytest
 
 from npe2._command_registry import CommandHandler, CommandRegistry
 from npe2._plugin_manager import PluginManager
 from npe2.manifest.schema import PluginManifest
+from npe2.types import PythonName
+
+SAMPLE_PLUGIN_NAME = "my-plugin"
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
@@ -23,6 +27,22 @@ def pm(sample_path):
         sys.path.remove(str(sample_path))
 
 
+def test_discover_clear(uses_sample_plugin):
+    pm = PluginManager.instance()
+    assert SAMPLE_PLUGIN_NAME in pm._manifests
+    reg_mock = Mock()
+    pm.events.plugins_registered.connect(reg_mock)
+    with patch.object(pm, "register", wraps=pm.register) as mock:
+        pm.discover()
+        mock.assert_not_called()  # nothing new to register
+        reg_mock.assert_not_called()
+
+        mock.reset_mock()
+        pm.discover(clear=True)  # clear forces reregister
+        mock.assert_called_once()
+        reg_mock.assert_called_once_with({pm._manifests[SAMPLE_PLUGIN_NAME]})
+
+
 def test_plugin_manager(pm: PluginManager):
     assert pm.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
 
@@ -37,6 +57,8 @@ def test_plugin_manager(pm: PluginManager):
     assert pm.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
 
     assert pm.get_submenu("mysubmenu")
+    with pytest.raises(KeyError):
+        pm.get_submenu("not-a-submenu")
     assert len(list(pm.iter_menu("/napari/layer_context"))) == 2
 
     # deactivation
@@ -66,7 +88,7 @@ def test_command_handler():
 
     with pytest.raises(RuntimeError):
         # cannot resolve something without either a python_name or function
-        CommandHandler("hi", python_name="cannot.import.this").resolve()
+        CommandHandler("hi", python_name=PythonName("cannot.import.this")).resolve()
 
 
 def test_command_reg_register():
@@ -101,3 +123,64 @@ def test_command_reg_get():
     assert "id" in reg
     assert reg.get("id") is f
     assert reg.execute("id", (1, 2)) == 3
+
+
+def _assert_sample_enabled(plugin_manager: PluginManager, enabled=True):
+    i = SAMPLE_PLUGIN_NAME in plugin_manager._contrib._indexed
+    assert i if enabled else not i
+
+    _not = "not " if not enabled else ""
+    # command
+    if enabled:
+        assert plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
+    else:
+        with pytest.raises(KeyError):
+            assert plugin_manager.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
+
+    # reader
+    cmds = [r.command for r in plugin_manager.iter_compatible_readers("*.fzy")]
+    b = f"{SAMPLE_PLUGIN_NAME}.some_reader" in cmds
+    assert b if enabled else not b, f"Reader should {_not}be enabled"
+
+    # writer
+    cmds = [r.command for r in plugin_manager.iter_compatible_writers(["image"] * 2)]
+    c = f"{SAMPLE_PLUGIN_NAME}.my_writer" in cmds
+    assert c if enabled else not c, f"Writer should {_not}be enabled"
+
+    d = "SampleTheme" in [t.label for t in plugin_manager.iter_themes()]
+    assert d if enabled else not d, f"Theme should {_not}be enabled"
+
+
+def test_enable_disable(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
+
+    _assert_sample_enabled(plugin_manager)
+    # just to test the enabled= kwarg on iter_manifests
+    # (this would show *only* disabled plugins)
+    assert not list(plugin_manager.iter_manifests(disabled=True))
+
+    # Do disable
+    mock = Mock()
+    plugin_manager.events.enablement_changed.connect(mock)
+    plugin_manager.disable(SAMPLE_PLUGIN_NAME)
+    mock.assert_called_once_with({}, {SAMPLE_PLUGIN_NAME})  # enabled, disabled
+
+    _assert_sample_enabled(plugin_manager, False)
+
+    # stuff you can't do while disabled:
+    with pytest.raises(ValueError):
+        plugin_manager.activate(SAMPLE_PLUGIN_NAME)
+
+    # re-enable
+    mock.reset_mock()
+    plugin_manager.enable(SAMPLE_PLUGIN_NAME)
+    mock.assert_called_once_with({SAMPLE_PLUGIN_NAME}, {})  # enabled, disabled
+    _assert_sample_enabled(plugin_manager)
+
+
+def test_warn_on_register_disabled(uses_sample_plugin, plugin_manager: PluginManager):
+    assert SAMPLE_PLUGIN_NAME in plugin_manager
+    mf = plugin_manager[SAMPLE_PLUGIN_NAME]
+    plugin_manager.disable(SAMPLE_PLUGIN_NAME)
+    plugin_manager._manifests.pop(SAMPLE_PLUGIN_NAME)  # NOT good way to "unregister"
+    with pytest.warns(UserWarning):
+        plugin_manager.register(mf)

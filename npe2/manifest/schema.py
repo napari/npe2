@@ -9,7 +9,10 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
+from pydantic.error_wrappers import ErrorWrapper
+from pydantic.main import BaseModel, ModelMetaclass
 
+from ..types import PythonName
 from . import _validators
 from ._bases import ImportExportModel
 from .contributions import ContributionPoints
@@ -47,8 +50,9 @@ class PluginManifest(ImportExportModel):
 
     name: str = Field(
         ...,
-        description="The name of the plugin. Should correspond to the python "
-        "package name for this plugin.",
+        description="The name of the plugin. Though this field is mandatory, it *must*"
+        " match the package `name` as defined in the python package metadata.",
+        allow_mutation=False,
     )
     _validate_name = validator("name", pre=True, allow_reuse=True)(
         _validators.package_name
@@ -89,30 +93,44 @@ class PluginManifest(ImportExportModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    on_activate: Optional[str] = Field(
+    on_activate: Optional[PythonName] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
-        "upon plugin activation (e.g. my_plugin._some_module:activate). The activate "
-        "function can be used to connect command ids to python callables, or perform "
-        "other side-effects. A plugin will be 'activated' when one of its "
+        "upon plugin activation (e.g. `'my_plugin.some_module:activate'`). The "
+        "activate function can be used to connect command ids to python callables, or"
+        " perform other side-effects. A plugin will be 'activated' when one of its "
         "contributions is requested by the user (such as a widget, or reader).",
     )
     _validate_activate_func = validator("on_activate", allow_reuse=True)(
         _validators.python_name
     )
-    on_deactivate: Optional[str] = Field(
+    on_deactivate: Optional[PythonName] = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
-        "when a user deactivates a plugin (e.g. my_plugin._some_module:deactivate). "
-        "This is optional, and may be used to perform any plugin cleanup.",
+        "when a user deactivates a plugin (e.g. `'my_plugin.some_module:deactivate'`)"
+        ". This is optional, and may be used to perform any plugin cleanup.",
     )
     _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
         _validators.python_name
     )
 
-    contributions: Optional[ContributionPoints]
+    contributions: ContributionPoints = Field(
+        default_factory=ContributionPoints,
+        description="An object describing the plugin's "
+        "[contributions](./contributions)",
+    )
 
-    package_metadata: Optional[PackageMetadata] = None
+    package_metadata: Optional[PackageMetadata] = Field(
+        None,
+        description="Package metadata following "
+        "https://packaging.python.org/specifications/core-metadata/. "
+        "For normal (non-dynamic) plugins, this data will come from the package's "
+        "setup.cfg",
+        hide_docs=True,
+    )
+
+    def __hash__(self):
+        return hash((self.name, self.package_version))
 
     @property
     def license(self) -> Optional[str]:
@@ -129,6 +147,10 @@ class PluginManifest(ImportExportModel):
     @property
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
+
+    @validator("contributions", pre=True)
+    def _coerce_none_contributions(cls, value):
+        return [] if value is None else value
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
@@ -161,6 +183,9 @@ class PluginManifest(ImportExportModel):
             """
                 )
             )
+
+        if not values.get("display_name"):
+            values["display_name"] = mf_name
 
         return values
 
@@ -200,6 +225,7 @@ class PluginManifest(ImportExportModel):
     class Config:
         underscore_attrs_are_private = True
         extra = Extra.forbid
+        validate_assignment = True
 
     @classmethod
     def discover(
@@ -250,7 +276,13 @@ class PluginManifest(ImportExportModel):
                         pm = cls._from_entrypoint(ep, dist)
                         yield DiscoverResults(pm, ep, None)
                     except ValidationError as e:
-                        logger.warning(msg=f"Invalid schema {ep.value!r}")
+                        module_name, filename = ep.value.split(":")
+                        logger.warning(
+                            "Invalid schema for package %r, please run"
+                            " 'npe2 validate %s' to check for manifest errors.",
+                            module_name,
+                            module_name,
+                        )
                         yield DiscoverResults(None, ep, e)
                     except Exception as e:
                         logger.error(
@@ -266,7 +298,8 @@ class PluginManifest(ImportExportModel):
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
-        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        match = entry_point.pattern.match(entry_point.value)
+        assert match
         module = match.group("module")
 
         spec = util.find_spec(module or "")
@@ -276,7 +309,8 @@ class PluginManifest(ImportExportModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        match = entry_point.pattern.match(entry_point.value)  # type: ignore
+        match = entry_point.pattern.match(entry_point.value)
+        assert match
         fname = match.group("attr")
 
         for loc in spec.submodule_search_locations or []:
@@ -339,6 +373,31 @@ class PluginManifest(ImportExportModel):
                     "package name or a file.."
                 ) from e
 
+    def validate_imports(self) -> None:
+        """Checks recursively that all `python_name` fields are actually importable."""
+        from .utils import import_python_name
+
+        errors = []
+
+        def check_pynames(m: BaseModel, loc=()):
+            for name, value in m:
+                if not value:
+                    continue
+                if isinstance(value, BaseModel):
+                    return check_pynames(value, (*loc, name))
+                field = m.__fields__[name]
+                if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
+                    return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
+                if field.outer_type_ is PythonName:
+                    try:
+                        import_python_name(value)
+                    except (ImportError, AttributeError) as e:
+                        errors.append(ErrorWrapper(e, (*loc, name)))
+
+        check_pynames(self)
+        if errors:
+            raise ValidationError(errors, type(self))
+
     ValidationError = ValidationError  # for convenience of access
 
 
@@ -354,4 +413,4 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
 
 
 if __name__ == "__main__":
-    print(PluginManifest.schema_json())
+    print(PluginManifest.schema_json(indent=2))

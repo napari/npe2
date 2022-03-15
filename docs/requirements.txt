@@ -1,0 +1,4 @@
+jupyter-book
+furo
+Jinja2
+sphinx-tabs
