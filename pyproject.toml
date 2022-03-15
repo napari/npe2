@@ -8,3 +8,11 @@ write_to = "npe2/_version.py"
 
 [tool.check-manifest]
 ignore = ["npe2/_version.py", ".pre-commit-config.yaml", ".github_changelog_generator"]
+
+
+[tool.pytest.ini_options]
+filterwarnings = ["error:::npe2"]
+addopts = "-m 'not github_main_only'"
+markers = [
+    "github_main_only: Test to run only on github main (verify it does not break latest napari docs build)"
+]
