@@ -1,7 +1,7 @@
 import warnings
 
 warnings.warn(
-    "please import PackageMetadata from npe2",
+    "please import menus from npe2.manifest.contributions",
     DeprecationWarning,
     stacklevel=2,
 )

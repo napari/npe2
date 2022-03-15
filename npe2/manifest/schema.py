@@ -15,8 +15,8 @@ from pydantic.main import BaseModel, ModelMetaclass
 from ..types import PythonName
 from . import _validators
 from ._bases import ImportExportModel
+from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
-from .package_metadata import PackageMetadata
 from .utils import Version
 
 try:
