@@ -5,3 +5,5 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
+
+from ._package_metadata import *  # noqa

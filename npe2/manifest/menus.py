@@ -5,3 +5,5 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
+
+from .contributions._menus import *  # noqa
