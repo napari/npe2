@@ -48,7 +48,7 @@ jobs:
 
       - name: Install ${{ matrix.plugin }}
         run: |
-          CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }})
+          CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }} )
           if [[ $VAR  == '200' ]]
           then
             conda install ${{ matrix.plugin }})
