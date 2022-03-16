@@ -44,7 +44,7 @@ jobs:
           pip install napari PySide2 pytest
 
       - name: Install ${{ matrix.plugin }}
-      - run: |
+        run: |
           CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }})
           if [[ $VAR  == '200' ]]
           then
