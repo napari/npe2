@@ -11,6 +11,7 @@ on:
 
 jobs:
   test:
+    if: ${{ github.event.label.name != 'test-all-plugins' }}
     name: ${{ matrix.platform }} (${{ matrix.python-version }})
     runs-on: ${{ matrix.platform }}
     strategy:
@@ -43,6 +44,7 @@ jobs:
           fail_ci_if_error: true
 
   test_napari:
+    if: ${{ github.event.label.name != 'test-all-plugins' }}
     name: napari tests
     runs-on: ubuntu-latest
     steps:

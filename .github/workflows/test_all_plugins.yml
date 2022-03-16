@@ -1,0 +1,61 @@
+name: Test all plugins
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+
+jobs:
+  get-plugins:
+    if: ${{ github.event.label.name == 'test-all-plugins' && github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+      - id: plugin_names
+        run: echo "::set-output name=plugins::$(curl -s https://api.napari-hub.org/plugins | jq -c 'keys')"
+    outputs:
+      plugins: ${{ steps.plugin_names.outputs.plugins }}
+
+  test_all:
+    needs: get-plugins
+    name: ${{ matrix.plugin }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.get-plugins.outputs.plugins) }}
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: tlambert03/setup-qt-libs
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-version: latest
+          use-mamba: true
+
+      - name: Install dependencies
+        run: |
+          pip install -U pip
+          pip install napari PySide2 pytest
+
+      - name: Install ${{ matrix.plugin }}
+      - run: |
+          CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }})
+          if [[ $VAR  == '200' ]]
+          then
+            conda install ${{ matrix.plugin }})
+            echo "installed with conda"
+          else
+            pip install ${{ matrix.plugin }})
+            echo "installed with pip"
+          fi
+
+      - name: Test
+        run: pytest tests/test_all_plugins.py -s -v --color=yes
+        env:
+          TEST_PACKAGE_NAME: ${{ matrix.plugin }})
