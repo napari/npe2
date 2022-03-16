@@ -41,13 +41,6 @@ jobs:
           miniforge-version: latest
           use-mamba: true
 
-      - name: Install napari
-        run: conda install napari
-
-      - name: Install npe2
-        run: |
-          pip install -e .[testing]
-
       - name: Install ${{ matrix.plugin }}
         run: |
           CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }} )
@@ -59,6 +52,13 @@ jobs:
             pip install ${{ matrix.plugin }})
             echo "installed with pip"
           fi
+
+      # - name: Install napari
+      #   run: conda install napari
+
+      - name: Install npe2
+        run: |
+          pip install -e .[testing]
 
       - name: Test
         run: pytest tests/test_all_plugins.py -s -v --color=yes
