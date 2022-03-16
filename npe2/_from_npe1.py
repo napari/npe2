@@ -22,6 +22,8 @@ from typing import (
     cast,
 )
 
+import magicgui
+
 from npe2.manifest import PluginManifest
 from npe2.manifest.commands import CommandContribution
 from npe2.manifest.themes import ThemeColors
@@ -464,6 +466,15 @@ def _python_name(
                     obj_name = local_name
                     mod_name = hook_mod.__name__
                     break
+
+    # trick if it's a magic_factory
+    if isinstance(obj, magicgui._magicgui.MagicFactory):
+        f = obj.keywords.get("function")
+        if f:
+            v = getattr(f, "__globals__", {}).get(getattr(f, "__name__", ""))
+            if v is obj:
+                mod_name = f.__module__
+                obj_name = f.__qualname__
 
     # if that didn't work get the qualname of the object
     # and, if it's not a locally defined qualname, get the name of the module
