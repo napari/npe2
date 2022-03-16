@@ -18,44 +18,44 @@ jobs:
     outputs:
       plugins: ${{ steps.plugin_names.outputs.plugins }}
 
-  test_all:
-    needs: get-plugins
-    name: ${{ matrix.plugin }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        plugin: ${{ fromJson(needs.get-plugins.outputs.plugins) }}
-    defaults:
-      run:
-        shell: bash -l {0}
+  # test_all:
+  #   needs: get-plugins
+  #   name: ${{ matrix.plugin }}
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       plugin: ${{ fromJson(needs.get-plugins.outputs.plugins) }}
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: tlambert03/setup-qt-libs@v1
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniforge-version: latest
-          use-mamba: true
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: tlambert03/setup-qt-libs@v1
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         miniforge-version: latest
+  #         use-mamba: true
 
-      - name: Install dependencies
-        run: |
-          pip install -U pip
-          pip install napari PySide2 pytest
+  #     - name: Install dependencies
+  #       run: |
+  #         pip install -U pip
+  #         pip install napari PySide2 pytest
 
-      - name: Install ${{ matrix.plugin }}
-      - run: |
-          CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }})
-          if [[ $VAR  == '200' ]]
-          then
-            conda install ${{ matrix.plugin }})
-            echo "installed with conda"
-          else
-            pip install ${{ matrix.plugin }})
-            echo "installed with pip"
-          fi
+  #     - name: Install ${{ matrix.plugin }}
+  #     - run: |
+  #         CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }})
+  #         if [[ $VAR  == '200' ]]
+  #         then
+  #           conda install ${{ matrix.plugin }})
+  #           echo "installed with conda"
+  #         else
+  #           pip install ${{ matrix.plugin }})
+  #           echo "installed with pip"
+  #         fi
 
-      - name: Test
-        run: pytest tests/test_all_plugins.py -s -v --color=yes
-        env:
-          TEST_PACKAGE_NAME: ${{ matrix.plugin }})
+  #     - name: Test
+  #       run: pytest tests/test_all_plugins.py -s -v --color=yes
+  #       env:
+  #         TEST_PACKAGE_NAME: ${{ matrix.plugin }})
