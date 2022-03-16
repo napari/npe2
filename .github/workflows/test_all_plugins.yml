@@ -1,8 +1,9 @@
 name: Test all plugins
 
 on:
-  pull_request:
-    types: [labeled]
+  push:
+  # pull_request:
+    # types: [labeled]
   workflow_dispatch:
 
 jobs:
