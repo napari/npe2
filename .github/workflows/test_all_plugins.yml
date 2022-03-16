@@ -61,7 +61,9 @@ jobs:
         run: |
           pip install -e .[testing]
 
-      - name: Test
-        run: pytest tests/test_all_plugins.py -s -v --color=yes
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: pytest tests/test_all_plugins.py -s -v --color=yes
         env:
           TEST_PACKAGE_NAME: ${{ matrix.plugin }}
