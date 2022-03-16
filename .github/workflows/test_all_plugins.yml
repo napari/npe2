@@ -35,7 +35,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - uses: tlambert03/setup-qt-libs@v1
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: 3.9
@@ -44,7 +46,8 @@ jobs:
           use-mamba: true
 
       - id: check_conda
-        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' 'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
+        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' \
+             'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
 
       - name: Install ${{ matrix.plugin }} from conda
         if: steps.check_conda.outputs.status == '200'
@@ -54,16 +57,11 @@ jobs:
         if: steps.check_conda.outputs.status != '200'
         run: pip install ${{ matrix.plugin }}
 
-      # - name: Install napari
-      #   run: conda install napari
-
       - name: Install npe2
-        run: |
-          pip install -e .[testing]
+        run: pip install -e .[testing]
 
-      - name: Run headless test
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: pytest tests/test_all_plugins.py -s -v --color=yes
+      - run: sudo apt-get install -y xvfb
+      - name: Run tests
+        run: xvfb-run --auto-servernum pytest tests/test_all_plugins.py -s -v --color=yes
         env:
           TEST_PACKAGE_NAME: ${{ matrix.plugin }}
