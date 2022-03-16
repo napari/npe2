@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import pytest
 
@@ -12,11 +13,18 @@ except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
 
-def test_entry_points():
-    assert PLUGIN
+@pytest.fixture
+def entry_points():
     d = metadata.distribution(str(PLUGIN))
-    eps = [
+    return [
         ep for ep in d.entry_points if ep.group in ("napari.plugin", "napari.manifest")
     ]
-    assert eps
-    print(eps)
+
+
+def test_plugin_has_entry_points(entry_points):
+    assert entry_points
+    print("EPs:", entry_points)
+
+
+def test_entry_points_importable(entry_points: List[metadata.EntryPoint]):
+    [ep.load() for ep in entry_points]
