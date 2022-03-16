@@ -1,14 +1,13 @@
 name: Test all plugins
 
 on:
-  push:
   pull_request:
-    types: [labeled]
+    types: [ labeled ]
   workflow_dispatch:
 
 jobs:
   get-plugins:
-    if: ${{ github.event.label.name == 'test-all-plugins' && github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: styfle/cancel-workflow-action@0.9.1
@@ -20,6 +19,7 @@ jobs:
       plugins: ${{ steps.plugin_names.outputs.plugins }}
 
   test_all:
+    if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'
     needs: get-plugins
     name: ${{ matrix.plugin }}
     runs-on: ubuntu-latest
@@ -39,10 +39,12 @@ jobs:
           miniforge-version: latest
           use-mamba: true
 
-      - name: Install dependencies
+      - name: Install napari
+        run: conda install napari
+
+      - name: Install npe2
         run: |
-          pip install -U pip
-          pip install napari PySide2 pytest
+          pip install -e .[testing]
 
       - name: Install ${{ matrix.plugin }}
         run: |
