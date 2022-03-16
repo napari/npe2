@@ -40,19 +40,17 @@ jobs:
         with:
           miniforge-version: latest
           use-mamba: true
+
       - id: check_conda
         run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' 'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
 
-      - name: Install ${{ matrix.plugin }}
-        run: |
-          if [[ ${{ steps.check_conda.outputs.status }}  == '200' ]]
-          then
-            mamba install ${{ matrix.plugin }})
-            echo "installed with conda"
-          else
-            pip install ${{ matrix.plugin }})
-            echo "installed with pip"
-          fi
+      - name: Install ${{ matrix.plugin }} from conda
+        if: steps.check_conda.outputs.status == '200'
+        run: mamba install ${{ matrix.plugin }})
+
+      - name: Install ${{ matrix.plugin }} from pip
+        if: steps.check_conda.outputs.status != '200'
+        run: pip install ${{ matrix.plugin }})
 
       # - name: Install napari
       #   run: conda install napari
