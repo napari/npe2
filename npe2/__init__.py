@@ -5,6 +5,7 @@ except ImportError:
 __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
 
+from ._dynamic_plugin import DynamicPlugin
 from ._plugin_manager import PluginContext, PluginManager
 from .io_utils import read, write
 from .manifest import PluginManifest
@@ -15,6 +16,7 @@ __all__ = [
     "PluginManager",
     "PluginContext",
     "PackageMetadata",
+    "DynamicPlugin",
     "write",
     "read",
 ]

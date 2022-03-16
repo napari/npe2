@@ -20,7 +20,7 @@ jobs:
 
   test_all:
     needs: get-plugins
-    name: test ${{ matrix.plugin }}
+    name: ${{ matrix.plugin }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
