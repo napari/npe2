@@ -64,4 +64,4 @@ jobs:
       - name: Test
         run: pytest tests/test_all_plugins.py -s -v --color=yes
         env:
-          TEST_PACKAGE_NAME: ${{ matrix.plugin }})
+          TEST_PACKAGE_NAME: ${{ matrix.plugin }}
