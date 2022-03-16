@@ -46,11 +46,11 @@ jobs:
 
       - name: Install ${{ matrix.plugin }} from conda
         if: steps.check_conda.outputs.status == '200'
-        run: mamba install ${{ matrix.plugin }})
+        run: mamba install ${{ matrix.plugin }}
 
       - name: Install ${{ matrix.plugin }} from pip
         if: steps.check_conda.outputs.status != '200'
-        run: pip install ${{ matrix.plugin }})
+        run: pip install ${{ matrix.plugin }}
 
       # - name: Install napari
       #   run: conda install napari
