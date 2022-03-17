@@ -78,7 +78,7 @@ def test_npe1_python_names(entry_points: List[metadata.EntryPoint]):
                     result = result.values()
                 elif not isinstance(result, list):
                     result = [result]
-                for idx, item in result:
+                for idx, item in enumerate(result):
                     pyname = _python_name(item, impl.function, idx)
                     if SHIM_NAME_PREFIX in pyname:
                         warnings.warn("SHIMMING: %r" % pyname)
