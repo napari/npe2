@@ -43,7 +43,7 @@ def entry_points():
 def test_plugin_has_entry_points(entry_points):
     if PLUGIN not in {"napari-console", "napari-error-reporter"}:
         assert entry_points
-        print("EPs:", entry_points)
+        print("\nEPs:", entry_points)
 
 
 if PLUGIN in FORGOT_NAPARI:
@@ -72,7 +72,7 @@ def test_npe1_python_names(entry_points: List[metadata.EntryPoint]):
                     "napari_experimental_provide_dock_widget",
                 ):
                     continue
-
+                print()
                 result = impl.function()
                 if isinstance(result, dict):
                     result = result.values()
@@ -81,6 +81,7 @@ def test_npe1_python_names(entry_points: List[metadata.EntryPoint]):
                 for idx, item in enumerate(result):
                     pyname = _python_name(item, impl.function, idx)
                     print(pyname)
+                    assert SHIM_NAME_PREFIX not in pyname  # temporary
                     if SHIM_NAME_PREFIX in pyname:
                         warnings.warn("SHIMMING: %r" % pyname)
                     assert import_python_name(pyname) is not None
