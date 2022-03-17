@@ -54,7 +54,7 @@ jobs:
       # but also work in the absence of napari... so probably don't want
       # to add napari to their deps.
       - name: install napari
-        if: matrix.plugin == "RedLionfish" || matrix.plugin == "smo"
+        if: ${{ matrix.plugin == 'RedLionfish' || matrix.plugin == 'smo' }}
         run: mamba install napari
 
       - name: Install ${{ matrix.plugin }} from conda
