@@ -42,6 +42,8 @@ def test_plugin_has_entry_points(entry_points):
 
 if PLUGIN in FORGOT_NAPARI:
     m = pytest.mark.xfail(reason="forgot napari in deps", strict=True)
+elif PLUGIN == "napari-omero":
+    m = pytest.mark.xfail(reason="needs conda work", strict=True)
 else:
     m = lambda f: f  # noqa
 

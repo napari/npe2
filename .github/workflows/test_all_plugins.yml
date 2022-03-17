@@ -53,6 +53,13 @@ jobs:
         if: matrix.plugin == 'napari-pyclesperanto-assistant' && steps.check_conda.outputs.status != '200'
         run: mamba install pyopencl oclgrind
 
+      # these plugins offer napari functionality
+      # but also work in the absence of napari... so probably don't want
+      # to add napari to their deps.
+      - name: install napari
+        if: matrix.plugin == "RedLionfish" || matrix.plugin == "smo"
+        run: mamba install napari
+
       - name: Install ${{ matrix.plugin }} from conda
         if: steps.check_conda.outputs.status == '200'
         run: mamba install ${{ matrix.plugin }} pyqt
