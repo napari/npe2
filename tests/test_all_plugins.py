@@ -22,8 +22,9 @@ def entry_points():
 
 
 def test_plugin_has_entry_points(entry_points):
-    assert entry_points
-    print("EPs:", entry_points)
+    if PLUGIN not in {"napari-console", "napari-error-reporter"}:
+        assert entry_points
+        print("EPs:", entry_points)
 
 
 def test_entry_points_importable(entry_points: List[metadata.EntryPoint]):
