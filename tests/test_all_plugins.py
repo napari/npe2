@@ -41,7 +41,7 @@ def test_plugin_has_entry_points(entry_points):
 
 
 if PLUGIN in FORGOT_NAPARI:
-    m = pytest.mark.xfail(reason="plugin forgot to list napari in deps", strict=True)
+    m = pytest.mark.xfail(reason="forgot napari in deps", strict=True)
 else:
     m = lambda f: f  # noqa
 
