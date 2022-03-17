@@ -27,4 +27,6 @@ def test_plugin_has_entry_points(entry_points):
 
 
 def test_entry_points_importable(entry_points: List[metadata.EntryPoint]):
-    [ep.load() for ep in entry_points]
+    for ep in entry_points:
+        if ep.group == "napari.plugin":
+            ep.load()
