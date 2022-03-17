@@ -12,6 +12,19 @@ try:
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
+FORGOT_NAPARI = [
+    "vessel-express",
+    "RedLionfish",
+    "smo",
+    "napari-yolov5",
+    "napari-timeseries-opener-plugin",  # really just qtpy, magicgui, and tifffile
+    "napari-nucleaizer",
+    "napari-mri",
+    "napari-dexp",
+    "empanada-napari",
+    "napari-bigwarp",
+]
+
 
 @pytest.fixture
 def entry_points():
@@ -27,6 +40,13 @@ def test_plugin_has_entry_points(entry_points):
         print("EPs:", entry_points)
 
 
+if PLUGIN in FORGOT_NAPARI:
+    m = pytest.mark.xfail(reason="plugin forgot to list napari in deps", strict=True)
+else:
+    m = lambda f: f  # noqa
+
+
+@m
 def test_entry_points_importable(entry_points: List[metadata.EntryPoint]):
     for ep in entry_points:
         if ep.group == "napari.plugin":
