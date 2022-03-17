@@ -46,8 +46,7 @@ jobs:
           use-mamba: true
 
       - id: check_conda
-        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' \
-             'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
+        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' 'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
 
       - name: Install ${{ matrix.plugin }} from conda
         if: steps.check_conda.outputs.status == '200'
