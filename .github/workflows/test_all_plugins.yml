@@ -2,12 +2,11 @@ name: Test all plugins
 
 on:
   pull_request:
-    types: [ labeled ]
   workflow_dispatch:
 
 jobs:
   get-plugins:
-    if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.pull_request.labels.*.name, 'test-all-plugins') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: styfle/cancel-workflow-action@0.9.1
