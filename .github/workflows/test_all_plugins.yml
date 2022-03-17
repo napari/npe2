@@ -2,12 +2,12 @@ name: Test all plugins
 
 on:
   pull_request:
-    types: [labeled]
+    types: [ labeled ]
   workflow_dispatch:
 
 jobs:
   get-plugins:
-    if: ${{ github.event.label.name == 'test-all-plugins' && github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: styfle/cancel-workflow-action@0.9.1
@@ -32,30 +32,44 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - uses: tlambert03/setup-qt-libs@v1
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
+          python-version: 3.9
+          miniforge-variant: Mambaforge
           miniforge-version: latest
           use-mamba: true
 
-      - name: Install dependencies
-        run: |
-          pip install -U pip
-          pip install napari PySide2 pytest
+      - id: check_conda
+        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' 'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
 
-      - name: Install ${{ matrix.plugin }}
-        run: |
-          CONDA=$(curl -s -o /dev/null -w "%{http_code}" https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }})
-          if [[ $VAR  == '200' ]]
-          then
-            conda install ${{ matrix.plugin }})
-            echo "installed with conda"
-          else
-            pip install ${{ matrix.plugin }})
-            echo "installed with pip"
-          fi
+      # for now, until clesperanto is on conda and can declare it itself
+      - name: openCL deps
+        if: matrix.plugin == 'napari-pyclesperanto-assistant' && steps.check_conda.outputs.status != '200'
+        run: mamba install pyopencl oclgrind
 
-      - name: Test
-        run: pytest tests/test_all_plugins.py -s -v --color=yes
+      # these plugins offer napari functionality
+      # but also work in the absence of napari... so probably don't want
+      # to add napari to their deps.
+      - name: install napari
+        if: matrix.plugin == "RedLionfish" || matrix.plugin == "smo"
+        run: mamba install napari
+
+      - name: Install ${{ matrix.plugin }} from conda
+        if: steps.check_conda.outputs.status == '200'
+        run: mamba install ${{ matrix.plugin }} pyqt
+
+      - name: Install ${{ matrix.plugin }} from pip
+        if: steps.check_conda.outputs.status != '200'
+        run: pip install ${{ matrix.plugin }} pyqt5
+
+      - name: Install npe2
+        run: pip install -e .[testing]
+
+      - run: sudo apt-get install -y xvfb
+      - name: Run tests
+        run: xvfb-run --auto-servernum pytest tests/test_all_plugins.py -s -v --color=yes
         env:
-          TEST_PACKAGE_NAME: ${{ matrix.plugin }})
+          TEST_PACKAGE_NAME: ${{ matrix.plugin }}
