@@ -81,7 +81,7 @@ def test_npe1_python_names(entry_points: List[metadata.EntryPoint]):
                 for idx, item in enumerate(result):
                     pyname = _python_name(item, impl.function, idx)
                     print(pyname)
-                    assert SHIM_NAME_PREFIX not in pyname  # temporary
+                    assert import_python_name(pyname) is not None
                     if SHIM_NAME_PREFIX in pyname:
                         warnings.warn("SHIMMING: %r" % pyname)
-                    assert import_python_name(pyname) is not None
+                    assert SHIM_NAME_PREFIX not in pyname  # temporary
