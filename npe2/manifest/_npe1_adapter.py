@@ -95,7 +95,7 @@ class NPE1Adapter(PluginManifest):
         if self._cache_path().exists() and not os.getenv(NPE2_NOCACHE):
             mf = PluginManifest.from_file(self._cache_path())
             self.contributions = mf.contributions
-            logger.debug("%r npe1 shim loaded from cache", self.name)
+            logger.debug("%r npe1 adapter loaded from cache", self.name)
             return
 
         with discovery_blocked():

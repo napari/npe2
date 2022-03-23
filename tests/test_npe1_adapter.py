@@ -166,12 +166,12 @@ def test_adapter_error_on_import():
         def locate_file(self, *_):
             ...
 
-    shim = _npe1_adapter.NPE1Adapter(FakeDist())
+    adapter = _npe1_adapter.NPE1Adapter(FakeDist())
 
     def err():
         raise ImportError("No package found.")
 
     with pytest.warns(UserWarning) as record:
         with patch.object(_npe1_adapter, "manifest_from_npe1", wraps=err):
-            shim.contributions
+            adapter.contributions
     assert "Error importing contributions for" in str(record[0])

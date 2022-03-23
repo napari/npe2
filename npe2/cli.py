@@ -147,7 +147,7 @@ def convert(
 @app.command()
 def cache(
     clear: Optional[bool] = typer.Option(
-        False, "--clear", "-d", help="Clear the npe1 shim manifest cache"
+        False, "--clear", "-d", help="Clear the npe1 adapter manifest cache"
     ),
     names: List[str] = typer.Argument(
         None, help="Name(s) of distributions to list/delete"
