@@ -32,7 +32,10 @@ class CommandHandler:
         try:
             self.function = utils.import_python_name(self.python_name)
         except Exception as e:
-            raise RuntimeError(f"Failed to import command at {self.python_name!r}: {e}")
+            raise RuntimeError(
+                f"Failed to import command at {self.python_name!r}: {e}"
+            ) from e
+
         return self.function
 
 
@@ -124,11 +127,13 @@ class CommandRegistry:
             if id in pm._contrib._commands:
                 _, plugin_key = pm._contrib._commands[id]
                 pm.activate(plugin_key)
-            if id not in self._commands:
+            if id not in self._commands:  # sourcery skip
                 raise KeyError(f"command {id!r} not registered")
         return self._commands[id].resolve()
 
-    def execute(self, id: str, args=(), kwargs={}) -> Any:
+    def execute(self, id: str, args=(), kwargs=None) -> Any:
+        if kwargs is None:
+            kwargs = {}
         return self.get(id)(*args, **kwargs)
 
     def __contains__(self, id: str):

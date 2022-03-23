@@ -6,7 +6,7 @@ import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
 from functools import lru_cache
-from importlib import import_module
+from importlib import import_module, metadata
 from logging import getLogger
 from pathlib import Path
 from types import ModuleType
@@ -33,11 +33,6 @@ from npe2.manifest.contributions import (
 )
 from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
 from npe2.types import WidgetCreator
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 logger = getLogger(__name__)
 NPE1_EP = "napari.plugin"
@@ -89,7 +84,7 @@ class PluginPackage:
     setup_cfg: Optional[Path] = None
 
 
-@lru_cache()
+@lru_cache
 def plugin_packages() -> List[PluginPackage]:
     """List of all packages with napari entry points.
 
@@ -661,10 +656,8 @@ class _SetupVisitor(ast.NodeVisitor):
             return  # pragma: no cover
         for kw in node.keywords:
             if kw.arg == "name":
-                self._name = (
-                    getattr(kw.value, "value", "")
-                    or getattr(kw.value, "id", "")
-                    or getattr(kw.value, "s", "")  # py3.7
+                self._name = getattr(kw.value, "value", "") or getattr(
+                    kw.value, "id", ""
                 )
 
             if kw.arg == "entry_points":

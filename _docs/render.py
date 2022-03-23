@@ -45,7 +45,7 @@ def _mocked_qtwidgets():
             del sys.modules["qtpy.QtWidgets"]
 
 
-@lru_cache()
+@lru_cache
 def type_strings() -> Dict[str, str]:
     """Return map of type name to source code for all types in types.py"""
     from npe2 import types as _t

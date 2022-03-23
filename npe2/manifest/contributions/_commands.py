@@ -92,9 +92,11 @@ class CommandContribution(BaseModel):
     def exec(
         self,
         args: tuple = (),
-        kwargs: dict = {},
+        kwargs: dict = None,
         _registry: Optional["CommandRegistry"] = None,
     ) -> Any:
+        if kwargs is None:
+            kwargs = {}
         if _registry is None:
             from ..._plugin_manager import PluginManager
 

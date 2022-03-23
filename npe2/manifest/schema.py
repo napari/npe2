@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from contextlib import contextmanager
-from importlib import util
+from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
@@ -18,12 +18,6 @@ from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
 from .utils import Version
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
-
 
 logger = getLogger(__name__)
 
@@ -299,8 +293,7 @@ class PluginManifest(ImportExportModel):
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
-        match = entry_point.pattern.match(entry_point.value)
-        assert match
+        assert (match := entry_point.pattern.match(entry_point.value))
         module = match.group("module")
 
         spec = util.find_spec(module or "")
@@ -310,8 +303,7 @@ class PluginManifest(ImportExportModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        match = entry_point.pattern.match(entry_point.value)
-        assert match
+        assert (match := entry_point.pattern.match(entry_point.value))
         fname = match.group("attr")
 
         for loc in spec.submodule_search_locations or []:

@@ -1,3 +1,4 @@
+from importlib import metadata
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,11 +8,6 @@ from pydantic import ValidationError
 from npe2 import PluginManifest
 from npe2.manifest import PackageMetadata
 from npe2.manifest.schema import ENTRY_POINT
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 SAMPLE_MODULE_NAME = "my_plugin"
@@ -115,12 +111,7 @@ def test_all_package_meta():
 
     just a brute force way to get a little more validation coverage
     """
-    try:
-        from importlib.metadata import distributions
-    except ImportError:
-        from importlib_metadata import distributions  # type: ignore
-
-    for d in distributions():
+    for d in metadata.distributions():
         assert PackageMetadata.from_dist_metadata(d.metadata)
 
 
