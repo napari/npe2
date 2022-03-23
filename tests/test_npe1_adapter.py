@@ -1,4 +1,5 @@
 from functools import partial
+from importlib import metadata
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,11 +11,6 @@ from npe2 import PluginManager
 from npe2.manifest import _npe1_adapter, utils
 from npe2.manifest.sample_data import SampleDataGenerator
 from npe2.manifest.utils import SHIM_NAME_PREFIX
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 
 def test_adapter_no_npe1():

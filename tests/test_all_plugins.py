@@ -1,4 +1,5 @@
 import os
+from importlib import metadata
 from typing import List
 
 import pytest
@@ -6,11 +7,6 @@ import pytest
 PLUGIN = os.getenv("TEST_PACKAGE_NAME")
 if not PLUGIN:
     pytest.skip("skipping plugin specific tests", allow_module_level=True)
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 FORGOT_NAPARI = [
     "vessel-express",

@@ -2,6 +2,7 @@ import logging
 import os
 import site
 import warnings
+from importlib import metadata
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Sequence
@@ -11,12 +12,6 @@ from appdirs import user_cache_dir
 from .._from_npe1 import manifest_from_npe1
 from .package_metadata import PackageMetadata
 from .schema import PluginManifest, discovery_blocked
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
-
 
 logger = logging.getLogger(__name__)
 ADAPTER_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2" / "adapter_manifests"
