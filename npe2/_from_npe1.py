@@ -7,6 +7,7 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib import import_module
+from logging import getLogger
 from pathlib import Path
 from types import ModuleType
 from typing import (
@@ -36,6 +37,7 @@ try:
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
+logger = getLogger(__name__)
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
 NPE1_IMPL_TAG = "napari_impl"  # same as HookImplementation.format_tag("napari")
@@ -163,6 +165,11 @@ def manifest_from_npe1(
 
     manifests: List[PluginManifest] = []
     for mod_name in modules:
+        logger.debug(
+            "Discovering contributions for npe1 plugin %r: module %r",
+            package_name,
+            mod_name,
+        )
         parser = HookImplParser(package_name, plugin_name or "", shim=shim)
         _mod = import_module(mod_name) if isinstance(mod_name, str) else mod_name
         parser.parse_module(_mod)

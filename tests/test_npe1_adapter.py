@@ -6,7 +6,7 @@ import pytest
 from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
-from npe2.manifest import _npe1_shim, utils
+from npe2.manifest import _npe1_adapter, utils
 from npe2.manifest.sample_data import SampleDataGenerator
 
 try:
@@ -29,7 +29,7 @@ def test_npe1_shim(uses_npe1_plugin):
     # we've found a shim
     assert len(pm._shims) == 1
     mf = pm.get_manifest("npe1-plugin")
-    assert isinstance(mf, _npe1_shim.NPE1Shim)
+    assert isinstance(mf, _npe1_adapter.NPE1Adapter)
     assert mf.package_metadata
     assert mf.package_metadata.version == "0.1.0"
     assert mf.package_metadata.name == "npe1-plugin"
@@ -37,9 +37,9 @@ def test_npe1_shim(uses_npe1_plugin):
     # it's currently unindexed and unstored
 
     with patch.object(
-        _npe1_shim,
+        _npe1_adapter,
         "manifest_from_npe1",
-        wraps=_npe1_shim.manifest_from_npe1,  # type: ignore
+        wraps=_npe1_adapter.manifest_from_npe1,  # type: ignore
     ) as mock:
         pm.index_npe1_shims()
         # the shim has been cleared by the indexing
@@ -52,12 +52,12 @@ def test_npe1_shim(uses_npe1_plugin):
         assert mf.contributions.sample_data
 
 
-def _get_mf() -> _npe1_shim.NPE1Shim:
+def _get_mf() -> _npe1_adapter.NPE1Adapter:
     pm = PluginManager.instance()
     pm.discover()
     pm.index_npe1_shims()
     mf = pm.get_manifest("npe1-plugin")
-    assert isinstance(mf, _npe1_shim.NPE1Shim)
+    assert isinstance(mf, _npe1_adapter.NPE1Adapter)
     return mf
 
 
@@ -117,12 +117,12 @@ def test_shim_error_on_import():
         def locate_file(self, *_):
             ...
 
-    shim = _npe1_shim.NPE1Shim(FakeDist())
+    shim = _npe1_adapter.NPE1Adapter(FakeDist())
 
     def err():
         raise ImportError("No package found.")
 
     with pytest.warns(UserWarning) as record:
-        with patch.object(_npe1_shim, "manifest_from_npe1", wraps=err):
+        with patch.object(_npe1_adapter, "manifest_from_npe1", wraps=err):
             shim.contributions
-    assert "Failed to detect contributions" in str(record[0])
+    assert "Error importing contributions for" in str(record[0])

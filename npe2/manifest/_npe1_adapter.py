@@ -14,7 +14,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class NPE1Shim(PluginManifest):
+class NPE1Adapter(PluginManifest):
     _is_loaded: bool = False
     _dist: metadata.Distribution
 
@@ -29,7 +29,7 @@ class NPE1Shim(PluginManifest):
         return super().__getattribute__(__name)
 
     def _load_contributions(self) -> None:
-        """imports and inspects package using npe1 plugin manager"""
+        """import and inspect package contributions."""
 
         with discovery_blocked():
             self._is_loaded = True  # if we fail once, we still don't try again.
@@ -37,7 +37,8 @@ class NPE1Shim(PluginManifest):
                 mf = manifest_from_npe1(self._dist, shim=True)
             except Exception as e:
                 warnings.warn(
-                    f"Failed to detect contributions for np1e plugin {self.name!r}: {e}"
+                    "Error importing contributions for first-generation "
+                    f"napari plugin {self.name!r}: {e}"
                 )
                 return
 

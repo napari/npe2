@@ -447,9 +447,9 @@ def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
     if _npe2:
         return PluginManifest._from_entrypoint(_npe2, dist)
     elif _npe1:
-        from ._npe1_shim import NPE1Shim
+        from ._npe1_adapter import NPE1Adapter
 
-        return NPE1Shim(dist=dist)
+        return NPE1Adapter(dist=dist)
     return None
 
 
