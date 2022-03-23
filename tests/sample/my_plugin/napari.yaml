@@ -66,7 +66,6 @@ contributions:
       - command: my-plugin.hello_world
     mysubmenu:
       - command: my-plugin.another_command
-      - command: my-plugin.affinder
   submenus:
     - id: mysubmenu
       label: My SubMenu

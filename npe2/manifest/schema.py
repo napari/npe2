@@ -6,7 +6,7 @@ from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -19,24 +19,25 @@ from .contributions import ContributionPoints
 from .package_metadata import PackageMetadata
 from .utils import Version
 
-if TYPE_CHECKING:
-    from importlib.metadata import EntryPoint
-
-
 logger = getLogger(__name__)
 
 
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
+NPE1_ENTRY_POINT = "napari.plugin"
 
 
 class DiscoverResults(NamedTuple):
     manifest: Optional[PluginManifest]
-    entrypoint: Optional[EntryPoint]
+    distribution: Optional[metadata.Distribution]
     error: Optional[Exception]
 
 
 class PluginManifest(ImportExportModel):
+    class Config:
+        underscore_attrs_are_private = True
+        extra = Extra.forbid
+        validate_assignment = True
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
@@ -122,7 +123,17 @@ class PluginManifest(ImportExportModel):
         "For normal (non-dynamic) plugins, this data will come from the package's "
         "setup.cfg",
         hide_docs=True,
+        exclude=True,
     )
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.package_metadata is None and self.name:
+            try:
+                meta = metadata.distribution(self.name).metadata
+                self.package_metadata = PackageMetadata.from_dist_metadata(meta)
+            except metadata.PackageNotFoundError:
+                pass
 
     def __hash__(self):
         return hash((self.name, self.package_version))
@@ -210,23 +221,16 @@ class PluginManifest(ImportExportModel):
             If the manifest is not valid
         """
         dist = metadata.distribution(name)  # may raise PackageNotFoundError
-        for ep in dist.entry_points:
-            if ep.group == ENTRY_POINT:
-                return PluginManifest._from_entrypoint(ep, dist)
-        raise ValueError(
-            "Distribution {name!r} exists but does not provide a napari manifest"
-        )
-
-    class Config:
-        underscore_attrs_are_private = True
-        extra = Extra.forbid
-        validate_assignment = True
+        pm = _from_dist(dist)
+        if not pm:
+            raise ValueError(
+                "Distribution {name!r} exists but does not provide a napari manifest"
+            )
+        return pm
 
     @classmethod
     def discover(
-        cls,
-        entry_point_group: str = ENTRY_POINT,
-        paths: Sequence[Union[str, Path]] = (),
+        cls, paths: Sequence[Union[str, Path]] = ()
     ) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
@@ -252,8 +256,6 @@ class PluginManifest(ImportExportModel):
 
         Parameters
         ----------
-        entry_point_group : str, optional
-            name of entry point group to discover, by default 'napari.manifest'
         paths : Sequence[str], optional
             paths to add to sys.path while discovering.
 
@@ -264,32 +266,30 @@ class PluginManifest(ImportExportModel):
         """
         with _temporary_path_additions(paths):
             for dist in metadata.distributions():
-                for ep in dist.entry_points:
-                    if ep.group != entry_point_group:
-                        continue
-                    try:
-                        pm = cls._from_entrypoint(ep, dist)
-                        yield DiscoverResults(pm, ep, None)
-                    except ValidationError as e:
-                        module_name, filename = ep.value.split(":")
-                        logger.warning(
-                            "Invalid schema for package %r, please run"
-                            " 'npe2 validate %s' to check for manifest errors.",
-                            module_name,
-                            module_name,
-                        )
-                        yield DiscoverResults(None, ep, e)
-                    except Exception as e:
-                        logger.error(
-                            "%s -> %r could not be imported: %s"
-                            % (entry_point_group, ep.value, e)
-                        )
-                        yield DiscoverResults(None, ep, e)
+                try:
+                    pm = _from_dist(dist)
+                    if pm:
+                        yield DiscoverResults(pm, dist, None)
+                except ValidationError as e:
+                    logger.warning(
+                        "Invalid schema for package %r, please run"
+                        " 'npe2 validate %s' to check for manifest errors.",
+                        dist.metadata["Name"],
+                        dist.metadata["Name"],
+                    )
+                    yield DiscoverResults(None, dist, e)
+
+                except Exception as e:
+                    logger.error(
+                        "%s -> %r could not be imported: %s"
+                        % (ENTRY_POINT, dist.metadata["Name"], e)
+                    )
+                    yield DiscoverResults(None, dist, e)
 
     @classmethod
     def _from_entrypoint(
         cls,
-        entry_point: EntryPoint,
+        entry_point: metadata.EntryPoint,
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
 
@@ -366,6 +366,10 @@ class PluginManifest(ImportExportModel):
                     "package name or a file.."
                 ) from e
 
+    def _serialized_data(self, **kwargs):
+        kwargs.setdefault("exclude", {"package_metadata"})
+        return super()._serialized_data(**kwargs)
+
     def validate_imports(self) -> None:
         """Checks recursively that all `python_name` fields are actually importable."""
         from .utils import import_python_name
@@ -394,8 +398,24 @@ class PluginManifest(ImportExportModel):
     ValidationError = ValidationError  # for convenience of access
 
 
+def _noop(*_, **__):
+    return []  # pragma: no cover
+
+
+@contextmanager
+def discovery_blocked():
+    orig = PluginManifest.discover
+    setattr(PluginManifest, "discover", _noop)
+    try:
+        yield
+    finally:
+        setattr(PluginManifest, "discover", orig)
+
+
 @contextmanager
 def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
+    if paths and (not isinstance(paths, Sequence) or isinstance(paths, str)):
+        raise TypeError("paths must be a sequence of strings")  # pragma: no cover
     for p in reversed(paths):
         sys.path.insert(0, str(p))
     try:
@@ -403,6 +423,26 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
     finally:
         for p in paths:
             sys.path.remove(str(p))
+
+
+def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
+    """Return PluginManifest or NPE1Adapter for a metadata.Distribution object.
+
+    ...depending on which entry points are available.
+    """
+    _npe1, _npe2 = [], None
+    for ep in dist.entry_points:
+        if ep.group == NPE1_ENTRY_POINT:
+            _npe1.append(ep)
+        elif ep.group == ENTRY_POINT:
+            _npe2 = ep
+    if _npe2:
+        return PluginManifest._from_entrypoint(_npe2, dist)
+    elif _npe1:
+        from ._npe1_adapter import NPE1Adapter
+
+        return NPE1Adapter(dist=dist)
+    return None
 
 
 if __name__ == "__main__":

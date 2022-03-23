@@ -63,7 +63,7 @@ def test_cli_convert_repo_dry_run(npe1_repo, mock_npe1_pm_with_plugin):
 def test_cli_convert_svg():
     result = runner.invoke(app, ["convert", "napari-svg"])
     assert "Some issues occured:" in result.stdout
-    assert "Found a multi-layer writer, but it's not convertable" in result.stdout
+    assert "Found a multi-layer writer in 'napari-svg'" in result.stdout
     assert result.exit_code == 0
 
 
@@ -86,3 +86,44 @@ def test_cli_main(monkeypatch, sample_path):
     with pytest.raises(SystemExit) as e:
         main()
     assert e.value.code == 0
+
+
+def test_cli_cache_list_empty(mock_cache):
+    result = runner.invoke(app, ["cache", "--list"])
+    assert "Nothing cached" in result.stdout
+    assert result.exit_code == 0
+
+
+def test_cli_cache_list_full(uses_npe1_plugin, mock_cache):
+    (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
+    result = runner.invoke(app, ["cache", "--list"])
+    assert result.stdout == "npe1-plugin: 0.1.0\n"
+    assert result.exit_code == 0
+
+
+def test_cli_cache_list_named(uses_npe1_plugin, mock_cache):
+    (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
+    result = runner.invoke(app, ["cache", "--list", "not-a-plugin"])
+    assert result.stdout == "Nothing cached for plugins: not-a-plugin\n"
+    assert result.exit_code == 0
+
+
+def test_cli_cache_clear_empty(mock_cache):
+    result = runner.invoke(app, ["cache", "--clear"])
+    assert "Nothing to clear" in result.stdout
+    assert result.exit_code == 0
+
+
+def test_cli_cache_clear_full(mock_cache):
+    (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
+    result = runner.invoke(app, ["cache", "--clear"])
+    assert "Cleared these files from cache" in result.stdout
+    assert "- npe1-plugin.yaml" in result.stdout
+    assert result.exit_code == 0
+
+
+def test_cli_cache_clear_named(mock_cache):
+    (mock_cache / "npe1-plugin.yaml").write_text("name: npe1-plugin\n")
+    result = runner.invoke(app, ["cache", "--clear", "not-a-plugin"])
+    assert result.stdout == "Nothing to clear for plugins: not-a-plugin\n"
+    assert result.exit_code == 0
