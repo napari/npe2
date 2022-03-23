@@ -111,7 +111,7 @@ def plugin_packages() -> List[PluginPackage]:
 def manifest_from_npe1(
     plugin: Union[str, metadata.Distribution, None] = None,
     module: Any = None,
-    shim=False,
+    adapter=False,
 ) -> PluginManifest:
     """Return manifest object given npe1 plugin or package name.
 
@@ -125,8 +125,8 @@ def manifest_from_npe1(
         package, and the name of an npe1 `napari.plugin` entry_point. by default None
     module : Optional[Module]
         namespace object, to directly import (mostly for testing.), by default None
-    shim : bool
-        If True, the resulting manifest will be used internally by NPE1Adaptor, but
+    adapter : bool
+        If True, the resulting manifest will be used internally by NPE1Adapter, but
         is NOT necessarily suitable for export as npe2 manifest. This will handle
         cases of locally defined functions and partials that don't have global
         python_names that are not supported natively by npe2. by default False
@@ -170,7 +170,7 @@ def manifest_from_npe1(
             package_name,
             mod_name,
         )
-        parser = HookImplParser(package_name, plugin_name or "", shim=shim)
+        parser = HookImplParser(package_name, plugin_name or "", adapter=adapter)
         _mod = import_module(mod_name) if isinstance(mod_name, str) else mod_name
         parser.parse_module(_mod)
         manifests.append(parser.manifest())
@@ -180,31 +180,31 @@ def manifest_from_npe1(
 
 
 class HookImplParser:
-    def __init__(self, package: str, plugin_name: str, shim: bool = False) -> None:
+    def __init__(self, package: str, plugin_name: str, adapter: bool = False) -> None:
         """A visitor class to convert npe1 hookimpls to a npe2 manifest
 
         Parameters
         ----------
         package : str
-            [description]
+            Name of package
         plugin_name : str
-            [description]
-        shim : bool, optional
-            If True, the resulting manifest will be used internally by NPE1Adaptor, but
+            Name of plugin (will almost always be name of package)
+        adapter : bool, optional
+            If True, the resulting manifest will be used internally by NPE1Adapter, but
             is NOT necessarily suitable for export as npe2 manifest. This will handle
             cases of locally defined functions and partials that don't have global
             python_names that are not supported natively by npe2. by default False
 
         Examples
         --------
-        >>> parser = HookImplParser(package, plugin_name, shim=shim)
+        >>> parser = HookImplParser(package, plugin_name)
         >>> parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
         >>> mf = PluginManifest(name=package, contributions=dict(parser.contributions))
         """
         self.package = package
         self.plugin_name = plugin_name
         self.contributions: DefaultDict[str, list] = DefaultDict(list)
-        self.shim = shim
+        self.adapter = adapter
 
     def manifest(self) -> PluginManifest:
         return PluginManifest(name=self.package, contributions=dict(self.contributions))
@@ -267,7 +267,7 @@ class HookImplParser:
                 # let these raise exceptions here immediately if they don't validate
                 id = f"{self.package}.data.{_key}"
                 py_name = _python_name(
-                    _sample, impl.function, shim_idx=idx if self.shim else None
+                    _sample, impl.function, hook_idx=idx if self.adapter else None
                 )
                 cmd_contrib = CommandContribution(
                     id=id,
@@ -292,7 +292,7 @@ class HookImplParser:
 
                 cmd = f"{self.package}.{item.__name__}"
                 py_name = _python_name(
-                    item, impl.function, shim_idx=idx if self.shim else None
+                    item, impl.function, hook_idx=idx if self.adapter else None
                 )
                 docsum = item.__doc__.splitlines()[0] if item.__doc__ else None
                 cmd_contrib = CommandContribution(
@@ -358,7 +358,9 @@ class HookImplParser:
         # returned it... In the case that we can't get an absolute python name to the
         # wdg_creator itself (e.g. it's defined in a local scope), then the py_name
         # will use the hookimpl itself, and the index of the object returned.
-        py_name = _python_name(wdg_creator, hook, shim_idx=idx if self.shim else None)
+        py_name = _python_name(
+            wdg_creator, hook, hook_idx=idx if self.adapter else None
+        )
 
         if not py_name:  # pragma: no cover
             raise ValueError(
@@ -434,7 +436,7 @@ def _safe_key(key: str) -> str:
 
 
 def _python_name(
-    obj: Any, hook: Callable = None, shim_idx: Optional[int] = None
+    obj: Any, hook: Callable = None, hook_idx: Optional[int] = None
 ) -> str:
     """Get resolvable python name for `obj` returned from an npe1 `hook` implentation.
 
@@ -446,9 +448,9 @@ def _python_name(
         the npe1 hook implementation that returned `obj`, by default None.
         This is used both to search the module namespace for `obj`, and also
         in the shim python name if `obj` cannot be found.
-    shim_idx : int, optional
-        If `obj` cannot be found and `shim_idx` is not None, then a shim name.
-        of the form "__npe1shim__.{_python_name(hook)}_{shim_idx}" will be returned.
+    hook_idx : int, optional
+        If `obj` cannot be found and `hook_idx` is not None, then a shim name.
+        of the form "__npe1shim__.{_python_name(hook)}_{hook_idx}" will be returned.
         by default None.
 
     Returns
@@ -493,10 +495,10 @@ def _python_name(
             if mod:
                 mod_name = mod.__name__
 
-    if not (mod_name and obj_name) and (hook and shim_idx is not None):
+    if not (mod_name and obj_name) and (hook and hook_idx is not None):
         # we weren't able to resolve an absolute name... if we are shimming, then we
         # can create a special py_name of the form `__npe1shim__.hookfunction_idx`
-        return f"{SHIM_NAME_PREFIX}{_python_name(hook)}_{shim_idx}"
+        return f"{SHIM_NAME_PREFIX}{_python_name(hook)}_{hook_idx}"
 
     if obj_name and "<locals>" in obj_name:
         raise ValueError("functions defined in local scopes are not yet supported.")

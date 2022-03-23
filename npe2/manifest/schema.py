@@ -434,7 +434,7 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
 
 
 def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
-    """Return PluginManifest or NPE1Shim for a metadata.Distribution object.
+    """Return PluginManifest or NPE1Adapter for a metadata.Distribution object.
 
     ...depending on which entry points are available.
     """
