@@ -13,6 +13,11 @@ try:
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata  # type: ignore
+
 
 @pytest.fixture
 def sample_path():
