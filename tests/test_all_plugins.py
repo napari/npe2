@@ -1,17 +1,12 @@
 import os
 import warnings
+from importlib import metadata
 from typing import List
 
 import pytest
 
 from npe2._from_npe1 import _python_name, iter_hookimpls
 from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
-
 
 PLUGIN = os.getenv("TEST_PACKAGE_NAME")
 if not PLUGIN:
