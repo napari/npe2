@@ -76,8 +76,8 @@ def test_cli_convert_repo_fails(npe1_repo, mock_npe1_pm_with_plugin):
 
 def test_cli_convert_package_name(npe1_repo, mock_npe1_pm_with_plugin):
     result = runner.invoke(app, ["convert", "npe1-plugin"])
-    assert result.exit_code == 0
     assert "name: npe1-plugin" in result.stdout  # just prints the yaml
+    assert result.exit_code == 0
 
 
 def test_cli_main(monkeypatch, sample_path):
