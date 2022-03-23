@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from npe2 import PluginManager, PluginManifest
+from npe2.manifest import _npe1_adapter
 
 try:
     from importlib import metadata
@@ -164,3 +165,10 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
                     new_manifest.unlink()
                 if (npe1_repo / "setup.py").exists():
                     (npe1_repo / "setup.py").unlink()
+
+
+@pytest.fixture
+def mock_cache(tmp_path, monkeypatch):
+    with monkeypatch.context() as m:
+        m.setattr(_npe1_adapter, "ADAPTER_CACHE", tmp_path)
+        yield tmp_path

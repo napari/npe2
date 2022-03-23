@@ -1,4 +1,5 @@
 from functools import partial
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -22,7 +23,7 @@ def test_adapter_no_npe1():
     assert not pm._npe1_adapters
 
 
-def test_npe1_adapter(uses_npe1_plugin):
+def test_npe1_adapter(uses_npe1_plugin, mock_cache: Path):
     """Test that the plugin manager detects npe1 plugins, and can index contribs"""
     pm = PluginManager()
     pm.discover()
@@ -36,6 +37,8 @@ def test_npe1_adapter(uses_npe1_plugin):
     assert mf.package_metadata.name == "npe1-plugin"
 
     # it's currently unindexed and unstored
+    assert not mf._cache_path().exists()
+    assert not list(mock_cache.iterdir())
 
     with patch.object(
         _npe1_adapter,
@@ -47,10 +50,53 @@ def test_npe1_adapter(uses_npe1_plugin):
         assert len(pm._npe1_adapters) == 0
         # manifest_from_npe1 was called
         mock.assert_called_once_with(mf._dist, adapter=True)
+        assert mf._cache_path().exists()
         # NOTE: accessing the `.contributions` object would have also triggered
         # importing, like pm.index_npe1_adapters() above, but it would not have
         # injected the contributions into the pm._contrib object.
         assert mf.contributions.sample_data
+
+        mock.reset_mock()
+        # clear and rediscover... this time we expect the cache to kick in
+        pm.discover(clear=True)
+        assert len(pm._npe1_adapters) == 1
+        pm.index_npe1_adapters()
+        assert len(pm._npe1_adapters) == 0
+        mock.assert_not_called()
+
+
+def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
+    """Test that we can clear cache, etc.."""
+    pm = PluginManager()
+    pm.discover()
+
+    with patch.object(
+        _npe1_adapter,
+        "manifest_from_npe1",
+        wraps=_npe1_adapter.manifest_from_npe1,  # type: ignore
+    ) as mock:
+
+        # if we clear the cache, it should import again
+        mf = pm.get_manifest("npe1-plugin")
+        assert isinstance(mf, _npe1_adapter.NPE1Adapter)
+        pm.index_npe1_adapters()
+        mock.assert_called_once_with(mf._dist, adapter=True)
+        assert mf._cache_path().exists()
+
+        _npe1_adapter.clear_cache()
+        assert not mf._cache_path().exists()
+
+        mock.reset_mock()
+        pm.discover(clear=True)
+        pm.index_npe1_adapters()
+        mf = pm.get_manifest("npe1-plugin")
+        assert isinstance(mf, _npe1_adapter.NPE1Adapter)
+        mock.assert_called_once_with(mf._dist, adapter=True)
+        assert mf._cache_path().exists()
+        _npe1_adapter.clear_cache(names=["not-our-plugin"])
+        assert mf._cache_path().exists()
+        _npe1_adapter.clear_cache(names=["npe1-plugin"])
+        assert not mf._cache_path().exists()
 
 
 def _get_mf() -> _npe1_adapter.NPE1Adapter:
@@ -62,7 +108,7 @@ def _get_mf() -> _npe1_adapter.NPE1Adapter:
     return mf
 
 
-def test_adapter_pyname_sample_data(uses_npe1_plugin):
+def test_adapter_pyname_sample_data(uses_npe1_plugin, mock_cache):
     """Test that objects defined locally in npe1 hookspecs can be retrieved."""
     mf = _get_mf()
     samples = mf.contributions.sample_data
@@ -84,7 +130,7 @@ def test_adapter_pyname_sample_data(uses_npe1_plugin):
     assert np.array_equal(func(), ONES)
 
 
-def test_adapter_pyname_dock_widget(uses_npe1_plugin):
+def test_adapter_pyname_dock_widget(uses_npe1_plugin, mock_cache):
     """Test that objects defined locally in npe1 hookspecs can be retrieved."""
     mf = _get_mf()
     widgets = mf.contributions.widgets
@@ -120,12 +166,12 @@ def test_adapter_error_on_import():
         def locate_file(self, *_):
             ...
 
-    shim = _npe1_adapter.NPE1Adapter(FakeDist())
+    adapter = _npe1_adapter.NPE1Adapter(FakeDist())
 
     def err():
         raise ImportError("No package found.")
 
     with pytest.warns(UserWarning) as record:
         with patch.object(_npe1_adapter, "manifest_from_npe1", wraps=err):
-            shim.contributions
+            adapter.contributions
     assert "Error importing contributions for" in str(record[0])
