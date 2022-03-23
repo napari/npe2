@@ -1,18 +1,21 @@
 import ast
-import itertools
+import inspect
 import re
 import sys
 import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
 from functools import lru_cache
+from importlib import import_module
+from logging import getLogger
 from pathlib import Path
+from types import ModuleType
 from typing import (
     Any,
     Callable,
     DefaultDict,
     Dict,
-    Iterable,
+    Iterator,
     List,
     Optional,
     Tuple,
@@ -20,12 +23,7 @@ from typing import (
     cast,
 )
 
-from napari_plugin_engine import (
-    HookCaller,
-    HookImplementation,
-    PluginManager,
-    napari_hook_specification,
-)
+import magicgui
 
 from npe2.manifest import PluginManifest
 from npe2.manifest.contributions import (
@@ -33,36 +31,53 @@ from npe2.manifest.contributions import (
     ThemeColors,
     WidgetContribution,
 )
+from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
+from npe2.types import WidgetCreator
 
 try:
     from importlib import metadata
 except ImportError:
     import importlib_metadata as metadata  # type: ignore
 
+logger = getLogger(__name__)
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
+NPE1_IMPL_TAG = "napari_impl"  # same as HookImplementation.format_tag("napari")
 
 
-# fmt: off
-class HookSpecs:
-    def napari_provide_sample_data(): ...  # type: ignore  # noqa: E704
-    def napari_get_reader(path): ...  # noqa: E704
-    def napari_get_writer(path, layer_types): ...  # noqa: E704
-    def napari_write_image(path, data, meta): ...  # noqa: E704
-    def napari_write_labels(path, data, meta): ...  # noqa: E704
-    def napari_write_points(path, data, meta): ...  # noqa: E704
-    def napari_write_shapes(path, data, meta): ...  # noqa: E704
-    def napari_write_surface(path, data, meta): ...  # noqa: E704
-    def napari_write_vectors(path, data, meta): ...  # noqa: E704
-    def napari_experimental_provide_function(): ...  # type: ignore  # noqa: E704
-    def napari_experimental_provide_dock_widget(): ...  # type: ignore  # noqa: E704
-    def napari_experimental_provide_theme(): ...  # type: ignore  # noqa: E704
-# fmt: on
+class HookImplementation:
+    def __init__(
+        self,
+        function: Callable,
+        plugin: Optional[ModuleType] = None,
+        plugin_name: Optional[str] = None,
+        **kwargs,
+    ):
+        self.function = function
+        self.plugin = plugin
+        self.plugin_name = plugin_name
+        self._specname = kwargs.get("specname")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<HookImplementation plugin={self.plugin_name!r} spec={self.specname!r}>"
+        )
+
+    @property
+    def specname(self) -> str:
+        return self._specname or self.function.__name__
 
 
-for m in dir(HookSpecs):
-    if m.startswith("napari"):
-        setattr(HookSpecs, m, napari_hook_specification(getattr(HookSpecs, m)))
+def iter_hookimpls(
+    module: ModuleType, plugin_name: Optional[str] = None
+) -> Iterator[HookImplementation]:
+    # yield all routines in module that have "{self.project_name}_impl" attr
+    for name in dir(module):
+        method = getattr(module, name)
+        if hasattr(method, NPE1_IMPL_TAG) and inspect.isroutine(method):
+            hookimpl_opts = getattr(method, NPE1_IMPL_TAG)
+            if isinstance(hookimpl_opts, dict):
+                yield HookImplementation(method, module, plugin_name, **hookimpl_opts)
 
 
 @dataclass
@@ -72,11 +87,6 @@ class PluginPackage:
     ep_value: str
     top_module: str
     setup_cfg: Optional[Path] = None
-
-    @property
-    def name_pairs(self):
-        names = (self.ep_name, self.package_name, self.top_module)
-        return itertools.product(names, repeat=2)
 
 
 @lru_cache()
@@ -100,102 +110,117 @@ def plugin_packages() -> List[PluginPackage]:
     return packages
 
 
-def ensure_package_name(name: str):
-    """Try all the tricks we know to find a package name given a plugin name."""
-    for attr in ("package_name", "ep_name", "top_module"):
-        for p in plugin_packages():
-            if name == getattr(p, attr):
-                return p.package_name
-    raise KeyError(  # pragma: no cover
-        f"Unable to find a locally installed package for plugin {name!r}"
-    )
-
-
-@lru_cache()
-def npe1_plugin_manager() -> Tuple[PluginManager, Tuple[int, list]]:
-    pm = PluginManager("napari", discover_entry_point=NPE1_EP)
-    pm.add_hookspecs(HookSpecs)
-    result = pm.discover()
-    return pm, result
-
-
-def norm_plugin_name(plugin_name: Optional[str] = None, module: Any = None) -> str:
-    """Try all the things we know to detect something called `plugin_name`."""
-    plugin_manager, (_, errors) = npe1_plugin_manager()
-
-    # directly providing a module is mostly for testing.
-    if module is not None:
-        if plugin_name:  # pragma: no cover
-            warnings.warn("module provided, plugin_name ignored")
-        plugin_name = getattr(module, "__name__", "dynamic_plugin")
-        if not plugin_manager.is_registered(plugin_name):
-            plugin_manager.register(module, plugin_name)
-        return cast(str, plugin_name)
-
-    if plugin_name in plugin_manager.plugins:
-        return cast(str, plugin_name)
-
-    for pkg in plugin_packages():
-        for a, b in pkg.name_pairs:
-            if plugin_name == a and b in plugin_manager.plugins:
-                return b
-
-    # we couldn't find it:
-    for e in errors:  # pragma: no cover
-        if module and e.plugin == module:
-            raise type(e)(e.format())
-        for pkg in plugin_packages():
-            if plugin_name in (pkg.ep_name, pkg.package_name, pkg.top_module):
-                raise type(e)(e.format())
-
-    msg = f"We tried hard! but could not detect a plugin named {plugin_name!r}."
-    if plugin_manager.plugins:
-        msg += f" Plugins found include: {list(plugin_manager.plugins)}"
-    raise metadata.PackageNotFoundError(msg)
-
-
 def manifest_from_npe1(
-    plugin_name: Optional[str] = None, module: Any = None
+    plugin: Union[str, metadata.Distribution, None] = None,
+    module: Any = None,
+    adapter=False,
 ) -> PluginManifest:
-    """Return manifest object given npe1 plugin_name or package name.
+    """Return manifest object given npe1 plugin or package name.
 
-    One of `plugin_name` or `module` must be provide.
+    One of `plugin` or `module` must be provide.
 
     Parameters
     ----------
-    plugin_name : str
-        Name of package/plugin to convert, by default None
-    module : Module
+    plugin : Union[str, metadata.Distribution, None]
+        Name of package/plugin to convert.  Or a `metadata.Distribution` object.
+        If a string, this function should be prepared to accept both the name of the
+        package, and the name of an npe1 `napari.plugin` entry_point. by default None
+    module : Optional[Module]
         namespace object, to directly import (mostly for testing.), by default None
+    adapter : bool
+        If True, the resulting manifest will be used internally by NPE1Adapter, but
+        is NOT necessarily suitable for export as npe2 manifest. This will handle
+        cases of locally defined functions and partials that don't have global
+        python_names that are not supported natively by npe2. by default False
     """
-    plugin_manager, _ = npe1_plugin_manager()
-    plugin_name = norm_plugin_name(plugin_name, module)
+    if module is not None:
+        modules: List[str] = [module]
+        package_name = "dynamic"
+        plugin_name = getattr(module, "__name__", "dynamic_plugin")
+    elif isinstance(plugin, str):
 
-    _module = plugin_manager.plugins[plugin_name]
-    package = ensure_package_name(plugin_name) if module is None else "dynamic"
+        modules = []
+        plugin_name = plugin
+        for pp in plugin_packages():
+            if plugin in (pp.ep_name, pp.package_name):
+                modules.append(pp.ep_value)
+                package_name = pp.package_name
+        if not modules:
+            _avail = [f"  {p.package_name} ({p.ep_name})" for p in plugin_packages()]
+            avail = "\n".join(_avail)
+            raise metadata.PackageNotFoundError(
+                f"No package or entry point found with name {plugin!r}: "
+                f"\nFound packages (entry_point):\n{avail}"
+            )
+    elif hasattr(plugin, "entry_points") and hasattr(plugin, "metadata"):
+        plugin = cast(metadata.Distribution, plugin)
+        # don't use isinstance(Distribution), setuptools monkeypatches sys.meta_path:
+        # https://github.com/pypa/setuptools/issues/3169
+        NPE1_ENTRY_POINT = "napari.plugin"
+        plugin_name = package_name = plugin.metadata["Name"]
+        modules = [
+            ep.value for ep in plugin.entry_points if ep.group == NPE1_ENTRY_POINT
+        ]
+        assert modules, f"No npe1 entry points found in distribution {plugin_name!r}"
+    else:
+        raise ValueError("one of plugin or module must be provided")  # pragma: no cover
 
-    parser = HookImplParser(package, plugin_name)
-    parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
+    manifests: List[PluginManifest] = []
+    for mod_name in modules:
+        logger.debug(
+            "Discovering contributions for npe1 plugin %r: module %r",
+            package_name,
+            mod_name,
+        )
+        parser = HookImplParser(package_name, plugin_name or "", adapter=adapter)
+        _mod = import_module(mod_name) if isinstance(mod_name, str) else mod_name
+        parser.parse_module(_mod)
+        manifests.append(parser.manifest())
 
-    return PluginManifest(name=package, contributions=dict(parser.contributions))
+    assert manifests, "No npe1 entry points found in distribution {name}"
+    return merge_manifests(manifests)
 
 
 class HookImplParser:
-    def __init__(self, package: str, plugin_name: str) -> None:
+    def __init__(self, package: str, plugin_name: str, adapter: bool = False) -> None:
+        """A visitor class to convert npe1 hookimpls to a npe2 manifest
+
+        Parameters
+        ----------
+        package : str
+            Name of package
+        plugin_name : str
+            Name of plugin (will almost always be name of package)
+        adapter : bool, optional
+            If True, the resulting manifest will be used internally by NPE1Adapter, but
+            is NOT necessarily suitable for export as npe2 manifest. This will handle
+            cases of locally defined functions and partials that don't have global
+            python_names that are not supported natively by npe2. by default False
+
+        Examples
+        --------
+        >>> parser = HookImplParser(package, plugin_name)
+        >>> parser.parse_callers(plugin_manager._plugin2hookcallers[_module])
+        >>> mf = PluginManifest(name=package, contributions=dict(parser.contributions))
+        """
         self.package = package
         self.plugin_name = plugin_name
         self.contributions: DefaultDict[str, list] = DefaultDict(list)
+        self.adapter = adapter
 
-    def parse_callers(self, callers: Iterable[HookCaller]):
-        for caller in callers:
-            for impl in caller.get_hookimpls():
-                if self.plugin_name and impl.plugin_name != self.plugin_name:
-                    continue  # pragma: no cover
+    def manifest(self) -> PluginManifest:
+        return PluginManifest(name=self.package, contributions=dict(self.contributions))
+
+    def parse_module(self, module: ModuleType):
+        for impl in iter_hookimpls(module, plugin_name=self.plugin_name):
+            if impl.plugin_name == self.plugin_name:
                 # call the corresponding hookimpl parser
                 try:
                     getattr(self, impl.specname)(impl)
                 except Exception as e:  # pragma: no cover
-                    warnings.warn(f"Failed to convert {impl.specname}: {e}")
+                    warnings.warn(
+                        f"Failed to convert {impl.specname} in {self.package!r}: {e}"
+                    )
 
     def napari_experimental_provide_theme(self, impl: HookImplementation):
         ThemeDict = Dict[str, Union[str, Tuple, List]]
@@ -214,11 +239,14 @@ class HookImplParser:
             )
 
     def napari_get_reader(self, impl: HookImplementation):
+
+        patterns = _guess_fname_patterns(impl.function)
+
         self.contributions["readers"].append(
             {
                 "command": self.add_command(impl),
                 "accepts_directories": True,
-                "filename_patterns": ["<EDIT_ME>"],
+                "filename_patterns": patterns,
             }
         )
 
@@ -226,7 +254,7 @@ class HookImplParser:
         module = sys.modules[impl.function.__module__.split(".", 1)[0]]
 
         samples: Dict[str, Union[dict, str, Callable]] = impl.function()
-        for key, sample in samples.items():
+        for idx, (key, sample) in enumerate(samples.items()):
             _sample: Union[str, Callable]
             if isinstance(sample, dict):
                 display_name = sample.get("display_name")
@@ -240,9 +268,12 @@ class HookImplParser:
             if callable(_sample):
                 # let these raise exceptions here immediately if they don't validate
                 id = f"{self.package}.data.{_key}"
+                py_name = _python_name(
+                    _sample, impl.function, hook_idx=idx if self.adapter else None
+                )
                 cmd_contrib = CommandContribution(
                     id=id,
-                    python_name=_python_name(_sample),
+                    python_name=py_name,
                     title=f"{key} sample",
                 )
                 self.contributions["commands"].append(cmd_contrib)
@@ -256,14 +287,15 @@ class HookImplParser:
 
     def napari_experimental_provide_function(self, impl: HookImplementation):
         items: Union[Callable, List[Callable]] = impl.function()
-        if not isinstance(items, list):
-            items = [items]
+        items = [items] if not isinstance(items, list) else items
+
         for idx, item in enumerate(items):
             try:
 
                 cmd = f"{self.package}.{item.__name__}"
-                py_name = _python_name(item)
-
+                py_name = _python_name(
+                    item, impl.function, hook_idx=idx if self.adapter else None
+                )
                 docsum = item.__doc__.splitlines()[0] if item.__doc__ else None
                 cmd_contrib = CommandContribution(
                     id=cmd, python_name=py_name, title=docsum or item.__name__
@@ -290,6 +322,8 @@ class HookImplParser:
         if not isinstance(items, list):
             items = [items]  # pragma: no cover
 
+        # "wdg_creator" will be the function given by the plugin that returns a widget
+        # while `impl` is the hook implementation that returned all the `wdg_creators`
         for idx, item in enumerate(items):
             if isinstance(item, tuple):
                 wdg_creator = item[0]
@@ -303,7 +337,11 @@ class HookImplParser:
                 continue
 
             try:
-                self._create_widget_contrib(impl, wdg_creator, kwargs)
+                func_name = getattr(wdg_creator, "__name__", "")
+                wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
+                self._create_widget_contrib(
+                    wdg_creator, display_name=wdg_name, idx=idx, hook=impl.function
+                )
             except Exception as e:  # pragma: no cover
                 msg = (
                     f"Error converting dock widget [{idx}] "
@@ -311,29 +349,20 @@ class HookImplParser:
                 )
                 warnings.warn(msg)
 
-    def _create_widget_contrib(self, impl, wdg_creator, kwargs, is_function=False):
-        # Get widget name
-        func_name = getattr(wdg_creator, "__name__", "")
-        wdg_name = str(kwargs.get("name", "")) or _camel_to_spaces(func_name)
-
-        # in some cases, like partials and magic_factories, there might not be an
-        # easily accessible python name (from __module__.__qualname__)...
-        # so first we look for this object in the module namespace
-        py_name = None
-        cmd = None
-        for local_name, val in impl.function.__globals__.items():
-            if val is wdg_creator:
-                py_name = f"{impl.function.__module__}:{local_name}"
-                cmd = f"{self.package}.{local_name}"
-                break
-        else:
-            try:
-                py_name = _python_name(wdg_creator)
-                cmd = (
-                    f"{self.package}.{func_name or wdg_name.lower().replace(' ', '_')}"
-                )
-            except AttributeError:  # pragma: no cover
-                pass
+    def _create_widget_contrib(
+        self,
+        wdg_creator: WidgetCreator,
+        display_name: str,
+        idx: int,
+        hook: Callable,
+    ):
+        # we provide both the wdg_creator object itself, as well as the hook impl that
+        # returned it... In the case that we can't get an absolute python name to the
+        # wdg_creator itself (e.g. it's defined in a local scope), then the py_name
+        # will use the hookimpl itself, and the index of the object returned.
+        py_name = _python_name(
+            wdg_creator, hook, hook_idx=idx if self.adapter else None
+        )
 
         if not py_name:  # pragma: no cover
             raise ValueError(
@@ -341,18 +370,21 @@ class HookImplParser:
                 "Is this a locally defined function or partial?"
             )
 
+        func_name = getattr(wdg_creator, "__name__", "")
+        cmd = f"{self.package}.{func_name or display_name.lower().replace(' ', '_')}"
+
         # let these raise exceptions here immediately if they don't validate
         cmd_contrib = CommandContribution(
-            id=cmd, python_name=py_name, title=f"Create {wdg_name}"
+            id=cmd, python_name=py_name, title=f"Create {display_name}"
         )
-        wdg_contrib = WidgetContribution(command=cmd, display_name=wdg_name)
+        wdg_contrib = WidgetContribution(command=cmd, display_name=display_name)
         self.contributions["commands"].append(cmd_contrib)
         self.contributions["widgets"].append(wdg_contrib)
 
     def napari_get_writer(self, impl: HookImplementation):
         warnings.warn(
-            "Found a multi-layer writer, but it's not convertable. "
-            "Please add the writer manually."
+            f"Found a multi-layer writer in {self.package!r} - {impl.specname!r}, "
+            "but it's not convertable. Please add the writer manually."
         )
         return NotImplemented  # pragma: no cover
 
@@ -378,7 +410,7 @@ class HookImplParser:
                 "command": id,
                 "layer_types": [layer],
                 "display_name": layer,
-                "filename_extensions": ["<EDIT_ME>"],
+                "filename_extensions": [],
             }
         )
 
@@ -405,8 +437,79 @@ def _safe_key(key: str) -> str:
     )
 
 
-def _python_name(object):
-    return f"{object.__module__}:{object.__qualname__}"
+def _python_name(
+    obj: Any, hook: Callable = None, hook_idx: Optional[int] = None
+) -> str:
+    """Get resolvable python name for `obj` returned from an npe1 `hook` implentation.
+
+    Parameters
+    ----------
+    obj : Any
+        a python obj
+    hook : Callable, optional
+        the npe1 hook implementation that returned `obj`, by default None.
+        This is used both to search the module namespace for `obj`, and also
+        in the shim python name if `obj` cannot be found.
+    hook_idx : int, optional
+        If `obj` cannot be found and `hook_idx` is not None, then a shim name.
+        of the form "__npe1shim__.{_python_name(hook)}_{hook_idx}" will be returned.
+        by default None.
+
+    Returns
+    -------
+    str
+       a string that can be imported with npe2.manifest.utils.import_python_name
+
+    Raises
+    ------
+    AttributeError
+        If a resolvable string cannot be found
+    """
+    obj_name: Optional[str] = None
+    mod_name: Optional[str] = None
+    # first, check the global namespace of the module where the hook was declared
+    # if we find `obj` itself, we can just use it.
+    if hasattr(hook, "__module__"):
+        hook_mod = sys.modules.get(hook.__module__)
+        if hook_mod:
+            for local_name, _obj in vars(hook_mod).items():
+                if _obj is obj:
+                    obj_name = local_name
+                    mod_name = hook_mod.__name__
+                    break
+
+    # trick if it's a magic_factory
+    if isinstance(obj, magicgui._magicgui.MagicFactory):
+        f = obj.keywords.get("function")
+        if f:
+            v = getattr(f, "__globals__", {}).get(getattr(f, "__name__", ""))
+            if v is obj:  # pragma: no cover
+                mod_name = f.__module__
+                obj_name = f.__qualname__
+
+    # if that didn't work get the qualname of the object
+    # and, if it's not a locally defined qualname, get the name of the module
+    # in which it is defined
+    if not (mod_name and obj_name):
+        obj_name = getattr(obj, "__qualname__", "")
+        if obj_name and "<locals>" not in obj_name:
+            mod = inspect.getmodule(obj) or inspect.getmodule(hook)
+            if mod:
+                mod_name = mod.__name__
+
+    if not (mod_name and obj_name) and (hook and hook_idx is not None):
+        # we weren't able to resolve an absolute name... if we are shimming, then we
+        # can create a special py_name of the form `__npe1shim__.hookfunction_idx`
+        return f"{SHIM_NAME_PREFIX}{_python_name(hook)}_{hook_idx}"
+
+    if obj_name and "<locals>" in obj_name:
+        raise ValueError("functions defined in local scopes are not yet supported.")
+    if not mod_name:
+        raise AttributeError(f"could not get resolvable python name for {obj}")
+    pyname = f"{mod_name}:{obj_name}"
+    if import_python_name(pyname) is not obj:  # pragma: no cover
+        raise AttributeError(f"could not get resolvable python name for {obj}")
+    return pyname
 
 
 def _luma(r, g, b):
@@ -574,3 +677,25 @@ class _SetupVisitor(ast.NodeVisitor):
                             self._entry_points.append(
                                 [i.strip() for i in item.split("=")]
                             )
+
+
+def _guess_fname_patterns(func):
+    """Try to guess filename extension patterns from source code.  Fallback to "*"."""
+
+    patterns = ["*"]
+    # try to look at source code to guess file extensions
+    _, *b = inspect.getsource(func).split("endswith(")
+    if b:
+        try:
+            middle = b[0].split(")")[0]
+            if middle.startswith("("):
+                middle += ")"
+            files = ast.literal_eval(middle)
+            if isinstance(files, str):
+                files = [files]
+            if files:
+                patterns = [f"*{f}" for f in files]
+        except Exception:  # pragma: no cover
+            # couldn't do it... just accept all filename patterns
+            pass
+    return patterns

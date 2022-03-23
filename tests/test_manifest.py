@@ -39,8 +39,10 @@ def test_schema():
 def test_discover(uses_sample_plugin):
     discover_results = list(PluginManifest.discover())
     assert len(discover_results) == 1
-    [(manifest, entrypoint, error)] = discover_results
+    [(manifest, distribution, error)] = discover_results
     assert manifest and manifest.name == SAMPLE_PLUGIN_NAME
+    assert distribution
+    entrypoint = tuple(distribution.entry_points)[0]
     assert entrypoint and entrypoint.group == "napari.manifest" == ENTRY_POINT
     assert entrypoint.value == f"{SAMPLE_MODULE_NAME}:napari.yaml"
     assert error is None
@@ -83,11 +85,13 @@ def test_discover_errors(tmp_path: Path):
     assert len(discover_results) == 2
     res_a, res_b = discover_results
     assert res_a.manifest is None
-    assert res_a.entrypoint.value == bad_value  # type: ignore
+    assert res_a.distribution
+    assert tuple(res_a.distribution.entry_points)[0].value == bad_value
     assert "Cannot find module 'asdfsad'" in str(res_a.error)
 
     assert res_b.manifest is None
-    assert res_b.entrypoint.value == "module:napari.yaml"  # type: ignore
+    assert res_b.distribution
+    assert tuple(res_b.distribution.entry_points)[0].value == "module:napari.yaml"
     assert isinstance(res_b.error, ValidationError)
 
 

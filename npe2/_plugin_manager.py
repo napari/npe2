@@ -25,6 +25,7 @@ from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
+from .manifest._npe1_adapter import NPE1Adapter
 from .manifest.contributions import LayerType, WriterContribution
 from .types import PathLike, PythonName, _ensure_str_or_seq_str
 
@@ -226,6 +227,7 @@ class PluginManager:
         self._contrib = _ContributionsIndex()
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
+        self._npe1_adapters: List[NPE1Adapter] = []
 
         # up to napari 0.4.15, discovery happened in the init here
         # so if we're running on an older version of napari, we need to discover
@@ -278,6 +280,12 @@ class PluginManager:
                 if result.manifest and result.manifest.name not in self._manifests:
                     self.register(result.manifest, warn_disabled=False)
 
+    def index_npe1_adapters(self):
+        with warnings.catch_warnings():
+            warnings.showwarning = lambda e, *_: print(str(e).split(" Please add")[0])
+            while self._npe1_adapters:
+                self._contrib.index_contributions(self._npe1_adapters.pop())
+
     def register(self, manifest: PluginManifest, warn_disabled=True) -> None:
         """Register a plugin manifest"""
         if manifest.name in self._manifests:
@@ -290,6 +298,8 @@ class PluginManager:
                     f"Disabled plugin {manifest.name!r} was registered, but will not "
                     "be indexed. Use `warn_disabled=False` to suppress this message."
                 )
+        elif isinstance(manifest, NPE1Adapter):
+            self._npe1_adapters.append(manifest)
         else:
             self._contrib.index_contributions(manifest)
         self.events.plugins_registered.emit({manifest})
