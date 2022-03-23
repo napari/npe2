@@ -481,7 +481,7 @@ def _python_name(
         f = obj.keywords.get("function")
         if f:
             v = getattr(f, "__globals__", {}).get(getattr(f, "__name__", ""))
-            if v is obj:
+            if v is obj:  # pragma: no cover
                 mod_name = f.__module__
                 obj_name = f.__qualname__
 
