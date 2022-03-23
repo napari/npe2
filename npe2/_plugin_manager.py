@@ -4,6 +4,7 @@ import os
 import warnings
 from collections import Counter
 from fnmatch import fnmatch
+from importlib import metadata
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -41,18 +42,13 @@ if TYPE_CHECKING:
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
 
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
-
 
 class _ContributionsIndex:
     def __init__(self) -> None:
         self._indexed: Set[str] = set()
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._readers: List[Tuple[str, ReaderContribution]] = list()
-        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
+        self._readers: List[Tuple[str, ReaderContribution]] = []
+        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = []
 
         # DEPRECATED: only here for napari <= 0.4.15 compat.
         self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(

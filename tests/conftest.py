@@ -1,5 +1,5 @@
 import sys
-from importlib import abc
+from importlib import abc, metadata
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,11 +7,6 @@ import pytest
 
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest import _npe1_adapter
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 
 @pytest.fixture

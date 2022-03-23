@@ -1,5 +1,6 @@
 import builtins
 import warnings
+from importlib.metadata import distribution
 from pathlib import Path
 from textwrap import indent
 from typing import List, Optional
@@ -7,11 +8,6 @@ from typing import List, Optional
 import typer
 
 from npe2 import PluginManifest
-
-try:
-    from importlib.metadata import distribution
-except ImportError:
-    from importlib_metadata import distribution  # type: ignore
 
 app = typer.Typer()
 
