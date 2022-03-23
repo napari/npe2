@@ -158,7 +158,7 @@ def cache(
     verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="verbose"),
 ):
     """Cache utils"""
-    from npe2.manifest._npe1_shim import SHIM_CACHE, clear_cache
+    from npe2.manifest._npe1_adapter import ADAPTER_CACHE, clear_cache
 
     if clear:
         _cleared = clear_cache(names)
@@ -174,7 +174,7 @@ def cache(
 
         typer.Exit()
     if list_:
-        files = builtins.list(SHIM_CACHE.glob("*.yaml"))
+        files = builtins.list(ADAPTER_CACHE.glob("*.yaml"))
         if names:
             files = [f for f in files if any(f.name.startswith(n) for n in names)]
 

@@ -19,12 +19,12 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
-SHIM_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2" / "shims"
+ADAPTER_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2" / "adapter_manifests"
 NPE2_NOCACHE = "NPE2_NOCACHE"
 
 
 def clear_cache(names: Sequence[str] = ()) -> List[Path]:
-    """Clear cached npe1 shim files
+    """Clear cached NPE1Adapter manifests.
 
     Parameters
     ----------
@@ -37,23 +37,48 @@ def clear_cache(names: Sequence[str] = ()) -> List[Path]:
         List of filepaths cleared
     """
     _cleared: List[Path] = []
-    if SHIM_CACHE.exists():
+    if ADAPTER_CACHE.exists():
         if names:
-            for f in SHIM_CACHE.glob("*.yaml"):
+            for f in ADAPTER_CACHE.glob("*.yaml"):
                 if any(f.name.startswith(f"{n}_") for n in names):
                     f.unlink()
                     _cleared.append(f)
         else:
-            _cleared = list(SHIM_CACHE.iterdir())
-            rmtree(SHIM_CACHE)
+            _cleared = list(ADAPTER_CACHE.iterdir())
+            rmtree(ADAPTER_CACHE)
     return _cleared
 
 
-class NPE1Shim(PluginManifest):
+class NPE1Adapter(PluginManifest):
+    """PluginManifest subclass that acts as an adapter for 1st gen plugins.
+
+    During plugin discovery, packages that provide a first generation
+    'napari.plugin' entry_point (but do *not* provide a second generation
+    'napari.manifest' entrypoint) will be stored as `NPE1Adapter` manifests
+    in the `PluginManager._npe1_adapters` list.
+
+    This class is instantiated with only a distribution object, but lacks
+    contributions at construction time.  When `self.contributions` is accesses for the
+    first time, `_load_contributions` is called triggering and import and indexing of
+    all plugin modules using the same logic as `npe2 convert`.  After import, the
+    discovered contributions are cached in a manifest for use in future sessions.
+    (The cache can be cleared using `npe2 cache --clear [plugin-name]`).
+
+
+
+    Parameters
+    ----------
+    dist : metadata.Distribution
+        A Distribution object for a package installed in the environment. (Minimally,
+        the distribution object must implement the `metadata` and `entry_points`
+        attributes.).  It will be passed to `manifest_from_npe1`
+    """
+
     _is_loaded: bool = False
     _dist: metadata.Distribution
 
     def __init__(self, dist: metadata.Distribution):
+        """_summary_"""
         meta = PackageMetadata.from_dist_metadata(dist.metadata)
         super().__init__(name=dist.metadata["Name"], package_metadata=meta)
         self._dist = dist
@@ -64,7 +89,7 @@ class NPE1Shim(PluginManifest):
         return super().__getattribute__(__name)
 
     def _load_contributions(self) -> None:
-        """imports and inspects package using npe1 plugin manager"""
+        """import and inspect package contributions."""
 
         self._is_loaded = True  # if we fail once, we still don't try again.
         if self._cache_path().exists() and not os.getenv(NPE2_NOCACHE):
@@ -75,15 +100,16 @@ class NPE1Shim(PluginManifest):
 
         with discovery_blocked():
             try:
-                mf = manifest_from_npe1(self._dist, shim=True)
+                mf = manifest_from_npe1(self._dist, adapter=True)
             except Exception as e:
                 warnings.warn(
-                    f"Failed to detect contributions for np1e plugin {self.name!r}: {e}"
+                    "Error importing contributions for first-generation "
+                    f"napari plugin {self.name!r}: {e}"
                 )
                 return
 
             self.contributions = mf.contributions
-            logger.debug("%r npe1 shim imported", self.name)
+            logger.debug("%r npe1 adapter imported", self.name)
 
         if not _is_editable_install(self._dist):
             self._save_to_cache()
@@ -95,12 +121,12 @@ class NPE1Shim(PluginManifest):
 
     def _cache_path(self) -> Path:
         """Return cache path for manifest corresponding to distribution."""
-        return _cached_shim_path(self.name, self.package_version or "")
+        return _cached_adapter_path(self.name, self.package_version or "")
 
 
-def _cached_shim_path(name: str, version: str) -> Path:
+def _cached_adapter_path(name: str, version: str) -> Path:
     """Return cache path for manifest corresponding to distribution."""
-    return SHIM_CACHE / f"{name}_{version}.yaml"
+    return ADAPTER_CACHE / f"{name}_{version}.yaml"
 
 
 def _is_editable_install(dist: metadata.Distribution) -> bool:
