@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from .utils import Executable
+from ..utils import Executable
 
 
 class LayerType(str, Enum):

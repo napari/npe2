@@ -9,7 +9,7 @@ from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
 from npe2.manifest import _npe1_adapter, utils
-from npe2.manifest.sample_data import SampleDataGenerator
+from npe2.manifest.contributions import SampleDataGenerator
 from npe2.manifest.utils import SHIM_NAME_PREFIX
 
 

@@ -65,7 +65,7 @@ jobs:
           python -m pip install pytest scikit-image[data] zarr xarray hypothesis matplotlib
 
       - name: Run napari plugin headless tests
-        run: pytest napari/plugins napari/settings napari/layers napari/components
+        run: pytest -W 'ignore::DeprecationWarning' napari/plugins napari/settings napari/layers napari/components
         working-directory: napari-from-github
 
   deploy:

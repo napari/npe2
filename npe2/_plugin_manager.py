@@ -25,19 +25,21 @@ from typing import (
 from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
+from .manifest import PluginManifest
 from .manifest._npe1_adapter import NPE1Adapter
-from .manifest.schema import PluginManifest
-from .manifest.writers import LayerType, WriterContribution
+from .manifest.contributions import LayerType, WriterContribution
 from .types import PathLike, PythonName, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
-    from .manifest.commands import CommandContribution
-    from .manifest.menus import MenuItem
-    from .manifest.readers import ReaderContribution
-    from .manifest.sample_data import SampleDataContribution
-    from .manifest.submenu import SubmenuContribution
-    from .manifest.themes import ThemeContribution
-    from .manifest.widgets import WidgetContribution
+    from .manifest.contributions import (
+        CommandContribution,
+        MenuItem,
+        ReaderContribution,
+        SampleDataContribution,
+        SubmenuContribution,
+        ThemeContribution,
+        WidgetContribution,
+    )
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`

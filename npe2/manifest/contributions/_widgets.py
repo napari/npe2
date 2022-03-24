@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from pydantic import BaseModel, Extra, Field
 
-from ..types import Widget
-from .utils import Executable
+from ...types import Widget
+from ..utils import Executable
 
 if TYPE_CHECKING:
-    from .._command_registry import CommandRegistry
+    from ..._command_registry import CommandRegistry
 
 
 class WidgetContribution(BaseModel, Executable[Widget]):

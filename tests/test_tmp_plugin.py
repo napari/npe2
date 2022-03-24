@@ -1,7 +1,7 @@
 import pytest
 
 from npe2 import DynamicPlugin, PluginManager
-from npe2.manifest.sample_data import SampleDataGenerator
+from npe2.manifest.contributions import SampleDataGenerator
 
 TMP = "tmp"
 

@@ -26,10 +26,12 @@ from typing import (
 import magicgui
 
 from npe2.manifest import PluginManifest
-from npe2.manifest.commands import CommandContribution
-from npe2.manifest.themes import ThemeColors
+from npe2.manifest.contributions import (
+    CommandContribution,
+    ThemeColors,
+    WidgetContribution,
+)
 from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
-from npe2.manifest.widgets import WidgetContribution
 from npe2.types import WidgetCreator
 
 logger = getLogger(__name__)

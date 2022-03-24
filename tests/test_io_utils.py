@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from npe2.io_utils import read, read_get_reader, write, write_get_writer
+from npe2 import read, read_get_reader, write, write_get_writer
 from npe2.types import FullLayerData, _ensure_str_or_seq_str
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
