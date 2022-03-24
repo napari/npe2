@@ -46,12 +46,14 @@ def test_cli_parse(sample_path):
     assert "name: my_plugin" in result.stdout  # just prints the yaml
 
 
+@pytest.mark.filterwarnings("default:Failed to convert")
 def test_cli_convert_repo(npe1_repo, mock_npe1_pm_with_plugin):
     result = runner.invoke(app, ["convert", str(npe1_repo)])
     assert result.exit_code == 0
     assert "✔  Conversion complete!" in result.stdout
 
 
+@pytest.mark.filterwarnings("default:Failed to convert")
 def test_cli_convert_repo_dry_run(npe1_repo, mock_npe1_pm_with_plugin):
     result = runner.invoke(app, ["convert", str(npe1_repo), "-n"])
     assert result.exit_code == 0
@@ -74,6 +76,7 @@ def test_cli_convert_repo_fails(npe1_repo, mock_npe1_pm_with_plugin):
     assert "Could not detect first gen napari plugin package" in result.stdout
 
 
+@pytest.mark.filterwarnings("default:Failed to convert")
 def test_cli_convert_package_name(npe1_repo, mock_npe1_pm_with_plugin):
     result = runner.invoke(app, ["convert", "npe1-plugin"])
     assert "name: npe1-plugin" in result.stdout  # just prints the yaml
