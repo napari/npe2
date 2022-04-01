@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from npe2 import read, read_get_reader, write, write_get_writer
