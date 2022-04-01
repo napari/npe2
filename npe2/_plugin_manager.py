@@ -28,7 +28,7 @@ from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
 from .manifest._npe1_adapter import NPE1Adapter
 from .manifest.contributions import LayerType, WriterContribution
-from .types import PathLike, PythonName, _ensure_str_or_seq_str
+from .types import PathLike, PythonName
 
 if TYPE_CHECKING:
     from .manifest.contributions import (
@@ -111,21 +111,18 @@ class _ContributionsIndex:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
 
-    def iter_compatible_readers(
-        self, path: Union[str, Sequence[str]]
-    ) -> Iterator[ReaderContribution]:
-        _ensure_str_or_seq_str(path)
-        if not path:
+    def iter_compatible_readers(self, paths: List[str]) -> Iterator[ReaderContribution]:
+        assert isinstance(paths, list)
+        if not paths:
             return
 
-        if isinstance(path, list):
-            if len({Path(i).suffix for i in path}) > 1:
-                raise ValueError(
-                    "All paths in the stack list must have the same extension."
-                )
-            path = path[0]
-        path = str(path)
-
+        if len({Path(i).suffix for i in paths}) > 1:
+            raise ValueError(
+                "All paths in the stack list must have the same extension."
+            )
+        path = paths[0]
+        if not path:
+            return
         assert isinstance(path, str)
 
         if os.path.isdir(path):
@@ -456,6 +453,9 @@ class PluginManager:
     def iter_compatible_readers(
         self, path: Union[PathLike, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
+        if isinstance(path, (str, Path)):
+            path = [path]
+        assert isinstance(path, list)
         return self._contrib.iter_compatible_readers(path)
 
     def iter_compatible_writers(

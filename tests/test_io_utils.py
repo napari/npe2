@@ -3,19 +3,19 @@ from pathlib import Path
 import pytest
 
 from npe2 import read, read_get_reader, write, write_get_writer
-from npe2.types import FullLayerData, _ensure_str_or_seq_str
+from npe2.types import FullLayerData
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
 
 def test_read(uses_sample_plugin):
-    assert read("some.fzzy") == [(None,)]
+    assert read(["some.fzzy"], stack=False) == [(None,)]
 
 
 def test_read_with_plugin(uses_sample_plugin):
     # no such plugin name.... but skips over the sample plugin
     with pytest.raises(ValueError):
-        read("some.fzzy", plugin_name="nope")
+        read(["some.fzzy"], plugin_name="nope", stack=False)
 
 
 def test_read_return_reader(uses_sample_plugin):
@@ -60,8 +60,3 @@ def test_writer_single_layer_api_exec(uses_sample_plugin):
     # This writer doesn't do anything but type check.
     paths = write("test/path", [([], {}, "labels")])
     assert len(paths) == 1
-
-
-def test_ensure_coverage():
-    with pytest.warns(UserWarning):
-        _ensure_str_or_seq_str(Path("."))
