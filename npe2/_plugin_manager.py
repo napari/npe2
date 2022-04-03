@@ -254,7 +254,9 @@ class PluginManager:
 
     # Discovery, activation, enablement
 
-    def discover(self, paths: Sequence[str] = (), clear=False) -> None:
+    def discover(
+        self, paths: Sequence[str] = (), clear=False, include_npe1=False
+    ) -> None:
         """Discover and index plugin manifests in the environment.
 
         Parameters
@@ -266,6 +268,9 @@ class PluginManager:
             Clear and re-index the environment.  If `False` (the default),
             calling discover again will only register and index newly
             discovered plugins. (Existing manifests will not be re-indexed)
+        include_npe1 : bool
+            Whether to detect npe1 plugins as npe1_adapters during discovery.
+            By default `False`.
         """
         if clear:
             self._contrib = _ContributionsIndex()
@@ -273,7 +278,11 @@ class PluginManager:
 
         with self.events.plugins_registered.paused(lambda a, b: (a[0] | b[0],)):
             for result in PluginManifest.discover(paths=paths):
-                if result.manifest and result.manifest.name not in self._manifests:
+                if (
+                    result.manifest
+                    and result.manifest.name not in self._manifests
+                    and (include_npe1 or not isinstance(result.manifest, NPE1Adapter))
+                ):
                     self.register(result.manifest, warn_disabled=False)
 
     def index_npe1_adapters(self):
