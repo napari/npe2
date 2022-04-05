@@ -126,7 +126,7 @@ class PluginManifest(ImportExportModel):
         exclude=True,
     )
 
-    properties: Optional[Dict[str, Any]] = Field(
+    properties: Dict[str, Any] = Field(
         default={},
         description="Properties for global values."
         "May be appended to by other plugins"
@@ -164,10 +164,6 @@ class PluginManifest(ImportExportModel):
     @validator("contributions", pre=True)
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
-
-    @validator("properties", pre=True)
-    def _coerce_none_properties(cls, value):
-        return {} if value is None else value
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
