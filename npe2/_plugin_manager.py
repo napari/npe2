@@ -531,6 +531,34 @@ class PluginManager:
         # Nothing got found
         return None, path
 
+    # Accessing Contributions
+
+    def configuration(self, config_key: str) -> List[Any]:
+        """
+        Get plugin configuration specifications for the provided key
+
+        Configurations are NOT merged until this method is called, and the state is
+        not saved. This lazy configuration discovery is preferrable as it ensures
+        that the returned list is consistent with the list of registered plugins.
+
+        Parameters
+        ----------
+        config_key : str
+            Key specified by plugin(s)
+
+        Returns
+        -------
+        List[Any]
+            All values specified by all plugins for key config_key
+        """
+
+        configuration_values = []
+        # Search all manifests for the presence of config key
+        declaring_manifests = filter(lambda m: config_key in m.configuration, self._manifests)
+        for manifest in declaring_manifests:
+            configuration_values.append(manifest.configuration[config_key])
+
+        return configuration_values
 
 class PluginContext:
     """An object that can contain information for a plugin over its lifetime."""
