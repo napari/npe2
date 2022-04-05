@@ -6,7 +6,7 @@ from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import Iterator, NamedTuple, Optional, Sequence, Union
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -126,6 +126,13 @@ class PluginManifest(ImportExportModel):
         exclude=True,
     )
 
+    configuration: Optional[Dict[str, Any]] = Field(
+        default={},
+        description="Configuration for global values."
+        "May be appended to by other plugins"
+        "who wish to have a say in shared state",
+    )
+
     def __init__(self, **data):
         super().__init__(**data)
         if self.package_metadata is None and self.name:
@@ -157,6 +164,10 @@ class PluginManifest(ImportExportModel):
     @validator("contributions", pre=True)
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
+
+    @validator("configuration", pre=True)
+    def _coerce_none_configuration(cls, value):
+        return {} if value is None else value
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
