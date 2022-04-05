@@ -552,7 +552,7 @@ class PluginManager:
             All values specified by all plugins for key config_key
         """
 
-        properties_values = set()
+        properties_values: Set[Any] = set()
         # Search all manifests for the presence of config key
         declaring_manifests = filter(
             lambda m: config_key in m.properties, self._manifests.values()
