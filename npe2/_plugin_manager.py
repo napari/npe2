@@ -554,7 +554,9 @@ class PluginManager:
 
         properties_values = set()
         # Search all manifests for the presence of config key
-        declaring_manifests = filter(lambda m: config_key in m.properties, self._manifests.values())
+        declaring_manifests = filter(
+            lambda m: config_key in m.properties, self._manifests.values()
+        )
         for manifest in declaring_manifests:
             value = manifest.properties[config_key]
             if isinstance(value, Iterable) and not isinstance(value, str):
@@ -563,6 +565,7 @@ class PluginManager:
                 properties_values.add(value)
 
         return properties_values
+
 
 class PluginContext:
     """An object that can contain information for a plugin over its lifetime."""

@@ -6,7 +6,7 @@ from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Sequence, Union
+from typing import Any, Dict, Iterator, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
