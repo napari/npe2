@@ -1,5 +1,47 @@
 # Changelog
 
+## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0)
+
+**Implemented enhancements:**
+
+- NPE1Adapter Part 3 - caching of adapter manifests [\#126](https://github.com/napari/npe2/pull/126) ([tlambert03](https://github.com/tlambert03))
+- NPE1Adapter Part 2 - adding the NPE1Adapter object. [\#125](https://github.com/napari/npe2/pull/125) ([tlambert03](https://github.com/tlambert03))
+- NPE1Adapter Part 1 - updated \_from\_npe1 conversion logic to prepare for locally defined objects [\#124](https://github.com/napari/npe2/pull/124) ([tlambert03](https://github.com/tlambert03))
+
+**Fixed bugs:**
+
+- Avoid use of inspect.signature on CommandContribution class [\#146](https://github.com/napari/npe2/pull/146) ([tlambert03](https://github.com/tlambert03))
+
+**Tests & CI:**
+
+- Fix black problem on pre-commit CI [\#147](https://github.com/napari/npe2/pull/147) ([Czaki](https://github.com/Czaki))
+- Add ci to test all plugins on PR label part1 [\#133](https://github.com/napari/npe2/pull/133) ([tlambert03](https://github.com/tlambert03))
+
+**Refactors:**
+
+- Turn off npe1 discovery by default [\#145](https://github.com/napari/npe2/pull/145) ([tlambert03](https://github.com/tlambert03))
+- Reorganize contributions into submodule [\#130](https://github.com/napari/npe2/pull/130) ([tlambert03](https://github.com/tlambert03))
+- drop py3.7 & misc small reformats [\#123](https://github.com/napari/npe2/pull/123) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- Fix ci for testing all plugins [\#134](https://github.com/napari/npe2/pull/134) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.2.2](https://github.com/napari/npe2/tree/v0.2.2) (2022-03-14)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.1...v0.2.2)
+
+**Implemented enhancements:**
+
+- Add DynamicPlugin object/context for ease of testing & dynamic plugin creation [\#128](https://github.com/napari/npe2/pull/128) ([tlambert03](https://github.com/tlambert03))
+
+**Refactors:**
+
+- Disallow mutation on plugin manifest name [\#127](https://github.com/napari/npe2/pull/127) ([tlambert03](https://github.com/tlambert03))
+- Clarify Typing. [\#105](https://github.com/napari/npe2/pull/105) ([Carreau](https://github.com/Carreau))
+
 ## [v0.2.1](https://github.com/napari/npe2/tree/v0.2.1) (2022-03-11)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.2.0...v0.2.1)
