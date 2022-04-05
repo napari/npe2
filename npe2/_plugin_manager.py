@@ -533,12 +533,12 @@ class PluginManager:
 
     # Accessing Contributions
 
-    def configuration(self, config_key: str) -> Set[Any]:
+    def properties(self, config_key: str) -> Set[Any]:
         """
-        Get plugin configuration specifications for the provided key
+        Get plugin properties specifications for the provided key
 
-        Configurations are NOT merged until this method is called, and the state is
-        not saved. This lazy configuration discovery is preferrable as it ensures
+        Properties are NOT merged until this method is called, and the state is
+        not saved. This lazy properties discovery is preferrable as it ensures
         that the returned list is consistent with the list of registered plugins.
 
         Parameters
@@ -552,17 +552,17 @@ class PluginManager:
             All values specified by all plugins for key config_key
         """
 
-        configuration_values = set()
+        properties_values = set()
         # Search all manifests for the presence of config key
-        declaring_manifests = filter(lambda m: config_key in m.configuration, self._manifests.values())
+        declaring_manifests = filter(lambda m: config_key in m.properties, self._manifests.values())
         for manifest in declaring_manifests:
-            value = manifest.configuration[config_key]
+            value = manifest.properties[config_key]
             if isinstance(value, Iterable) and not isinstance(value, str):
-                configuration_values.update(value)
+                properties_values.update(value)
             else:
-                configuration_values.add(value)
+                properties_values.add(value)
 
-        return configuration_values
+        return properties_values
 
 class PluginContext:
     """An object that can contain information for a plugin over its lifetime."""

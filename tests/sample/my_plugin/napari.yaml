@@ -91,7 +91,7 @@ contributions:
     - display_name: Random internet image
       key: internet_image
       uri: https://picsum.photos/1024
-configuration:
+properties:
   check_num: 10
   check_num_list:
     - 1

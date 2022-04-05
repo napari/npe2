@@ -126,9 +126,9 @@ class PluginManifest(ImportExportModel):
         exclude=True,
     )
 
-    configuration: Optional[Dict[str, Any]] = Field(
+    properties: Optional[Dict[str, Any]] = Field(
         default={},
-        description="Configuration for global values."
+        description="Properties for global values."
         "May be appended to by other plugins"
         "who wish to have a say in shared state",
     )
@@ -165,8 +165,8 @@ class PluginManifest(ImportExportModel):
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
-    @validator("configuration", pre=True)
-    def _coerce_none_configuration(cls, value):
+    @validator("properties", pre=True)
+    def _coerce_none_properties(cls, value):
         return {} if value is None else value
 
     @root_validator
