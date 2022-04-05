@@ -91,3 +91,15 @@ contributions:
     - display_name: Random internet image
       key: internet_image
       uri: https://picsum.photos/1024
+configuration:
+  check_num: 10
+  check_num_list:
+    - 1
+    - 2
+    - 3
+  check_str: 'foo'
+  check_str_list:
+    - 'a'
+    - 'b'
+    - 'c'
+  check_bool: true

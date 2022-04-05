@@ -533,7 +533,7 @@ class PluginManager:
 
     # Accessing Contributions
 
-    def configuration(self, config_key: str) -> List[Any]:
+    def configuration(self, config_key: str) -> Set[Any]:
         """
         Get plugin configuration specifications for the provided key
 
@@ -548,15 +548,19 @@ class PluginManager:
 
         Returns
         -------
-        List[Any]
+        Set[Any]
             All values specified by all plugins for key config_key
         """
 
-        configuration_values = []
+        configuration_values = set()
         # Search all manifests for the presence of config key
-        declaring_manifests = filter(lambda m: config_key in m.configuration, self._manifests)
+        declaring_manifests = filter(lambda m: config_key in m.configuration, self._manifests.values())
         for manifest in declaring_manifests:
-            configuration_values.append(manifest.configuration[config_key])
+            value = manifest.configuration[config_key]
+            if isinstance(value, Iterable) and not isinstance(value, str):
+                configuration_values.update(value)
+            else:
+                configuration_values.add(value)
 
         return configuration_values
 
