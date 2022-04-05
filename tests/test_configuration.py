@@ -49,11 +49,12 @@ def test_properties_multiple_plugins(sample_manifest):
     # Ensure its properties is merged
     assert pm.properties("check_str") == {"foo", "bar"}
 
+
 def test_properties_not_added(sample_manifest):
     """Ensures unpopulation for unused property"""
     pm = PluginManager()
 
-    # Add a plugin 
+    # Add a plugin
     pm.register(sample_manifest)
     assert pm.properties("not_added") == set()
 
@@ -61,5 +62,3 @@ def test_properties_not_added(sample_manifest):
     manifest2 = PluginManifest(name="my-third-plugin")
     pm.register(manifest2)
     assert pm.properties("not_added") == set()
-    
-
