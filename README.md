@@ -7,10 +7,19 @@ napari plugin refactor
 
 see also https://github.com/napari/napari/issues/3115
 
+## Documentation
+
+For documentation on authoring npe2 plugins, see the [napari plugin docs](https://napari.org/plugins/index.html).  These include:
+- the [manifest reference](https://napari.org/plugins/manifest.html)
+- the [contribution guide](https://napari.org/plugins/contributions.html)
+
+## Command line tool
+
 Includes a command line tool `npe2` with the following commands:
 ```bash
 Commands:
-  convert   Convert existing plugin repository to npe2 format (create manifest, update setup.cfg)
+  cache     Cache utils
+  convert   Convert first generation napari plugin to new (manifest) format.
   parse     Show parsed manifest as yaml
   validate  Validate manifest for a distribution name or manifest filepath.
 ```
