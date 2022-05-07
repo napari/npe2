@@ -1,7 +1,7 @@
 import pytest
 
 from npe2.manifest.schema import PluginManifest
-from npe2.manifest.utils import Version, deep_update, merge_manifests
+from npe2.manifest.utils import Version, deep_update, merge_manifests, path_to_key
 
 
 def test_version():
@@ -71,3 +71,8 @@ def test_deep_update():
 
     deep_update(a, b, copy=False)
     assert a == {"a": {"b": 1, "d": 4, "c": 3}, "e": 2, "f": 0}
+
+
+def test_path_to_key():
+    assert 'napari__plugins' == path_to_key('/napari/plugins')
+    assert 'mysubmenu' == path_to_key('mysubmenu')

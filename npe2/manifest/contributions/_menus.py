@@ -89,7 +89,7 @@ class MenusContribution(BaseModel):
             # menu locations must begin with a `/`
             if key[0] == '/':
                 menu_key = path_to_key(key)
-                if menu_key not in valid_menu_keys:
+                if menu_key not in valid_menu_keys:  # pragma: no cover
                     raise ValueError(
                         "Manifest provided menu location does not match"
                         " valid menu contribution location"
