@@ -75,7 +75,7 @@ class MenusContribution(BaseModel):
     @root_validator(pre=True)
     def _coerce_locations(cls, values):
         """Map plugin menu locations provided in the plugin manifest.
-        
+
         Plugins are able to contribute menu items to certain locations in napari.
         In the plugin manifest these locations must begin with a '/'. The valid
         locations are '/napari/plugins' and '/napari/layer_context'.
@@ -86,11 +86,13 @@ class MenusContribution(BaseModel):
         menu_contributions = {}
         for key, val in values.items():
             # menu locations must begin with a `/`
-            if key[0] == '/':
-                menu_name = key[1:].replace('/', '__')
+            if key[0] == "/":
+                menu_name = key[1:].replace("/", "__")
                 if menu_name not in list(MenusContribution.__fields__.keys()):
-                    raise ValueError("Manifest provided menu location does not match"
-                                     " valid menu contribution location")
+                    raise ValueError(
+                        "Manifest provided menu location does not match"
+                        " valid menu contribution location"
+                    )
                 menu_contributions[menu_name] = val
             else:
                 menu_contributions[key] = val
