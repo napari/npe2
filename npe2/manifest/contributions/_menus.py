@@ -87,7 +87,7 @@ class MenusContribution(BaseModel):
         valid_menu_keys = list(MenusContribution.__fields__.keys())
         for key, val in values.items():
             # menu locations must begin with a `/`
-            if key[0] == '/':
+            if key[0] == "/":
                 menu_key = path_to_key(key)
                 if menu_key not in valid_menu_keys:
                     raise ValueError(
