@@ -74,5 +74,5 @@ def test_deep_update():
 
 
 def test_path_to_key():
-    assert 'napari__plugins' == path_to_key('/napari/plugins')
-    assert 'mysubmenu' == path_to_key('mysubmenu')
+    assert "napari__plugins" == path_to_key("/napari/plugins")
+    assert "mysubmenu" == path_to_key("mysubmenu")
