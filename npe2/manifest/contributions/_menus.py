@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
-from ..utils import Executable
+from ..utils import Executable, path_to_key
 
 # # napari provides these
 # class Menu(BaseModel):
@@ -84,14 +84,15 @@ class MenusContribution(BaseModel):
         # this mapping removes the initial '/' and replaces subsequent `'/'
         # with '__'.
         menu_contributions = {}
+        valid_menu_keys = list(MenusContribution.__fields__.keys())
         for key, val in values.items():
             # menu locations must begin with a `/`
             if key[0] == '/':
-                menu_name = key[1:].replace('/', '__')
-                if menu_name not in list(MenusContribution.__fields__.keys()):
+                menu_key = path_to_key(key)
+                if menu_key not in valid_menu_keys:
                     raise ValueError("Manifest provided menu location does not match"
                                      " valid menu contribution location")
-                menu_contributions[menu_name] = val
+                menu_contributions[menu_key] = val
             else:
                 menu_contributions[key] = val
         return menu_contributions

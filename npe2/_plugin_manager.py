@@ -28,6 +28,7 @@ from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
 from .manifest._npe1_adapter import NPE1Adapter
 from .manifest.contributions import LayerType, WriterContribution
+from .manifest.utils import path_to_key
 from .types import PathLike, PythonName, _ensure_str_or_seq_str
 
 if TYPE_CHECKING:
@@ -454,7 +455,8 @@ class PluginManager:
                     return subm
         raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
-    def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
+    def iter_menu(self, menu_path: str) -> Iterator[MenuItem]:
+        menu_key = path_to_key(menu_path)
         for mf in self.iter_manifests(disabled=False):
             yield from getattr(mf.contributions.menus, menu_key, ())
 

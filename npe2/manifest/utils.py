@@ -289,3 +289,25 @@ def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dic
                             item["command"] = item["command"] + f"_{n + 2}"
             out = deep_update(out, c)
     return out
+
+
+def path_to_key(path):
+    """Map a path to a valid key.
+
+    Parameters
+    ----------
+    path : str
+        Location defined in plugin manifest. If this path begins with a '/'
+        we remove the first '/' and replace subsequent '/' with '__' to map
+        to a potentially valid key. If the path does not begin with a '/' it
+        is returned as is.
+    
+    Returns
+    -------
+    str
+        A string that could now be a key.
+    """
+    if path[0] == '/':
+        return path[1:].replace('/', '__')
+    else:
+        return path
