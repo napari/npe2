@@ -64,17 +64,37 @@ class MenuCommand(_MenuItem, Executable):
 MenuItem = Union[MenuCommand, Submenu]
 
 
-# how to do something like layers/context
+# define the valid locations that menu items can populate
 class MenusContribution(BaseModel):
-    # TODO: list of (str, menu item) coerce to dict/MenuItem
-    # TODO: define convention around strings
-    command_pallete: Optional[List[MenuItem]]
-    layers__context: Optional[List[MenuItem]]
-    plugins__widgets: Optional[List[MenuItem]]
-    test_menu: Optional[List[MenuItem]]
+    napari__plugins: Optional[List[MenuItem]]
+    napari__layer_context: Optional[List[MenuItem]]
 
     class Config:
         extra = "allow"
+
+    @root_validator(pre=True)
+    def _coerce_locations(cls, values):
+        """Map plugin menu locations provided in the plugin manifest.
+        
+        Plugins are able to contribute menu items to certain locations in napari.
+        In the plugin manifest these locations must begin with a '/'. The valid
+        locations are '/napari/plugins' and '/napari/layer_context'.
+        """
+        # map from manifest provided menu locations to MenusContribution keys
+        # this mapping removes the initial '/' and replaces subsequent `'/'
+        # with '__'.
+        menu_contributions = {}
+        for key, val in values.items():
+            # menu locations must begin with a `/`
+            if key[0] == '/':
+                menu_name = key[1:].replace('/', '__')
+                if menu_name not in list(MenusContribution.__fields__.keys()):
+                    raise ValueError("Manifest provided menu location does not match"
+                                     " valid menu contribution location")
+                menu_contributions[menu_name] = val
+            else:
+                menu_contributions[key] = val
+        return menu_contributions
 
     @root_validator
     def _validate_extra(cls, values: dict):
