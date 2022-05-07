@@ -301,13 +301,13 @@ def path_to_key(path):
         we remove the first '/' and replace subsequent '/' with '__' to map
         to a potentially valid key. If the path does not begin with a '/' it
         is returned as is.
-    
+
     Returns
     -------
     str
         A string that could now be a key.
     """
-    if path[0] == '/':
-        return path[1:].replace('/', '__')
+    if path[0] == "/":
+        return path[1:].replace("/", "__")
     else:
         return path
