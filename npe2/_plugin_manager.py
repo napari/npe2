@@ -456,7 +456,7 @@ class PluginManager:
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         for mf in self.iter_manifests(disabled=False):
-            yield from getattr(mf.contributions.menus, menu_key, ())
+            yield from mf.contributions.menus.get(menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
         for mf in self.iter_manifests(disabled=False):
