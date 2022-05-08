@@ -5,22 +5,22 @@ from pydantic import BaseModel, Field
 
 from ..utils import Executable
 
-
-Menu = namedtuple('Menu', 'key description')
+Menu = namedtuple("Menu", "key description")
 
 # a list of valid napari menu locations that plugins can contribute too.
 # keys provided in the plugin manifest must match these strings
-napari_menus = [Menu('/napari/layer_context', "Process Layer"),
-                Menu('/napari/layer_context/projections', "Make Projection"),
-                Menu('/napari/layer_context/convert_type', "Convert datatype"),
-                Menu('/napari/tools/acquisition', "Acquisition"),
-                Menu('/napari/tools/classification', "Classification"),
-                Menu('/napari/tools/measurement', "Measurement"),
-                Menu('/napari/tools/segmentation', "Segmentation"),
-                Menu('/napari/tools/transform', "Transform"),
-                Menu('/napari/tools/utilities', "Utilities"),
-                Menu('/napari/tools/visualization', "Visualization"),
-                ]
+napari_menus = [
+    Menu("/napari/layer_context", "Process Layer"),
+    Menu("/napari/layer_context/projections", "Make Projection"),
+    Menu("/napari/layer_context/convert_type", "Convert datatype"),
+    Menu("/napari/tools/acquisition", "Acquisition"),
+    Menu("/napari/tools/classification", "Classification"),
+    Menu("/napari/tools/measurement", "Measurement"),
+    Menu("/napari/tools/segmentation", "Segmentation"),
+    Menu("/napari/tools/transform", "Transform"),
+    Menu("/napari/tools/utilities", "Utilities"),
+    Menu("/napari/tools/visualization", "Visualization"),
+]
 
 
 # user provides this
