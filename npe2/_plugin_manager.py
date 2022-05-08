@@ -114,7 +114,7 @@ class _ContributionsIndex:
     def iter_compatible_readers(self, paths: List[str]) -> Iterator[ReaderContribution]:
         assert isinstance(paths, list)
         if not paths:
-            return
+            return  # pragma: no cover
 
         if len({Path(i).suffix for i in paths}) > 1:
             raise ValueError(
