@@ -19,7 +19,7 @@ class ContributionPoints(BaseModel):
     widgets: Optional[List[WidgetContribution]]
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
-  
+
     # We use a dict for menus to allow for keys with `/`
     menus: Optional[Dict[str, List[MenuItem]]] = Field(None, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
@@ -27,15 +27,15 @@ class ContributionPoints(BaseModel):
     # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]
 
-    @validator('menus')
+    @validator("menus")
     def _check_napari_menus(cls, v):
         valid_names = [n.key for n in napari_menus]
         for key in v.keys():
             if key not in valid_names:
                 raise ValueError(
-                        f"Menu location not recognized. Got {key},"
-                        f" valid locations are {valid_names}."
-                    )
+                    f"Menu location not recognized. Got {key},"
+                    f" valid locations are {valid_names}."
+                )
         return v
 
     class Config:
