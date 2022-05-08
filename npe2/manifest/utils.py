@@ -35,6 +35,21 @@ if TYPE_CHECKING:
             ...
 
 
+def v1_to_v2(path):
+    if isinstance(path, list):
+        return path, True
+    else:
+        return [path], False
+
+
+def v2_to_v1(paths, stack):
+    if stack:
+        return paths
+    else:
+        assert len(paths) == 1
+        return paths[0]
+
+
 R = TypeVar("R")
 SHIM_NAME_PREFIX = "__npe1shim__."
 

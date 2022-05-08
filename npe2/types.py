@@ -1,5 +1,3 @@
-import warnings
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -28,19 +26,6 @@ PathOrPaths = Union[PathLike, Sequence[PathLike]]
 PythonName = NewType("PythonName", str)
 
 # Layer-related types
-
-
-def _ensure_str_or_seq_str(path):
-    if isinstance(path, Path) or (
-        isinstance(path, (list, tuple)) and any([isinstance(p, Path) for p in path])
-    ):
-        warnings.warn(
-            "Npe2 receive a `Path` or a list of `Path`s, instead of `str`,"
-            " this will  become an error in the future and is likely a"
-            " napari bug. Please fill and issue.",
-            UserWarning,
-            stacklevel=3,
-        )
 
 
 class ArrayLike(Protocol):
