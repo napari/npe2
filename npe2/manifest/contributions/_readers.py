@@ -51,7 +51,7 @@ class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
         kwargs["path"] = v2_to_v1(kwargs["path"], stack)
         callable_ = super().exec(kwargs=kwargs)
 
-        if callable_ is None:
+        if callable_ is None:  # pragma: no cover
             return None
 
         @wraps(callable_)

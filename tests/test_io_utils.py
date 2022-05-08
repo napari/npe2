@@ -22,6 +22,12 @@ def test_read_return_reader(uses_sample_plugin):
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
+def test_read_return_reader_with_stack(uses_sample_plugin):
+    data, reader = read_get_reader(["some.fzzy"], stack=True)
+    assert data == [(None,)]
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+
 def test_read_list(uses_sample_plugin):
     data, reader = read_get_reader(["some.fzzy", "other.fzzy"])
     assert data == [(None,)]
