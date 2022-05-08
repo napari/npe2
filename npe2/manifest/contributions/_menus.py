@@ -13,13 +13,13 @@ Menu = namedtuple('Menu', 'key description')
 napari_menus = [Menu('/napari/layer_context', "Process Layer"),
                 Menu('/napari/layer_context/projections', "Make Projection"),
                 Menu('/napari/layer_context/convert_type', "Convert datatype"),
-                Menu('/napari/tools/Acquisition', "Acquisition"),
-                Menu('/napari/tools/Classification', "Classification"),
-                Menu('/napari/tools/Measurement', "Measurement"),
-                Menu('/napari/tools/Segmentation', "Segmentation"),
-                Menu('/napari/tools/Transform', "Transform"),
-                Menu('/napari/tools/Utilities', "Utilities"),
-                Menu('/napari/tools/Visualization', "Visualization"),
+                Menu('/napari/tools/acquisition', "Acquisition"),
+                Menu('/napari/tools/classification', "Classification"),
+                Menu('/napari/tools/measurement', "Measurement"),
+                Menu('/napari/tools/segmentation', "Segmentation"),
+                Menu('/napari/tools/transform', "Transform"),
+                Menu('/napari/tools/utilities', "Utilities"),
+                Menu('/napari/tools/visualization', "Visualization"),
                 ]
 
 
