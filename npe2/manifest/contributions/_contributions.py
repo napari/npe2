@@ -29,11 +29,12 @@ class ContributionPoints(BaseModel):
 
     @validator('menus')
     def _check_napari_menus(cls, v):
+        valid_names = [n.key for n in napari_menus]
         for key in v.keys():
-            if key not in napari_menus:
+            if key not in valid_names:
                 raise ValueError(
                         f"Menu location not recognized. Got {key},"
-                        f" valid locations are {napari_menus}."
+                        f" valid locations are {valid_names}."
                     )
         return v
 
