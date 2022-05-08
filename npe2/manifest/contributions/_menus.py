@@ -4,24 +4,20 @@ from pydantic import BaseModel, Field
 
 from ..utils import Executable
 
-# # napari provides these
-# class Menu(BaseModel):
-#     key: str
-#     id: int
-#     description: str
-#     supports_submenus: bool = True
-#     deprecation_message: Optional[str]
 
-
-# napari_menus = [
-#     Menu(key="command_pallete", id=0, description="The Command Palette"),
-#     Menu(
-#         key="layers__context", id=1, description="The layer list context menu"
-#     ),
-#     Menu(
-#         key="layers__context", id=1, description="The layer list context menu"
-#     ),
-# ]
+# a list of valid napari menu locations that plugins can contribute too.
+# keys provided in the plugin manifest must match these strings
+napari_menus = ['/napari/layer_context',
+                '/napari/layer_context/projections',
+                '/napari/layer_context/convert_type',
+                '/napari/tools/Acquisition',
+                '/napari/tools/Classification',
+                '/napari/tools/Measurement',
+                '/napari/tools/Segmentation',
+                '/napari/tools/Transform',
+                '/napari/tools/Utilities',
+                '/napari/tools/Visualization',
+                ]
 
 
 # user provides this
