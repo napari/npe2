@@ -1,6 +1,6 @@
 from ._commands import CommandContribution
 from ._contributions import ContributionPoints
-from ._menus import MenuCommand, MenuItem, MenusContribution, Submenu
+from ._menus import MenuCommand, MenuItem, Submenu
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
 from ._submenu import SubmenuContribution
@@ -15,7 +15,6 @@ __all__ = [
     "LayerTypeConstraint",
     "MenuCommand",
     "MenuItem",
-    "MenusContribution",
     "ReaderContribution",
     "SampleDataContribution",
     "SampleDataGenerator",

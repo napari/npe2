@@ -22,7 +22,7 @@ def test_adapter_no_npe1():
 def test_npe1_adapter(uses_npe1_plugin, mock_cache: Path):
     """Test that the plugin manager detects npe1 plugins, and can index contribs"""
     pm = PluginManager()
-    pm.discover()
+    pm.discover(include_npe1=True)
 
     # we've found an adapter
     assert len(pm._npe1_adapters) == 1
@@ -54,7 +54,7 @@ def test_npe1_adapter(uses_npe1_plugin, mock_cache: Path):
 
         mock.reset_mock()
         # clear and rediscover... this time we expect the cache to kick in
-        pm.discover(clear=True)
+        pm.discover(clear=True, include_npe1=True)
         assert len(pm._npe1_adapters) == 1
         pm.index_npe1_adapters()
         assert len(pm._npe1_adapters) == 0
@@ -64,7 +64,7 @@ def test_npe1_adapter(uses_npe1_plugin, mock_cache: Path):
 def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
     """Test that we can clear cache, etc.."""
     pm = PluginManager()
-    pm.discover()
+    pm.discover(include_npe1=True)
 
     with patch.object(
         _npe1_adapter,
@@ -83,7 +83,7 @@ def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
         assert not mf._cache_path().exists()
 
         mock.reset_mock()
-        pm.discover(clear=True)
+        pm.discover(clear=True, include_npe1=True)
         pm.index_npe1_adapters()
         mf = pm.get_manifest("npe1-plugin")
         assert isinstance(mf, _npe1_adapter.NPE1Adapter)
@@ -97,7 +97,7 @@ def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
 
 def _get_mf() -> _npe1_adapter.NPE1Adapter:
     pm = PluginManager.instance()
-    pm.discover()
+    pm.discover(include_npe1=True)
     pm.index_npe1_adapters()
     mf = pm.get_manifest("npe1-plugin")
     assert isinstance(mf, _npe1_adapter.NPE1Adapter)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 from typing import (
     Any,
     Callable,
@@ -31,7 +30,7 @@ from .manifest.schema import PluginManifest
 C = TypeVar("C", bound=BaseModel)
 T = TypeVar("T", bound=Callable[..., Any])
 
-COMMAND_PARAMS = inspect.signature(CommandContribution).parameters
+
 # a mapping of contribution type to string name in the ContributionPoints
 # e.g. {ReaderContribution: 'readers'}
 CONTRIB_NAMES = {v.type_: k for k, v in ContributionPoints.__fields__.items()}
@@ -206,7 +205,11 @@ class ContributionDecorator(Generic[C]):
         """Create a new command contribution for `func`"""
         kwargs.setdefault("title", func.__name__)
         kwargs.setdefault("id", f"{self.plugin.manifest.name}.{func.__name__}")
-        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in COMMAND_PARAMS}
+        cmd_kwargs = {
+            k: kwargs.pop(k)
+            for k in list(kwargs)
+            if k in CommandContribution.__fields__
+        }
         cmd = CommandContribution(**cmd_kwargs)
         self.commands.append(cmd)
         self.plugin.plugin_manager.commands.register(cmd.id, func)
