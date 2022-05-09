@@ -3,13 +3,16 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, validator
 
 from ._commands import CommandContribution
-from ._menus import MenuItem, napari_menus
+from ._menus import MenuContribution, NAPARI_MENUS
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution
 from ._submenu import SubmenuContribution
 from ._themes import ThemeContribution
 from ._widgets import WidgetContribution
 from ._writers import WriterContribution
+
+
+VALID_MENUS_NAMES = {n.key for n in NAPARI_MENUS}
 
 
 class ContributionPoints(BaseModel):
@@ -21,7 +24,7 @@ class ContributionPoints(BaseModel):
     themes: Optional[List[ThemeContribution]]
 
     # We use a dict for menus to allow for keys with `/`
-    menus: Optional[Dict[str, List[MenuItem]]] = Field(None, hide_docs=True)
+    menus: Optional[MenuContribution] = Field(None, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
 
     # configuration: Optional[JsonSchemaObject]
@@ -29,12 +32,11 @@ class ContributionPoints(BaseModel):
 
     @validator("menus")
     def _check_napari_menus(cls, v):
-        valid_names = [n.key for n in napari_menus]
         for key in v.keys():
-            if key not in valid_names:
+            if key not in VALID_MENUS_NAMES:
                 raise ValueError(
                     f"Menu location not recognized. Got {key},"
-                    f" valid locations are {valid_names}."
+                    f" valid locations are {VALID_MENUS_NAMES}."
                 )
         return v
 

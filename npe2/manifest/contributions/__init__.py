@@ -1,6 +1,6 @@
 from ._commands import CommandContribution
 from ._contributions import ContributionPoints
-from ._menus import MenuCommand, MenuItem, Submenu
+from ._menus import NAPARI_MENUS, MenuCommand, MenuItem, Submenu
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
 from ._submenu import SubmenuContribution
@@ -9,6 +9,7 @@ from ._widgets import WidgetContribution
 from ._writers import LayerType, LayerTypeConstraint, WriterContribution
 
 __all__ = [
+    "NAPARI_MENUS",
     "CommandContribution",
     "ContributionPoints",
     "LayerType",
