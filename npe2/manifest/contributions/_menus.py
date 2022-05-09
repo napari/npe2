@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 from ..utils import Executable
 
-
 Menu = namedtuple("Menu", "key description order")
 
 # a list of valid napari menu locations that plugins can contribute too.

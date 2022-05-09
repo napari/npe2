@@ -1,16 +1,15 @@
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, validator
 
 from ._commands import CommandContribution
-from ._menus import MenuContribution, NAPARI_MENUS
+from ._menus import NAPARI_MENUS, MenuContribution
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution
 from ._submenu import SubmenuContribution
 from ._themes import ThemeContribution
 from ._widgets import WidgetContribution
 from ._writers import WriterContribution
-
 
 VALID_MENUS_NAMES = {n.key for n in NAPARI_MENUS}
 
