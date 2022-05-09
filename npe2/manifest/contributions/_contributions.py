@@ -11,7 +11,6 @@ from ._themes import ThemeContribution
 from ._widgets import WidgetContribution
 from ._writers import WriterContribution
 
-
 VALID_MENUS_NAMES = {n.path for n in NAPARI_MENUS}
 
 
