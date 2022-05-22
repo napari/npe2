@@ -15,4 +15,4 @@ def test_pm_module():
     for k, v in vars(PluginManager).items():
         if k.startswith("_") or isinstance(v, (classmethod, property)):
             continue
-        assert hasattr(pm, k)
+        assert hasattr(pm, k), f"pm.py module is missing function {k!r}"
