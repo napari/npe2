@@ -10,3 +10,9 @@ def test_pm_module():
     assert not list(pm.iter_widgets())
     assert not list(pm.iter_sample_data())
     assert not list(pm.iter_compatible_readers("sadfds"))
+
+    # make sure we have it covered.
+    for k, v in vars(PluginManager).items():
+        if k.startswith("_") or isinstance(v, (classmethod, property)):
+            continue
+        assert hasattr(pm, k)
