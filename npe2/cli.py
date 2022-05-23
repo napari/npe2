@@ -1,6 +1,5 @@
 import builtins
 import warnings
-from importlib.metadata import distribution
 from pathlib import Path
 from textwrap import indent
 from typing import List, Optional
@@ -185,8 +184,7 @@ def cache(
             if verbose:
                 _pprint_yaml(mf.yaml())  # pragma: no cover
             else:
-                d = distribution(mf.name)
-                typer.secho(f"{mf.name}: {d.version}", fg=typer.colors.GREEN)
+                typer.secho(f"{mf.name}: {mf.package_version}", fg=typer.colors.GREEN)
 
 
 def main():
