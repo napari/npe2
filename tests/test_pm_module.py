@@ -2,7 +2,7 @@ from npe2 import PluginManager
 
 
 def test_pm_module():
-    from npe2 import pm
+    from npe2 import plugin_manager as pm
 
     assert pm.instance() is PluginManager.instance()
 
