@@ -18,8 +18,6 @@ from typing import (
 
 from pydantic import BaseModel
 
-from npe2.types import PathLike
-
 from .manifest import contributions
 
 T = TypeVar("T", bound=Callable[..., Any])
@@ -37,11 +35,6 @@ def _build_decorator(contrib: Type[BaseModel]):
     ----------
     contrib : Type[BaseModel]
         The type of contribution this object implements.
-
-    Returns
-    -------
-    [
-        [description]
     """
     # build a signature for this contribution, mixed with Command params
     contribs: Sequence[Type[BaseModel]] = (contributions.CommandContribution, contrib)
@@ -178,12 +171,30 @@ class PluginModuleVisitor(ast.NodeVisitor):
         return f"{self.module_name}:{obj_name}"
 
 
-def compile(
-    path: Union[ModuleType, PathLike], plugin_name: str, module_name: str = ""
-) -> dict:
+def visit(
+    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
+) -> contributions.ContributionPoints:
+    """Visit a module and extract contribution points.
+
+    Parameters
+    ----------
+    path : Union[ModuleType, str, Path]
+        Either a path to a Python module, a module object, or a string
+    plugin_name : str
+        Name of the plugin
+    module_name : str, optional
+        Module name, by default ""
+
+    Returns
+    -------
+    ContributionPoints
+        ContributionPoints discovered in the module.
+    """
     if isinstance(path, ModuleType):
         assert path.__file__
-        path = Path(path.__file__)
+        assert path.__name__
+        module_name = path.__name__
+        path = path.__file__
 
     root = ast.parse(Path(path).read_text())
 
@@ -192,5 +203,4 @@ def compile(
     if "commands" in visitor._contrib_points:
         compress = {tuple(i.items()) for i in visitor._contrib_points["commands"]}
         visitor._contrib_points["commands"] = [dict(i) for i in compress]
-    contributions.ContributionPoints(**visitor._contrib_points)  # validate
-    return visitor._contrib_points
+    return contributions.ContributionPoints(**visitor._contrib_points)

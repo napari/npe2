@@ -12,8 +12,6 @@ from npe2.manifest.contributions import (
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
-SAMPLE_PLUGIN_NAME = "my-plugin"
-
 
 def test_writer_empty_layers():
     pm = PluginManager()

@@ -2,8 +2,7 @@ import sys
 from pathlib import Path
 
 from npe2 import PluginManifest
-from npe2.implements import compile
-from npe2.manifest.contributions import ContributionPoints
+from npe2.implements import visit
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 SAMPLE_MODULE_NAME = "my_plugin"
@@ -12,12 +11,11 @@ SAMPLE_DIR = Path(__file__).parent / "sample"
 
 def test_extract_manifest():
     module_with_decorators = SAMPLE_DIR / "_with_decorators.py"
-    output = compile(
+    extracted = visit(
         module_with_decorators,
         plugin_name=SAMPLE_PLUGIN_NAME,
         module_name=SAMPLE_MODULE_NAME,
     )
-    extracted = ContributionPoints(**output)
     assert extracted.commands
     assert extracted.readers
     assert extracted.writers
@@ -32,8 +30,8 @@ def test_extract_manifest():
     expected.sample_data = [c for c in expected.sample_data if not hasattr(c, "uri")]
 
     # check that they're all the same
-    id = lambda x: x.id  # noqa
-    assert sorted(extracted.commands, key=id) == sorted(expected.commands, key=id)
+    _id = lambda x: x.id  # noqa
+    assert sorted(extracted.commands, key=_id) == sorted(expected.commands, key=_id)
     k = lambda x: x.command  # noqa
     assert sorted(extracted.readers, key=k) == sorted(expected.readers, key=k)
     assert sorted(extracted.writers, key=k) == sorted(expected.writers, key=k)
@@ -57,10 +55,10 @@ def test_dynamic(monkeypatch):
         )
 
         # we can compile a module object as well as a string path
-        extracted = compile(
+        extracted = visit(
             _with_decorators,
             plugin_name=SAMPLE_PLUGIN_NAME,
             module_name=SAMPLE_MODULE_NAME,
         )
 
-        assert "commands" in extracted
+        assert extracted.commands
