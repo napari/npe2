@@ -56,7 +56,7 @@ def test_plugin_manager(pm: PluginManager):
 
     assert pm.get_command(f"{SAMPLE_PLUGIN_NAME}.hello_world")
 
-    assert pm.get_submenu("mysubmenu")
+    assert pm.get_submenu(f"{SAMPLE_PLUGIN_NAME}.mysubmenu")
     with pytest.raises(KeyError):
         pm.get_submenu("not-a-submenu")
     assert len(list(pm.iter_menu("/napari/layer_context"))) == 2

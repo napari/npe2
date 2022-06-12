@@ -1,20 +1,20 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .commands import CommandContribution
-from .menus import MenusContribution
-from .readers import ReaderContribution
-from .sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
-from .submenu import SubmenuContribution
-from .themes import ThemeContribution
-from .widgets import WidgetContribution
-from .writers import WriterContribution
+from ._commands import CommandContribution
+from ._menus import MenuItem
+from ._readers import ReaderContribution
+from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
+from ._submenu import SubmenuContribution
+from ._themes import ThemeContribution
+from ._widgets import WidgetContribution
+from ._writers import WriterContribution
 
 __all__ = [
     "ContributionPoints",
     "CommandContribution",
-    "MenusContribution",
+    "MenuItem",
     "ReaderContribution",
     "SampleDataContribution",
     "SubmenuContribution",
@@ -34,7 +34,8 @@ class ContributionPoints(BaseModel):
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
 
-    menus: Optional[MenusContribution] = Field(None, hide_docs=True)
+    # We use a dict for menus to allow for keys with `/`
+    menus: Optional[Dict[str, List[MenuItem]]] = Field(None, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
 
     # configuration: Optional[JsonSchemaObject]

@@ -4,6 +4,7 @@ import os
 import warnings
 from collections import Counter
 from fnmatch import fnmatch
+from importlib import metadata
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -25,33 +26,31 @@ from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
-from .manifest.writers import LayerType, WriterContribution
-from .types import PathLike, PythonName, _ensure_str_or_seq_str
+from .manifest._npe1_adapter import NPE1Adapter
+from .manifest.contributions import LayerType, WriterContribution
+from .types import PathLike, PythonName
 
 if TYPE_CHECKING:
-    from .manifest.commands import CommandContribution
-    from .manifest.menus import MenuItem
-    from .manifest.readers import ReaderContribution
-    from .manifest.sample_data import SampleDataContribution
-    from .manifest.submenu import SubmenuContribution
-    from .manifest.themes import ThemeContribution
-    from .manifest.widgets import WidgetContribution
+    from .manifest.contributions import (
+        CommandContribution,
+        MenuItem,
+        ReaderContribution,
+        SampleDataContribution,
+        SubmenuContribution,
+        ThemeContribution,
+        WidgetContribution,
+    )
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata  # type: ignore
 
 
 class _ContributionsIndex:
     def __init__(self) -> None:
         self._indexed: Set[str] = set()
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._readers: List[Tuple[str, ReaderContribution]] = list()
-        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = list()
+        self._readers: List[Tuple[str, ReaderContribution]] = []
+        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = []
 
         # DEPRECATED: only here for napari <= 0.4.15 compat.
         self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(
@@ -112,21 +111,18 @@ class _ContributionsIndex:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
 
-    def iter_compatible_readers(
-        self, path: Union[str, Sequence[str]]
-    ) -> Iterator[ReaderContribution]:
-        _ensure_str_or_seq_str(path)
+    def iter_compatible_readers(self, paths: List[str]) -> Iterator[ReaderContribution]:
+        assert isinstance(paths, list)
+        if not paths:
+            return  # pragma: no cover
+
+        if len({Path(i).suffix for i in paths}) > 1:
+            raise ValueError(
+                "All paths in the stack list must have the same extension."
+            )
+        path = paths[0]
         if not path:
             return
-
-        if isinstance(path, list):
-            if len({Path(i).suffix for i in path}) > 1:
-                raise ValueError(
-                    "All paths in the stack list must have the same extension."
-                )
-            path = path[0]
-        path = str(path)
-
         assert isinstance(path, str)
 
         if os.path.isdir(path):
@@ -157,32 +153,23 @@ class _ContributionsIndex:
                 if layer == lt and (min_ <= counts[lt] < max_)
             }
 
-        candidates = {w for _, _, _, w in self._writers}
+        # keep ordered without duplicates
+        candidates = list({w: None for _, _, _, w in self._writers})
         for lt in LayerType:
             if candidates:
-                candidates &= _get_candidates(lt)
+                candidates = [i for i in candidates if i in _get_candidates(lt)]
             else:
                 break
 
-        def _writer_key(writer: WriterContribution) -> Tuple[bool, int, int, List[str]]:
+        def _writer_key(writer: WriterContribution) -> Tuple[bool, int]:
             # 1. writers with no file extensions (like directory writers) go last
             no_ext = len(writer.filename_extensions) == 0
 
             # 2. more "specific" writers first
             nbounds = sum(not c.is_zero() for c in writer.layer_type_constraints())
+            return (no_ext, nbounds)
 
-            # 3. then sort by the number of listed extensions
-            #    (empty set of extensions goes last)
-            ext_len = len(writer.filename_extensions)
-
-            # 4. finally group related extensions together
-            exts = writer.filename_extensions
-            return (no_ext, nbounds, ext_len, exts)
-
-        yield from sorted(
-            candidates,
-            key=_writer_key,
-        )
+        yield from sorted(candidates, key=_writer_key)
 
 
 class PluginManagerEvents(SignalGroup):
@@ -224,6 +211,7 @@ class PluginManager:
         self._contrib = _ContributionsIndex()
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
+        self._npe1_adapters: List[NPE1Adapter] = []
 
         # up to napari 0.4.15, discovery happened in the init here
         # so if we're running on an older version of napari, we need to discover
@@ -243,7 +231,7 @@ class PluginManager:
 
     @classmethod
     def instance(cls) -> PluginManager:
-        """Singleton instance."""
+        """Return global PluginManager singleton instance."""
         if cls.__instance is None:
             cls.__instance = cls()
         return cls.__instance
@@ -254,7 +242,9 @@ class PluginManager:
 
     # Discovery, activation, enablement
 
-    def discover(self, paths: Sequence[str] = (), clear=False) -> None:
+    def discover(
+        self, paths: Sequence[str] = (), clear=False, include_npe1=False
+    ) -> None:
         """Discover and index plugin manifests in the environment.
 
         Parameters
@@ -266,6 +256,9 @@ class PluginManager:
             Clear and re-index the environment.  If `False` (the default),
             calling discover again will only register and index newly
             discovered plugins. (Existing manifests will not be re-indexed)
+        include_npe1 : bool
+            Whether to detect npe1 plugins as npe1_adapters during discovery.
+            By default `False`.
         """
         if clear:
             self._contrib = _ContributionsIndex()
@@ -273,8 +266,19 @@ class PluginManager:
 
         with self.events.plugins_registered.paused(lambda a, b: (a[0] | b[0],)):
             for result in PluginManifest.discover(paths=paths):
-                if result.manifest and result.manifest.name not in self._manifests:
+                if (
+                    result.manifest
+                    and result.manifest.name not in self._manifests
+                    and (include_npe1 or not isinstance(result.manifest, NPE1Adapter))
+                ):
                     self.register(result.manifest, warn_disabled=False)
+
+    def index_npe1_adapters(self):
+        """Import and index any/all npe1 adapters."""
+        with warnings.catch_warnings():
+            warnings.showwarning = lambda e, *_: print(str(e).split(" Please add")[0])
+            while self._npe1_adapters:
+                self._contrib.index_contributions(self._npe1_adapters.pop())
 
     def register(self, manifest: PluginManifest, warn_disabled=True) -> None:
         """Register a plugin manifest"""
@@ -288,11 +292,14 @@ class PluginManager:
                     f"Disabled plugin {manifest.name!r} was registered, but will not "
                     "be indexed. Use `warn_disabled=False` to suppress this message."
                 )
+        elif isinstance(manifest, NPE1Adapter):
+            self._npe1_adapters.append(manifest)
         else:
             self._contrib.index_contributions(manifest)
         self.events.plugins_registered.emit({manifest})
 
     def unregister(self, key: PluginName):
+        """Unregister plugin named `key`."""
         if key not in self._manifests:
             raise ValueError(f"No registered plugin named {key!r}")  # pragma: no cover
         self.deactivate(key)
@@ -389,7 +396,7 @@ class PluginManager:
     # Getting manifests
 
     def get_manifest(self, plugin_name: str) -> PluginManifest:
-        """Gen manifest for `plugin_name`"""
+        """Get manifest for `plugin_name`"""
         key = str(plugin_name).split(".")[0]
         try:
             return self._manifests[key]
@@ -428,9 +435,11 @@ class PluginManager:
     # Accessing Contributions
 
     def get_command(self, command_id: str) -> CommandContribution:
+        """Retrieve CommandContribution for `command_id`"""
         return self._contrib.get_command(command_id)
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
+        """Get SubmenuContribution for `submenu_id`."""
         for mf in self.iter_manifests(disabled=False):
             for subm in mf.contributions.submenus or ():
                 if submenu_id == subm.id:
@@ -438,24 +447,45 @@ class PluginManager:
         raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
+        """Iterate over `MenuItems` in menu with id `menu_key`."""
         for mf in self.iter_manifests(disabled=False):
-            yield from getattr(mf.contributions.menus, menu_key, ())
+            if mf.contributions.menus is not None:
+                yield from mf.contributions.menus.get(menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
+        """Iterate over discovered/enuabled `ThemeContributions`."""
         for mf in self.iter_manifests(disabled=False):
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
         self, path: Union[PathLike, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
+        """Iterate over ReaderContributions compatible with `path`.
+
+        Parameters
+        ----------
+        path : Union[PathLike, Sequence[str]]
+            Pathlike or list of pathlikes, with file(s) to read.
+        """
+        if isinstance(path, (str, Path)):
+            path = [path]
+        assert isinstance(path, list)
         return self._contrib.iter_compatible_readers(path)
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
+        """Iterate over compatible WriterContributions given a sequence of layer_types.
+
+        Parameters
+        ----------
+        layer_types : Sequence[str]
+            list of lowercase Layer type names like `['image', 'labels']`
+        """
         return self._contrib.iter_compatible_writers(layer_types)
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
+        """Iterate over discovered WidgetContributions."""
         for mf in self.iter_manifests(disabled=False):
             yield from mf.contributions.widgets or ()
 

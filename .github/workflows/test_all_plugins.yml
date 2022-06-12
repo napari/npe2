@@ -1,0 +1,75 @@
+name: Test all plugins
+
+on:
+  pull_request:
+    types: [ labeled ]
+  workflow_dispatch:
+
+jobs:
+  get-plugins:
+    if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+      - id: plugin_names
+        run: echo "::set-output name=plugins::$(curl -s https://api.napari-hub.org/plugins | jq -c 'keys')"
+    outputs:
+      plugins: ${{ steps.plugin_names.outputs.plugins }}
+
+  test_all:
+    needs: get-plugins
+    name: ${{ matrix.plugin }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.get-plugins.outputs.plugins) }}
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: tlambert03/setup-qt-libs@v1
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.9
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          use-mamba: true
+
+      - id: check_conda
+        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' 'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
+
+      # for now, until clesperanto is on conda and can declare it itself
+      - name: openCL deps
+        if: matrix.plugin == 'napari-pyclesperanto-assistant' && steps.check_conda.outputs.status != '200'
+        run: mamba install pyopencl oclgrind
+
+      # these plugins offer napari functionality
+      # but also work in the absence of napari... so probably don't want
+      # to add napari to their deps.
+      - name: install napari
+        if: matrix.plugin == "RedLionfish" || matrix.plugin == "smo"
+        run: mamba install napari
+
+      - name: Install ${{ matrix.plugin }} from conda
+        if: steps.check_conda.outputs.status == '200'
+        run: mamba install ${{ matrix.plugin }} pyqt
+
+      - name: Install ${{ matrix.plugin }} from pip
+        if: steps.check_conda.outputs.status != '200'
+        run: pip install ${{ matrix.plugin }} pyqt5
+
+      - name: Install npe2
+        run: pip install -e .[testing]
+
+      - run: sudo apt-get install -y xvfb
+      - name: Run tests
+        run: xvfb-run --auto-servernum pytest tests/test_all_plugins.py -s -v --color=yes
+        env:
+          TEST_PACKAGE_NAME: ${{ matrix.plugin }}

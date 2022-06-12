@@ -1,7 +1,8 @@
+import builtins
 import warnings
 from pathlib import Path
 from textwrap import indent
-from typing import Optional
+from typing import List, Optional
 
 import typer
 
@@ -136,6 +137,54 @@ def convert(
             fg=typer.colors.GREEN,
             bold=False,
         )
+
+
+@app.command()
+def cache(
+    clear: Optional[bool] = typer.Option(
+        False, "--clear", "-d", help="Clear the npe1 adapter manifest cache"
+    ),
+    names: List[str] = typer.Argument(
+        None, help="Name(s) of distributions to list/delete"
+    ),
+    list_: Optional[bool] = typer.Option(
+        False, "--list", "-l", help="List cached manifests"
+    ),
+    verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="verbose"),
+):
+    """Cache utils"""
+    from npe2.manifest._npe1_adapter import ADAPTER_CACHE, clear_cache
+
+    if clear:
+        _cleared = clear_cache(names)
+        if _cleared:
+            nf = "\n".join(f" - {i.name}" for i in _cleared)
+            typer.secho("Cleared these files from cache:")
+            typer.secho(nf, fg=typer.colors.RED)
+        else:
+            msg = "Nothing to clear"
+            if names:
+                msg += f" for plugins: {','.join(names)}"
+            typer.secho(msg, fg=typer.colors.RED)
+
+        typer.Exit()
+    if list_:
+        files = builtins.list(ADAPTER_CACHE.glob("*.yaml"))
+        if names:
+            files = [f for f in files if any(f.name.startswith(n) for n in names)]
+
+        if not files:
+            if names:
+                typer.secho(f"Nothing cached for plugins: {','.join(names)}")
+            else:
+                typer.secho("Nothing cached")
+            typer.Exit()
+        for fname in files:
+            mf = PluginManifest.from_file(fname)
+            if verbose:
+                _pprint_yaml(mf.yaml())  # pragma: no cover
+            else:
+                typer.secho(f"{mf.name}: {mf.package_version}", fg=typer.colors.GREEN)
 
 
 def main():

@@ -3,9 +3,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from npe2 import PluginManager, PluginManifest
-from npe2.manifest.commands import CommandContribution
-from npe2.manifest.sample_data import SampleDataGenerator, SampleDataURI
+from npe2 import DynamicPlugin, PluginManager, PluginManifest
+from npe2.manifest.contributions import (
+    CommandContribution,
+    SampleDataGenerator,
+    SampleDataURI,
+)
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
@@ -38,6 +41,23 @@ def test_writer_ranges(param, uses_sample_plugin, plugin_manager: PluginManager)
     )
 
     assert nwriters == expected_count
+
+
+def test_writer_priority():
+    """Contributions listed earlier in the manifest should be preferred."""
+    pm = PluginManager()
+    with DynamicPlugin(name="my_plugin", plugin_manager=pm) as plg:
+
+        @plg.contribute.writer(filename_extensions=["*.tif"], layer_types=["image"])
+        def my_writer1(path, data):
+            ...
+
+        @plg.contribute.writer(filename_extensions=["*.abc"], layer_types=["image"])
+        def my_writer2(path, data):
+            ...
+
+        writers = list(pm.iter_compatible_writers(["image"]))
+        assert writers[0].command == "my_plugin.my_writer1"
 
 
 @pytest.mark.parametrize(

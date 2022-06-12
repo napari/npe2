@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from pydantic import BaseModel
 from pydantic.fields import Field
 
-from ..types import LayerData
-from .utils import Executable
+from ...types import LayerData
+from ..utils import Executable
 
 if TYPE_CHECKING:
-    from .._command_registry import CommandRegistry
+    from ..._command_registry import CommandRegistry
 
 
 class _SampleDataContribution(BaseModel, ABC):
@@ -63,9 +63,9 @@ class SampleDataURI(_SampleDataContribution):
     )
 
     def open(self, *args, **kwargs) -> List[LayerData]:
-        from ..io_utils import read
+        from ...io_utils import read
 
-        return read(self.uri, plugin_name=self.reader_plugin)
+        return read([self.uri], plugin_name=self.reader_plugin, stack=False)
 
     class Config:
         title = "Sample Data URI"

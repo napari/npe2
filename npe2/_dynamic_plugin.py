@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 from typing import (
     Any,
     Callable,
@@ -18,18 +17,20 @@ from pydantic import BaseModel, ValidationError
 from typing_extensions import Literal
 
 from ._plugin_manager import PluginManager
-from .manifest.commands import CommandContribution
-from .manifest.contributions import ContributionPoints
-from .manifest.readers import ReaderContribution
-from .manifest.sample_data import SampleDataGenerator
+from .manifest.contributions import (
+    CommandContribution,
+    ContributionPoints,
+    ReaderContribution,
+    SampleDataGenerator,
+    WidgetContribution,
+    WriterContribution,
+)
 from .manifest.schema import PluginManifest
-from .manifest.widgets import WidgetContribution
-from .manifest.writers import WriterContribution
 
 C = TypeVar("C", bound=BaseModel)
 T = TypeVar("T", bound=Callable[..., Any])
 
-COMMAND_PARAMS = inspect.signature(CommandContribution).parameters
+
 # a mapping of contribution type to string name in the ContributionPoints
 # e.g. {ReaderContribution: 'readers'}
 CONTRIB_NAMES = {v.type_: k for k, v in ContributionPoints.__fields__.items()}
@@ -204,7 +205,11 @@ class ContributionDecorator(Generic[C]):
         """Create a new command contribution for `func`"""
         kwargs.setdefault("title", func.__name__)
         kwargs.setdefault("id", f"{self.plugin.manifest.name}.{func.__name__}")
-        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in COMMAND_PARAMS}
+        cmd_kwargs = {
+            k: kwargs.pop(k)
+            for k in list(kwargs)
+            if k in CommandContribution.__fields__
+        }
         cmd = CommandContribution(**cmd_kwargs)
         self.commands.append(cmd)
         self.plugin.plugin_manager.commands.register(cmd.id, func)
