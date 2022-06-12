@@ -6,8 +6,7 @@ from pydantic.fields import SHAPE_LIST
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    from importlib.metadata import PackageMetadata as ImportlibPackageMetadata
-
+    import email.message
 
 # https://packaging.python.org/specifications/core-metadata/
 
@@ -23,7 +22,7 @@ class PackageMetadata(BaseModel):
     https://packaging.python.org/specifications/core-metadata/
 
     The `importlib.metadata` provides the `metadata()` function,
-    but it returns a somewhat awkward `ImportlibPackageMetadata` object.
+    but it returns a somewhat awkward `email.message.Message` object.
     """
 
     class Config:
@@ -189,7 +188,7 @@ class PackageMetadata(BaseModel):
         return cls.from_dist_metadata(metadata(name))
 
     @classmethod
-    def from_dist_metadata(cls, meta: "ImportlibPackageMetadata") -> "PackageMetadata":
+    def from_dist_metadata(cls, meta: "email.message.Message") -> "PackageMetadata":
         """Accepts importlib.metadata.Distribution.metadata"""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
         d: Dict[str, Union[str, List[str]]] = {}
