@@ -38,7 +38,7 @@ jobs:
         run: pytest --color yes --cov npe2 --cov-report xml --cov-report term-missing
 
       - name: Coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
 
