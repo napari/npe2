@@ -169,7 +169,7 @@ class _ContributionsIndex:
             nbounds = sum(not c.is_zero() for c in writer.layer_type_constraints())
             return (no_ext, nbounds)
 
-        yield from candidates
+        yield from sorted(candidates, key=_writer_key)
 
 
 class PluginManagerEvents(SignalGroup):
