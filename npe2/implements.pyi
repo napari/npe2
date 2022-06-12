@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, TypeVar, Union
 from _typeshed import Incomplete
 from pydantic import BaseModel as BaseModel
 
+from .manifest import PluginManifest as PluginManifest
 from .manifest import contributions as contributions
 
 T = TypeVar("T", bound=Callable[..., Any])
@@ -70,3 +71,5 @@ def visit(
     path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ...
 ) -> contributions.ContributionPoints:
     """Visit a module and extract contribution points."""
+
+def compile(src_dir: Union[str, Path]) -> PluginManifest: ...

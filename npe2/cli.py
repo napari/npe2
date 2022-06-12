@@ -17,7 +17,9 @@ def _pprint_yaml(string):  # pragma: no cover
         from rich.console import Console
         from rich.syntax import Syntax
 
-        Console().print(Syntax(string, "yaml", theme="fruity"))
+        Console().print(
+            Syntax(string, "yaml", theme="monokai", background_color="black")
+        )
     except ImportError:
         typer.echo(string)
 
@@ -185,6 +187,14 @@ def cache(
                 _pprint_yaml(mf.yaml())  # pragma: no cover
             else:
                 typer.secho(f"{mf.name}: {mf.package_version}", fg=typer.colors.GREEN)
+
+
+@app.command()
+def compile(src_dir: str):
+    """Compile napari_plugin_engine plugins"""
+    from .implements import compile
+
+    _pprint_yaml(compile(src_dir).yaml())
 
 
 def main():
