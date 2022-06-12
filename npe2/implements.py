@@ -23,12 +23,12 @@ from .manifest import contributions
 T = TypeVar("T", bound=Callable[..., Any])
 
 
-p0 = Parameter(
+_p0 = Parameter(
     "__obj", Parameter.POSITIONAL_ONLY, default=None, annotation=Optional[Callable]
 )
 
 
-def _build_decorator(contrib: Type[BaseModel]):
+def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     """Create a decorator (e.g. `@implements.reader`) to mark an object as a contrib.
 
     Parameters
@@ -38,7 +38,7 @@ def _build_decorator(contrib: Type[BaseModel]):
     """
     # build a signature for this contribution, mixed with Command params
     contribs: Sequence[Type[BaseModel]] = (contributions.CommandContribution, contrib)
-    params = [p0] + [
+    params = [_p0] + [
         Parameter(
             f.name,
             Parameter.KEYWORD_ONLY,
@@ -85,23 +85,12 @@ def on_deactivate(func):
     return func
 
 
-# # fmt: off
-# @overload
-# def _marker(__obj: Literal[None]=None, **kwargs) -> Callable[[T], T]: ...
-# @overload
-# def _marker(__obj: T, **kwargs) -> T: ...
-# # fmt: on
-# def _marker(__obj: Optional[T] = None, **kwargs) -> Union[T, Callable[[T], T]]:
-#     def _inner(obj: T) -> T:
-#         return obj
-
-#     return _inner if __obj is None else __obj
-
-
-COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
+_COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
 
 
 class PluginModuleVisitor(ast.NodeVisitor):
+    """AST visitor to find all contributions in a module."""
+
     def __init__(self, plugin_name: str, module_name: str) -> None:
         super().__init__()
         self.plugin_name = plugin_name
@@ -109,20 +98,20 @@ class PluginModuleVisitor(ast.NodeVisitor):
         self._contrib_points: Dict[str, Any] = {}
         self._names: Dict[str, str] = {}
 
-    def visit_Import(self, node: ast.Import) -> Any:
+    def visit_Import(self, node: ast.Import) -> Any:  # noqa: D102
         for alias in node.names:
             self._names[alias.asname or alias.name] = alias.name
         return super().generic_visit(node)
 
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:  # noqa: D102
         for alias in node.names:
             self._names[alias.asname or alias.name] = f"{node.module}.{alias.name}"
         return super().generic_visit(node)
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:  # noqa: D102
         self._find_decorators(node)
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> Any:
+    def visit_ClassDef(self, node: ast.ClassDef) -> Any:  # noqa: D102
         self._find_decorators(node)
 
     def _find_decorators(self, node: Union[ast.ClassDef, ast.FunctionDef]):
@@ -155,7 +144,7 @@ class PluginModuleVisitor(ast.NodeVisitor):
 
     def _store_command(self, keywords: List[ast.keyword], name: str) -> Dict[str, Any]:
         kwargs = {str(k.arg): ast.literal_eval(k.value) for k in keywords}
-        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in COMMAND_PARAMS}
+        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in _COMMAND_PARAMS}
         cmd_kwargs["python_name"] = self._qualified_pyname(name)
         cmd = contributions.CommandContribution(**cmd_kwargs)
         if cmd.id.startswith(self.plugin_name):
@@ -196,10 +185,8 @@ def visit(
         module_name = path.__name__
         path = path.__file__
 
-    root = ast.parse(Path(path).read_text())
-
     visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
-    visitor.visit(root)
+    visitor.visit(ast.parse(Path(path).read_text()))
     if "commands" in visitor._contrib_points:
         compress = {tuple(i.items()) for i in visitor._contrib_points["commands"]}
         visitor._contrib_points["commands"] = [dict(i) for i in compress]
