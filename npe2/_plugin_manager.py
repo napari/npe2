@@ -435,9 +435,6 @@ class PluginManager:
                 continue
             yield mf
 
-    def __iter__(self) -> Iterator[PluginManifest]:
-        yield from self.iter_manifests()
-
     def __contains__(self, name: str) -> bool:
         return name in self._manifests
 
