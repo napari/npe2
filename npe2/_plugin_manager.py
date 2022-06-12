@@ -153,32 +153,23 @@ class _ContributionsIndex:
                 if layer == lt and (min_ <= counts[lt] < max_)
             }
 
-        candidates = {w for _, _, _, w in self._writers}
+        # keep ordered without duplicates
+        candidates = list({w: None for _, _, _, w in self._writers})
         for lt in LayerType:
             if candidates:
-                candidates &= _get_candidates(lt)
+                candidates = [i for i in candidates if i in _get_candidates(lt)]
             else:
                 break
 
-        def _writer_key(writer: WriterContribution) -> Tuple[bool, int, int, List[str]]:
+        def _writer_key(writer: WriterContribution) -> Tuple[bool, int]:
             # 1. writers with no file extensions (like directory writers) go last
             no_ext = len(writer.filename_extensions) == 0
 
             # 2. more "specific" writers first
             nbounds = sum(not c.is_zero() for c in writer.layer_type_constraints())
+            return (no_ext, nbounds)
 
-            # 3. then sort by the number of listed extensions
-            #    (empty set of extensions goes last)
-            ext_len = len(writer.filename_extensions)
-
-            # 4. finally group related extensions together
-            exts = writer.filename_extensions
-            return (no_ext, nbounds, ext_len, exts)
-
-        yield from sorted(
-            candidates,
-            key=_writer_key,
-        )
+        yield from sorted(candidates, key=_writer_key)
 
 
 class PluginManagerEvents(SignalGroup):
