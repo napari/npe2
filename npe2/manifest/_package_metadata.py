@@ -1,8 +1,4 @@
-try:
-    from importlib.metadata import metadata
-except ImportError:
-    from importlib_metadata import metadata  # type: ignore
-
+from importlib.metadata import metadata
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, constr, root_validator
@@ -10,7 +6,7 @@ from pydantic.fields import SHAPE_LIST
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    import email.message
+    from importlib.metadata import PackageMetadata as ImportlibPackageMetadata
 
 
 # https://packaging.python.org/specifications/core-metadata/
@@ -27,7 +23,7 @@ class PackageMetadata(BaseModel):
     https://packaging.python.org/specifications/core-metadata/
 
     The `importlib.metadata` provides the `metadata()` function,
-    but it returns a somewhat awkward `email.message.Message` object.
+    but it returns a somewhat awkward `ImportlibPackageMetadata` object.
     """
 
     class Config:
@@ -193,11 +189,12 @@ class PackageMetadata(BaseModel):
         return cls.from_dist_metadata(metadata(name))
 
     @classmethod
-    def from_dist_metadata(cls, meta: "email.message.Message") -> "PackageMetadata":
+    def from_dist_metadata(cls, meta: "ImportlibPackageMetadata") -> "PackageMetadata":
         """Accepts importlib.metadata.Distribution.metadata"""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
         d: Dict[str, Union[str, List[str]]] = {}
-        for key, value in meta.items():
+        for key in meta:
+            value = meta[key]
             key = _norm(key)
             if key in manys:
                 d.setdefault(key, []).append(value)  # type: ignore
