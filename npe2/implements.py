@@ -3,29 +3,13 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
 
 from pydantic import BaseModel
 
 from .manifest import contributions
 
 T = TypeVar("T", bound=Callable[..., Any])
-
-
-_p0 = Parameter(
-    "__obj", Parameter.POSITIONAL_ONLY, default=None, annotation=Optional[Callable]
-)
 
 
 def _build_decorator(contrib: Type[BaseModel]) -> Callable:
@@ -38,7 +22,7 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     """
     # build a signature for this contribution, mixed with Command params
     contribs: Sequence[Type[BaseModel]] = (contributions.CommandContribution, contrib)
-    params = [_p0] + [
+    params = [
         Parameter(
             f.name,
             Parameter.KEYWORD_ONLY,
@@ -48,21 +32,21 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
         for f in (f for c in contribs for f in c.__fields__.values())
         if f.name not in ("python_name", "command")
     ]
-    signature = Signature(parameters=params)
+    signature = Signature(parameters=params, return_annotation=Callable[[T], T])
 
     # create decorator
-    def _deco(__obj: Optional[T] = None, **kwargs) -> Union[T, Callable[[T], T]]:
-        # assert we've satisfied the signature when the decorator is invoked
-        # TODO: improve error message to provide context
-        signature.bind(__obj, **kwargs)
-
+    def _deco(**kwargs) -> Callable[[T], T]:
         def _store_attrs(func: T) -> T:
+            # assert we've satisfied the signature when the decorator is invoked
+            # TODO: improve error message to provide context
+            signature.bind(func, **kwargs)
+
             # store these attributes on the function
             # TODO: check if it's already there and assert the same id
             setattr(func, f"_npe2_{contrib.__name__}", kwargs)
             return func
 
-        return _store_attrs if __obj is None else _store_attrs(__obj)
+        return _store_attrs
 
     # set the signature and return the decorator
     setattr(_deco, "__signature__", signature)
@@ -76,11 +60,13 @@ sample_data_generator = _build_decorator(contributions.SampleDataGenerator)
 
 
 def on_activate(func):
+    """Mark a function to be called when a plugin is activated."""
     setattr(func, "npe2_on_activate", True)
     return func
 
 
 def on_deactivate(func):
+    """Mark a function to be called when a plugin is deactivated."""
     setattr(func, "npe2_on_deactivate", True)
     return func
 
@@ -95,7 +81,7 @@ class PluginModuleVisitor(ast.NodeVisitor):
         super().__init__()
         self.plugin_name = plugin_name
         self.module_name = module_name
-        self._contrib_points: Dict[str, Any] = {}
+        self.contribution_points: Dict[str, List[dict]] = {}
         self._names: Dict[str, str] = {}
 
     def visit_Import(self, node: ast.Import) -> Any:  # noqa: D102
@@ -139,7 +125,7 @@ class PluginModuleVisitor(ast.NodeVisitor):
         }
         Cls, contrib_name = _map[type_]
         contrib = Cls(**self._store_command(keywords, name))
-        existing: List[dict] = self._contrib_points.setdefault(contrib_name, [])
+        existing: List[dict] = self.contribution_points.setdefault(contrib_name, [])
         existing.append(contrib.dict(exclude_unset=True))
 
     def _store_command(self, keywords: List[ast.keyword], name: str) -> Dict[str, Any]:
@@ -151,7 +137,7 @@ class PluginModuleVisitor(ast.NodeVisitor):
             n = len(self.plugin_name)
             cmd.id = cmd.id[n:]
         cmd.id = f"{self.plugin_name}.{cmd.id.lstrip('.')}"
-        cmd_contribs: List[dict] = self._contrib_points.setdefault("commands", [])
+        cmd_contribs: List[dict] = self.contribution_points.setdefault("commands", [])
         cmd_contribs.append(cmd.dict(exclude_unset=True))
         kwargs["command"] = cmd.id
         return kwargs
@@ -187,7 +173,7 @@ def visit(
 
     visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
     visitor.visit(ast.parse(Path(path).read_text()))
-    if "commands" in visitor._contrib_points:
-        compress = {tuple(i.items()) for i in visitor._contrib_points["commands"]}
-        visitor._contrib_points["commands"] = [dict(i) for i in compress]
-    return contributions.ContributionPoints(**visitor._contrib_points)
+    if "commands" in visitor.contribution_points:
+        compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
+        visitor.contribution_points["commands"] = [dict(i) for i in compress]
+    return contributions.ContributionPoints(**visitor.contribution_points)
