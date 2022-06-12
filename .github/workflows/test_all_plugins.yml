@@ -31,7 +31,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: tlambert03/setup-qt-libs@v1
 
