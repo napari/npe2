@@ -39,7 +39,7 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
         def _store_attrs(func: T) -> T:
             # assert we've satisfied the signature when the decorator is invoked
             # TODO: improve error message to provide context
-            signature.bind(func, **kwargs)
+            signature.bind(**kwargs)
 
             # store these attributes on the function
             # TODO: check if it's already there and assert the same id

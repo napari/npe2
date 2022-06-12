@@ -72,7 +72,7 @@ class SomeWidget:
 
 
 @npe2.implements.sample_data_generator(
-    id="generate_random_data",  # the plugin-name is optional
+    id="my-plugin.generate_random_data",  # the plugin-name is optional
     title="Generate uniform random data",
     key="random_data",
     display_name="Some Random Data (512 x 512)",
