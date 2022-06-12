@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - uses: tlambert03/setup-qt-libs@v1
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
