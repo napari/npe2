@@ -15,7 +15,7 @@ def test_version():
     assert str(v) == "0.1.2"
 
     with pytest.raises(TypeError):
-        v == 1.2
+        assert v == 1.2
 
     with pytest.raises(ValueError):
         Version.parse("alkfdjs")
