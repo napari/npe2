@@ -297,7 +297,7 @@ def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dic
             c = ctrb.dict(exclude_unset=True)
             for cmd in c.get("commands", ()):
                 cmd["id"] = cmd["id"] + f"_{n + 2}"
-            for name, val in c.items():
+            for val in c.values():
                 if isinstance(val, list):
                     for item in val:
                         if "command" in item:

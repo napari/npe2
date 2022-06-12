@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def write_points(path: str, layer_data: Any, attributes: Dict[str, Any]) -> List[str]:
-    with open(path, "w") as fh:
+    with open(path, "w"):
         ...  # save layer_data and attributes to file
 
     # return path to any file(s) that were successfully written
@@ -66,7 +66,7 @@ def threshold(
 
 def create_fractal() -> List[LayerData]:
     """An example of a  Sample Data Function.
-    
+
     Note: Sample Data with URIs don't need python code.
     """
     data = ...  # do something cool to create a fractal
