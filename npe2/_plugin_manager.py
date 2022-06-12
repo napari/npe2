@@ -240,7 +240,7 @@ class PluginManager:
 
     @classmethod
     def instance(cls) -> PluginManager:
-        """Singleton instance."""
+        """Return global PluginManager singleton instance."""
         if cls.__instance is None:
             cls.__instance = cls()
         return cls.__instance
@@ -283,6 +283,7 @@ class PluginManager:
                     self.register(result.manifest, warn_disabled=False)
 
     def index_npe1_adapters(self):
+        """Import and index any/all npe1 adapters."""
         with warnings.catch_warnings():
             warnings.showwarning = lambda e, *_: print(str(e).split(" Please add")[0])
             while self._npe1_adapters:
@@ -307,6 +308,7 @@ class PluginManager:
         self.events.plugins_registered.emit({manifest})
 
     def unregister(self, key: PluginName):
+        """Unregister plugin named `key`."""
         if key not in self._manifests:
             raise ValueError(f"No registered plugin named {key!r}")  # pragma: no cover
         self.deactivate(key)
@@ -403,7 +405,7 @@ class PluginManager:
     # Getting manifests
 
     def get_manifest(self, plugin_name: str) -> PluginManifest:
-        """Gen manifest for `plugin_name`"""
+        """Get manifest for `plugin_name`"""
         key = str(plugin_name).split(".")[0]
         try:
             return self._manifests[key]
@@ -442,9 +444,11 @@ class PluginManager:
     # Accessing Contributions
 
     def get_command(self, command_id: str) -> CommandContribution:
+        """Retrieve CommandContribution for `command_id`"""
         return self._contrib.get_command(command_id)
 
     def get_submenu(self, submenu_id: str) -> SubmenuContribution:
+        """Get SubmenuContribution for `submenu_id`."""
         for mf in self.iter_manifests(disabled=False):
             for subm in mf.contributions.submenus or ():
                 if submenu_id == subm.id:
@@ -452,17 +456,26 @@ class PluginManager:
         raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
+        """Iterate over `MenuItems` in menu with id `menu_key`."""
         for mf in self.iter_manifests(disabled=False):
             if mf.contributions.menus is not None:
                 yield from mf.contributions.menus.get(menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
+        """Iterate over discovered/enuabled `ThemeContributions`."""
         for mf in self.iter_manifests(disabled=False):
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
         self, path: Union[PathLike, Sequence[str]]
     ) -> Iterator[ReaderContribution]:
+        """Iterate over ReaderContributions compatible with `path`.
+
+        Parameters
+        ----------
+        path : Union[PathLike, Sequence[str]]
+            Pathlike or list of pathlikes, with file(s) to read.
+        """
         if isinstance(path, (str, Path)):
             path = [path]
         assert isinstance(path, list)
@@ -471,9 +484,17 @@ class PluginManager:
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
     ) -> Iterator[WriterContribution]:
+        """Iterate over compatible WriterContributions given a sequence of layer_types.
+
+        Parameters
+        ----------
+        layer_types : Sequence[str]
+            list of lowercase Layer type names like `['image', 'labels']`
+        """
         return self._contrib.iter_compatible_writers(layer_types)
 
     def iter_widgets(self) -> Iterator[WidgetContribution]:
+        """Iterate over discovered WidgetContributions."""
         for mf in self.iter_manifests(disabled=False):
             yield from mf.contributions.widgets or ()
 
