@@ -153,10 +153,11 @@ class _ContributionsIndex:
                 if layer == lt and (min_ <= counts[lt] < max_)
             }
 
-        candidates = {w for _, _, _, w in self._writers}
+        # keep ordered without duplicates
+        candidates = list({w: None for _, _, _, w in self._writers})
         for lt in LayerType:
             if candidates:
-                candidates &= _get_candidates(lt)
+                candidates = [i for i in candidates if i in _get_candidates(lt)]
             else:
                 break
 
@@ -168,7 +169,7 @@ class _ContributionsIndex:
             nbounds = sum(not c.is_zero() for c in writer.layer_type_constraints())
             return (no_ext, nbounds)
 
-        yield from sorted(candidates, key=_writer_key)
+        yield from candidates
 
 
 class PluginManagerEvents(SignalGroup):
