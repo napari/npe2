@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.4.0](https://github.com/napari/npe2/tree/0.4.0) (2022-06-13)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...0.4.0)
+
+**Implemented enhancements:**
+
+- Turn menus contributions into dict of arbitrary key to list of MenuItems [\#175](https://github.com/napari/npe2/pull/175) ([tlambert03](https://github.com/tlambert03))
+- Add minor conveniences for DynamicPlugin [\#173](https://github.com/napari/npe2/pull/173) ([tlambert03](https://github.com/tlambert03))
+- Add `plugin_manager` module for global singleton convenience  [\#164](https://github.com/napari/npe2/pull/164) ([tlambert03](https://github.com/tlambert03))
+- Allow arbitrary menu locations in npe2 [\#160](https://github.com/napari/npe2/pull/160) ([sofroniewn](https://github.com/sofroniewn))
+
+**Fixed bugs:**
+
+- Fix writer order preference [\#172](https://github.com/napari/npe2/pull/172) ([tlambert03](https://github.com/tlambert03))
+- Fix potential error with `npe2 cache --list` with uninstalled plugin [\#165](https://github.com/napari/npe2/pull/165) ([tlambert03](https://github.com/tlambert03))
+
+**Tests & CI:**
+
+- Pre commit, flake8, and mypy updates [\#171](https://github.com/napari/npe2/pull/171) ([tlambert03](https://github.com/tlambert03))
+- add dependabot [\#167](https://github.com/napari/npe2/pull/167) ([tlambert03](https://github.com/tlambert03))
+- Auto update changelog workflow [\#151](https://github.com/napari/npe2/pull/151) ([Carreau](https://github.com/Carreau))
+
+**Refactors:**
+
+- Revert menu restriction \(\#160\) [\#174](https://github.com/napari/npe2/pull/174) ([tlambert03](https://github.com/tlambert03))
+- Push stack=... through all the reader internal API, take II [\#142](https://github.com/napari/npe2/pull/142) ([Carreau](https://github.com/Carreau))
+
+**Documentation:**
+
+- Add doc links to README [\#158](https://github.com/napari/npe2/pull/158) ([nclack](https://github.com/nclack))
+- Fix codeblock directive in docstring [\#156](https://github.com/napari/npe2/pull/156) ([melissawm](https://github.com/melissawm))
+
+## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.3.0.rc0)
+
 ## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0)
@@ -17,6 +53,7 @@
 **Tests & CI:**
 
 - Fix black problem on pre-commit CI [\#147](https://github.com/napari/npe2/pull/147) ([Czaki](https://github.com/Czaki))
+- Fix ci for testing all plugins [\#134](https://github.com/napari/npe2/pull/134) ([tlambert03](https://github.com/tlambert03))
 - Add ci to test all plugins on PR label part1 [\#133](https://github.com/napari/npe2/pull/133) ([tlambert03](https://github.com/tlambert03))
 
 **Refactors:**
@@ -27,7 +64,7 @@
 
 **Merged pull requests:**
 
-- Fix ci for testing all plugins [\#134](https://github.com/napari/npe2/pull/134) ([tlambert03](https://github.com/tlambert03))
+- add v0.3.0 changelog [\#150](https://github.com/napari/npe2/pull/150) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.2.2](https://github.com/napari/npe2/tree/v0.2.2) (2022-03-14)
 
