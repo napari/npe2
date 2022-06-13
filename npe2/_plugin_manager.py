@@ -446,10 +446,18 @@ class PluginManager:
                     return subm
         raise KeyError(f"No plugin provides a submenu with id {submenu_id}")
 
-    def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
+    def iter_menu(self, menu_key: str, disabled=False) -> Iterator[MenuItem]:
         """Iterate over `MenuItems` in menu with id `menu_key`."""
-        for mf in self.iter_manifests(disabled=False):
-            yield from getattr(mf.contributions.menus, menu_key, ())
+        for mf in self.iter_manifests(disabled=disabled):
+            yield from mf.contributions.menus.get(menu_key, ())
+
+    def menus(self, disabled=False) -> Dict[str, List[MenuItem]]:
+        """Return all registered menu_key -> List[MenuItems]."""
+        _menus: DefaultDict[str, List[MenuItem]] = DefaultDict(list)
+        for mf in self.iter_manifests(disabled=disabled):
+            for key, menus in mf.contributions.menus.items():
+                _menus[key].extend(menus)
+        return dict(_menus)
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
         """Iterate over discovered/enuabled `ThemeContributions`."""

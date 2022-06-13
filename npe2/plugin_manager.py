@@ -1,7 +1,7 @@
 """Convenience module to access methods on the global PluginManager singleton."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -79,8 +79,12 @@ def get_submenu(submenu_id: str) -> contributions.SubmenuContribution:
     """Get SubmenuContribution for `submenu_id`."""
 
 
-def iter_menu(menu_key: str) -> Iterator[contributions.MenuItem]:
+def iter_menu(menu_key: str, disabled=False) -> Iterator[contributions.MenuItem]:
     """Iterate over `MenuItems` in menu with id `menu_key`."""
+
+
+def menus(disabled=False) -> Dict[str, List[contributions.MenuItem]]:
+    """Return all registered menu_key -> List[MenuItems]."""
 
 
 def iter_themes() -> Iterator[contributions.ThemeContribution]:
