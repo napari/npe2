@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import os
 import re
 import sys
 from contextlib import contextmanager
@@ -183,8 +184,12 @@ def main(dest: Path = _BUILD):
 
     dest.mkdir(exist_ok=True, parents=True)
     schema = PluginManifest.schema()
-    with urlopen(SCHEMA_URL) as response:
-        schema = json.load(response)
+    if local_schema := os.getenv("NPE2_SCHEMA"):
+        with open(local_schema) as f:
+            schema = json.load(f)
+    else:
+        with urlopen(SCHEMA_URL) as response:
+            schema = json.load(response)
 
     contributions = schema["definitions"]["ContributionPoints"]["properties"]
     context = {

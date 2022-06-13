@@ -20,7 +20,7 @@ class ContributionPoints(BaseModel):
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
 
-    menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, description="")
+    menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
 
     # configuration: Optional[JsonSchemaObject]
