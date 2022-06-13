@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.4.0](https://github.com/napari/npe2/tree/0.4.0) (2022-06-13)
+## [0.4.1](https://github.com/napari/npe2/tree/0.4.1) (2022-06-13)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...0.4.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.4.0...0.4.1)
+
+**Fixed bugs:**
+
+- hide docs again in napari menus \(Fix napari docs build\) [\#178](https://github.com/napari/npe2/pull/178) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.4.0)
 
 **Implemented enhancements:**
 
@@ -32,13 +40,17 @@
 - Add doc links to README [\#158](https://github.com/napari/npe2/pull/158) ([nclack](https://github.com/nclack))
 - Fix codeblock directive in docstring [\#156](https://github.com/napari/npe2/pull/156) ([melissawm](https://github.com/melissawm))
 
-## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
+**Merged pull requests:**
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.3.0.rc0)
+- add changelog for v0.4.0 [\#177](https://github.com/napari/npe2/pull/177) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.3.0)
+
+## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0.rc0)
 
 **Implemented enhancements:**
 
