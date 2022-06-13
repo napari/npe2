@@ -80,11 +80,10 @@ jobs:
       - name: Build schema
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e .[docs]
           python -m npe2.manifest.schema > _schema.json
       - name: Test rendering docs
-        run: |
-          python _docs/render.py
+        run: python _docs/render.py
         env:
           NPE2_SCHEMA: "_schema.json"
 
