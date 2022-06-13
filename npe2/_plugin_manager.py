@@ -459,7 +459,6 @@ class PluginManager:
                 _menus[key].extend(menus)
         return dict(_menus)
 
-
     def iter_themes(self) -> Iterator[ThemeContribution]:
         """Iterate over discovered/enuabled `ThemeContributions`."""
         for mf in self.iter_manifests(disabled=False):
