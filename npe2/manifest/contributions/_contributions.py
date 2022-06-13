@@ -1,8 +1,9 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 from ._commands import CommandContribution
+from ._menus import MenuItem
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution
 from ._submenu import SubmenuContribution
