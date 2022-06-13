@@ -62,14 +62,13 @@ contributions:
       autogenerate: true
   menus:
     /napari/layer_context:
-      - submenu: my-plugin.mysubmenu
+      - submenu: mysubmenu
       - command: my-plugin.hello_world
+    mysubmenu:
+      - command: my-plugin.another_command
   submenus:
-    - id: my-plugin.mysubmenu
+    - id: mysubmenu
       label: My SubMenu
-      contents:
-        - command: my-plugin.another_command
-        - command: my-plugin.another_command
   themes:
     - label: "SampleTheme"
       id: "sample_theme"
