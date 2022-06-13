@@ -148,3 +148,11 @@ def test_command_exec():
         some_func.assert_called_once_with("hi!")
     finally:
         pm.__instance = None
+
+
+def test_menus(uses_sample_plugin, plugin_manager: PluginManager):
+    menus = plugin_manager.menus()
+    assert len(menus) == 2
+    assert set(menus) == {"/napari/layer_context", "mysubmenu"}
+    items = list(plugin_manager.iter_menu("/napari/layer_context"))
+    assert len(items) == 2
