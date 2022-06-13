@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   test:
     name: ${{ matrix.platform }} (${{ matrix.python-version }})
     runs-on: ${{ matrix.platform }}
@@ -67,6 +68,25 @@ jobs:
       - name: Run napari plugin headless tests
         run: pytest -W 'ignore::DeprecationWarning' napari/plugins napari/settings napari/layers napari/components
         working-directory: napari-from-github
+
+  test_docs_render:
+    name: docs render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Build schema
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m npe2.manifest.schema > _schema.json
+      - name: Test rendering docs
+        run: |
+          python _docs/render.py
+        env:
+          NPE2_SCHEMA: "_schema.json"
 
   deploy:
     name: Deploy
