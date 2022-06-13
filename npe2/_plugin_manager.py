@@ -449,8 +449,7 @@ class PluginManager:
     def iter_menu(self, menu_key: str) -> Iterator[MenuItem]:
         """Iterate over `MenuItems` in menu with id `menu_key`."""
         for mf in self.iter_manifests(disabled=False):
-            if mf.contributions.menus is not None:
-                yield from mf.contributions.menus.get(menu_key, ())
+            yield from getattr(mf.contributions.menus, menu_key, ())
 
     def iter_themes(self) -> Iterator[ThemeContribution]:
         """Iterate over discovered/enuabled `ThemeContributions`."""

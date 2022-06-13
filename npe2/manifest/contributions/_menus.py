@@ -1,6 +1,6 @@
-from typing import Optional, Union
+from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError, root_validator
 
 from ..utils import Executable
 
@@ -62,3 +62,35 @@ class MenuCommand(_MenuItem, Executable):
 
 
 MenuItem = Union[MenuCommand, Submenu]
+
+
+# how to do something like layers/context
+class MenusContribution(BaseModel):
+    # TODO: list of (str, menu item) coerce to dict/MenuItem
+    # TODO: define convention around strings
+    command_pallete: Optional[List[MenuItem]]
+    layers__context: Optional[List[MenuItem]]
+    plugins__widgets: Optional[List[MenuItem]]
+    test_menu: Optional[List[MenuItem]]
+
+    class Config:
+        extra = "allow"
+
+    @root_validator
+    def _validate_extra(cls, values: dict):
+        """Plugins may declare custom menu IDs... we make sure they are valid here.
+
+        They become accessible as attributes on the MenusContribution instance.
+        """
+
+        # get validator... all of these fields have the same type
+        # (Optional[List[MenuItem]])
+        validate = list(MenusContribution.__fields__.values())[0].validate
+
+        for i, (key, val) in enumerate(values.items()):
+            if key not in cls.__fields__:
+                val, err = validate(val, {}, loc=str(i))
+                if err:  # pragma: no cover
+                    raise ValidationError([err], cls)
+                values[key] = val
+        return values
