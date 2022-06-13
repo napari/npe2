@@ -35,7 +35,7 @@ T = TypeVar("T", bound=Callable[..., Any])
 # e.g. {ReaderContribution: 'readers'}
 CONTRIB_NAMES = {v.type_: k for k, v in ContributionPoints.__fields__.items()}
 for key in list(CONTRIB_NAMES):
-    if getattr(key, "__origin__", "") is Union:
+    if getattr(key, "__origin__", "") == Union:
         v = CONTRIB_NAMES.pop(key)
         for t in key.__args__:
             CONTRIB_NAMES[t] = v
@@ -67,6 +67,16 @@ class DynamicPlugin:
         self.manifest = PluginManifest(name=name)
         self.contribute = ContributionDecorators(self)
         self._pm = plugin_manager
+
+    @property
+    def name(self) -> str:
+        """Name of the plugin"""
+        return self.manifest.name
+
+    @property
+    def display_name(self) -> str:
+        """Display name of the plugin"""
+        return self.manifest.display_name
 
     def cleanup(self) -> None:
         """Remove this plugin from its plugin manager"""
@@ -113,6 +123,44 @@ class DynamicPlugin:
 
     def __exit__(self, *_) -> None:
         self.cleanup()
+
+    def spawn(
+        self,
+        name: Optional[str] = None,
+        plugin_manager: Optional[PluginManager] = None,
+        register: bool = False,
+    ) -> DynamicPlugin:
+        """Create a new DynamicPlugin instance with the same plugin manager.
+
+        Parameters
+        ----------
+        name : Optional[str]
+            If not provided, will increment current name, by default None
+        plugin_manager : Optional[PluginManager]
+            Plugin manager, by default the same as this plugin's plugin manager
+        register : bool
+            Whether to register the new plugin, by default False
+
+        Returns
+        -------
+        DynamicPlugin
+            A new DynamicPlugin instance.
+        """
+        pm = plugin_manager or self.plugin_manager
+        assert isinstance(pm, PluginManager), "plugin_manager must be a PluginManager"
+
+        if name:
+            assert name not in pm._manifests, f"name {name!r} already in plugin manager"
+            _name = name
+        else:
+            i = 1
+            while (_name := f"{self.name}-{i}") in pm._manifests:
+                i += 1
+
+        new = type(self)(_name, plugin_manager=pm)
+        if register:
+            new.register()
+        return new
 
 
 class ContributionDecorators:
