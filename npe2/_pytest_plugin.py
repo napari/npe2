@@ -15,7 +15,7 @@ class TestPluginManager(PluginManager):
         import warnings
 
         warnings.warn(
-            "TestPluginManager is unable to discover plugins.  "
+            "TestPluginManager is unable to discover plugins. "
             "Please use `tmp_plugin()` to add a plugin to this plugin manager."
         )
         return None
@@ -48,7 +48,7 @@ class TestPluginManager(PluginManager):
             be sure to enter the DynamicPlugin context to register the plugin.
         """
         if manifest is not None:
-            if package or name:
+            if package or name:  # pragma: no cover
                 warnings.warn(
                     "`manifest` overrides the `package` and `name` arguments. "
                     "Please provide only one."
@@ -58,7 +58,7 @@ class TestPluginManager(PluginManager):
             else:
                 mf = PluginManifest.from_file(manifest)
         elif package:
-            if name:
+            if name:  # pragma: no cover
                 warnings.warn(
                     "`package` overrides the `name` argument. Please provide only one."
                 )
@@ -66,7 +66,7 @@ class TestPluginManager(PluginManager):
         else:
             name = name or "tmp_plugin"
             i = 0
-            while name in self._manifests:
+            while name in self._manifests:  # pragma: no cover
                 # guarantee that name is unique
                 name = f"{name}_{i}"
                 i += 1

@@ -36,7 +36,10 @@ jobs:
       - name: Test Main docs build
         run: pytest --color yes -m github_main_only
       - name: Test
-        run: pytest --color yes --cov npe2 --cov-report xml --cov-report term-missing
+        run: |
+          coverage run --source=npe2 -m pytest --color yes
+          coverage xml
+          coverage report --show-missing
 
       - name: Coverage
         uses: codecov/codecov-action@v3
