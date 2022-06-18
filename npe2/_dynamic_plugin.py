@@ -63,8 +63,12 @@ class DynamicPlugin:
         self,
         name: str = "temp-plugin",
         plugin_manager: Optional[PluginManager] = None,
+        manifest: Optional[PluginManifest] = None,
     ) -> None:
-        self.manifest = PluginManifest(name=name)
+        if isinstance(manifest, PluginManifest):
+            self.manifest = manifest
+        else:
+            self.manifest = PluginManifest(name=name)
         self.contribute = ContributionDecorators(self)
         self._pm = plugin_manager
 

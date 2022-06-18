@@ -280,8 +280,34 @@ class PluginManager:
             while self._npe1_adapters:
                 self._contrib.index_contributions(self._npe1_adapters.pop())
 
-    def register(self, manifest: PluginManifest, warn_disabled=True) -> None:
-        """Register a plugin manifest"""
+    def register(
+        self, manifest_or_package: Union[PluginManifest, str], warn_disabled=True
+    ) -> None:
+        """Register a plugin manifest, path to manifest file, or a plugin (package) name.
+
+        Parameters
+        ----------
+        manifest_or_package : Union[PluginManifest, str]
+            _description_
+        warn_disabled : bool, optional
+            _description_, by default True
+
+        Raises
+        ------
+        ValueError
+            _description_
+        """
+        if isinstance(manifest_or_package, str):
+            if Path(manifest_or_package).is_file():
+                manifest = PluginManifest.from_file(manifest_or_package)
+            else:
+                manifest = PluginManifest.from_distribution(manifest_or_package)
+        elif isinstance(manifest_or_package, PluginManifest):
+            manifest = manifest_or_package
+        else:  # pragma: no cover
+            raise TypeError(
+                "The first argument to register must be a string or a PluginManifest."
+            )
         if manifest.name in self._manifests:
             raise ValueError(f"A manifest with name {manifest.name!r} already exists.")
 
