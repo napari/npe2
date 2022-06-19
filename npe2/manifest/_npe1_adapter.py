@@ -122,7 +122,7 @@ class NPE1Adapter(PluginManifest):
         return _cached_adapter_path(self.name, self.package_version or "")
 
     def _serialized_data(self, **kwargs):
-        if not self._is_loaded:
+        if not self._is_loaded:  # pragma: no cover
             self._load_contributions(save=False)
         return super()._serialized_data(**kwargs)
 
