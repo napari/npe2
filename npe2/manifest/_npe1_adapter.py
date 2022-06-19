@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import site
@@ -110,12 +111,8 @@ class NPE1Adapter(PluginManifest):
             logger.debug("%r npe1 adapter imported", self.name)
 
         if save and not _is_editable_install(self._dist):
-            try:
+            with contextlib.suppress(OSError):
                 self._save_to_cache()
-            # could throw error on read only file system e.g. for napari hub,
-            # but we fail silently as caching is just convenience
-            except OSError:
-                pass
 
     def _save_to_cache(self):
         cache_path = self._cache_path()
