@@ -81,13 +81,14 @@ class NPE1Adapter(PluginManifest):
         self._dist = dist
 
     def __getattribute__(self, __name: str):
-        if __name == "contributions" and not self._is_loaded:
+        if __name == "contributions":
             self._load_contributions()
         return super().__getattribute__(__name)
 
     def _load_contributions(self, save=True) -> None:
         """import and inspect package contributions."""
-
+        if self._is_loaded:
+            return
         self._is_loaded = True  # if we fail once, we still don't try again.
         if self._cache_path().exists() and not os.getenv(NPE2_NOCACHE):
             mf = PluginManifest.from_file(self._cache_path())
