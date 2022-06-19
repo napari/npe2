@@ -120,9 +120,9 @@ class NPE1Adapter(PluginManifest):
         """Return cache path for manifest corresponding to distribution."""
         return _cached_adapter_path(self.name, self.package_version or "")
 
-    def yaml(self, **kwargs) -> str:
+    def _serialized_data(self, **kwargs):
         self._load_contributions(save=False)
-        return super().yaml(**kwargs)
+        return super()._serialized_data(**kwargs)
 
 
 def _cached_adapter_path(name: str, version: str) -> Path:
