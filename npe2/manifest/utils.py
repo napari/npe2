@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import json
 import re
+import site
 import sys
 import tempfile
+import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass
-from functools import total_ordering
+from functools import lru_cache, total_ordering
+from io import BytesIO
+from logging import getLogger
 from pathlib import Path
-from subprocess import DEVNULL, run
+from subprocess import run
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -25,6 +29,9 @@ from typing import (
     Union,
 )
 from urllib.request import urlopen
+from zipfile import ZipFile
+
+from build.env import IsolatedEnvBuilder
 
 if TYPE_CHECKING:
     from npe2.manifest.schema import PluginManifest
@@ -43,6 +50,9 @@ if TYPE_CHECKING:
 
         def get_callable(self, _registry: Optional[CommandRegistry] = None):
             ...
+
+
+logger = getLogger(__name__)
 
 
 def v1_to_v2(path):
@@ -396,36 +406,11 @@ def tmp_pip_install(
 
 
 @contextmanager
-def tmp_conda_install(
-    package: str, version: Optional[str] = None, stdout: _FILE = DEVNULL
-):
-    """Context in which a pip specifier is installed and added to sys.path.
-
-    Parameters
-    ----------
-    specifier : str
-        package name
-    version : str, optional
-        optional package version, by default, latest version.
-    stdout : subprocess._FILE
-        stdout for pip install, by default DEVNULL
-    """
-    from shutil import which
-
-    binary = "mamba" if which("mamba") else "conda"
-    with tempfile.TemporaryDirectory() as td:
-        pkg = f"{package}=={version}" if version else package
-        run([binary, "install", "-p", td, pkg], check=True, stdout=stdout)
-        sys.path.insert(0, td)
-        yield
-
-
-@contextmanager
-def tmp_wheel_download(name: str, version: Optional[str] = None) -> Iterator[Path]:
-    from io import BytesIO
-    from zipfile import ZipFile
-
+def _tmp_pypi_wheel_download(
+    name: str, version: Optional[str] = None
+) -> Iterator[Path]:
     url = get_pypi_url(name, version=version, packagetype="bdist_wheel")
+    logger.debug(f"downloading wheel for {name} {version or ''}")
     with tempfile.TemporaryDirectory() as td, urlopen(url) as f:
         with ZipFile(BytesIO(f.read())) as zf:
             zf.extractall(td)
@@ -447,34 +432,103 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     PluginManifest
         Plugin manifest for package `specifier`.
     """
-    import warnings
     from importlib.metadata import PathDistribution
 
     from npe2 import PluginManifest
     from npe2.manifest import PackageMetadata
-    from npe2.manifest._npe1_adapter import NPE1Adapter
 
-    with tmp_wheel_download(package, version) as td:
-        distinfo = next(Path(td).glob("*.dist-info"))
-        dist = PathDistribution(distinfo)
+    is_npe1 = False
+
+    # first just grab the wheel from pypi with no dependencies
+    with _tmp_pypi_wheel_download(package, version) as td:
+        # create a PathDistribution from the dist-info directory in the wheel
+        dist = PathDistribution(next(Path(td).glob("*.dist-info")))
+
         for ep in dist.entry_points:
+            # if we find an npe2 entry point, we can just use
+            # PathDistribution.locate_file to get the file.
             if ep.group == "napari.manifest":
+                logger.debug("pypi wheel has npe2 entry point.")
                 mf_file = dist.locate_file(Path(ep.module) / ep.attr)
                 mf = PluginManifest.from_file(str(mf_file))
+                # manually add the package metadata from our distribution object.
                 mf.package_metadata = PackageMetadata.from_dist_metadata(dist.metadata)
                 return mf
-            # elif ep.group == "napari.plugin":
+            elif ep.group == "napari.plugin":
+                is_npe1 = True
 
-    with tmp_pip_install(package, extra_packages=["napari[all]"]):
-        mf = PluginManifest.from_distribution(package)
+    if not is_npe1:
+        raise ValueError(f"{package} had no napari entry points.")
 
-        if isinstance(mf, NPE1Adapter):
-            # we want failures to load to raise an error, not a warning
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "error",
-                    message="Error importing contributions",
-                    category=UserWarning,
-                )
-                mf._load_contributions(save=False)
-        return mf
+    logger.debug("falling back to npe1")
+    return fetch_npe1_manifest(package, version=version)
+
+
+@lru_cache
+def get_all_plugins() -> Dict[str, str]:
+    with urlopen("https://api.napari-hub.org/plugins") as r:
+        return json.load(r)
+
+
+@lru_cache
+def get_plugin_info(plugin: str):
+    with urlopen(f"https://api.napari-hub.org/plugins/{plugin}") as r:
+        return json.load(r)
+
+
+def _try_load_contributions(mf):
+    from npe2.manifest._npe1_adapter import NPE1Adapter
+
+    if not isinstance(mf, NPE1Adapter):
+        return True
+
+    mf._is_loaded = False
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error",
+                message="Error importing contributions",
+                category=UserWarning,
+            )
+            mf._load_contributions(save=False)
+            return True
+    except Exception:
+        return False
+
+
+def fetch_npe1_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
+    from npe2.manifest.schema import PluginManifest
+
+    # create an isolated env in which to install npe1 plugin
+    with IsolatedEnvBuilder() as env:
+        # install the package
+        env.install([f"{package}=={version}" if version else package])
+
+        # temporarily add env site packages to path
+        prefixes = [getattr(env, "path")]  # noqa
+        if not (site_pkgs := site.getsitepackages(prefixes=prefixes)):
+            raise ValueError("No site-packages found")
+        sys.path.insert(0, site_pkgs[0])
+
+        try:
+            mf = PluginManifest.from_distribution(package)
+
+            if not _try_load_contributions(mf):
+                # if loading contributions fails, it can very often be fixed
+                # by installing `napari[all]` into the environment
+                env.install(["napari[all]"])
+                # force reloading of some modules
+                sys.modules.pop("qtpy", None)
+                if not _try_load_contributions(mf):
+                    raise ValueError(
+                        f"Unable to load contributions for npe1 plugin {package}"
+                    )
+            return mf
+        finally:
+            # cleanup sys.path
+            sys.path.pop(0)
+
+
+if __name__ == "__main__":
+    mf = fetch_npe1_manifest("napari-clusters-plotter")
+    print(mf.yaml())

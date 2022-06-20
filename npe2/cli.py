@@ -100,9 +100,9 @@ def fetch(
 
     mf = fetch_manifest(name, version=version)
     kwargs: dict = {"indent": 2}
-    # if include_package_meta:
-    #     kwargs["exclude"] = set()
-    _pprint_yaml(mf.json(**kwargs))
+    if include_package_meta:
+        kwargs["exclude"] = set()
+    _pprint_yaml(mf.yaml(**kwargs))
 
 
 @app.command()
