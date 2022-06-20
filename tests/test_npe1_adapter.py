@@ -172,6 +172,7 @@ def test_adapter_error_on_import():
             adapter.contributions
     assert "Error importing contributions for" in str(record[0])
 
+
 def test_adapter_cache_fail(uses_npe1_plugin, mock_cache):
     pm = PluginManager()
     pm.discover(include_npe1=True)
@@ -180,6 +181,6 @@ def test_adapter_cache_fail(uses_npe1_plugin, mock_cache):
     def err(obj):
         raise OSError("Can't cache")
 
-    with patch.object(_npe1_adapter.NPE1Adapter, '_save_to_cache', err):
+    with patch.object(_npe1_adapter.NPE1Adapter, "_save_to_cache", err):
         # shouldn't reraise the error
         mf.contributions
