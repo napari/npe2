@@ -180,22 +180,28 @@ def isolated_plugin_env(
             if validate_npe1_imports:
                 dist = metadata.distribution(package)
 
-                npe1_eps: List[metadata.EntryPoint] = [
-                    ep for ep in dist.entry_points if ep.group == "napari.plugin"
-                ]
-                for ep in npe1_eps:
-                    try:
-                        ep.load()
-                    except ImportError:
-                        # if loading contributions fails, it can very often be fixed
-                        # by installing `napari[all]` into the environment
-                        if install_napari_if_necessary:
-                            env.install(["napari[all]"])
-                            # force reloading of qtpy
-                            sys.modules.pop("qtpy", None)
+                npe1_eps: List[metadata.EntryPoint] = []
+                npe2_ep: Optional[metadata.EntryPoint] = None
+                for ep in dist.entry_points:
+                    if ep.group == "napari.plugin":
+                        npe1_eps.append(ep)
+                    elif ep.group == "napari.manifest":
+                        npe2_ep = ep
+
+                if npe2_ep is None:
+                    for ep in npe1_eps:
+                        try:
                             ep.load()
-                        else:
-                            raise
+                        except ImportError:
+                            # if loading contributions fails, it can very often be fixed
+                            # by installing `napari[all]` into the environment
+                            if install_napari_if_necessary:
+                                env.install(["napari[all]"])
+                                # force reloading of qtpy
+                                sys.modules.pop("qtpy", None)
+                                ep.load()
+                            else:
+                                raise
             yield env
         finally:
             # cleanup sys.path
