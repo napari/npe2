@@ -47,10 +47,13 @@ class DynamicPlugin:
     Parameters
     ----------
     name : str
-        _description_, by default "temp-plugin"
+        Optional name for this temporary plugin., by default "temp-plugin"
     plugin_manager : Optional[PluginManager]
         A plugin manager instance with which to associate this plugin. If `None` (the
         default), the global `PluginManager.instance()` will be used.
+    manifest: Optional[PluginManifest],
+        Optionally provide a manifest to use for this plugin. If not provided, a new
+        manifest will be created.
 
     Examples
     --------
@@ -74,20 +77,20 @@ class DynamicPlugin:
 
     @property
     def name(self) -> str:
-        """Name of the plugin"""
+        """Name of the plugin."""
         return self.manifest.name
 
     @property
     def display_name(self) -> str:
-        """Display name of the plugin"""
+        """Display name of the plugin."""
         return self.manifest.display_name
 
     def cleanup(self) -> None:
-        """Remove this plugin from its plugin manager"""
+        """Remove this plugin from its plugin manager."""
         self.plugin_manager.unregister(self.manifest.name)
 
     def register(self) -> None:
-        """Remove this plugin from its plugin manager"""
+        """Remove this plugin from its plugin manager."""
         self.plugin_manager.register(self.manifest)
 
     def clear(self) -> None:
