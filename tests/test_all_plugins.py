@@ -22,7 +22,7 @@ def plugin_env():
         with isolated_plugin_env(PLUGIN) as env:
             yield env
     except CalledProcessError as e:
-        if "Failed building wheel" in e.output:
+        if "Failed building wheel" in str(e.output):
             yield None
 
 
