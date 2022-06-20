@@ -96,7 +96,7 @@ def fetch(
     If an npe2 plugin is detected, the manifest is returned directly, otherwise
     it will be installed into a temporary directory, imported, and discovered.
     """
-    from npe2.manifest.utils import fetch_manifest
+    from npe2._fetch import fetch_manifest
 
     mf = fetch_manifest(name, version=version)
     kwargs: dict = {"indent": 2}

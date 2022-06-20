@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from npe2 import PluginManifest
+from npe2._fetch import isolated_plugin_env
 from npe2.cli import app
-from npe2.manifest.utils import isolated_plugin_env
 
 if TYPE_CHECKING:
     from pathlib import Path
