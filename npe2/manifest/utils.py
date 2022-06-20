@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import json
 import re
+import sys
+import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import total_ordering
+from pathlib import Path
+from subprocess import DEVNULL, run
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     Generic,
+    Iterator,
+    List,
     Optional,
     Sequence,
     SupportsInt,
@@ -16,9 +24,11 @@ from typing import (
     TypeVar,
     Union,
 )
+from urllib.request import urlopen
 
 if TYPE_CHECKING:
     from npe2.manifest.schema import PluginManifest
+    from subprocess import _FILE
 
 from ..types import PythonName
 
@@ -304,3 +314,167 @@ def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dic
                             item["command"] = item["command"] + f"_{n + 2}"
             out = deep_update(out, c)
     return out
+
+
+def get_pypi_url(
+    name: str, version: Optional[str] = None, packagetype: Optional[str] = None
+) -> str:
+    """Get URL for a package on PyPI.
+
+    Parameters
+    ----------
+    name : str
+        package name
+    version : str, optional
+        package version, by default, latest version.
+    packagetype : str, optional
+        one of 'sdist', 'bdist_wheel', by default 'bdist_wheel' will be tried first,
+        then 'sdist'
+
+    Returns
+    -------
+    str
+        URL to download the package.
+
+    Raises
+    ------
+    ValueError
+        If packagetype is not one of 'sdist', 'bdist_wheel', or if version is specified
+        and does not match any available version.
+    KeyError
+        If packagetype is specified and no package of that type is available.
+    """
+    if packagetype not in {"sdist", "bdist_wheel", None}:
+        raise ValueError(
+            f"Invalid packagetype: {packagetype}, must be one of sdist, bdist_wheel"
+        )
+
+    with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
+        data = json.load(f)
+
+    if version:
+        version = version.lstrip("v")
+        if version not in data["releases"]:
+            raise ValueError(f"{name} does not have version {version}")
+        _releases: List[dict] = data["releases"][version]
+    else:
+        _releases = data["urls"]
+
+    releases = {d.get("packagetype"): d for d in _releases}
+    if packagetype:
+        if packagetype not in releases:
+            version = version or "latest"
+            raise KeyError('No {packagetype} releases found for version "{version}"')
+        return releases[packagetype]["url"]
+    return (releases.get("bdist_wheel") or releases["sdist"])["url"]
+
+
+@contextmanager
+def tmp_pip_install(
+    package: str,
+    version: Optional[str] = None,
+    stdout: _FILE = None,
+    extra_packages: Sequence[str] = (),
+):
+    """Context in which a pip specifier is installed and added to sys.path.
+
+    Parameters
+    ----------
+    package : str
+        pypi package name
+    version : str, optional
+        optional package version, by default, latest version.
+    stdout : subprocess._FILE
+        stdout for pip install, by default DEVNULL
+    """
+    with tempfile.TemporaryDirectory() as td:
+        pkg = f"{package}=={version}" if version else package
+        cmd = ["pip", "install", "--target", td, pkg] + list(extra_packages)
+        run(cmd, check=True, stdout=stdout)
+        sys.path.insert(0, td)
+        yield td
+
+
+@contextmanager
+def tmp_conda_install(
+    package: str, version: Optional[str] = None, stdout: _FILE = DEVNULL
+):
+    """Context in which a pip specifier is installed and added to sys.path.
+
+    Parameters
+    ----------
+    specifier : str
+        package name
+    version : str, optional
+        optional package version, by default, latest version.
+    stdout : subprocess._FILE
+        stdout for pip install, by default DEVNULL
+    """
+    from shutil import which
+
+    binary = "mamba" if which("mamba") else "conda"
+    with tempfile.TemporaryDirectory() as td:
+        pkg = f"{package}=={version}" if version else package
+        run([binary, "install", "-p", td, pkg], check=True, stdout=stdout)
+        sys.path.insert(0, td)
+        yield
+
+
+@contextmanager
+def tmp_wheel_download(name: str, version: Optional[str] = None) -> Iterator[Path]:
+    from io import BytesIO
+    from zipfile import ZipFile
+
+    url = get_pypi_url(name, version=version, packagetype="bdist_wheel")
+    with tempfile.TemporaryDirectory() as td, urlopen(url) as f:
+        with ZipFile(BytesIO(f.read())) as zf:
+            zf.extractall(td)
+            yield Path(td)
+
+
+def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
+    """Fetch a manifest for a pip specifier (package name, possibly with version).
+
+    Parameters
+    ----------
+    package : str
+        package name
+    version : str, optional
+        package version, by default, latest version.
+
+    Returns
+    -------
+    PluginManifest
+        Plugin manifest for package `specifier`.
+    """
+    import warnings
+    from importlib.metadata import PathDistribution
+
+    from npe2 import PluginManifest
+    from npe2.manifest import PackageMetadata
+    from npe2.manifest._npe1_adapter import NPE1Adapter
+
+    with tmp_wheel_download(package, version) as td:
+        distinfo = next(Path(td).glob("*.dist-info"))
+        dist = PathDistribution(distinfo)
+        for ep in dist.entry_points:
+            if ep.group == "napari.manifest":
+                mf_file = dist.locate_file(Path(ep.module) / ep.attr)
+                mf = PluginManifest.from_file(str(mf_file))
+                mf.package_metadata = PackageMetadata.from_dist_metadata(dist.metadata)
+                return mf
+            # elif ep.group == "napari.plugin":
+
+    with tmp_pip_install(package, extra_packages=["napari[all]"]):
+        mf = PluginManifest.from_distribution(package)
+
+        if isinstance(mf, NPE1Adapter):
+            # we want failures to load to raise an error, not a warning
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    message="Error importing contributions",
+                    category=UserWarning,
+                )
+                mf._load_contributions(save=False)
+        return mf

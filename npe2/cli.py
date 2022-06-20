@@ -81,6 +81,31 @@ def parse(name: str):
 
 
 @app.command()
+def fetch(
+    name: str,
+    version: Optional[str] = None,
+    include_package_meta: Optional[bool] = typer.Option(
+        False,
+        "-m",
+        "--include-package-meta",
+        help="Include package metadata in the manifest.",
+    ),
+):
+    """Fetch manifest from remote package.
+
+    If an npe2 plugin is detected, the manifest is returned directly, otherwise
+    it will be installed into a temporary directory, imported, and discovered.
+    """
+    from npe2.manifest.utils import fetch_manifest
+
+    mf = fetch_manifest(name, version=version)
+    kwargs: dict = {"indent": 2}
+    # if include_package_meta:
+    #     kwargs["exclude"] = set()
+    _pprint_yaml(mf.json(**kwargs))
+
+
+@app.command()
 def convert(
     path: Path = typer.Argument(
         ...,

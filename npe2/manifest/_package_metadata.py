@@ -192,8 +192,7 @@ class PackageMetadata(BaseModel):
         """Accepts importlib.metadata.Distribution.metadata"""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
         d: Dict[str, Union[str, List[str]]] = {}
-        for key in meta:
-            value = meta[key]
+        for key, value in meta.items():
             key = _norm(key)
             if key in manys:
                 d.setdefault(key, []).append(value)  # type: ignore

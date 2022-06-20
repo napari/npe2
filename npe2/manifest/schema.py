@@ -123,7 +123,7 @@ class PluginManifest(ImportExportModel):
         "For normal (non-dynamic) plugins, this data will come from the package's "
         "setup.cfg",
         hide_docs=True,
-        exclude=True,
+        # exclude=True,
     )
 
     npe1_shim: bool = Field(
