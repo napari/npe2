@@ -12,7 +12,6 @@ from functools import lru_cache, total_ordering
 from io import BytesIO
 from logging import getLogger
 from pathlib import Path
-from subprocess import run
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -35,7 +34,6 @@ from build.env import IsolatedEnvBuilder
 
 if TYPE_CHECKING:
     from npe2.manifest.schema import PluginManifest
-    from subprocess import _FILE
 
 from ..types import PythonName
 
@@ -374,35 +372,9 @@ def get_pypi_url(
     if packagetype:
         if packagetype not in releases:
             version = version or "latest"
-            raise KeyError('No {packagetype} releases found for version "{version}"')
+            raise KeyError(f'No {packagetype} releases found for version "{version}"')
         return releases[packagetype]["url"]
     return (releases.get("bdist_wheel") or releases["sdist"])["url"]
-
-
-@contextmanager
-def tmp_pip_install(
-    package: str,
-    version: Optional[str] = None,
-    stdout: _FILE = None,
-    extra_packages: Sequence[str] = (),
-):
-    """Context in which a pip specifier is installed and added to sys.path.
-
-    Parameters
-    ----------
-    package : str
-        pypi package name
-    version : str, optional
-        optional package version, by default, latest version.
-    stdout : subprocess._FILE
-        stdout for pip install, by default DEVNULL
-    """
-    with tempfile.TemporaryDirectory() as td:
-        pkg = f"{package}=={version}" if version else package
-        cmd = ["pip", "install", "--target", td, pkg] + list(extra_packages)
-        run(cmd, check=True, stdout=stdout)
-        sys.path.insert(0, td)
-        yield td
 
 
 @contextmanager
