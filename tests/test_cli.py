@@ -4,6 +4,7 @@ import pytest
 from typer.testing import CliRunner
 
 from npe2.cli import app, main
+from npe2.manifest.schema import PluginManifest
 
 runner = CliRunner()
 
@@ -39,11 +40,23 @@ def test_cli_validate_load_err(tmp_path):
     assert "Could not find manifest for" in result.stdout
 
 
-def test_cli_parse(sample_path):
-    cmd = ["parse", str(sample_path / "my_plugin" / "napari.yaml")]
+@pytest.mark.parametrize("format", ["json", "yaml", "toml"])
+def test_cli_parse(sample_path, format):
+    cmd = ["parse", str(sample_path / "my_plugin" / "napari.yaml"), "-f", format]
     result = runner.invoke(app, cmd)
     assert result.exit_code == 0
-    assert "name: my_plugin" in result.stdout  # just prints the yaml
+    assert "my-plugin" in result.stdout  # just prints the yaml
+
+
+@pytest.mark.parametrize("format", ["json", "yaml", "toml", "csv"])
+def test_cli_parse_to_file(sample_path, format, tmp_path):
+    dest = tmp_path / f"output.{format}"
+    cmd = ["parse", str(sample_path / "my_plugin" / "napari.yaml"), "-o", str(dest)]
+    result = runner.invoke(app, cmd)
+    assert result.exit_code == 0 if format != "csv" else 1
+    if format != "csv":
+        assert dest.exists()
+        assert PluginManifest.from_file(dest)
 
 
 @pytest.mark.filterwarnings("default:Failed to convert")

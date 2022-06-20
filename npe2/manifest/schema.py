@@ -126,6 +126,12 @@ class PluginManifest(ImportExportModel):
         exclude=True,
     )
 
+    npe1_shim: bool = Field(
+        False,
+        description="Whether this manifest was created as a shim for an npe1 plugin.",
+        hide_docs=True,
+    )
+
     def __init__(self, **data):
         super().__init__(**data)
         if self.package_metadata is None and self.name:

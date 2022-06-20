@@ -1,5 +1,6 @@
 import builtins
 import warnings
+from enum import Enum
 from pathlib import Path
 from textwrap import indent
 from typing import List, Optional
@@ -11,14 +12,22 @@ from npe2 import PluginManifest
 app = typer.Typer()
 
 
-def _pprint_yaml(string):  # pragma: no cover
+class Format(str, Enum):
+    """Valid manifest file formats."""
+
+    yaml = "yaml"
+    json = "json"
+    toml = "toml"
+
+
+def _pprint_formatted(string, format: Format = Format.yaml):  # pragma: no cover
     """Print yaml nicely, depending on available modules."""
     try:
         from rich.console import Console
         from rich.syntax import Syntax
 
         Console().print(
-            Syntax(string, "yaml", theme="monokai", background_color="black")
+            Syntax(string, format.value, theme="monokai", background_color="black")
         )
     except ImportError:
         typer.echo(string)
@@ -76,10 +85,45 @@ def validate(
 
 
 @app.command()
-def parse(name: str):
-    """Show parsed manifest as yaml"""
+def parse(
+    name: str = typer.Argument(
+        ..., help="Name of an installed package, or path to a manifest file."
+    ),
+    format: Format = typer.Option(
+        "yaml", "-f", "--format", help="Markdown format to use."
+    ),
+    indent: Optional[int] = typer.Option(
+        None,
+        "--indent",
+        help="Number of spaces to indent (for json)",
+        min=0,
+        max=10,
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        exists=False,
+        help="If provided, will write manifest to filepath (must end with .yaml, "
+        ".json, or .toml). Otherwise, will print to stdout.",
+    ),
+):  # sourcery skip: avoid-builtin-shadow
+    """Show parsed manifest as yaml."""
+    if output:
+        if output.suffix.lstrip(".") not in Format._member_names_:
+            typer.echo(
+                f"Invalid output extension {output.suffix!r}. Must be one of: "
+                + ", ".join(Format._member_names_)
+            )
+            raise typer.Exit()
+        format = Format(output.suffix.lstrip("."))
+
     pm = PluginManifest._from_package_or_name(name)
-    _pprint_yaml(pm.yaml())
+    manifest_string = getattr(pm, format.value)(indent=indent)
+    if output:
+        output.write_text(manifest_string)
+    else:
+        _pprint_formatted(manifest_string, format)
 
 
 @app.command()
@@ -129,7 +173,7 @@ def convert(
                 fg=typer.colors.BRIGHT_GREEN,
                 bold=False,
             )
-        _pprint_yaml(pm.yaml())
+        _pprint_formatted(pm.yaml(), Format.yaml)
     else:
         msg = f"✔  Conversion complete! New manifest at {mf_path}."
         typer.secho(msg, fg=typer.colors.GREEN, bold=True)
@@ -184,7 +228,7 @@ def cache(
         for fname in files:
             mf = PluginManifest.from_file(fname)
             if verbose:
-                _pprint_yaml(mf.yaml())  # pragma: no cover
+                _pprint_formatted(mf.yaml(), Format.yaml)  # pragma: no cover
             else:
                 typer.secho(f"{mf.name}: {mf.package_version}", fg=typer.colors.GREEN)
 
@@ -194,7 +238,7 @@ def compile(src_dir: str):
     """Compile napari_plugin_engine plugins"""
     from .implements import compile
 
-    _pprint_yaml(compile(src_dir).yaml())
+    _pprint_formatted(compile(src_dir).yaml(), Format.yaml)
 
 
 def main():
