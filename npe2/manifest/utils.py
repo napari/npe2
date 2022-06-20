@@ -9,6 +9,7 @@ import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache, total_ordering
+from importlib import import_module, metadata
 from io import BytesIO
 from logging import getLogger
 from pathlib import Path
@@ -34,6 +35,7 @@ from build.env import IsolatedEnvBuilder
 
 if TYPE_CHECKING:
     from npe2.manifest.schema import PluginManifest
+    import build.env
 
 from ..types import PythonName
 
@@ -54,18 +56,14 @@ logger = getLogger(__name__)
 
 
 def v1_to_v2(path):
-    if isinstance(path, list):
-        return path, True
-    else:
-        return [path], False
+    return (path, True) if isinstance(path, list) else ([path], False)
 
 
 def v2_to_v1(paths, stack):
     if stack:
         return paths
-    else:
-        assert len(paths) == 1
-        return paths[0]
+    assert len(paths) == 1
+    return paths[0]
 
 
 R = TypeVar("R")
@@ -250,7 +248,6 @@ def _import_npe1_shim(shim_name: str) -> Any:
 
 
 def import_python_name(python_name: Union[PythonName, str]) -> Any:
-    from importlib import import_module
 
     from . import _validators
 
@@ -404,7 +401,6 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     PluginManifest
         Plugin manifest for package `specifier`.
     """
-    from importlib.metadata import PathDistribution
 
     from npe2 import PluginManifest
     from npe2.manifest import PackageMetadata
@@ -414,7 +410,7 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     # first just grab the wheel from pypi with no dependencies
     with _tmp_pypi_wheel_download(package, version) as td:
         # create a PathDistribution from the dist-info directory in the wheel
-        dist = PathDistribution(next(Path(td).glob("*.dist-info")))
+        dist = metadata.PathDistribution(next(Path(td).glob("*.dist-info")))
 
         for ep in dist.entry_points:
             # if we find an npe2 entry point, we can just use
@@ -448,7 +444,7 @@ def get_plugin_info(plugin: str):
         return json.load(r)
 
 
-def _try_load_contributions(mf):
+def _try_load_contributions(mf, raising=False):
     from npe2.manifest._npe1_adapter import NPE1Adapter
 
     if not isinstance(mf, NPE1Adapter):
@@ -464,41 +460,90 @@ def _try_load_contributions(mf):
             )
             mf._load_contributions(save=False)
             return True
-    except Exception:
+    except Exception as e:
+        if raising:
+            raise ValueError(
+                f"Unable to load contributions for npe1 plugin {mf.name}: {e}"
+            ) from e
+
         return False
 
 
-def fetch_npe1_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
-    from npe2.manifest.schema import PluginManifest
+@contextmanager
+def isolated_plugin_env(
+    package: str,
+    version: Optional[str] = None,
+    validate_ep_imports: bool = True,
+    install_napari_if_necessary: bool = True,
+) -> Iterator[build.env.IsolatedEnv]:
+    """Isolated env context with a plugin installed.
 
-    # create an isolated env in which to install npe1 plugin
+    The site-packages folder of the env is added to sys.path within the context.
+
+    Parameters
+    ----------
+    package : str
+        package name
+    version : str, optional
+        package version, by default, latest version.
+
+    Yields
+    ------
+    build.env.IsolatedEnv
+        env object that has an `install` method.
+    """
+    print("building isolated env")
     with IsolatedEnvBuilder() as env:
         # install the package
-        env.install([f"{package}=={version}" if version else package])
+        pkg = f"{package}=={version}" if version else package
+        logger.debug(f"installing {pkg} into virtual env")
+        env.install([pkg])
 
         # temporarily add env site packages to path
         prefixes = [getattr(env, "path")]  # noqa
         if not (site_pkgs := site.getsitepackages(prefixes=prefixes)):
             raise ValueError("No site-packages found")
         sys.path.insert(0, site_pkgs[0])
-
         try:
-            mf = PluginManifest.from_distribution(package)
+            if validate_ep_imports:
+                dist = metadata.distribution(package)
 
-            if not _try_load_contributions(mf):
-                # if loading contributions fails, it can very often be fixed
-                # by installing `napari[all]` into the environment
-                env.install(["napari[all]"])
-                # force reloading of some modules
-                sys.modules.pop("qtpy", None)
-                if not _try_load_contributions(mf):
-                    raise ValueError(
-                        f"Unable to load contributions for npe1 plugin {package}"
-                    )
-            return mf
+                npe1_eps: List[metadata.EntryPoint] = [
+                    ep for ep in dist.entry_points if ep.group == "napari.plugin"
+                ]
+                for ep in npe1_eps:
+                    try:
+                        ep.load()
+                    except ImportError:
+                        # if loading contributions fails, it can very often be fixed
+                        # by installing `napari[all]` into the environment
+                        if install_napari_if_necessary:
+                            env.install(["napari[all]"])
+                            # force reloading of qtpy
+                            sys.modules.pop("qtpy", None)
+                            ep.load()
+                        else:
+                            raise
+            yield env
         finally:
             # cleanup sys.path
             sys.path.pop(0)
+
+
+def fetch_npe1_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
+    from npe2.manifest._npe1_adapter import NPE1Adapter
+    from npe2.manifest.schema import PluginManifest
+
+    # create an isolated env in which to install npe1 plugin
+    with isolated_plugin_env(package, version):
+        mf = PluginManifest.from_distribution(package)
+        if isinstance(mf, NPE1Adapter):
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error", message="Error importing contributions"
+                )
+                mf._load_contributions(save=False)
+        return mf
 
 
 if __name__ == "__main__":

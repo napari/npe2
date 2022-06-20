@@ -1,58 +1,45 @@
 import os
 from importlib import metadata
-from typing import List
+from typing import TYPE_CHECKING
 
 import pytest
+
+from npe2 import PluginManifest
+from npe2.cli import app
+from npe2.manifest.utils import isolated_plugin_env
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 PLUGIN: str = os.getenv("TEST_PACKAGE_NAME") or ""
 if not PLUGIN:
     pytest.skip("skipping plugin specific tests", allow_module_level=True)
 
-FORGOT_NAPARI = [
-    "vessel-express",
-    "RedLionfish",
-    "smo",
-    "napari-yolov5",
-    "napari-timeseries-opener-plugin",  # really just qtpy, magicgui, and tifffile
-    "napari-nucleaizer",
-    "napari-mri",
-    "napari-dexp",
-    "empanada-napari",
-    "napari-bigwarp",
-]
+
+@pytest.fixture(scope="session")
+def plugin_env():
+    with isolated_plugin_env(PLUGIN) as env:
+        yield env
 
 
-@pytest.fixture
-def entry_points():
-    d = metadata.distribution(str(PLUGIN))
-    return [
-        ep for ep in d.entry_points if ep.group in ("napari.plugin", "napari.manifest")
+def test_entry_points_importable(plugin_env):
+    entry_points = [
+        ep
+        for ep in metadata.distribution(PLUGIN).entry_points
+        if ep.group in ("napari.plugin", "napari.manifest")
     ]
-
-
-def test_plugin_has_entry_points(entry_points):
     if PLUGIN not in {"napari-console", "napari-error-reporter"}:
         assert entry_points
-        print("EPs:", entry_points)
 
-
-if PLUGIN in FORGOT_NAPARI:
-    m = pytest.mark.xfail(reason="forgot napari in deps", strict=True)
-elif PLUGIN == "napari-omero":
-    m = pytest.mark.xfail(reason="needs conda work", strict=True)
-else:
-    m = lambda f: f  # noqa
-
-
-@m
-def test_entry_points_importable(entry_points: List[metadata.EntryPoint]):
     for ep in entry_points:
         if ep.group == "napari.plugin":
             ep.load()
 
 
-@m
-def test_fetch():
-    import subprocess
+def test_fetch(tmp_path: "Path"):
+    from typer.testing import CliRunner
 
-    subprocess.run(["npe2", "fetch", PLUGIN])
+    result = CliRunner().invoke(app, ["fetch", PLUGIN])
+    assert result.exit_code == 0
+    (out := tmp_path / "out.yaml").write_text(result.output)
+    assert PluginManifest.from_file(out)
