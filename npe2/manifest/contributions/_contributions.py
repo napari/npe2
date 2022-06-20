@@ -34,8 +34,7 @@ class ContributionPoints(BaseModel):
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
 
-    # We use a dict for menus to allow for keys with `/`
-    menus: Optional[Dict[str, List[MenuItem]]] = Field(None, hide_docs=True)
+    menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, description="")
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
 
     # configuration: Optional[JsonSchemaObject]

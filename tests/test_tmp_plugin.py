@@ -100,3 +100,16 @@ def test_temporary_plugin_change_pm(tmp_plugin: DynamicPlugin):
 
     tmp_plugin.clear()
     assert not tmp_plugin.manifest.contributions.commands
+
+
+def test_temporary_plugin_spawn(tmp_plugin: DynamicPlugin):
+    new = tmp_plugin.spawn("another-name", register=True)
+    assert new.name == "another-name"
+    assert new.display_name == "another-name"
+    assert new.plugin_manager == tmp_plugin.plugin_manager
+
+    assert (t1 := tmp_plugin.spawn(register=True)).name == f"{tmp_plugin.name}-1"
+    assert (t2 := tmp_plugin.spawn()).name == f"{tmp_plugin.name}-2"
+
+    assert t1.name in tmp_plugin.plugin_manager._manifests
+    assert t2.name not in tmp_plugin.plugin_manager._manifests

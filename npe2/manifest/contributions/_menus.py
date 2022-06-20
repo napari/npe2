@@ -4,28 +4,11 @@ from pydantic import BaseModel, Field
 
 from ..utils import Executable
 
-# # napari provides these
-# class Menu(BaseModel):
-#     key: str
-#     id: int
-#     description: str
-#     supports_submenus: bool = True
-#     deprecation_message: Optional[str]
-
-
-# napari_menus = [
-#     Menu(key="command_pallete", id=0, description="The Command Palette"),
-#     Menu(
-#         key="layers__context", id=1, description="The layer list context menu"
-#     ),
-#     Menu(
-#         key="layers__context", id=1, description="The layer list context menu"
-#     ),
-# ]
-
 
 # user provides this
 class _MenuItem(BaseModel):
+    """Generic menu item contribution."""
+
     when: Optional[str] = Field(
         description="Condition which must be true to show this item"
     )
@@ -33,6 +16,8 @@ class _MenuItem(BaseModel):
 
 
 class Submenu(_MenuItem):
+    """Contributes a submenu placement in a menu."""
+
     submenu: str = Field(
         ...,
         description="Identifier of the submenu to display in this item."
@@ -43,6 +28,8 @@ class Submenu(_MenuItem):
 
 
 class MenuCommand(_MenuItem, Executable):
+    """Contributes a command in a menu."""
+
     command: str = Field(
         ...,
         description="Identifier of the command to execute. "
@@ -56,9 +43,6 @@ class MenuCommand(_MenuItem, Executable):
         "It will be shown and invoked when pressing Alt while opening a menu."
         "The command must be declared in the 'commands' section"
     )
-    # if command doesn't exist, you get:
-    # "Menu item references an alt-command  `...` which is not defined in
-    # the 'commands' section."
 
 
 MenuItem = Union[MenuCommand, Submenu]
