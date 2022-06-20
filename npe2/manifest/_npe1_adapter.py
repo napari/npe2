@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import site
@@ -75,17 +76,20 @@ class NPE1Adapter(PluginManifest):
     def __init__(self, dist: metadata.Distribution):
         """_summary_"""
         meta = PackageMetadata.from_dist_metadata(dist.metadata)
-        super().__init__(name=dist.metadata["Name"], package_metadata=meta)
+        super().__init__(
+            name=dist.metadata["Name"], package_metadata=meta, npe1_shim=True
+        )
         self._dist = dist
 
     def __getattribute__(self, __name: str):
-        if __name == "contributions" and not self._is_loaded:
+        if __name == "contributions":
             self._load_contributions()
         return super().__getattribute__(__name)
 
-    def _load_contributions(self) -> None:
+    def _load_contributions(self, save=True) -> None:
         """import and inspect package contributions."""
-
+        if self._is_loaded:
+            return
         self._is_loaded = True  # if we fail once, we still don't try again.
         if self._cache_path().exists() and not os.getenv(NPE2_NOCACHE):
             mf = PluginManifest.from_file(self._cache_path())
@@ -106,8 +110,9 @@ class NPE1Adapter(PluginManifest):
             self.contributions = mf.contributions
             logger.debug("%r npe1 adapter imported", self.name)
 
-        if not _is_editable_install(self._dist):
-            self._save_to_cache()
+        if save and not _is_editable_install(self._dist):
+            with contextlib.suppress(OSError):
+                self._save_to_cache()
 
     def _save_to_cache(self):
         cache_path = self._cache_path()
@@ -117,6 +122,11 @@ class NPE1Adapter(PluginManifest):
     def _cache_path(self) -> Path:
         """Return cache path for manifest corresponding to distribution."""
         return _cached_adapter_path(self.name, self.package_version or "")
+
+    def _serialized_data(self, **kwargs):
+        if not self._is_loaded:  # pragma: no cover
+            self._load_contributions(save=False)
+        return super()._serialized_data(**kwargs)
 
 
 def _cached_adapter_path(name: str, version: str) -> Path:

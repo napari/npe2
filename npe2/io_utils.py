@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, overload
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, cast, overload
 
 from typing_extensions import Literal
 
@@ -9,6 +9,8 @@ from .manifest.utils import v1_to_v2
 from .types import FullLayerData, LayerData
 
 if TYPE_CHECKING:
+    import napari.layers
+
     from .manifest.contributions import ReaderContribution, WriterContribution
 
 
@@ -65,7 +67,7 @@ def read_get_reader(
 
 def write(
     path: str,
-    layer_data: List[FullLayerData],
+    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
     *,
     plugin_name: Optional[str] = None,
 ) -> List[str]:
@@ -97,7 +99,7 @@ def write(
 
 def write_get_writer(
     path: str,
-    layer_data: List[FullLayerData],
+    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
     *,
     plugin_name: Optional[str] = None,
 ) -> Tuple[List[str], WriterContribution]:
@@ -150,8 +152,7 @@ def _read(
         read_func = rdr.exec(kwargs={"path": paths, "stack": stack})
         if read_func is not None:
             # if the reader function raises an exception here, we don't try to catch it
-            layer_data = read_func(paths, stack=stack)
-            if layer_data:
+            if layer_data := read_func(paths, stack=stack):
                 return (layer_data, rdr) if return_reader else layer_data
     raise ValueError(f"No readers returned data for {paths!r}")
 
@@ -159,7 +160,7 @@ def _read(
 @overload
 def _write(
     path: str,
-    layer_data: List[FullLayerData],
+    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
     *,
     plugin_name: Optional[str] = None,
     return_writer: Literal[False] = False,
@@ -171,7 +172,7 @@ def _write(
 @overload
 def _write(
     path: str,
-    layer_data: List[FullLayerData],
+    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
     *,
     plugin_name: Optional[str] = None,
     return_writer: Literal[True],
@@ -182,7 +183,7 @@ def _write(
 
 def _write(
     path: str,
-    layer_data: List[FullLayerData],
+    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
     *,
     plugin_name: Optional[str] = None,
     return_writer: bool = False,
@@ -194,7 +195,13 @@ def _write(
     if _pm is None:
         _pm = PluginManager.instance()
 
-    layer_types = [x[2] for x in layer_data]
+    _layer_tuples: List[FullLayerData] = [
+        cast("napari.layers.Layer", x).as_layer_data_tuple()
+        if hasattr(x, "as_layer_data_tuple")
+        else x
+        for x in layer_data
+    ]
+    layer_types = [x[2] for x in _layer_tuples]
     writer, new_path = _pm.get_writer(
         path, layer_types=layer_types, plugin_name=plugin_name
     )
@@ -205,7 +212,7 @@ def _write(
     # Writers that take at most one layer must use the single-layer api.
     # Otherwise, they must use the multi-layer api.
     n = sum(ltc.max() for ltc in writer.layer_type_constraints())
-    args = (new_path, *layer_data[0][:2]) if n <= 1 else (new_path, layer_data)
+    args = (new_path, *_layer_tuples[0][:2]) if n <= 1 else (new_path, _layer_tuples)
     res = writer.exec(args=args)
 
     # napari_get_writer-style writers don't always return a list
