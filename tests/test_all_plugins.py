@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-PLUGIN = os.getenv("TEST_PACKAGE_NAME")
+PLUGIN: str = os.getenv("TEST_PACKAGE_NAME") or ""
 if not PLUGIN:
     pytest.skip("skipping plugin specific tests", allow_module_level=True)
 
@@ -49,3 +49,10 @@ def test_entry_points_importable(entry_points: List[metadata.EntryPoint]):
     for ep in entry_points:
         if ep.group == "napari.plugin":
             ep.load()
+
+
+@m
+def test_fetch():
+    import subprocess
+
+    subprocess.run(["npe2", "fetch", PLUGIN])
