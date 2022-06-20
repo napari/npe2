@@ -288,14 +288,16 @@ class PluginManager:
         Parameters
         ----------
         manifest_or_package : Union[PluginManifest, str]
-            _description_
+            Either a PluginManifest instance or a string. If a string, should be either
+            the name of a plugin package, or a path to a plugin manifest file.
         warn_disabled : bool, optional
-            _description_, by default True
+            If True, emits a warning if the plugin being registered is marked as
+            disabled, by default True.
 
         Raises
         ------
         ValueError
-            _description_
+            If a plugin with the same name is already registered.
         """
         if isinstance(manifest_or_package, str):
             if Path(manifest_or_package).is_file():

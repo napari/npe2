@@ -46,6 +46,17 @@ class TestPluginManager(PluginManager):
         -------
         DynamicPlugin
             be sure to enter the DynamicPlugin context to register the plugin.
+
+        Examples
+        --------
+        >>> def test_something_with_only_my_plugin_registered(npe2pm):
+        ...    with npe2pm.tmp_plugin(package='my-plugin') as plugin:
+        ...        ...
+
+        >>> def test_something_with_specific_manifest_file_registered(npe2pm):
+        ...    mf_file = Path(__file__).parent / 'my_manifest.yaml'
+        ...    with npe2pm.tmp_plugin(manifest=str(mf_file)) as plugin:
+        ...        ...
         """
         if manifest is not None:
             if package or name:  # pragma: no cover
@@ -76,7 +87,15 @@ class TestPluginManager(PluginManager):
 
 @pytest.fixture
 def npe2pm():
-    """Return mocked Global plugin manager instance, unable to discover plugins."""
+    """Return mocked Global plugin manager instance, unable to discover plugins.
+
+    Examples
+    --------
+    >>> @pytest.fixture(autouse=True)
+    ... def mock_npe2_pm(npe2pm):
+    ...     # Auto-use this fixture to prevent plugin discovery.
+    ...     return npe2pm
+    """
     _pm = TestPluginManager()
     with patch("npe2.PluginManager.instance", return_value=_pm):
         yield _pm
