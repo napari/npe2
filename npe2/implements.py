@@ -220,7 +220,6 @@ class PluginModuleVisitor(ast.NodeVisitor):
         return {str(k.arg): ast.literal_eval(k.value) for k in keywords}
 
     def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
-        # this can also be taken from schemas
         kwargs.pop(CHECK_ARGS_PARAM, None)
         ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
         contrib = ContribClass(**self._store_command(name, kwargs))
