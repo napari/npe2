@@ -5,11 +5,25 @@ from pydantic import BaseModel, Field
 from ._commands import CommandContribution
 from ._menus import MenuItem
 from ._readers import ReaderContribution
-from ._sample_data import SampleDataContribution
+from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
 from ._submenu import SubmenuContribution
 from ._themes import ThemeContribution
 from ._widgets import WidgetContribution
 from ._writers import WriterContribution
+
+__all__ = [
+    "ContributionPoints",
+    "CommandContribution",
+    "MenuItem",
+    "ReaderContribution",
+    "SampleDataContribution",
+    "SubmenuContribution",
+    "ThemeContribution",
+    "WidgetContribution",
+    "WriterContribution",
+    "SampleDataGenerator",
+    "SampleDataURI",
+]
 
 
 class ContributionPoints(BaseModel):

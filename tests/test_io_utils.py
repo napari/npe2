@@ -5,6 +5,8 @@ from npe2.types import FullLayerData
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
+SAMPLE_PLUGIN_NAME = "my-plugin"
+
 
 def test_read(uses_sample_plugin):
     assert read(["some.fzzy"], stack=False) == [(None,)]
