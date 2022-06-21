@@ -1,19 +1,20 @@
 # Changelog
 
-## [0.5.0](https://github.com/napari/npe2/tree/0.5.0) (2022-06-21)
+## [v0.5.0](https://github.com/napari/npe2/tree/v0.5.0) (2022-06-21)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.4.1...0.5.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.4.1...v0.5.0)
 
 **Implemented enhancements:**
 
 - allow `npe2 parse` to output to file, add format option [\#183](https://github.com/napari/npe2/pull/183) ([tlambert03](https://github.com/tlambert03))
-- Add npe1\_shim field to schema [\#182](https://github.com/napari/npe2/pull/182) ([tlambert03](https://github.com/tlambert03))
+- Add `npe1_shim` field to schema [\#182](https://github.com/napari/npe2/pull/182) ([tlambert03](https://github.com/tlambert03))
 - allow `npe2.write` to take layer instances [\#181](https://github.com/napari/npe2/pull/181) ([tlambert03](https://github.com/tlambert03))
-- add npe2pm TestPluginManager fixture [\#180](https://github.com/napari/npe2/pull/180) ([tlambert03](https://github.com/tlambert03))
+- Add `npe2pm` `TestPluginManager` fixture [\#180](https://github.com/napari/npe2/pull/180) ([tlambert03](https://github.com/tlambert03))
+- Add `@npe.implements` decorators, for opt-in manifest validation and/or AST-based-generation [\#75](https://github.com/napari/npe2/pull/75) ([tlambert03](https://github.com/tlambert03))
 
 **Fixed bugs:**
 
-- Fail silently when caching throws OSError [\#184](https://github.com/napari/npe2/pull/184) ([DragaDoncila](https://github.com/DragaDoncila))
+- Fail silently when caching throws `OSError` [\#184](https://github.com/napari/npe2/pull/184) ([DragaDoncila](https://github.com/DragaDoncila))
 
 ## [v0.4.1](https://github.com/napari/npe2/tree/v0.4.1) (2022-06-13)
 
