@@ -205,54 +205,52 @@ def isolated_plugin_env(
         sys.path.insert(0, site_pkgs[0])
         try:
             if validate_npe1_imports:
+                # try to import the plugin's entry points
                 dist = metadata.distribution(package)
-
-                npe1_eps: List[metadata.EntryPoint] = []
-                npe2_ep: Optional[metadata.EntryPoint] = None
-                for ep in dist.entry_points:
-                    if ep.group == NPE2_ENTRY_POINT:
-                        npe2_ep = ep  # pragma: no cover
-                    elif ep.group == NPE1_ENTRY_POINT:
-                        npe1_eps.append(ep)
-
-                if npe2_ep is None:
-                    for ep in npe1_eps:
-                        try:
-                            ep.load()
-                        except ImportError:
-                            # if loading contributions fails, it can very often be fixed
-                            # by installing `napari[all]` into the environment
-                            if install_napari_if_necessary:
-                                env.install(["napari[all]"])
-                                # force reloading of qtpy
-                                sys.modules.pop("qtpy", None)
-                                ep.load()
-                            else:
-                                raise
+                ep_groups = {ep.group for ep in dist.entry_points}
+                if NPE1_ENTRY_POINT in ep_groups and NPE2_ENTRY_POINT not in ep_groups:
+                    try:
+                        _get_loaded_mf_or_die(package)
+                    except Exception:  # pragma: no cover
+                        # if loading contributions fails, it can very often be fixed
+                        # by installing `napari[all]` into the environment
+                        if install_napari_if_necessary:
+                            env.install(["napari[all]"])
+                            # force reloading of qtpy
+                            sys.modules.pop("qtpy", None)
+                            _get_loaded_mf_or_die(package)
+                        else:
+                            raise
             yield env
         finally:
             # cleanup sys.path
             sys.path.pop(0)
 
 
+def _get_loaded_mf_or_die(package: str) -> PluginManifest:
+    """Return a fully loaded (if npe1) manifest, or raise an exception."""
+    from npe2 import PluginManifest
+    from npe2.manifest._npe1_adapter import NPE1Adapter
+
+    mf = PluginManifest.from_distribution(package)
+    if isinstance(mf, NPE1Adapter):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", message="Error importing contributions")
+            warnings.filterwarnings("error", message="Failed to convert")
+            warnings.filterwarnings("ignore", message="Found a multi-layer writer")
+            mf._load_contributions(save=False)
+    return mf
+
+
 def _fetch_manifest_with_full_install(
     package: str, version: Optional[str] = None
 ) -> PluginManifest:
     """Fetch manifest for plugin by installing into an isolated environment."""
-    from npe2.manifest._npe1_adapter import NPE1Adapter
-    from npe2.manifest.schema import PluginManifest
-
     # create an isolated env in which to install npe1 plugin
-    with isolated_plugin_env(package, version):
-        mf = PluginManifest.from_distribution(package)
-        if isinstance(mf, NPE1Adapter):
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "error", message="Error importing contributions"
-                )
-                warnings.filterwarnings("ignore", message="Found a multi-layer writer")
-                mf._load_contributions(save=False)
-        return mf
+    with isolated_plugin_env(
+        package, version, validate_npe1_imports=True, install_napari_if_necessary=True
+    ):
+        return _get_loaded_mf_or_die(package)
 
 
 @lru_cache
