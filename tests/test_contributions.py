@@ -114,6 +114,7 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
     ctrbA, ctrbB = contribs
     # ignoring types because .command and .uri come from different sample provider
     # types... they don't both have "command" or "uri"
+
     assert isinstance(ctrbA, SampleDataGenerator)
     assert ctrbA.command == f"{SAMPLE_PLUGIN_NAME}.generate_random_data"
     assert ctrbA.plugin_name == SAMPLE_PLUGIN_NAME

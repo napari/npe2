@@ -10,6 +10,8 @@ from npe2.types import PythonName
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
+SAMPLE_PLUGIN_NAME = "my-plugin"
+
 
 @pytest.fixture
 def pm(sample_path):
