@@ -56,7 +56,7 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     ...
 
 
-@npe2.implements.writer(
+@implements.writer(
     id="my_single_writer",
     title="My single-layer Writer",
     filename_extensions=["*.xyz"],
