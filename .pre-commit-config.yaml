@@ -43,3 +43,4 @@ repos:
         additional_dependencies:
           - types-toml
           - types-PyYAML
+        exclude: npe2/implements.pyi

@@ -42,29 +42,6 @@ jobs:
           miniforge-version: latest
           use-mamba: true
 
-      - id: check_conda
-        run: echo ::set-output name=status::$(curl -s -o /dev/null -w '%{http_code}' 'https://api.anaconda.org/package/conda-forge/${{ matrix.plugin }}')
-
-      # for now, until clesperanto is on conda and can declare it itself
-      - name: openCL deps
-        if: matrix.plugin == 'napari-pyclesperanto-assistant' && steps.check_conda.outputs.status != '200'
-        run: mamba install pyopencl oclgrind
-
-      # these plugins offer napari functionality
-      # but also work in the absence of napari... so probably don't want
-      # to add napari to their deps.
-      - name: install napari
-        if: matrix.plugin == "RedLionfish" || matrix.plugin == "smo"
-        run: mamba install napari
-
-      - name: Install ${{ matrix.plugin }} from conda
-        if: steps.check_conda.outputs.status == '200'
-        run: mamba install ${{ matrix.plugin }} pyqt
-
-      - name: Install ${{ matrix.plugin }} from pip
-        if: steps.check_conda.outputs.status != '200'
-        run: pip install ${{ matrix.plugin }} pyqt5
-
       - name: Install npe2
         run: pip install -e .[testing]
 

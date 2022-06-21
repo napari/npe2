@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from functools import total_ordering
+from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -17,10 +18,11 @@ from typing import (
     Union,
 )
 
+from ..types import PythonName
+
 if TYPE_CHECKING:
     from npe2.manifest.schema import PluginManifest
 
-from ..types import PythonName
 
 if TYPE_CHECKING:
     from typing_extensions import Protocol
@@ -36,18 +38,14 @@ if TYPE_CHECKING:
 
 
 def v1_to_v2(path):
-    if isinstance(path, list):
-        return path, True
-    else:
-        return [path], False
+    return (path, True) if isinstance(path, list) else ([path], False)
 
 
 def v2_to_v1(paths, stack):
     if stack:
         return paths
-    else:
-        assert len(paths) == 1
-        return paths[0]
+    assert len(paths) == 1
+    return paths[0]
 
 
 R = TypeVar("R")
@@ -232,8 +230,6 @@ def _import_npe1_shim(shim_name: str) -> Any:
 
 
 def import_python_name(python_name: Union[PythonName, str]) -> Any:
-    from importlib import import_module
-
     from . import _validators
 
     if python_name.startswith(SHIM_NAME_PREFIX):
