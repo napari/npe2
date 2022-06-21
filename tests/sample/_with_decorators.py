@@ -34,6 +34,7 @@ def get_reader(path: str):
     title="URL Reader",
     filename_patterns=["http://*", "https://*"],
     accepts_directories=False,
+    ensure_args_valid=True,
 )
 def url_reader(path: str):
     ...

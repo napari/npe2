@@ -17,6 +17,7 @@ def reader(
     title: str,
     filename_patterns: List[str],
     accepts_directories: bool = False,
+    ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
     """Mark a function as a reader contribution"""
 
@@ -27,6 +28,7 @@ def writer(
     layer_types: List[str],
     filename_extensions: List[str] = [],
     display_name: str = "",
+    ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
     """Mark function as a writer contribution"""
 
@@ -36,6 +38,7 @@ def widget(
     title: str,
     display_name: str,
     autogenerate: bool = False,
+    ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
     """Mark a function as a widget contribution"""
 
@@ -45,6 +48,7 @@ def sample_data_generator(
     title: str,
     key: str,
     display_name: str,
+    ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
     """Mark a function as a sample data generator contribution"""
 

@@ -1,4 +1,5 @@
 import ast
+import contextlib
 import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
@@ -9,8 +10,26 @@ from pydantic import BaseModel
 
 from .manifest import contributions
 
+__all__ = [
+    "on_activate",
+    "on_deactivate",
+    "PluginModuleVisitor",
+    "reader",
+    "sample_data_generator",
+    "visit",
+    "widget",
+    "writer",
+]
+
 T = TypeVar("T", bound=Callable[..., Any])
 _COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
+CONTRIB_MAP: Dict[str, Tuple[Type[BaseModel], str]] = {
+    "writer": (contributions.WriterContribution, "writers"),
+    "reader": (contributions.ReaderContribution, "readers"),
+    "sample_data_generator": (contributions.SampleDataGenerator, "sample_data"),
+    "widget": (contributions.WidgetContribution, "widgets"),
+}
+CHECK_ARGS_PARAM = "ensure_args_valid"
 
 
 def _build_decorator(contrib: Type[BaseModel]) -> Callable:
@@ -44,6 +63,17 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
                 )
                 params.append(param)
 
+    # add one more parameter to control whether the arguments in the decorator itself
+    # are validated at runtime
+    params.append(
+        Parameter(
+            CHECK_ARGS_PARAM,
+            kind=Parameter.KEYWORD_ONLY,
+            default=False,
+            annotation=bool,
+        )
+    )
+
     signature = Signature(parameters=params, return_annotation=Callable[[T], T])
 
     # creates the actual `@npe2.implements.something` decorator
@@ -51,13 +81,17 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     # as attributes on the function being decorated.
     def _deco(**kwargs) -> Callable[[T], T]:
         def _store_attrs(func: T) -> T:
-            # assert we've satisfied the signature when the decorator is invoked
+            # If requested, assert that we've satisfied the signature when
+            # the decorator is invoked at runtime.
             # TODO: improve error message to provide context
-            signature.bind(**kwargs)
+            if kwargs.pop(CHECK_ARGS_PARAM, False):
+                signature.bind(**kwargs)
 
-            # store these attributes on the function
             # TODO: check if it's already there and assert the same id
-            setattr(func, f"_npe2_{contrib.__name__}", kwargs)
+            # store these attributes on the function
+            with contextlib.suppress(AttributeError):
+                setattr(func, f"_npe2_{contrib.__name__}", kwargs)
+
             # return the original decorated function
             return func
 
@@ -171,30 +205,28 @@ class PluginModuleVisitor(ast.NodeVisitor):
                     # If the name resolves to the name of this module,
                     # then we have a hit! Store the contribution.
                     if self._names.get(call_name) == __name__:
-                        self._store_contrib(call.func.attr, call.keywords, node.name)
+                        kwargs = self._keywords_to_kwargs(call.keywords)
+                        self._store_contrib(call.func.attr, node.name, kwargs)
             elif isinstance(call.func, ast.Name):
                 # if the function is just a direct name (e.g. `@reader`)
                 # then we can just see if the name points to something imported from
                 # this module.
                 if self._names.get(call.func.id, "").startswith(__name__):
-                    self._store_contrib(call.func.id, call.keywords, node.name)
+                    kwargs = self._keywords_to_kwargs(call.keywords)
+                    self._store_contrib(call.func.id, node.name, kwargs)
         return super().generic_visit(node)
 
-    def _store_contrib(self, type_: str, keywords: List[ast.keyword], name: str):
-        # this can also be taken from schemas
-        _map: Dict[str, Tuple[Type[BaseModel], str]] = {
-            "writer": (contributions.WriterContribution, "writers"),
-            "reader": (contributions.ReaderContribution, "readers"),
-            "sample_data_generator": (contributions.SampleDataGenerator, "sample_data"),
-            "widget": (contributions.WidgetContribution, "widgets"),
-        }
-        Cls, contrib_name = _map[type_]
-        contrib = Cls(**self._store_command(keywords, name))
+    def _keywords_to_kwargs(self, keywords: List[ast.keyword]) -> Dict[str, Any]:
+        return {str(k.arg): ast.literal_eval(k.value) for k in keywords}
+
+    def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
+        kwargs.pop(CHECK_ARGS_PARAM, None)
+        ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
+        contrib = ContribClass(**self._store_command(name, kwargs))
         existing: List[dict] = self.contribution_points.setdefault(contrib_name, [])
         existing.append(contrib.dict(exclude_unset=True))
 
-    def _store_command(self, keywords: List[ast.keyword], name: str) -> Dict[str, Any]:
-        kwargs = {str(k.arg): ast.literal_eval(k.value) for k in keywords}
+    def _store_command(self, name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in _COMMAND_PARAMS}
         cmd_kwargs["python_name"] = self._qualified_pyname(name)
         cmd = contributions.CommandContribution(**cmd_kwargs)
