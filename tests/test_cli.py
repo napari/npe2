@@ -40,23 +40,55 @@ def test_cli_validate_load_err(tmp_path):
     assert "Could not find manifest for" in result.stdout
 
 
-@pytest.mark.parametrize("format", ["json", "yaml", "toml"])
-def test_cli_parse(sample_path, format):
-    cmd = ["parse", str(sample_path / "my_plugin" / "napari.yaml"), "-f", format]
+@pytest.mark.parametrize("format", ["json", "yaml", "toml", "csv"])
+@pytest.mark.parametrize("to_file", [True, False])
+def test_cli_parse(sample_path, format, tmp_path, to_file):
+    cmd = ["parse", str(sample_path / "my_plugin" / "napari.yaml")]
+    if to_file:
+        dest = tmp_path / f"output.{format}"
+        cmd.extend(["-o", str(dest)])
+    else:
+        cmd.extend(["-f", format])
+
     result = runner.invoke(app, cmd)
+    if format == "csv":
+        assert result.exit_code
+        return
+
     assert result.exit_code == 0
-    assert "my-plugin" in result.stdout  # just prints the yaml
+    if to_file:
+        assert dest.exists()
+        assert PluginManifest.from_file(dest)
+    else:
+        assert "my-plugin" in result.stdout  # just prints the yaml
 
 
 @pytest.mark.parametrize("format", ["json", "yaml", "toml", "csv"])
-def test_cli_parse_to_file(sample_path, format, tmp_path):
-    dest = tmp_path / f"output.{format}"
-    cmd = ["parse", str(sample_path / "my_plugin" / "napari.yaml"), "-o", str(dest)]
+@pytest.mark.parametrize("to_file", [True, False])
+@pytest.mark.parametrize("include_meta", [True, False])
+def test_cli_fetch(format, tmp_path, to_file, include_meta):
+    cmd = ["fetch", "napari-omero"]
+    if to_file:
+        dest = tmp_path / f"output.{format}"
+        cmd.extend(["-o", str(dest)])
+    else:
+        cmd.extend(["-f", format])
+    if include_meta:
+        cmd.extend(["--include-package-meta", "--indent=2"])
+
     result = runner.invoke(app, cmd)
-    assert result.exit_code == 0 if format != "csv" else 1
-    if format != "csv":
+    if format == "csv":
+        assert result.exit_code
+        return
+
+    assert result.exit_code == 0
+    if to_file:
         assert dest.exists()
         assert PluginManifest.from_file(dest)
+    else:
+        assert "napari-omero" in result.stdout  # just prints the yaml
+        if include_meta:
+            assert "package_metadata" in result.stdout
 
 
 @pytest.mark.filterwarnings("default:Failed to convert")
