@@ -1,8 +1,11 @@
 import sys
+from contextlib import nullcontext
 from pathlib import Path
 
+import pytest
+
+import npe2.implements
 from npe2 import PluginManifest
-from npe2.implements import visit
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 SAMPLE_MODULE_NAME = "my_plugin"
@@ -11,7 +14,7 @@ SAMPLE_DIR = Path(__file__).parent / "sample"
 
 def test_extract_manifest():
     module_with_decorators = SAMPLE_DIR / "_with_decorators.py"
-    extracted = visit(
+    extracted = npe2.implements.visit(
         module_with_decorators,
         plugin_name=SAMPLE_PLUGIN_NAME,
         module_name=SAMPLE_MODULE_NAME,
@@ -55,10 +58,21 @@ def test_dynamic(monkeypatch):
         )
 
         # we can compile a module object as well as a string path
-        extracted = visit(
+        extracted = npe2.implements.visit(
             _with_decorators,
             plugin_name=SAMPLE_PLUGIN_NAME,
             module_name=SAMPLE_MODULE_NAME,
         )
 
         assert extracted.commands
+
+
+@pytest.mark.parametrize("check", [True, False])
+def test_decorator_arg_check(check):
+    """Check that the decorators don't check arguments at runtime unless instructed."""
+    # tilde is wrong and filename_patterns is missing
+    kwargs = dict(id="some_id", tilde="some_title")
+    kwargs[npe2.implements.CHECK_ARGS_PARAM] = check
+    ctx = pytest.raises(TypeError) if check else nullcontext()
+    with ctx:
+        npe2.implements.reader(**kwargs)(lambda: None)

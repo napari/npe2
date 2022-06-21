@@ -3,7 +3,19 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from pydantic import BaseModel
 
@@ -22,6 +34,13 @@ __all__ = [
 
 T = TypeVar("T", bound=Callable[..., Any])
 _COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
+CONTRIB_MAP: Dict[str, Tuple[Type[BaseModel], str]] = {
+    "writer": (contributions.WriterContribution, "writers"),
+    "reader": (contributions.ReaderContribution, "readers"),
+    "sample_data_generator": (contributions.SampleDataGenerator, "sample_data"),
+    "widget": (contributions.WidgetContribution, "widgets"),
+}
+CHECK_ARGS_PARAM = "ensure_args_valid"
 
 
 def _build_decorator(contrib: Type[BaseModel]) -> Callable:
@@ -55,6 +74,17 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
                 )
                 params.append(param)
 
+    # add one more parameter to control whether the arguments in the decorator itself
+    # are validated at runtime
+    params.append(
+        Parameter(
+            CHECK_ARGS_PARAM,
+            kind=Parameter.KEYWORD_ONLY,
+            default=False,
+            annotation=bool,
+        )
+    )
+
     signature = Signature(parameters=params, return_annotation=Callable[[T], T])
 
     # creates the actual `@npe2.implements.something` decorator
@@ -64,7 +94,8 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
         def _store_attrs(func: T) -> T:
             # assert we've satisfied the signature when the decorator is invoked
             # TODO: improve error message to provide context
-            signature.bind(**kwargs)
+            if kwargs.pop(CHECK_ARGS_PARAM, False):
+                signature.bind(**kwargs)
 
             # store these attributes on the function
             # TODO: check if it's already there and assert the same id
@@ -182,30 +213,29 @@ class PluginModuleVisitor(ast.NodeVisitor):
                     # If the name resolves to the name of this module,
                     # then we have a hit! Store the contribution.
                     if self._names.get(call_name) == __name__:
-                        self._store_contrib(call.func.attr, call.keywords, node.name)
+                        kwargs = self._keywords_to_kwargs(call.keywords)
+                        self._store_contrib(call.func.attr, node.name, kwargs)
             elif isinstance(call.func, ast.Name):
                 # if the function is just a direct name (e.g. `@reader`)
                 # then we can just see if the name points to something imported from
                 # this module.
                 if self._names.get(call.func.id, "").startswith(__name__):
-                    self._store_contrib(call.func.id, call.keywords, node.name)
+                    kwargs = self._keywords_to_kwargs(call.keywords)
+                    self._store_contrib(call.func.id, node.name, kwargs)
         return super().generic_visit(node)
 
-    def _store_contrib(self, type_: str, keywords: List[ast.keyword], name: str):
+    def _keywords_to_kwargs(self, keywords: List[ast.keyword]) -> Dict[str, Any]:
+        return {str(k.arg): ast.literal_eval(k.value) for k in keywords}
+
+    def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
         # this can also be taken from schemas
-        _map: Dict[str, Tuple[Type[BaseModel], str]] = {
-            "writer": (contributions.WriterContribution, "writers"),
-            "reader": (contributions.ReaderContribution, "readers"),
-            "sample_data_generator": (contributions.SampleDataGenerator, "sample_data"),
-            "widget": (contributions.WidgetContribution, "widgets"),
-        }
-        Cls, contrib_name = _map[type_]
-        contrib = Cls(**self._store_command(keywords, name))
+        kwargs.pop(CHECK_ARGS_PARAM, None)
+        ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
+        contrib = ContribClass(**self._store_command(name, kwargs))
         existing: List[dict] = self.contribution_points.setdefault(contrib_name, [])
         existing.append(contrib.dict(exclude_unset=True))
 
-    def _store_command(self, keywords: List[ast.keyword], name: str) -> Dict[str, Any]:
-        kwargs = {str(k.arg): ast.literal_eval(k.value) for k in keywords}
+    def _store_command(self, name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in _COMMAND_PARAMS}
         cmd_kwargs["python_name"] = self._qualified_pyname(name)
         cmd = contributions.CommandContribution(**cmd_kwargs)
@@ -221,14 +251,57 @@ class PluginModuleVisitor(ast.NodeVisitor):
     def _qualified_pyname(self, obj_name: str) -> str:
         return f"{self.module_name}:{obj_name}"
 
+    def _visit_comments(self, lines: Sequence[str], node_names: Dict[int, str]) -> None:
+        """Look for `# @npe.implements` comments in the source code.
 
-def _parse_comment_call(lines: Sequence[str]) -> Tuple[str, Dict[str, Any]]:
+        This will find commented out decorators and add them as contributions, entirely
+        eliminating the need to depend on npe2 at runtime.
+
+        Parameters
+        ----------
+        lines : Sequence[str]
+            lines of source code
+        node_names : Dict[int, str]
+            a mapping of line numbers to names defined on that line, such as
+            `{10: "foo", 12: "bar"}` if `def foo` was on line 10 and `def bar` was
+            on line 12.
+
+        Examples
+        --------
+        ```python
+        # @npe2.implements.writer(
+        #     id="my_single_writer",
+        #     title="My single-layer Writer",
+        #     filename_extensions=["*.xyz"],
+        #     layer_types=["labels"],
+        # )
+        def my_writer(path: str, layer_data: Any, meta: Dict) -> List[str]:
+            ...
+        ```
+        """
+        # iterate chunks of comments whose first line contains the name of this module
+        for line, comment in _iter_comment_blocks(lines, chunk_on=__name__):
+            # try to parse the comment to retrieve contribution kwargs
+            if name_and_kwargs := _parse_comment_call(comment):
+                # find the first name definition following the comment block
+                # e.g. `def some_function(): ...` should find `some_function`
+                if obj_name := next(
+                    (v for k, v in node_names.items() if k > line + len(comment)), None
+                ):
+                    # store the contribution
+                    name, kwargs = name_and_kwargs
+                    contrib_type = name.replace(__name__, "").lstrip(".").strip()
+                    if contrib_type in CONTRIB_MAP:
+                        self._store_contrib(contrib_type, obj_name, kwargs)
+
+
+def _parse_comment_call(lines: Sequence[str]) -> Optional[Tuple[str, Dict[str, Any]]]:
     """Parse a comment block into a function name and a dictionary of kwargs.
 
     Parameters
     ----------
     lines : Sequence[str]
-        Lines of strings, the coment block.
+        Lines of strings, the comment block.
 
     Returns
     -------
@@ -264,11 +337,69 @@ def _parse_comment_call(lines: Sequence[str]) -> Tuple[str, Dict[str, Any]]:
         name = lines[0].split("(")[0].lstrip("#@ ")
         return name, kwargs
     except Exception:
-        return ("", {})
+        return None
+
+
+def _iter_comment_blocks(
+    lines: Sequence[str], chunk_on: Optional[str] = None
+) -> Iterator[Tuple[int, List[str]]]:
+    """Iterate over comment blocks in a sequence of lines.
+
+    Parameters
+    ----------
+    lines : Sequence[str]
+        Lines of strings, such as module source code with `splitlines()`.
+    chunk_on : Optional[str]
+        If provided, then when the iterator encounters a line that includes the
+        string `chunk_on`, it will yield the current block and start a new one.
+
+    Yields
+    ------
+    Tuple[int, List[str]]
+        Tuple where the first value is the line number where the comment block starts,
+        and the second value is the lines of the comment block.
+
+    Examples
+    --------
+    >>> lines = [
+    ...     '# @npe2.implements.writer(',
+    ...     '#     id="my_single_writer",',
+    ...     '# )',
+    ...     'x=1',
+    ...     '# @npe2.implements.reader(',
+    ...     '#     id="my_single_reader",',
+    ...     '# )'
+    ... ]
+    >>> list(_iter_comment_blocks(lines, chunk_on='npe2'))
+    [
+        (0, ['# @npe2.implements.writer(', '#     id="my_single_writer",', '# )']),
+        (4, ['# @npe2.implements.reader(', '#     id="my_single_reader",', '# )'])
+    ]
+    """
+    block: List[str] = []
+    block_start = 0
+    for line_no, line in enumerate(lines):
+        if line.startswith("#"):
+            if chunk_on and chunk_on in line:
+                # reset
+                if block:
+                    yield block_start, block  # pragma: no cover
+                block_start, block = line_no, []
+            if not chunk_on or chunk_on in line or block:
+                block.append(line)
+        else:
+            if block:
+                yield block_start, block
+            block_start, block = line_no, []
+    if block:
+        yield block_start, block  # pragma: no cover
 
 
 def visit(
-    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
+    path: Union[ModuleType, str, Path],
+    plugin_name: str,
+    module_name: str = "",
+    visit_comments: bool = True,
 ) -> contributions.ContributionPoints:
     """Visit a module and extract contribution points.
 
@@ -280,6 +411,15 @@ def visit(
         Name of the plugin
     module_name : str
         Module name, by default ""
+    visit_comments: bool
+        Whether to try to parse comments for commented out contributions. This
+        lets the plugin avoid depending on npe2 entirely at runtime. by default, True
+
+            # @npe2.implements.writer(
+            #     id="my_single_writer",
+            #     ...
+            # )
+            def my_writer(...): ...
 
     Returns
     -------
@@ -296,7 +436,13 @@ def visit(
     src_code = Path(path).read_text()
     node = ast.parse(src_code)
     visitor.visit(node)
-    breakpoint()
+
+    # look for commented out contributions in the module
+    if visit_comments:
+        # get list of names defined in this module, by line number
+        node_names = {x.lineno: getattr(x, "name", "") for x in node.body}
+        visitor._visit_comments(src_code.splitlines(), node_names)
+
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]

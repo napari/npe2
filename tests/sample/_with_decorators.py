@@ -34,6 +34,7 @@ def get_reader(path: str):
     title="URL Reader",
     filename_patterns=["http://*", "https://*"],
     accepts_directories=False,
+    ensure_args_valid=True,
 )
 def url_reader(path: str):
     ...
@@ -90,3 +91,9 @@ def random_data():
 )
 def make_widget_from_function(x: int, threshold: int):
     ...
+
+
+# test that poorly contructed comments don't break things.
+# @npe2.implements.some_nonsense(
+#     print(1)
+# )
