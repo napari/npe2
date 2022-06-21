@@ -6,6 +6,8 @@
 
 **Implemented enhancements:**
 
+- Prevent runtime-arg checking on npe2.implements decorators by default [\#188](https://github.com/napari/npe2/pull/188) ([tlambert03](https://github.com/tlambert03))
+- Add `npe2 fetch` command to cli to fetch remote manifests [\#185](https://github.com/napari/npe2/pull/185) ([tlambert03](https://github.com/tlambert03))
 - allow `npe2 parse` to output to file, add format option [\#183](https://github.com/napari/npe2/pull/183) ([tlambert03](https://github.com/tlambert03))
 - Add `npe1_shim` field to schema [\#182](https://github.com/napari/npe2/pull/182) ([tlambert03](https://github.com/tlambert03))
 - allow `npe2.write` to take layer instances [\#181](https://github.com/napari/npe2/pull/181) ([tlambert03](https://github.com/tlambert03))
@@ -23,10 +25,6 @@
 **Fixed bugs:**
 
 - hide docs again in napari menus \(Fix napari docs build\) [\#178](https://github.com/napari/npe2/pull/178) ([tlambert03](https://github.com/tlambert03))
-
-**Merged pull requests:**
-
-- add changelog for v0.4.1 [\#179](https://github.com/napari/npe2/pull/179) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
 
