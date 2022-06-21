@@ -84,6 +84,16 @@ def validate(
         raise typer.Exit(1)
 
 
+def _check_output(output: Path) -> Format:
+    if output.suffix.lstrip(".") not in Format._member_names_:
+        typer.echo(
+            f"Invalid output extension {output.suffix!r}. Must be one of: "
+            + ", ".join(Format._member_names_)
+        )
+        raise typer.Exit(1)
+    return Format(output.suffix.lstrip("."))
+
+
 @app.command()
 def parse(
     name: str = typer.Argument(
@@ -107,23 +117,65 @@ def parse(
         help="If provided, will write manifest to filepath (must end with .yaml, "
         ".json, or .toml). Otherwise, will print to stdout.",
     ),
-):  # sourcery skip: avoid-builtin-shadow
+):
     """Show parsed manifest as yaml."""
-    if output:
-        if output.suffix.lstrip(".") not in Format._member_names_:
-            typer.echo(
-                f"Invalid output extension {output.suffix!r}. Must be one of: "
-                + ", ".join(Format._member_names_)
-            )
-            raise typer.Exit()
-        format = Format(output.suffix.lstrip("."))
-
+    fmt = _check_output(output) if output else format
     pm = PluginManifest._from_package_or_name(name)
-    manifest_string = getattr(pm, format.value)(indent=indent)
+    manifest_string = getattr(pm, fmt.value)(indent=indent)
     if output:
         output.write_text(manifest_string)
     else:
-        _pprint_formatted(manifest_string, format)
+        _pprint_formatted(manifest_string, fmt)
+
+
+@app.command()
+def fetch(
+    name: str,
+    version: Optional[str] = None,
+    include_package_meta: Optional[bool] = typer.Option(
+        False,
+        "-m",
+        "--include-package-meta",
+        help="Include package metadata in the manifest.",
+    ),
+    format: Format = typer.Option(
+        "yaml", "-f", "--format", help="Markdown format to use."
+    ),
+    indent: Optional[int] = typer.Option(
+        None,
+        "--indent",
+        help="Number of spaces to indent (for json)",
+        min=0,
+        max=10,
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        exists=False,
+        help="If provided, will write manifest to filepath (must end with .yaml, "
+        ".json, or .toml). Otherwise, will print to stdout.",
+    ),
+):
+    """Fetch manifest from remote package.
+
+    If an npe2 plugin is detected, the manifest is returned directly, otherwise
+    it will be installed into a temporary directory, imported, and discovered.
+    """
+    from npe2._fetch import fetch_manifest
+
+    fmt = _check_output(output) if output else format
+    kwargs: dict = {"indent": indent}
+    if include_package_meta:
+        kwargs["exclude"] = set()
+
+    mf = fetch_manifest(name, version=version)
+    manifest_string = getattr(mf, fmt.value)(**kwargs)
+
+    if output:
+        output.write_text(manifest_string)
+    else:
+        _pprint_formatted(manifest_string, fmt)
 
 
 @app.command()

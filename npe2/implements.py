@@ -33,6 +33,17 @@ __all__ = [
     "writer",
 ]
 
+__all__ = [
+    "on_activate",
+    "on_deactivate",
+    "PluginModuleVisitor",
+    "reader",
+    "sample_data_generator",
+    "visit",
+    "widget",
+    "writer",
+]
+
 T = TypeVar("T", bound=Callable[..., Any])
 _COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
 CONTRIB_MAP: Dict[str, Tuple[Type[BaseModel], str]] = {
@@ -232,7 +243,6 @@ class PluginModuleVisitor(ast.NodeVisitor):
         return {str(k.arg): ast.literal_eval(k.value) for k in keywords}
 
     def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
-        # this can also be taken from schemas
         kwargs.pop(CHECK_ARGS_PARAM, None)
         ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
         contrib = ContribClass(**self._store_command(name, kwargs))
