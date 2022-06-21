@@ -17,7 +17,6 @@ from zipfile import ZipFile
 
 from build.env import IsolatedEnvBuilder
 
-
 if TYPE_CHECKING:
     import build.env
 
