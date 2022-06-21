@@ -17,6 +17,7 @@ from zipfile import ZipFile
 
 from build.env import IsolatedEnvBuilder
 
+
 if TYPE_CHECKING:
     import build.env
 
@@ -24,15 +25,24 @@ if TYPE_CHECKING:
 
 logger = getLogger(__name__)
 
+NPE1_ENTRY_POINT = "napari.plugin"
+NPE2_ENTRY_POINT = "napari.manifest"
+
+
+@lru_cache
+def _pypi_info(package: str) -> dict:
+    with urlopen(f"https://pypi.org/pypi/{package}/json") as f:
+        return json.load(f)
+
 
 def get_pypi_url(
-    name: str, version: Optional[str] = None, packagetype: Optional[str] = None
+    package: str, version: Optional[str] = None, packagetype: Optional[str] = None
 ) -> str:
     """Get URL for a package on PyPI.
 
     Parameters
     ----------
-    name : str
+    package : str
         package name
     version : str, optional
         package version, by default, latest version.
@@ -54,24 +64,23 @@ def get_pypi_url(
         If packagetype is specified and no package of that type is available.
     """
     if packagetype not in {"sdist", "bdist_wheel", None}:
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Invalid packagetype: {packagetype}, must be one of sdist, bdist_wheel"
         )
 
-    with urlopen(f"https://pypi.org/pypi/{name}/json") as f:
-        data = json.load(f)
-
+    data = _pypi_info(package)
     if version:
         version = version.lstrip("v")
-        if version not in data["releases"]:
-            raise ValueError(f"{name} does not have version {version}")
-        _releases: List[dict] = data["releases"][version]
+        try:
+            _releases: List[dict] = data["releases"][version]
+        except KeyError as e:  # pragma: no cover
+            raise ValueError(f"{package} does not have version {version}") from e
     else:
         _releases = data["urls"]
 
     releases = {d.get("packagetype"): d for d in _releases}
     if packagetype:
-        if packagetype not in releases:
+        if packagetype not in releases:  # pragma: no cover
             version = version or "latest"
             raise KeyError(f'No {packagetype} releases found for version "{version}"')
         return releases[packagetype]["url"]
@@ -109,7 +118,7 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     from npe2 import PluginManifest
     from npe2.manifest import PackageMetadata
 
-    is_npe1 = False
+    has_npe1 = False
 
     # first just grab the wheel from pypi with no dependencies
     try:
@@ -120,7 +129,7 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
             for ep in dist.entry_points:
                 # if we find an npe2 entry point, we can just use
                 # PathDistribution.locate_file to get the file.
-                if ep.group == "napari.manifest":
+                if ep.group == NPE2_ENTRY_POINT:
                     logger.debug("pypi wheel has npe2 entry point.")
                     mf_file = dist.locate_file(Path(ep.module) / ep.attr)
                     mf = PluginManifest.from_file(str(mf_file))
@@ -129,19 +138,18 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
                         dist.metadata
                     )
                     return mf
-                elif ep.group == "napari.plugin":
-                    is_npe1 = True
+                elif ep.group == NPE1_ENTRY_POINT:
+                    has_npe1 = True  # pragma: no cover
     except KeyError as e:
         if "No bdist_wheel releases found" not in str(e):
-            raise
-        logger.debug("falling back to npe1")
-        is_npe1 = True
+            raise  # pragma: no cover
+        has_npe1 = True
 
-    if not is_npe1:
-        raise ValueError(f"{package} had no napari entry points.")
+    if not has_npe1:
+        raise ValueError(f"{package} had no napari entry points.")  # pragma: no cover
 
     logger.debug("falling back to npe1")
-    return _fetch_npe1_manifest(package, version=version)
+    return _fetch_manifest_with_full_install(package, version=version)
 
 
 @contextmanager
@@ -182,7 +190,7 @@ def isolated_plugin_env(
         # temporarily add env site packages to path
         prefixes = [getattr(env, "path")]  # noqa
         if not (site_pkgs := site.getsitepackages(prefixes=prefixes)):
-            raise ValueError("No site-packages found")
+            raise ValueError("No site-packages found")  # pragma: no cover
         sys.path.insert(0, site_pkgs[0])
         try:
             if validate_npe1_imports:
@@ -191,10 +199,10 @@ def isolated_plugin_env(
                 npe1_eps: List[metadata.EntryPoint] = []
                 npe2_ep: Optional[metadata.EntryPoint] = None
                 for ep in dist.entry_points:
-                    if ep.group == "napari.plugin":
+                    if ep.group == NPE2_ENTRY_POINT:
+                        npe2_ep = ep  # pragma: no cover
+                    elif ep.group == NPE1_ENTRY_POINT:
                         npe1_eps.append(ep)
-                    elif ep.group == "napari.manifest":
-                        npe2_ep = ep
 
                 if npe2_ep is None:
                     for ep in npe1_eps:
@@ -216,8 +224,10 @@ def isolated_plugin_env(
             sys.path.pop(0)
 
 
-def _fetch_npe1_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
-    """Fetch manifest for npe1 plugin in an isolated environment."""
+def _fetch_manifest_with_full_install(
+    package: str, version: Optional[str] = None
+) -> PluginManifest:
+    """Fetch manifest for plugin by installing into an isolated environment."""
     from npe2.manifest._npe1_adapter import NPE1Adapter
     from npe2.manifest.schema import PluginManifest
 
