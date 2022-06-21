@@ -4,19 +4,7 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -255,155 +243,9 @@ class PluginModuleVisitor(ast.NodeVisitor):
     def _qualified_pyname(self, obj_name: str) -> str:
         return f"{self.module_name}:{obj_name}"
 
-    def _visit_comments(self, lines: Sequence[str], node_names: Dict[int, str]) -> None:
-        """Look for `# @npe.implements` comments in the source code.
-
-        This will find commented out decorators and add them as contributions, entirely
-        eliminating the need to depend on npe2 at runtime.
-
-        Parameters
-        ----------
-        lines : Sequence[str]
-            lines of source code
-        node_names : Dict[int, str]
-            a mapping of line numbers to names defined on that line, such as
-            `{10: "foo", 12: "bar"}` if `def foo` was on line 10 and `def bar` was
-            on line 12.
-
-        Examples
-        --------
-        ```python
-        # @npe2.implements.writer(
-        #     id="my_single_writer",
-        #     title="My single-layer Writer",
-        #     filename_extensions=["*.xyz"],
-        #     layer_types=["labels"],
-        # )
-        def my_writer(path: str, layer_data: Any, meta: Dict) -> List[str]:
-            ...
-        ```
-        """
-        # iterate chunks of comments whose first line contains the name of this module
-        for line, comment in _iter_comment_blocks(lines, chunk_on=__name__):
-            # try to parse the comment to retrieve contribution kwargs
-            if name_and_kwargs := _parse_comment_call(comment):
-                # find the first name definition following the comment block
-                # e.g. `def some_function(): ...` should find `some_function`
-                if obj_name := next(
-                    (v for k, v in node_names.items() if k > line + len(comment)), None
-                ):
-                    # store the contribution
-                    name, kwargs = name_and_kwargs
-                    contrib_type = name.replace(__name__, "").lstrip(".").strip()
-                    if contrib_type in CONTRIB_MAP:
-                        self._store_contrib(contrib_type, obj_name, kwargs)
-
-
-def _parse_comment_call(lines: Sequence[str]) -> Optional[Tuple[str, Dict[str, Any]]]:
-    """Parse a comment block into a function name and a dictionary of kwargs.
-
-    Parameters
-    ----------
-    lines : Sequence[str]
-        Lines of strings, the comment block.
-
-    Returns
-    -------
-    Tuple[str, Dict[str, Any]]
-        `(name_of_function, kwargs)`
-
-    Examples
-    --------
-    >>> lines = [
-    ...     '# @npe2.implements.writer(',
-    ...     '#     id="my_single_writer",',
-    ...     '#     title="My single-layer Writer",',
-    ...     '#     filename_extensions=["*.xyz"],',
-    ...     '#     layer_types=["labels"],',
-    ...     '# )'
-    ... ]
-    >>> _parse_comment_call(lines)
-    (
-        'npe2.implements.writer',
-        {
-            'id': 'my_single_writer',
-            'title': 'My single-layer Writer',
-            'filename_extensions': ['*.xyz'],
-            'layer_types': ['labels']
-        }
-    )
-
-    """
-    try:
-        signature = "\n".join([line.lstrip("# ") for line in lines])
-        expr = "dict(" + signature.split("(")[-1]
-        kwargs = eval(expr, {"__builtins__": None}, {"dict": dict})
-        name = lines[0].split("(")[0].lstrip("#@ ")
-        return name, kwargs
-    except Exception:
-        return None
-
-
-def _iter_comment_blocks(
-    lines: Sequence[str], chunk_on: Optional[str] = None
-) -> Iterator[Tuple[int, List[str]]]:
-    """Iterate over comment blocks in a sequence of lines.
-
-    Parameters
-    ----------
-    lines : Sequence[str]
-        Lines of strings, such as module source code with `splitlines()`.
-    chunk_on : Optional[str]
-        If provided, then when the iterator encounters a line that includes the
-        string `chunk_on`, it will yield the current block and start a new one.
-
-    Yields
-    ------
-    Tuple[int, List[str]]
-        Tuple where the first value is the line number where the comment block starts,
-        and the second value is the lines of the comment block.
-
-    Examples
-    --------
-    >>> lines = [
-    ...     '# @npe2.implements.writer(',
-    ...     '#     id="my_single_writer",',
-    ...     '# )',
-    ...     'x=1',
-    ...     '# @npe2.implements.reader(',
-    ...     '#     id="my_single_reader",',
-    ...     '# )'
-    ... ]
-    >>> list(_iter_comment_blocks(lines, chunk_on='npe2'))
-    [
-        (0, ['# @npe2.implements.writer(', '#     id="my_single_writer",', '# )']),
-        (4, ['# @npe2.implements.reader(', '#     id="my_single_reader",', '# )'])
-    ]
-    """
-    block: List[str] = []
-    block_start = 0
-    for line_no, line in enumerate(lines):
-        if line.startswith("#"):
-            if chunk_on and chunk_on in line:
-                # reset
-                if block:
-                    yield block_start, block  # pragma: no cover
-                block_start, block = line_no, []
-            if not chunk_on or chunk_on in line or block:
-                block.append(line)
-        else:
-            if block:
-                yield block_start, block
-            block_start, block = line_no, []
-    if block:
-        yield block_start, block  # pragma: no cover
-
 
 def visit(
-    path: Union[ModuleType, str, Path],
-    plugin_name: str,
-    module_name: str = "",
-    visit_comments: bool = True,
+    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
 ) -> contributions.ContributionPoints:
     """Visit a module and extract contribution points.
 
@@ -415,15 +257,6 @@ def visit(
         Name of the plugin
     module_name : str
         Module name, by default ""
-    visit_comments: bool
-        Whether to try to parse comments for commented out contributions. This
-        lets the plugin avoid depending on npe2 entirely at runtime. by default, True
-
-            # @npe2.implements.writer(
-            #     id="my_single_writer",
-            #     ...
-            # )
-            def my_writer(...): ...
 
     Returns
     -------
@@ -437,16 +270,7 @@ def visit(
         path = path.__file__
 
     visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
-    src_code = Path(path).read_text()
-    node = ast.parse(src_code)
-    visitor.visit(node)
-
-    # look for commented out contributions in the module
-    if visit_comments:
-        # get list of names defined in this module, by line number
-        node_names = {x.lineno: getattr(x, "name", "") for x in node.body}
-        visitor._visit_comments(src_code.splitlines(), node_names)
-
+    visitor.visit(ast.parse(Path(path).read_text()))
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]

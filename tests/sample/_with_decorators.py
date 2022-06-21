@@ -56,12 +56,12 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     ...
 
 
-# @npe2.implements.writer(
-#     id="my_single_writer",
-#     title="My single-layer Writer",
-#     filename_extensions=["*.xyz"],
-#     layer_types=["labels"],
-# )
+@npe2.implements.writer(
+    id="my_single_writer",
+    title="My single-layer Writer",
+    filename_extensions=["*.xyz"],
+    layer_types=["labels"],
+)
 def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
     ...
 
@@ -91,9 +91,3 @@ def random_data():
 )
 def make_widget_from_function(x: int, threshold: int):
     ...
-
-
-# test that poorly contructed comments don't break things.
-# @npe2.implements.some_nonsense(
-#     print(1)
-# )
