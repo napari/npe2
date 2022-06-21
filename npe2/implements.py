@@ -1,4 +1,5 @@
 import ast
+import contextlib
 import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
@@ -92,14 +93,17 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     # as attributes on the function being decorated.
     def _deco(**kwargs) -> Callable[[T], T]:
         def _store_attrs(func: T) -> T:
-            # assert we've satisfied the signature when the decorator is invoked
+            # If requested, assert that we've satisfied the signature when
+            # the decorator is invoked at runtime.
             # TODO: improve error message to provide context
             if kwargs.pop(CHECK_ARGS_PARAM, False):
                 signature.bind(**kwargs)
 
-            # store these attributes on the function
             # TODO: check if it's already there and assert the same id
-            setattr(func, f"_npe2_{contrib.__name__}", kwargs)
+            # store these attributes on the function
+            with contextlib.suppress(AttributeError):
+                setattr(func, f"_npe2_{contrib.__name__}", kwargs)
+
             # return the original decorated function
             return func
 
