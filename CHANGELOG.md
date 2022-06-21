@@ -26,10 +26,6 @@
 
 - hide docs again in napari menus \(Fix napari docs build\) [\#178](https://github.com/napari/npe2/pull/178) ([tlambert03](https://github.com/tlambert03))
 
-**Merged pull requests:**
-
-- add changelog for v0.4.1 [\#179](https://github.com/napari/npe2/pull/179) ([tlambert03](https://github.com/tlambert03))
-
 ## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.4.0)
