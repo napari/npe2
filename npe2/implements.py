@@ -222,6 +222,51 @@ class PluginModuleVisitor(ast.NodeVisitor):
         return f"{self.module_name}:{obj_name}"
 
 
+def _parse_comment_call(lines: Sequence[str]) -> Tuple[str, Dict[str, Any]]:
+    """Parse a comment block into a function name and a dictionary of kwargs.
+
+    Parameters
+    ----------
+    lines : Sequence[str]
+        Lines of strings, the coment block.
+
+    Returns
+    -------
+    Tuple[str, Dict[str, Any]]
+        `(name_of_function, kwargs)`
+
+    Examples
+    --------
+    >>> lines = [
+    ...     '# @npe2.implements.writer(',
+    ...     '#     id="my_single_writer",',
+    ...     '#     title="My single-layer Writer",',
+    ...     '#     filename_extensions=["*.xyz"],',
+    ...     '#     layer_types=["labels"],',
+    ...     '# )'
+    ... ]
+    >>> _parse_comment_call(lines)
+    (
+        'npe2.implements.writer',
+        {
+            'id': 'my_single_writer',
+            'title': 'My single-layer Writer',
+            'filename_extensions': ['*.xyz'],
+            'layer_types': ['labels']
+        }
+    )
+
+    """
+    try:
+        signature = "\n".join([line.lstrip("# ") for line in lines])
+        expr = "dict(" + signature.split("(")[-1]
+        kwargs = eval(expr, {"__builtins__": None}, {"dict": dict})
+        name = lines[0].split("(")[0].lstrip("#@ ")
+        return name, kwargs
+    except Exception:
+        return ("", {})
+
+
 def visit(
     path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
 ) -> contributions.ContributionPoints:
@@ -248,7 +293,10 @@ def visit(
         path = path.__file__
 
     visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
-    visitor.visit(ast.parse(Path(path).read_text()))
+    src_code = Path(path).read_text()
+    node = ast.parse(src_code)
+    visitor.visit(node)
+    breakpoint()
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]

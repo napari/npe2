@@ -55,12 +55,12 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     ...
 
 
-@implements.writer(
-    id="my_single_writer",
-    title="My single-layer Writer",
-    filename_extensions=["*.xyz"],
-    layer_types=["labels"],
-)
+# @npe2.implements.writer(
+#     id="my_single_writer",
+#     title="My single-layer Writer",
+#     filename_extensions=["*.xyz"],
+#     layer_types=["labels"],
+# )
 def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
     ...
 
