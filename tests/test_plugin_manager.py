@@ -69,6 +69,20 @@ def test_plugin_manager(pm: PluginManager):
     assert SAMPLE_PLUGIN_NAME not in pm._contexts
 
 
+def test_plugin_manager_register(sample_path):
+    sys.path.append(str(sample_path))
+    try:
+        pm = PluginManager()
+        pm.register(str(sample_path / "my_plugin" / "napari.yaml"))
+        assert "my-plugin" in pm._manifests
+        pm.unregister("my-plugin")
+        assert "my-plugin" not in pm._manifests
+        pm.register("my_plugin")
+        assert "my-plugin" in pm._manifests
+    finally:
+        sys.path.remove(str(sample_path))
+
+
 def test_plugin_manager_raises(pm: PluginManager):
     with pytest.raises(KeyError):
         pm.get_manifest("not-a-pluginxxx")

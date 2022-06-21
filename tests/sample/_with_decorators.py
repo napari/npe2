@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple
 import npe2.implements
 import npe2.implements as impls
 from npe2 import implements
+from npe2.implements import reader
 
 
 @implements.on_activate
@@ -28,7 +29,7 @@ def get_reader(path: str):
     ...
 
 
-@implements.reader(
+@reader(
     id="url_reader",
     title="URL Reader",
     filename_patterns=["http://*", "https://*"],

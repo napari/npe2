@@ -1,6 +1,5 @@
 import ast
 import inspect
-from importlib.metadata import EntryPoint
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
@@ -8,11 +7,10 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Un
 
 from pydantic import BaseModel
 
-from npe2 import PluginManifest
-from npe2.manifest import contributions
-from npe2.manifest.utils import merge_manifests
+from .manifest import PluginManifest, contributions
 
 T = TypeVar("T", bound=Callable[..., Any])
+_COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
 
 
 def _build_decorator(contrib: Type[BaseModel]) -> Callable:
@@ -23,21 +21,34 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     contrib : Type[BaseModel]
         The type of contribution this object implements.
     """
-    # build a signature for this contribution, mixed with Command params
+    # build a signature based on the fields in this contribution type, mixed with
+    # the fields in the CommandContribution
     contribs: Sequence[Type[BaseModel]] = (contributions.CommandContribution, contrib)
-    params = [
-        Parameter(
-            f.name,
-            Parameter.KEYWORD_ONLY,
-            default=Parameter.empty if f.required else f.get_default(),
-            annotation=f.outer_type_ or f.type_,
-        )
-        for f in (f for c in contribs for f in c.__fields__.values())
-        if f.name not in ("python_name", "command")
-    ]
+    params: List[Parameter] = []
+    for contrib in contribs:
+        # iterate over the fields in the contribution types
+        for field in contrib.__fields__.values():
+            # we don't need python_name (since that will be gleaned from the function
+            # we're decorating) ... and we don't need `command`, since that will just
+            # be a string pointing to the contributions.commands entry that we are
+            # creating here.
+            if field.name not in {"python_name", "command"}:
+                # ensure that required fields raise a TypeError if they are not provided
+                default = Parameter.empty if field.required else field.get_default()
+                # create the parameter and add it to the signature.
+                param = Parameter(
+                    field.name,
+                    Parameter.KEYWORD_ONLY,
+                    default=default,
+                    annotation=field.outer_type_ or field.type_,
+                )
+                params.append(param)
+
     signature = Signature(parameters=params, return_annotation=Callable[[T], T])
 
-    # create decorator
+    # creates the actual `@npe2.implements.something` decorator
+    # this just stores the parameters for the corresponding contribution type
+    # as attributes on the function being decorated.
     def _deco(**kwargs) -> Callable[[T], T]:
         def _store_attrs(func: T) -> T:
             # assert we've satisfied the signature when the decorator is invoked
@@ -47,6 +58,7 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
             # store these attributes on the function
             # TODO: check if it's already there and assert the same id
             setattr(func, f"_npe2_{contrib.__name__}", kwargs)
+            # return the original decorated function
             return func
 
         return _store_attrs
@@ -56,6 +68,8 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     return _deco
 
 
+# builds decorators for each of the contribution types that are essentially just
+# pointers to some command.
 reader = _build_decorator(contributions.ReaderContribution)
 writer = _build_decorator(contributions.WriterContribution)
 widget = _build_decorator(contributions.WidgetContribution)
@@ -74,11 +88,34 @@ def on_deactivate(func):
     return func
 
 
-_COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
-
-
 class PluginModuleVisitor(ast.NodeVisitor):
-    """AST visitor to find all contributions in a module."""
+    """AST visitor to find all contributions in a module.
+
+    This visitor will find all the contributions in a module and store them in
+    `contribution_points`.  It works as follows:
+
+    1. Visit all `Import` and `ImportFrom` nodes in the module, storing their import
+       names in `_names` so we can look them up later.  For example, if the module
+       had the line `from npe2 import implements as impls` at the top, then the
+       `visit_ImportFrom` method would add the entry:
+       `self._names['impls'] = 'npe2.implements'`
+       This way, we know that an `@impls` found later in the module is referring to
+       `npe2.implements`.
+    2. Visit all `FunctionDef` and `ClassDef` nodes in the module and check their
+       decorators with `_find_decorators`
+    3. In `_find_decorators` we check to see if the name of any of the decorators
+       resolves to the something from this module (i.e., if it's being decorated with
+       something from `npe2.implements`).  If it is, then we call `_store_contrib`...
+    4. `_store_contrib` first calls `_store_command` which does the job of storing the
+       fully-resolved `python_name` for the function being decorated, and creates a
+       CommandContribution. `_store_contrib` will then create the appropriate
+       contribution type (e.g. `npe2.implements.reader` will instantiate a
+       `ReaderContribution`), set its `command` entry to the `id` of the just-created
+       `CommandContribution`, then store it in `contribution_points`.
+    5. When the visitor is finished, we can create an instance of `ContributionPoints`
+       using `ContributionPoints(**visitor.contribution_points)`, then add it to a
+       manifest.
+    """
 
     def __init__(self, plugin_name: str, module_name: str) -> None:
         super().__init__()
@@ -88,24 +125,35 @@ class PluginModuleVisitor(ast.NodeVisitor):
         self._names: Dict[str, str] = {}
 
     def visit_Import(self, node: ast.Import) -> Any:  # noqa: D102
+        # https://docs.python.org/3/library/ast.html#ast.Import
         for alias in node.names:
             self._names[alias.asname or alias.name] = alias.name
         return super().generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:  # noqa: D102
+        # https://docs.python.org/3/library/ast.html#ast.ImportFrom
         for alias in node.names:
             self._names[alias.asname or alias.name] = f"{node.module}.{alias.name}"
         return super().generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:  # noqa: D102
+        # https://docs.python.org/3/library/ast.html#ast.FunctionDef
         self._find_decorators(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> Any:  # noqa: D102
         self._find_decorators(node)
 
     def _find_decorators(self, node: Union[ast.ClassDef, ast.FunctionDef]):
+        # for each in the decorator list ...
         for call in node.decorator_list:
-            if isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute):
+            # https://docs.python.org/3/library/ast.html#ast.Call
+            # if the function is an attribute ...
+            # (e.g in `@npe2.implements.reader`, `reader` is an attribute of
+            # implements, which is an attribute of npe2)
+            if not isinstance(call, ast.Call):
+                continue
+            if isinstance(call.func, ast.Attribute):
+                # then go up the chain of attributes until we get to a root Name
                 val = call.func.value
                 _names = []
                 while isinstance(val, ast.Attribute):
@@ -113,9 +161,23 @@ class PluginModuleVisitor(ast.NodeVisitor):
                     val = val.value
                 if isinstance(val, ast.Name):
                     _names.append(val.id)
+                    # finally, we can build the fully resolved call name of the
+                    # decorator (e.g. `@npe2.implements`, or `@implements`)
                     call_name = ".".join(reversed(_names))
+                    # we then check the `_names` we gathered above to resolve these
+                    # call names to their fully qualified names (e.g. `implements`
+                    # would resolve to `npe2.implements` if the name `implements` was
+                    # imported from `npe2`.)
+                    # If the name resolves to the name of this module,
+                    # then we have a hit! Store the contribution.
                     if self._names.get(call_name) == __name__:
                         self._store_contrib(call.func.attr, call.keywords, node.name)
+            elif isinstance(call.func, ast.Name):
+                # if the function is just a direct name (e.g. `@reader`)
+                # then we can just see if the name points to something imported from
+                # this module.
+                if self._names.get(call.func.id, "").startswith(__name__):
+                    self._store_contrib(call.func.id, call.keywords, node.name)
         return super().generic_visit(node)
 
     def _store_contrib(self, type_: str, keywords: List[ast.keyword], name: str):
@@ -160,7 +222,7 @@ def visit(
         Either a path to a Python module, a module object, or a string
     plugin_name : str
         Name of the plugin
-    module_name : str, optional
+    module_name : str
         Module name, by default ""
 
     Returns
@@ -242,7 +304,7 @@ def compile(src_dir: Union[str, Path]) -> PluginManifest:
 
     import pkgutil
 
-    from npe2.manifest.utils import merge_contributions
+    from npe2.manifest.utils import merge_contributions, merge_manifests
 
     contribs: List[contributions.ContributionPoints] = []
     for name, initpy in info["packages"].items():
