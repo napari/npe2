@@ -88,7 +88,7 @@ def _check_output(output: Path) -> Format:
             f"Invalid output extension {output.suffix!r}. Must be one of: "
             + ", ".join(Format._member_names_)
         )
-        raise typer.Exit()
+        raise typer.Exit(1)
     return Format(output.suffix.lstrip("."))
 
 
@@ -117,15 +117,13 @@ def parse(
     ),
 ):
     """Show parsed manifest as yaml."""
-    if output:
-        format = _check_output(output)
-
+    fmt = _check_output(output) if output else format
     pm = PluginManifest._from_package_or_name(name)
-    manifest_string = getattr(pm, format.value)(indent=indent)
+    manifest_string = getattr(pm, fmt.value)(indent=indent)
     if output:
         output.write_text(manifest_string)
     else:
-        _pprint_formatted(manifest_string, format)
+        _pprint_formatted(manifest_string, fmt)
 
 
 @app.command()
@@ -164,20 +162,18 @@ def fetch(
     """
     from npe2._fetch import fetch_manifest
 
-    if output:
-        format = _check_output(output)
-
+    fmt = _check_output(output) if output else format
     kwargs: dict = {"indent": indent}
     if include_package_meta:
         kwargs["exclude"] = set()
 
     mf = fetch_manifest(name, version=version)
-    manifest_string = getattr(mf, format.value)(**kwargs)
+    manifest_string = getattr(mf, fmt.value)(**kwargs)
 
     if output:
         output.write_text(manifest_string)
     else:
-        _pprint_formatted(manifest_string, format)
+        _pprint_formatted(manifest_string, fmt)
 
 
 @app.command()
