@@ -6,8 +6,8 @@ import pytest
 from npe2 import fetch_manifest
 from npe2._fetch import (
     _fetch_manifest_with_full_install,
-    get_all_plugins,
-    get_plugin_info,
+    get_hub_plugin,
+    get_hub_plugins,
     get_pypi_url,
 )
 from npe2.manifest._npe1_adapter import NPE1Adapter
@@ -42,11 +42,11 @@ def test_fetch_manifest_with_full_install():
     assert mf.contributions
 
 
-def test_get_all_plugins():
-    plugins = get_all_plugins()
+def test_get_hub_plugins():
+    plugins = get_hub_plugins()
     assert "napari-svg" in plugins
 
 
-def test_get_plugin_info():
-    info = get_plugin_info("napari-svg")
+def test_get_hub_plugin():
+    info = get_hub_plugin("napari-svg")
     assert info["name"] == "napari-svg"

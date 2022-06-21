@@ -26,76 +26,13 @@ logger = getLogger(__name__)
 
 NPE1_ENTRY_POINT = "napari.plugin"
 NPE2_ENTRY_POINT = "napari.manifest"
-
-
-@lru_cache
-def _pypi_info(package: str) -> dict:
-    with urlopen(f"https://pypi.org/pypi/{package}/json") as f:
-        return json.load(f)
-
-
-def get_pypi_url(
-    package: str, version: Optional[str] = None, packagetype: Optional[str] = None
-) -> str:
-    """Get URL for a package on PyPI.
-
-    Parameters
-    ----------
-    package : str
-        package name
-    version : str, optional
-        package version, by default, latest version.
-    packagetype : str, optional
-        one of 'sdist', 'bdist_wheel', by default 'bdist_wheel' will be tried first,
-        then 'sdist'
-
-    Returns
-    -------
-    str
-        URL to download the package.
-
-    Raises
-    ------
-    ValueError
-        If packagetype is not one of 'sdist', 'bdist_wheel', or if version is specified
-        and does not match any available version.
-    KeyError
-        If packagetype is specified and no package of that type is available.
-    """
-    if packagetype not in {"sdist", "bdist_wheel", None}:
-        raise ValueError(  # pragma: no cover
-            f"Invalid packagetype: {packagetype}, must be one of sdist, bdist_wheel"
-        )
-
-    data = _pypi_info(package)
-    if version:
-        version = version.lstrip("v")
-        try:
-            _releases: List[dict] = data["releases"][version]
-        except KeyError as e:  # pragma: no cover
-            raise ValueError(f"{package} does not have version {version}") from e
-    else:
-        _releases = data["urls"]
-
-    releases = {d.get("packagetype"): d for d in _releases}
-    if packagetype:
-        if packagetype not in releases:  # pragma: no cover
-            version = version or "latest"
-            raise KeyError(f'No {packagetype} releases found for version "{version}"')
-        return releases[packagetype]["url"]
-    return (releases.get("bdist_wheel") or releases["sdist"])["url"]
-
-
-@contextmanager
-def _tmp_pypi_wheel_download(
-    name: str, version: Optional[str] = None
-) -> Iterator[Path]:
-    url = get_pypi_url(name, version=version, packagetype="bdist_wheel")
-    logger.debug(f"downloading wheel for {name} {version or ''}")
-    with tempfile.TemporaryDirectory() as td, urlopen(url) as f:
-        with ZipFile(BytesIO(f.read())) as zf:
-            zf.extractall(td)
-            yield Path(td)
+__all__ = [
+    "fetch_manifest",
+    "get_pypi_url",
+    "isolated_plugin_env",
+    "get_hub_plugin",
+    "get_hub_plugins",
+]
 
 
 def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
@@ -113,7 +50,6 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     PluginManifest
         Plugin manifest for package `specifier`.
     """
-
     from npe2 import PluginManifest
     from npe2.manifest import PackageMetadata
 
@@ -155,6 +91,76 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
 
     logger.debug("falling back to npe1")
     return _fetch_manifest_with_full_install(package, version=version)
+
+
+@lru_cache
+def _pypi_info(package: str) -> dict:
+    with urlopen(f"https://pypi.org/pypi/{package}/json") as f:
+        return json.load(f)
+
+
+def get_pypi_url(
+    package: str, version: Optional[str] = None, packagetype: Optional[str] = None
+) -> str:
+    """Get URL for a package on PyPI.
+
+    Parameters
+    ----------
+    package : str
+        package name
+    version : str, optional
+        package version, by default, latest version.
+    packagetype : str, optional
+        one of `'sdist'`, `'bdist_wheel'`, or `None`,
+        by default `None`, which means 'bdist_wheel' will be tried first, then 'sdist'
+
+    Returns
+    -------
+    str
+        URL to download the package.
+
+    Raises
+    ------
+    ValueError
+        If packagetype is not one of 'sdist', 'bdist_wheel', or if version is specified
+        and does not match any available version.
+    KeyError
+        If packagetype is specified and no package of that type is available.
+    """
+    if packagetype not in {"sdist", "bdist_wheel", None}:
+        raise ValueError(  # pragma: no cover
+            f"Invalid packagetype: {packagetype}, must be one of sdist, bdist_wheel"
+        )
+
+    data = _pypi_info(package)
+    if version:
+        version = version.lstrip("v")
+        try:
+            _releases: List[dict] = data["releases"][version]
+        except KeyError as e:  # pragma: no cover
+            raise ValueError(f"{package} does not have version {version}") from e
+    else:
+        _releases = data["urls"]
+
+    releases = {d.get("packagetype"): d for d in _releases}
+    if packagetype:
+        if packagetype not in releases:  # pragma: no cover
+            version = version or "latest"
+            raise KeyError(f'No {packagetype} releases found for version "{version}"')
+        return releases[packagetype]["url"]
+    return (releases.get("bdist_wheel") or releases["sdist"])["url"]
+
+
+@contextmanager
+def _tmp_pypi_wheel_download(
+    package: str, version: Optional[str] = None
+) -> Iterator[Path]:
+    url = get_pypi_url(package, version=version, packagetype="bdist_wheel")
+    logger.debug(f"downloading wheel for {package} {version or ''}")
+    with tempfile.TemporaryDirectory() as td, urlopen(url) as f:
+        with ZipFile(BytesIO(f.read())) as zf:
+            zf.extractall(td)
+            yield Path(td)
 
 
 @contextmanager
@@ -250,14 +256,14 @@ def _fetch_manifest_with_full_install(
 
 
 @lru_cache
-def get_all_plugins() -> Dict[str, str]:
+def get_hub_plugins() -> Dict[str, str]:
     """Return {name: latest_version} for all plugins on the hub."""
     with urlopen("https://api.napari-hub.org/plugins") as r:
         return json.load(r)
 
 
 @lru_cache
-def get_plugin_info(plugin: str) -> Dict[str, Any]:
+def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
     """Return hub information for a specific plugin."""
-    with urlopen(f"https://api.napari-hub.org/plugins/{plugin}") as r:
+    with urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
         return json.load(r)
