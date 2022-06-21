@@ -130,7 +130,13 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
                 # PathDistribution.locate_file to get the file.
                 if ep.group == NPE2_ENTRY_POINT:
                     logger.debug("pypi wheel has npe2 entry point.")
-                    mf_file = dist.locate_file(Path(ep.module) / ep.attr)
+                    # python 3.8 fallbacks
+                    match = ep.pattern.match(ep.value)
+                    assert match
+                    module: str = match.groupdict()["module"]
+                    attr: str = match.groupdict()["attr"]
+
+                    mf_file = dist.locate_file(Path(module) / attr)
                     mf = PluginManifest.from_file(str(mf_file))
                     # manually add the package metadata from our distribution object.
                     mf.package_metadata = PackageMetadata.from_dist_metadata(
