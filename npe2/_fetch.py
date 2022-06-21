@@ -112,22 +112,30 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     is_npe1 = False
 
     # first just grab the wheel from pypi with no dependencies
-    with _tmp_pypi_wheel_download(package, version) as td:
-        # create a PathDistribution from the dist-info directory in the wheel
-        dist = metadata.PathDistribution(next(Path(td).glob("*.dist-info")))
+    try:
+        with _tmp_pypi_wheel_download(package, version) as td:
+            # create a PathDistribution from the dist-info directory in the wheel
+            dist = metadata.PathDistribution(next(Path(td).glob("*.dist-info")))
 
-        for ep in dist.entry_points:
-            # if we find an npe2 entry point, we can just use
-            # PathDistribution.locate_file to get the file.
-            if ep.group == "napari.manifest":
-                logger.debug("pypi wheel has npe2 entry point.")
-                mf_file = dist.locate_file(Path(ep.module) / ep.attr)
-                mf = PluginManifest.from_file(str(mf_file))
-                # manually add the package metadata from our distribution object.
-                mf.package_metadata = PackageMetadata.from_dist_metadata(dist.metadata)
-                return mf
-            elif ep.group == "napari.plugin":
-                is_npe1 = True
+            for ep in dist.entry_points:
+                # if we find an npe2 entry point, we can just use
+                # PathDistribution.locate_file to get the file.
+                if ep.group == "napari.manifest":
+                    logger.debug("pypi wheel has npe2 entry point.")
+                    mf_file = dist.locate_file(Path(ep.module) / ep.attr)
+                    mf = PluginManifest.from_file(str(mf_file))
+                    # manually add the package metadata from our distribution object.
+                    mf.package_metadata = PackageMetadata.from_dist_metadata(
+                        dist.metadata
+                    )
+                    return mf
+                elif ep.group == "napari.plugin":
+                    is_npe1 = True
+    except KeyError as e:
+        if "No bdist_wheel releases found" not in str(e):
+            raise
+        logger.debug("falling back to npe1")
+        is_npe1 = True
 
     if not is_npe1:
         raise ValueError(f"{package} had no napari entry points.")
