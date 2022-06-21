@@ -455,6 +455,7 @@ def visit(
 
 def _get_setuptools_info(src_path: Path, entry="napari.manifest") -> Dict[str, Any]:
     import os
+    from importlib.metadata import EntryPoint
 
     from setuptools import Distribution
     from setuptools.command.build_py import build_py
