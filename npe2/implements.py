@@ -150,7 +150,9 @@ class PluginModuleVisitor(ast.NodeVisitor):
             # if the function is an attribute ...
             # (e.g in `@npe2.implements.reader`, `reader` is an attribute of
             # implements, which is an attribute of npe2)
-            if isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute):
+            if not isinstance(call, ast.Call):
+                continue
+            if isinstance(call.func, ast.Attribute):
                 # then go up the chain of attributes until we get to a root Name
                 val = call.func.value
                 _names = []
@@ -170,6 +172,12 @@ class PluginModuleVisitor(ast.NodeVisitor):
                     # then we have a hit! Store the contribution.
                     if self._names.get(call_name) == __name__:
                         self._store_contrib(call.func.attr, call.keywords, node.name)
+            elif isinstance(call.func, ast.Name):
+                # if the function is just a direct name (e.g. `@reader`)
+                # then we can just see if the name points to something imported from
+                # this module.
+                if self._names.get(call.func.id, "").startswith(__name__):
+                    self._store_contrib(call.func.id, call.keywords, node.name)
         return super().generic_visit(node)
 
     def _store_contrib(self, type_: str, keywords: List[ast.keyword], name: str):
