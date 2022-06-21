@@ -1,8 +1,8 @@
 # Changelog
 
-## [v0.5.0](https://github.com/napari/npe2/tree/v0.5.0) (2022-06-21)
+## [0.5.0](https://github.com/napari/npe2/tree/0.5.0) (2022-06-21)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.4.1...v0.5.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.4.1...0.5.0)
 
 **Implemented enhancements:**
 
@@ -23,10 +23,6 @@
 **Fixed bugs:**
 
 - hide docs again in napari menus \(Fix napari docs build\) [\#178](https://github.com/napari/npe2/pull/178) ([tlambert03](https://github.com/tlambert03))
-
-**Merged pull requests:**
-
-- add changelog for v0.4.1 [\#179](https://github.com/napari/npe2/pull/179) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
 
