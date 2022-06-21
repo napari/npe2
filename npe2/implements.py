@@ -9,6 +9,17 @@ from pydantic import BaseModel
 
 from .manifest import contributions
 
+__all__ = [
+    "on_activate",
+    "on_deactivate",
+    "PluginModuleVisitor",
+    "reader",
+    "sample_data_generator",
+    "visit",
+    "widget",
+    "writer",
+]
+
 T = TypeVar("T", bound=Callable[..., Any])
 _COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
 
