@@ -229,6 +229,7 @@ def _fetch_npe1_manifest(package: str, version: Optional[str] = None) -> PluginM
                 warnings.filterwarnings(
                     "error", message="Error importing contributions"
                 )
+                warnings.filterwarnings("ignore", message="Found a multi-layer writer")
                 mf._load_contributions(save=False)
         return mf
 
