@@ -127,6 +127,42 @@ def parse(
 
 
 @app.command()
+def list():
+    from rich.console import Console
+    from rich.table import Table
+
+    from npe2 import PluginManager
+
+    pm = PluginManager.instance()
+    pm.discover(include_npe1=True)
+
+    table = Table(title="Installed napari plugins")
+
+    table.add_column("Name", style="cyan", no_wrap=True)
+    table.add_column("Version", style="magenta")
+    table.add_column("npe2")
+    table.add_column("Contributions", style="green")
+
+    rows = (
+        (
+            mf.name,
+            mf.package_version,
+            "" if mf.npe1_shim else ":white_check_mark:",
+            ", ".join(
+                [f"{k}({len(v)})" for k, v in mf.contributions.dict().items() if v]
+            ),
+        )
+        for mf in pm.iter_manifests()
+    )
+
+    for row in sorted(rows, key=lambda r: r[0]):
+        table.add_row(*row)
+
+    console = Console()
+    console.print(table)
+
+
+@app.command()
 def fetch(
     name: str,
     version: Optional[str] = None,
