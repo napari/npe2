@@ -4,7 +4,18 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from pydantic import BaseModel
 
@@ -329,7 +340,9 @@ def _get_setuptools_info(src_path: Path, entry="napari.manifest") -> Dict[str, A
         os.chdir(curdir)
 
 
-def compile(src_dir: Union[str, Path]) -> PluginManifest:
+def compile(
+    src_dir: Union[str, Path], dest: Union[str, Path, None] = None
+) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
     This will discover all the contribution points in the repo and output a manifest
@@ -349,6 +362,14 @@ def compile(src_dir: Union[str, Path]) -> PluginManifest:
 
     src_path = Path(src_dir)
     assert src_path.exists(), f"src_dir {src_dir} does not exist"
+
+    if dest is not None:
+        pdest = Path(dest)
+        suffix = pdest.suffix.lstrip(".")
+        if suffix not in {"json", "yaml", "toml"}:
+            raise ValueError(
+                f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
+            )
 
     info = _get_setuptools_info(src_path)
 
@@ -375,4 +396,9 @@ def compile(src_dir: Union[str, Path]) -> PluginManifest:
         original_manifest = PluginManifest.from_file(manifest)
         mf.display_name = original_manifest.display_name
         mf = merge_manifests([original_manifest, mf], overwrite=True)
+
+    if dest is not None:
+        manifest_string = getattr(mf, cast(str, suffix))(indent=2)
+        pdest.write_text(manifest_string)
+
     return mf
