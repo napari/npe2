@@ -61,7 +61,6 @@ def validate(
     ),
 ):
     """Validate manifest for a distribution name or manifest filepath."""
-
     err: Optional[Exception] = None
     try:
         pm = PluginManifest._from_package_or_name(name)
@@ -323,8 +322,7 @@ def cache(
     from npe2.manifest._npe1_adapter import ADAPTER_CACHE, clear_cache
 
     if clear:
-        _cleared = clear_cache(names)
-        if _cleared:
+        if _cleared := clear_cache(names):
             nf = "\n".join(f" - {i.name}" for i in _cleared)
             typer.secho("Cleared these files from cache:")
             typer.secho(nf, fg=typer.colors.RED)
