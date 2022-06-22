@@ -11,6 +11,9 @@ from npe2 import PluginManifest
 
 app = typer.Typer()
 
+SYNTAX_THME = "monokai"
+SYNTAX_BACKGROUND = "black"
+
 
 class Format(str, Enum):
     """Valid manifest file formats."""
@@ -27,7 +30,12 @@ def _pprint_formatted(string, format: Format = Format.yaml):  # pragma: no cover
         from rich.syntax import Syntax
 
         Console().print(
-            Syntax(string, format.value, theme="monokai", background_color="black")
+            Syntax(
+                string,
+                format.value,
+                theme=SYNTAX_THME,
+                background_color=SYNTAX_BACKGROUND,
+            )
         )
     except ImportError:
         typer.echo(string)
