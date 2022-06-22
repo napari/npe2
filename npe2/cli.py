@@ -135,16 +135,20 @@ def list(fields: str = "name,version,npe2,contributions", sort: str = "0"):
 
     _fields = [f.lower() for f in fields.split(",")]
 
+    bad_param_msg = (
+        f"Invalid sort value {sort!r}. "
+        f"Must be column index (<{len(_fields)}) or one of: " + ", ".join(_fields)
+    )
     try:
         _sort_by = int(sort)
         sort_index = _sort_by
+        if sort_index >= len(_fields):
+            raise typer.BadParameter(bad_param_msg)
     except ValueError:
-        sort_index = _fields.index(sort.lower())
-    if sort_index >= len(_fields):
-        raise typer.BadParameter(
-            f"Invalid sort value {sort!r}. "
-            f"Must be integer <{len(_fields)} or one of: " + ", ".join(_fields)
-        )
+        try:
+            sort_index = _fields.index(sort.lower())
+        except ValueError:
+            raise typer.BadParameter(bad_param_msg)
 
     pm = PluginManager.instance()
     pm.discover(include_npe1=True)
