@@ -1,9 +1,10 @@
 import builtins
 import warnings
 from enum import Enum
+from itertools import cycle
 from pathlib import Path
 from textwrap import indent
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import typer
 
@@ -127,35 +128,69 @@ def parse(
 
 
 @app.command()
-def list():
+def list(fields: str = "name,version,npe2,contributions", sort: str = "0"):
     from rich.console import Console
     from rich.table import Table
 
     from npe2 import PluginManager
 
+    _fields = [f.lower() for f in fields.split(",")]
+
+    try:
+        _sort_by = int(sort)
+        sort_index = _sort_by
+    except ValueError:
+        sort_index = _fields.index(sort.lower())
+    if sort_index >= len(_fields):
+        raise typer.BadParameter(
+            f"Invalid sort value {sort!r}. "
+            f"Must be integer <{len(_fields)} or one of: " + ", ".join(_fields)
+        )
+
     pm = PluginManager.instance()
     pm.discover(include_npe1=True)
 
-    table = Table(title="Installed napari plugins")
+    table = Table()
 
-    table.add_column("Name", style="cyan", no_wrap=True)
-    table.add_column("Version", style="magenta")
-    table.add_column("npe2")
-    table.add_column("Contributions", style="green")
+    for f, color in zip(_fields, cycle(["cyan", "magenta", "green", "yellow"])):
+        name = f.split(".")[-1].replace("_", " ").title()
+        table.add_column(name, style=color)
 
-    rows = (
-        (
-            mf.name,
-            mf.package_version,
-            "" if mf.npe1_shim else ":white_check_mark:",
-            ", ".join(
+    _aliases = {"version": "package_version", "npe2": "!npe1_shim", "npe1": "npe1_shim"}
+
+    def _get_field(mf: PluginManifest, field: str):
+        field = _aliases.get(field, field)
+        if field == "contributions":
+            return ", ".join(
                 [f"{k}({len(v)})" for k, v in mf.contributions.dict().items() if v]
-            ),
-        )
-        for mf in pm.iter_manifests()
-    )
+            )
+        negate = False
+        if field.startswith("!"):
+            field = field[1:]
+            negate = True
 
-    for row in sorted(rows, key=lambda r: r[0]):
+        parts = field.split(".")
+        try:
+            val: Any = mf
+            while parts:
+                val = getattr(val, parts.pop(0))
+        except AttributeError as e:
+            raise typer.BadParameter(f"Unknown field name: {field!r}") from e
+
+        if negate:
+            val = not val
+        if (f := mf.__fields__.get(field)) and f.outer_type_ == bool:
+            return ":white_check_mark:" if val else ""
+        if isinstance(val, (builtins.list, tuple)):
+            return ", ".join([str(v) for v in val])
+        return str(val)
+
+    rows = []
+    for mf in pm.iter_manifests():
+        row = [_get_field(mf, field) for field in _fields]
+        rows.append(row)
+
+    for row in sorted(rows, key=lambda r: r[sort_index]):
         table.add_row(*row)
 
     console = Console()
