@@ -4,7 +4,19 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from pydantic import BaseModel
 
@@ -21,6 +33,9 @@ __all__ = [
     "widget",
     "writer",
 ]
+
+if TYPE_CHECKING:
+    from importlib.machinery import FileFinder, SourceFileLoader
 
 
 T = TypeVar("T", bound=Callable[..., Any])
@@ -341,6 +356,7 @@ def compile(src_dir: Union[str, Path]) -> PluginManifest:
     assert src_path.exists(), f"src_dir {src_dir} does not exist"
 
     info = _get_setuptools_info(src_path)
+    plugin_name = info["name"]
 
     import pkgutil
 
@@ -348,17 +364,19 @@ def compile(src_dir: Union[str, Path]) -> PluginManifest:
 
     contribs: List[contributions.ContributionPoints] = []
     for name, initpy in info["packages"].items():
-        contribs.extend(
-            visit(
-                module_info.module_finder.find_module(module_info.name).path,  # type: ignore  # noqa
-                plugin_name=info["name"],
-                module_name=f"{name}.{module_info.name}",
-            )
-            for module_info in pkgutil.iter_modules([initpy.replace("__init__.py", "")])
-        )
+        for module_info in pkgutil.iter_modules([initpy.replace("__init__.py", "")]):
+            finder = cast("FileFinder", module_info.module_finder)
+            if loader := finder.find_module(module_info.name):
+                contribs.append(
+                    visit(
+                        str(cast("SourceFileLoader", loader).path),
+                        plugin_name=plugin_name,
+                        module_name=f"{name}.{module_info.name}",
+                    )
+                )
 
     mf = PluginManifest(
-        name=info["name"],
+        name=plugin_name,
         contributions=merge_contributions(contribs),
     )
     if (manifest := info.get("manifest")) and Path(manifest).exists():
