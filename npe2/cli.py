@@ -2,7 +2,7 @@ import builtins
 import warnings
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence
+from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence
 
 import typer
 
@@ -23,6 +23,8 @@ class Format(str, Enum):
 
 
 class ListFormat(str, Enum):
+    """Valid out formats for `npe2 list`."""
+
     table = "table"
     json = "json"  # alias for json in pandas "records" format
     yaml = "yaml"
@@ -157,74 +159,112 @@ def parse(
         _pprint_formatted(manifest_string, fmt)
 
 
-def _get_field(mf: PluginManifest, field: str):
-    if field == "contributions":
-        return {k: len(v) for k, v in mf.contributions.dict().items() if v}
+def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
+    """Cleanup output from pm.dict() into rows for table.
 
-    negate = False
-    if field.startswith("!"):
-        field = field[1:]
-        negate = True
+    outside of just extracting the fields we care about, this also:
 
-    parts = field.split(".")
-    try:
-        val: Any = mf
-        while parts:
-            val = getattr(val, parts.pop(0))
-    except AttributeError as e:
-        raise typer.BadParameter(f"Unknown field name: {field!r}") from e
+    - handles nested fields expressed as dotted strings: `packge_metadata.version`
+    - negates fields that are prefixed with `!`
+    - simplifies contributions to a {name: count} dict.
 
-    if negate:
-        val = not val
-    if isinstance(val, (builtins.list, tuple)):
-        return ", ".join([str(v) for v in val])
-    return val
+    """
+    for info in pm_dict["plugins"].values():
+        row = []
+        for field in normed_fields:
+            val = info.get(field.lstrip("!"))
+
+            # extact nested fields
+            if not val and "." in field:
+                parts = field.split(".")
+                val = info
+                while parts:
+                    val = val[parts.pop(0)]
+
+            # negate fields starting with !
+            if field.startswith("!"):
+                val = not val
+
+            # simplify contributions to just the number of contributions
+            if field == "contributions":
+                val = {k: len(v) for k, v in val.items() if v}
+
+            row.append(val)
+        yield row
 
 
 @app.command()
 def list(
-    fields: str = "name,version,npe2,contributions",
-    sort: str = "0",
-    format: ListFormat = ListFormat.table,
+    fields: str = typer.Option(
+        "name,version,npe2,contributions",
+        help="Comma seperated list of fields to include in the output."
+        "Names may contain dots, indicating nested manifest fields "
+        "(`contributions.readers`). Fields names prefixed with `!` will be "
+        "negated in the output. Fields will appear in the table in the order in "
+        "which they are provided.",
+        metavar="FIELDS",
+    ),
+    sort: str = typer.Option(
+        "0",
+        "-s",
+        "--sort",
+        help="Field name or (int) index on which to sort.",
+        metavar="KEY",
+    ),
+    format: ListFormat = typer.Option(
+        "table",
+        "-f",
+        "--format",
+        help="Out format to use. When using 'compact', `--fields` is ignored ",
+    ),
 ):
+    """List currently installed plugins."""
 
     if format == ListFormat.compact:
-        fields = "name,version,npe2,contributions"
+        fields = "name,version,contributions"
 
-    _fields = [f.lower() for f in fields.split(",")]
+    requested_fields = [f.lower() for f in fields.split(",")]
 
+    # check for sort values that will not work
     bad_sort_param_msg = (
         f"Invalid sort value {sort!r}. "
-        f"Must be column index (<{len(_fields)}) or one of: " + ", ".join(_fields)
+        f"Must be column index (<{len(requested_fields)}) or one of: "
+        + ", ".join(requested_fields)
     )
     try:
-        if (sort_index := int(sort)) >= len(_fields):
+        if (sort_index := int(sort)) >= len(requested_fields):
             raise typer.BadParameter(bad_sort_param_msg)
     except ValueError:
         try:
-            sort_index = _fields.index(sort.lower())
+            sort_index = requested_fields.index(sort.lower())
         except ValueError as e:
             raise typer.BadParameter(bad_sort_param_msg) from e
 
+    # some convenience aliases
+    ALIASES = {
+        "version": "package_metadata.version",
+        "summary": "package_metadata.summary",
+        "license": "package_metadata.license",
+        "author": "package_metadata.author",
+        "npe2": "!npe1_shim",
+        "npe1": "npe1_shim",
+    }
+    normed_fields = [ALIASES.get(f, f) for f in requested_fields]
+
     pm = PluginManager.instance()
     pm.discover(include_npe1=True)
-
-    ALIASES = {"version": "package_version", "npe2": "!npe1_shim", "npe1": "npe1_shim"}
-
-    rows = []
-    for mf in pm.iter_manifests():
-        row = [_get_field(mf, ALIASES.get(f, f)) for f in _fields]
-        rows.append(row)
-
-    rows = sorted(rows, key=lambda r: r[sort_index])
+    pm_dict = pm.dict(include={f.lstrip("!") for f in normed_fields})
+    rows = sorted(_make_rows(pm_dict, normed_fields), key=lambda r: r[sort_index])
 
     if format == ListFormat.table:
-        headers = [f.split(".")[-1].replace("_", " ").title() for f in _fields]
-        _pprint_table(headers=headers, rows=rows)
+        heads = [f.split(".")[-1].replace("_", " ").title() for f in requested_fields]
+        _pprint_table(headers=heads, rows=rows)
         return
 
+    # standard records format used for the other formats
     # [{column -> value}, ... , {column -> value}]
-    data: List[dict] = [dict(zip(_fields, row)) for row in rows]
+    data: List[dict] = [dict(zip(requested_fields, row)) for row in rows]
+
     if format == ListFormat.json:
         import json
 
