@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from os import PathLike
-    from typing import Iterator, List, NewType, Optional, Sequence, Tuple, Union
+    from typing import Any, Iterator, List, NewType, Optional, Sequence, Tuple, Union
 
     from npe2 import PluginManifest
-    from npe2._plugin_manager import PluginContext
+    from npe2._plugin_manager import InclusionSet, PluginContext
     from npe2.manifest import contributions
 
     from ._plugin_manager import PluginManager
@@ -25,6 +25,12 @@ def instance() -> PluginManager:
 
 def discover(paths: Sequence[str] = (), clear=False, include_npe1=False) -> None:
     """Discover and index plugin manifests in the environment."""
+
+
+def dict(
+    self, *, include: InclusionSet = None, exclude: InclusionSet = None
+) -> Dict[str, Any]:
+    """Return a dictionary with the state of the plugin manager."""
 
 
 def index_npe1_adapters() -> None:
