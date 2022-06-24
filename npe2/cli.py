@@ -1,14 +1,15 @@
 import builtins
 import warnings
 from enum import Enum
-from itertools import cycle
 from pathlib import Path
-from textwrap import indent
-from typing import Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence
 
 import typer
 
-from npe2 import PluginManifest
+from npe2 import PluginManager, PluginManifest
+
+if TYPE_CHECKING:
+    from rich.console import RenderableType
 
 app = typer.Typer()
 
@@ -21,29 +22,59 @@ class Format(str, Enum):
     toml = "toml"
 
 
+class ListFormat(str, Enum):
+    table = "table"
+    json = "json"  # alias for json in pandas "records" format
+    yaml = "yaml"
+    compact = "compact"
+
+
 def _pprint_formatted(string, format: Format = Format.yaml):  # pragma: no cover
     """Print yaml nicely, depending on available modules."""
-    try:
-        from rich.console import Console
-        from rich.syntax import Syntax
+    from rich.console import Console
+    from rich.syntax import Syntax
 
-        Console().print(Syntax(string, format.value, theme="fruity"))
-    except ImportError:
-        typer.echo(string)
+    Console().print(Syntax(string, format.value, theme="fruity"))
 
 
 def _pprint_exception(err: Exception):
+    from rich.console import Console
+    from rich.traceback import Traceback
+
     e_info = (type(err), err, err.__traceback__)
-    try:
-        from rich.console import Console
-        from rich.traceback import Traceback
 
-        trace = Traceback.extract(*e_info, show_locals=True)
-        Console().print(Traceback(trace))
-    except ImportError:
-        import traceback
+    trace = Traceback.extract(*e_info, show_locals=True)
+    Console().print(Traceback(trace))
 
-        typer.echo("\n" + "".join(traceback.format_exception(*e_info)))
+
+def _pprint_table(
+    headers: Sequence["RenderableType"], rows: Sequence[Sequence["RenderableType"]]
+):
+    from itertools import cycle
+
+    from rich.console import Console
+    from rich.table import Table
+
+    COLORS = ["cyan", "magenta", "green", "yellow"]
+    EMOJI_TRUE = ":white_check_mark:"
+    EMOJI_FALSE = ""
+
+    table = Table()
+    for head, color in zip(headers, cycle(COLORS)):
+        table.add_column(head, style=color)
+    for row in rows:
+        strings = []
+        for r in row:
+            val = ""
+            if isinstance(r, dict):
+                val = ", ".join(f"{k} ({v})" for k, v in r.items())
+            elif r:
+                val = str(r).replace("True", EMOJI_TRUE).replace("False", EMOJI_FALSE)
+            strings.append(val)
+        table.add_row(*strings)
+
+    console = Console()
+    console.print(table)
 
 
 @app.command()
@@ -126,78 +157,87 @@ def parse(
         _pprint_formatted(manifest_string, fmt)
 
 
-@app.command()
-def list(fields: str = "name,version,npe2,contributions", sort: str = "0"):
-    from rich.console import Console
-    from rich.table import Table
+def _get_field(mf: PluginManifest, field: str):
+    if field == "contributions":
+        return {k: len(v) for k, v in mf.contributions.dict().items() if v}
 
-    from npe2 import PluginManager
+    negate = False
+    if field.startswith("!"):
+        field = field[1:]
+        negate = True
+
+    parts = field.split(".")
+    try:
+        val: Any = mf
+        while parts:
+            val = getattr(val, parts.pop(0))
+    except AttributeError as e:
+        raise typer.BadParameter(f"Unknown field name: {field!r}") from e
+
+    if negate:
+        val = not val
+    if isinstance(val, (builtins.list, tuple)):
+        return ", ".join([str(v) for v in val])
+    return val
+
+
+@app.command()
+def list(
+    fields: str = "name,version,npe2,contributions",
+    sort: str = "0",
+    format: ListFormat = ListFormat.table,
+):
+
+    if format == ListFormat.compact:
+        fields = "name,version,npe2,contributions"
 
     _fields = [f.lower() for f in fields.split(",")]
 
-    bad_param_msg = (
+    bad_sort_param_msg = (
         f"Invalid sort value {sort!r}. "
         f"Must be column index (<{len(_fields)}) or one of: " + ", ".join(_fields)
     )
     try:
-        _sort_by = int(sort)
-        sort_index = _sort_by
-        if sort_index >= len(_fields):
-            raise typer.BadParameter(bad_param_msg)
+        if (sort_index := int(sort)) >= len(_fields):
+            raise typer.BadParameter(bad_sort_param_msg)
     except ValueError:
         try:
             sort_index = _fields.index(sort.lower())
-        except ValueError:
-            raise typer.BadParameter(bad_param_msg)
+        except ValueError as e:
+            raise typer.BadParameter(bad_sort_param_msg) from e
 
     pm = PluginManager.instance()
     pm.discover(include_npe1=True)
 
-    table = Table()
-
-    for f, color in zip(_fields, cycle(["cyan", "magenta", "green", "yellow"])):
-        name = f.split(".")[-1].replace("_", " ").title()
-        table.add_column(name, style=color)
-
-    _aliases = {"version": "package_version", "npe2": "!npe1_shim", "npe1": "npe1_shim"}
-
-    def _get_field(mf: PluginManifest, field: str):
-        field = _aliases.get(field, field)
-        if field == "contributions":
-            return ", ".join(
-                [f"{k}({len(v)})" for k, v in mf.contributions.dict().items() if v]
-            )
-        negate = False
-        if field.startswith("!"):
-            field = field[1:]
-            negate = True
-
-        parts = field.split(".")
-        try:
-            val: Any = mf
-            while parts:
-                val = getattr(val, parts.pop(0))
-        except AttributeError as e:
-            raise typer.BadParameter(f"Unknown field name: {field!r}") from e
-
-        if negate:
-            val = not val
-        if (f := mf.__fields__.get(field)) and f.outer_type_ == bool:
-            return ":white_check_mark:" if val else ""
-        if isinstance(val, (builtins.list, tuple)):
-            return ", ".join([str(v) for v in val])
-        return str(val)
+    ALIASES = {"version": "package_version", "npe2": "!npe1_shim", "npe1": "npe1_shim"}
 
     rows = []
     for mf in pm.iter_manifests():
-        row = [_get_field(mf, field) for field in _fields]
+        row = [_get_field(mf, ALIASES.get(f, f)) for f in _fields]
         rows.append(row)
 
-    for row in sorted(rows, key=lambda r: r[sort_index]):
-        table.add_row(*row)
+    rows = sorted(rows, key=lambda r: r[sort_index])
 
-    console = Console()
-    console.print(table)
+    if format == ListFormat.table:
+        headers = [f.split(".")[-1].replace("_", " ").title() for f in _fields]
+        _pprint_table(headers=headers, rows=rows)
+        return
+
+    # [{column -> value}, ... , {column -> value}]
+    data: List[dict] = [dict(zip(_fields, row)) for row in rows]
+    if format == ListFormat.json:
+        import json
+
+        _pprint_formatted(json.dumps(data, indent=1), Format.json)
+    elif format in (ListFormat.yaml):
+        import yaml
+
+        _pprint_formatted(yaml.safe_dump(data, sort_keys=False), Format.yaml)
+    elif format in (ListFormat.compact):
+        template = "- {name}: {version} ({ncontrib} contributions)"
+        for r in data:
+            ncontrib = sum(r.get("contributions", {}).values())
+            typer.echo(template.format(**r, ncontrib=ncontrib))
 
 
 @app.command()
@@ -276,6 +316,8 @@ def convert(
             else:
                 pm = manifest_from_npe1(str(path))
         if w:
+            from textwrap import indent
+
             typer.secho("Some issues occured:", fg=typer.colors.RED, bold=False)
             for r in w:
                 typer.secho(
