@@ -8,6 +8,7 @@ from importlib import metadata
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
+    AbstractSet,
     Any,
     Callable,
     DefaultDict,
@@ -15,6 +16,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -40,6 +42,12 @@ if TYPE_CHECKING:
         ThemeContribution,
         WidgetContribution,
     )
+
+    IntStr = Union[int, str]
+    AbstractSetIntStr = AbstractSet[IntStr]
+    DictIntStrAny = Dict[IntStr, Any]
+    MappingIntStrAny = Mapping[IntStr, Any]
+    InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
@@ -454,6 +462,65 @@ class PluginManager:
                 continue
             yield mf
 
+    def dict(
+        self, *, include: InclusionSet = None, exclude: InclusionSet = None
+    ) -> Dict[str, Any]:
+        """Return a dictionary with the state of the plugin manager.
+
+        `include` and `exclude` will be passed to each `PluginManifest.dict()`
+        See pydantic documentation for details:
+        https://pydantic-docs.helpmanual.io/usage/exporting_models/#modeldict
+
+        `include` and `exclude` may be a set of dotted strings, indicating
+        nested fields in the manifest model.  For example:
+
+            {'contributions.readers', 'package_metadata.description'}
+
+        will be expanded to
+
+            {
+                'contributions': {'readers': True},
+                'package_metadata': {'description': True}
+            }
+
+        This facilitates selection of nested fields on the command line.
+
+
+        Parameters
+        ----------
+        include : InclusionSet, optional
+            A set of manifest fields to include, by default all fields are included.
+        exclude : InclusionSet, optional
+            A set of manifest fields to exclude, by default no fields are excluded.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with the state of the plugin manager.  Keys will include
+
+                - `'plugins'`: dict of `{name: manifest.dict()} for discovered plugins
+                - `'disabled'`: set of disabled plugins
+                - `'activated'`: set of activated plugins
+
+        """
+        # _include =
+        out: Dict[str, Any] = {
+            "plugins": {
+                mf.name: mf.dict(
+                    include=_expand_dotted_set(include),
+                    exclude=_expand_dotted_set(exclude),
+                )
+                for mf in self.iter_manifests()
+            }
+        }
+        if not exclude or "disabled" not in exclude:
+            out["disabled"] = set(self._disabled_plugins)
+        if not exclude or "activated" not in exclude:
+            out["activated"] = {
+                name for name, ctx in self._contexts.items() if ctx._activated
+            }
+        return out
+
     def __contains__(self, name: str) -> bool:
         return name in self._manifests
 
@@ -616,3 +683,43 @@ def _call_python_name(python_name: PythonName, args=()) -> Any:
     func = import_python_name(python_name)
     if callable(func):
         return func(*args)
+
+
+def _expand_dotted_set(inclusion_set: InclusionSet) -> InclusionSet:
+    """Expand a set of strings with dots to a dict of dicts.
+
+    Examples
+    --------
+    >>> _expand_dotted_set({'a.b', 'c', 'a.d'})
+    {'a': {'b': True, 'd': True}, 'c': True}
+
+    >>> _expand_dotted_set({'a.b', 'a.d.e', 'a'})
+    {'a'}
+
+    >>> _expand_dotted_set({'a.b', 'a.d', 'x.y.z'})
+    {'x': {'y': {'z': True}}, 'a': {'d': True, 'b': True}}
+    """
+    if not isinstance(inclusion_set, set) or all(
+        "." not in str(s) for s in inclusion_set
+    ):
+        return inclusion_set
+
+    result: Dict[IntStr, Any] = {}
+    # sort the strings based on the number of dots,
+    # so that higher level keys take precedence
+    # e.g. {'a.b', 'a.d.e', 'a'} -> {'a'}
+    for key in sorted(inclusion_set, key=lambda i: i.count("."), reverse=True):
+        if isinstance(key, str):
+            parts = key.split(".")
+            if len(parts) == 1:
+                result[key] = True
+            else:
+                cur = result
+                for part in parts[:-1]:
+                    # integer keys are used in pydantic for lists
+                    # they must remain integers
+                    _p: IntStr = int(part) if part.isdigit() else part
+                    cur = cur.setdefault(_p, {})
+                cur[parts[-1]] = True
+
+    return result
