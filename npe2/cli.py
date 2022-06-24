@@ -234,7 +234,7 @@ def list(
 
         _pprint_formatted(yaml.safe_dump(data, sort_keys=False), Format.yaml)
     elif format in (ListFormat.compact):
-        template = "- {name}: {version} ({ncontrib} contributions)"
+        template = "  - {name}: {version} ({ncontrib} contributions)"
         for r in data:
             ncontrib = sum(r.get("contributions", {}).values())
             typer.echo(template.format(**r, ncontrib=ncontrib))
