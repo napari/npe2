@@ -253,6 +253,7 @@ def list(
 
     pm = PluginManager.instance()
     pm.discover(include_npe1=True)
+    pm.index_npe1_adapters()
     pm_dict = pm.dict(include={f.lstrip("!") for f in normed_fields})
     rows = sorted(_make_rows(pm_dict, normed_fields), key=lambda r: r[sort_index])
 
