@@ -1,8 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, cast, overload
-
-from typing_extensions import Literal
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+    overload,
+)
 
 from . import PluginManager
 from .manifest.utils import v1_to_v2
