@@ -162,7 +162,7 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
                     (npe1_repo / "setup.py").unlink()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_cache(tmp_path, monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(_npe1_adapter, "ADAPTER_CACHE", tmp_path)
