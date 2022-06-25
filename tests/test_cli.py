@@ -136,7 +136,7 @@ def test_cli_main(monkeypatch, sample_path):
     assert e.value.code == 0
 
 
-def test_cli_cache_list_empty(mock_cache):
+def test_cli_cache_list_empty():
     result = runner.invoke(app, ["cache", "--list"])
     assert "Nothing cached" in result.stdout
     assert result.exit_code == 0
@@ -156,7 +156,7 @@ def test_cli_cache_list_named(uses_npe1_plugin, mock_cache):
     assert result.exit_code == 0
 
 
-def test_cli_cache_clear_empty(mock_cache):
+def test_cli_cache_clear_empty():
     result = runner.invoke(app, ["cache", "--clear"])
     assert "Nothing to clear" in result.stdout
     assert result.exit_code == 0
