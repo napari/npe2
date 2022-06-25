@@ -1,9 +1,8 @@
 from importlib.metadata import metadata
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, constr, root_validator
 from pydantic.fields import SHAPE_LIST
-from typing_extensions import Literal
 
 if TYPE_CHECKING:
     import email.message

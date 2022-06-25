@@ -175,3 +175,28 @@ def test_cli_cache_clear_named(mock_cache):
     result = runner.invoke(app, ["cache", "--clear", "not-a-plugin"])
     assert result.stdout == "Nothing to clear for plugins: not-a-plugin\n"
     assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("format", ["table", "compact", "yaml", "json"])
+@pytest.mark.parametrize("fields", [None, "name,version,author"])
+def test_cli_list(format, fields, uses_npe1_plugin):
+    result = runner.invoke(app, ["list", "-f", format, "--fields", fields])
+    assert result.exit_code == 0
+    assert "npe1-plugin" in result.output
+    if fields and "author" in fields and format != "compact":
+        assert "author" in result.output.lower()
+    else:
+        assert "author" not in result.output.lower()
+
+
+def test_cli_list_sort(uses_npe1_plugin):
+    result = runner.invoke(app, ["list", "--sort", "version"])
+    assert result.exit_code == 0
+
+    result = runner.invoke(app, ["list", "--sort", "7"])
+    assert result.exit_code
+    assert "Invalid sort value '7'" in result.output
+
+    result = runner.invoke(app, ["list", "--sort", "notaname"])
+    assert result.exit_code
+    assert "Invalid sort value 'notaname'" in result.output
