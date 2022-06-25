@@ -1,8 +1,7 @@
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, color
 from pydantic.fields import Field
-from typing_extensions import Literal
 
 
 # pydantic doesn't implement color equality?
