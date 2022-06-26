@@ -1,10 +1,11 @@
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, validator
 
 from ...types import PythonName
 from .. import _validators
+from ._icon import Icon
 
 if TYPE_CHECKING:
     from ..._command_registry import CommandRegistry
@@ -60,31 +61,33 @@ class CommandContribution(BaseModel):
     )
     _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
-    # short_title: Optional[str] = Field(
-    #     None,
-    #     description="Short title by which the command is "
-    #     "represented in the UI",
-    # )
-    # category: Optional[str] = Field(
-    #     None,
-    #     description="Category string by the command is grouped in the UI",
-    # )
-    # icon: Optional[Union[str, Icon]] = Field(
-    #     None,
-    #     description=(
-    #         "Icon which is used to represent the command in the UI."
-    #         " Either a file path, an object with file paths for dark and light"
-    #         "themes, or a theme icon references, like `$(zap)`"
-    #     ),
-    # )
-    # enablement: Optional[str] = Field(
-    #     None,
-    #     description=(
-    #         "Condition which must be true to enable the command in the UI "
-    #         "(menu and keybindings). Does not prevent executing the command "
-    #         "by other means, like the `executeCommand` api."
-    #     ),
-    # )
+    short_title: Optional[str] = Field(
+        None,
+        description="(Optional) Short title by which the command is represented in "
+        "the UI. Menus pick either `title` or `short_title` depending on the context "
+        "in which they show commands.",
+    )
+    category: Optional[str] = Field(
+        None,
+        description="(Optional) Category string by which the command may be grouped "
+        "in the UI",
+    )
+    icon: Optional[Union[str, Icon]] = Field(
+        None,
+        description="(Optional) Icon used to represent this command in the UI, e.g. on "
+        "buttons or in menus. These may be superqt fonticon keys, such as "
+        "`fa5s.arrow_down`",
+        # TODO: add link to superqt fonticon docs
+        # ... plugin should be required to state the dependency...
+    )
+    enablement: Optional[str] = Field(
+        None,
+        description=(
+            "Condition which must be true to enable the command in the UI "
+            "(menu and keybindings). Does not prevent executing the command "
+            "by other means, like the `execute_command` api."
+        ),
+    )
 
     class Config:
         extra = Extra.forbid
