@@ -178,7 +178,7 @@ def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
             if not val and "." in field:
                 parts = field.split(".")
                 val = info
-                while parts:
+                while parts and val:
                     val = val[parts.pop(0)]
 
             # negate fields starting with !
