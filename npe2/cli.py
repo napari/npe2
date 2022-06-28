@@ -28,6 +28,7 @@ def _main(
         "--version",
         callback=_show_version_and_exit,
         help="Show version and exit.",
+        is_eager=True,
     ),
 ):
     """npe2: napari plugin engine (v{version})
