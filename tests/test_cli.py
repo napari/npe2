@@ -3,6 +3,7 @@ import sys
 import pytest
 from typer.testing import CliRunner
 
+from npe2 import __version__
 from npe2.cli import app, main
 from npe2.manifest.schema import PluginManifest
 
@@ -200,3 +201,9 @@ def test_cli_list_sort(uses_npe1_plugin):
     result = runner.invoke(app, ["list", "--sort", "notaname"])
     assert result.exit_code
     assert "Invalid sort value 'notaname'" in result.output
+
+
+def test_cli_version():
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert __version__ in result.output
