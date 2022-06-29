@@ -4,7 +4,6 @@ import re
 import sys
 import warnings
 from configparser import ConfigParser
-from dataclasses import dataclass
 from functools import lru_cache
 from importlib import import_module, metadata
 from logging import getLogger
@@ -33,6 +32,8 @@ from npe2.manifest.contributions import (
 )
 from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
 from npe2.types import WidgetCreator
+
+from ._setuputils import PackageInfo, get_package_dir_info
 
 logger = getLogger(__name__)
 NPE1_EP = "napari.plugin"
@@ -75,17 +76,8 @@ def iter_hookimpls(
                 yield HookImplementation(method, module, plugin_name, **hookimpl_opts)
 
 
-@dataclass
-class PluginPackage:
-    package_name: str
-    ep_name: str
-    ep_value: str
-    top_module: str
-    setup_cfg: Optional[Path] = None
-
-
 @lru_cache
-def plugin_packages() -> List[PluginPackage]:
+def plugin_packages() -> List[PackageInfo]:
     """List of all packages with napari entry points.
 
     This is useful to help resolve naming issues (due to the terrible confusion
@@ -97,10 +89,14 @@ def plugin_packages() -> List[PluginPackage]:
         for ep in dist.entry_points:
             if ep.group != NPE1_EP:
                 continue  # pragma: no cover
-            top = dist.read_text("top_level.txt")
+            top = dist.read_text("top_level.txt") or ""
             top = top.splitlines()[0] if top else ep.value.split(".")[0]
             packages.append(
-                PluginPackage(dist.metadata["Name"], ep.name, ep.value, top)
+                PackageInfo(
+                    package_name=dist.metadata["Name"],
+                    entry_points=[ep],
+                    top_modules=[top],
+                )
             )
     return packages
 
@@ -543,6 +539,12 @@ def convert_repository(
 
     # get the info we need and create a manifest
     info = get_package_dir_info(path)
+    if not (info.package_name and info._ep1):
+        msg = f'Could not detect first gen napari plugin package at "{path}".'
+        if info._ep2 is not None:
+            msg += f" Found a {NPE2_EP} entry_point. Is this package already converted?"
+        raise ValueError(msg)
+
     manifest = manifest_from_npe1(info.package_name)
     top_module = get_top_module_path(info.package_name, info.top_module)
     if not top_module.is_dir():
@@ -579,7 +581,7 @@ def convert_repository(
     return manifest, mf_path
 
 
-def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
+def _write_new_setup_cfg_ep(info: PackageInfo, mf_name: str):
     assert info.setup_cfg
     p = ConfigParser(comment_prefixes="/", allow_no_value=True)  # preserve comments
     p.read(info.setup_cfg)
@@ -597,79 +599,6 @@ def _write_new_setup_cfg_ep(info: PluginPackage, mf_name: str):
     p.remove_option("options.entry_points", NPE1_EP)
     with open(info.setup_cfg, "w") as fh:
         p.write(fh)
-
-
-def get_package_dir_info(path: Union[Path, str]) -> PluginPackage:
-    """Attempts to *statically* get plugin info from a package directory."""
-    path = Path(path).absolute()
-    if not path.is_dir():  # pragma: no cover
-        raise ValueError(f"Provided path is not a directory: {path}")
-
-    _name = None
-    _entry_points: List[List[str]] = []
-    _setup_cfg = None
-    p = None
-
-    # check for setup.cfg
-    setup_cfg = path / "setup.cfg"
-    if setup_cfg.exists():
-        _setup_cfg = setup_cfg
-        p = ConfigParser()
-        p.read(setup_cfg)
-        _name = p.get("metadata", "name", fallback=None)
-        eps = p.get("options.entry_points", NPE1_EP, fallback="").strip()
-        _entry_points = [[i.strip() for i in ep.split("=")] for ep in eps.splitlines()]
-
-    if not _name or not _entry_points:
-        # check for setup.py
-        setup_py = path / "setup.py"
-        if setup_py.exists():
-            node = ast.parse(setup_py.read_text())
-            visitor = _SetupVisitor()
-            visitor.visit(node)
-            _name = _name or visitor._name
-            if visitor._entry_points and not _entry_points:
-                _entry_points = visitor._entry_points
-                _setup_cfg = None  # the ep metadata wasn't in setupcfg
-
-    if _name and _entry_points:
-        ep_name, ep_value = next(iter(_entry_points), ["", ""])
-        top_mod = ep_value.split(".", 1)[0]
-        return PluginPackage(_name, ep_name, ep_value, top_mod, _setup_cfg)
-
-    msg = f'Could not detect first gen napari plugin package at "{path}".'
-    if p is not None and p.get("options.entry_points", NPE2_EP, fallback=False):
-        msg += f" Found a {NPE2_EP} entry_point. Is this package already converted?"
-    raise ValueError(msg)
-
-
-class _SetupVisitor(ast.NodeVisitor):
-    """Visitor to statically determine metadata from setup.py"""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._name: str = ""
-        self._entry_points: List[List[str]] = []  # [[name, value], ...]
-
-    def visit_Call(self, node: ast.Call) -> Any:
-        if getattr(node.func, "id", "") != "setup":
-            return  # pragma: no cover
-        for kw in node.keywords:
-            if kw.arg == "name":
-                self._name = getattr(kw.value, "value", "") or getattr(
-                    kw.value, "id", ""
-                )
-
-            if kw.arg == "entry_points":
-                eps: dict = ast.literal_eval(kw.value)
-                for k, v in eps.items():
-                    if k == NPE1_EP:
-                        if type(v) is str:
-                            v = [v]
-                        for item in v:
-                            self._entry_points.append(
-                                [i.strip() for i in item.split("=")]
-                            )
 
 
 def _guess_fname_patterns(func):
