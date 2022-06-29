@@ -6,12 +6,40 @@ from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence
 
 import typer
 
-from npe2 import PluginManager, PluginManifest
+from npe2 import PluginManager, PluginManifest, __version__
 
 if TYPE_CHECKING:
     from rich.console import RenderableType
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
+
+
+def _show_version_and_exit(value: bool) -> None:
+    if value:
+        typer.echo(f"npe2 v{__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def _main(
+    version: Optional[bool] = typer.Option(
+        None,
+        "-v",
+        "--version",
+        callback=_show_version_and_exit,
+        help="Show version and exit.",
+        is_eager=True,
+    ),
+):
+    """npe2: napari plugin engine (v{version})
+
+    For additional help on a specific command: type 'npe2 [command] --help'
+    """  # noqa D400
+
+
+_main.__doc__ = typer.style(
+    (_main.__doc__ or "").format(version=__version__), fg="bright_yellow"
+)
 
 
 class Format(str, Enum):
