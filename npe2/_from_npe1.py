@@ -84,14 +84,14 @@ def plugin_packages() -> List[PackageInfo]:
     around *what* a npe1 plugin name actually was).
     """
 
-    packages = []
+    packages: List[PackageInfo] = []
     for dist in metadata.distributions():
-        for ep in dist.entry_points:
-            if ep.group != NPE1_EP:
-                continue  # pragma: no cover
-            packages.append(
-                PackageInfo(package_name=dist.metadata["Name"], entry_points=[ep])
-            )
+        packages.extend(
+            PackageInfo(package_name=dist.metadata["Name"], entry_points=[ep])
+            for ep in dist.entry_points
+            if ep.group == NPE1_EP
+        )
+
     return packages
 
 

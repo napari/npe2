@@ -1,11 +1,10 @@
-from functools import cached_property
-from typing import Dict, List, Optional, Union, Any
-from pathlib import Path
-from dataclasses import dataclass, field
-from configparser import ConfigParser
 import ast
-
+from configparser import ConfigParser
+from dataclasses import dataclass, field
+from functools import cached_property
 from importlib.metadata import EntryPoint
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
@@ -46,6 +45,7 @@ class PackageInfo:
     def top_module(self) -> str:
         if ep := (self._ep1 or self._ep2):
             return ep.value.split(".", 1)[0].split(":", 1)[0]
+        return ""  # pragma: no cover
 
 
 def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
@@ -85,23 +85,12 @@ def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
     return info
 
 
-# 3067: If the file pyproject.toml exists and it includes project metadata/config
-# (via [project] table or [tool.setuptools]), a series of new behaviors that are not backward compatible may take place:
-# The default value of include_package_data will be considered to be True.
-# Setuptools will attempt to validate the pyproject.toml file according to PEP 621 specification.
-# The values specified in pyproject.toml will take precedence over those specified in setup.cfg or setup.py.
-
-# 3206: Fixed behaviour when both install_requires (in setup.py) and dependencies
-# (in pyproject.toml) are specified. The configuration in pyproject.toml will take
-# precedence over setup.py (in accordance with PEP 621). A warning was added to inform users.
-
-
 class _SetupVisitor(ast.NodeVisitor):
     """Visitor to statically determine metadata from setup.py"""
 
     def __init__(self) -> None:
         super().__init__()
-        self._names = {}
+        self._names: Dict[str, Any] = {}
         self._setup_kwargs: Dict[str, Any] = {}
 
     def visit_Assign(self, node: ast.Assign) -> Any:
