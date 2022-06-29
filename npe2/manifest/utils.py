@@ -21,11 +21,9 @@ from typing import (
 from ..types import PythonName
 
 if TYPE_CHECKING:
+    from typing import Protocol
+
     from npe2.manifest.schema import PluginManifest
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Protocol
 
     from .._command_registry import CommandRegistry
     from .contributions import ContributionPoints

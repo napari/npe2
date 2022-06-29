@@ -249,7 +249,6 @@ def visit(
     path: Union[ModuleType, str, Path],
     plugin_name: str,
     module_name: str = "",
-    visit_comments: bool = True,
 ) -> contributions.ContributionPoints:
     """Visit a module and extract contribution points.
 
@@ -261,15 +260,6 @@ def visit(
         Name of the plugin
     module_name : str
         Module name, by default ""
-    visit_comments: bool
-        Whether to try to parse comments for commented out contributions. This
-        lets the plugin avoid depending on npe2 entirely at runtime. by default, True
-
-            # @npe2.implements.writer(
-            #     id="my_single_writer",
-            #     ...
-            # )
-            def my_writer(...): ...
 
     Returns
     -------

@@ -12,6 +12,7 @@ from .io_utils import read, read_get_reader, write, write_get_writer
 from .manifest import PackageMetadata, PluginManifest
 
 __all__ = [
+    "__version__",
     "DynamicPlugin",
     "fetch_manifest",
     "PackageMetadata",
