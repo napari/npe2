@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Dict, List, Optional, Sequence, Union, Any
+from typing import Dict, List, Optional, Union, Any
 from pathlib import Path
 from dataclasses import dataclass, field
 from configparser import ConfigParser
@@ -11,11 +11,6 @@ NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
 
 
-def find_packages(src_dir: Path) -> List[Path]:
-    """Find all packages in a directory."""
-    return [p.parent for p in src_dir.glob("**/__init__.py")]
-
-
 @dataclass
 class PackageInfo:
     src_root: Optional[Path] = None
@@ -24,7 +19,6 @@ class PackageInfo:
     setup_cfg: Optional[Path] = None
     setup_py: Optional[Path] = None
     pyproject_toml: Optional[Path] = None
-    top_modules: List[str] = field(default_factory=list)
 
     # @property
     # def packages(self) -> Optional[List[Path]]:
@@ -52,7 +46,6 @@ class PackageInfo:
     def top_module(self) -> str:
         if ep := (self._ep1 or self._ep2):
             return ep.value.split(".", 1)[0].split(":", 1)[0]
-        return self.top_modules[0] if self.top_modules else ""
 
 
 def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
@@ -91,6 +84,7 @@ def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
 
     return info
 
+
 # 3067: If the file pyproject.toml exists and it includes project metadata/config
 # (via [project] table or [tool.setuptools]), a series of new behaviors that are not backward compatible may take place:
 # The default value of include_package_data will be considered to be True.
@@ -107,7 +101,14 @@ class _SetupVisitor(ast.NodeVisitor):
 
     def __init__(self) -> None:
         super().__init__()
+        self._names = {}
         self._setup_kwargs: Dict[str, Any] = {}
+
+    def visit_Assign(self, node: ast.Assign) -> Any:
+        if len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name) and isinstance(target.ctx, ast.Store):
+                self._names[target.id] = self._get_val(node.value)
 
     def visit_Call(self, node: ast.Call) -> Any:
         if getattr(node.func, "id", "") == "setup":
@@ -120,29 +121,18 @@ class _SetupVisitor(ast.NodeVisitor):
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.Name):
-            return node.id
+            return (
+                self._names.get(node.id) if isinstance(node.ctx, ast.Load) else node.id
+            )
         if isinstance(node, ast.Dict):
             keys = [self._get_val(k) for k in node.keys]
             values = [self._get_val(k) for k in node.values]
             return dict(zip(keys, values))
         if isinstance(node, ast.List):
             return [self._get_val(k) for k in node.elts]
-        if isinstance(node, ast.Tuple):
+        if isinstance(node, ast.Tuple):  # pragma: no cover
             return tuple(self._get_val(k) for k in node.elts)
-        if isinstance(node, ast.Call):
-            return f"{self._get_val(node.func)}()"
-        return str(node)
+        return str(node)  # pragma: no cover
 
     def get(self, key: str, default: Any = None) -> Any:
         return self._setup_kwargs.get(key, default)
-
-
-def read_pyproject(root: Union[str, Path] = "."):
-    from pytomlpp import loads
-
-    data = Path(root).resolve().joinpath("pyproject.toml").read_text()
-    defn = loads(data)
-    # try:
-    #     section = defn.get("tool", {})[tool_name]
-    # except LookupError as e:
-    #     raise LookupError(f"{name} does not contain a tool.{tool_name} section") from e

@@ -89,14 +89,8 @@ def plugin_packages() -> List[PackageInfo]:
         for ep in dist.entry_points:
             if ep.group != NPE1_EP:
                 continue  # pragma: no cover
-            top = dist.read_text("top_level.txt") or ""
-            top = top.splitlines()[0] if top else ep.value.split(".")[0]
             packages.append(
-                PackageInfo(
-                    package_name=dist.metadata["Name"],
-                    entry_points=[ep],
-                    top_modules=[top],
-                )
+                PackageInfo(package_name=dist.metadata["Name"], entry_points=[ep])
             )
     return packages
 
