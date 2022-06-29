@@ -3,14 +3,14 @@ from typing import (
     Callable,
     Dict,
     List,
+    Literal,
     NewType,
     Optional,
+    Protocol,
     Sequence,
     Tuple,
     Union,
 )
-
-from typing_extensions import Literal, Protocol
 
 if TYPE_CHECKING:
     import magicgui.widgets

@@ -1,8 +1,35 @@
 # Changelog
 
-## [0.5.0](https://github.com/napari/npe2/tree/0.5.0) (2022-06-21)
+## [0.5.1](https://github.com/napari/npe2/tree/0.5.1) (2022-06-26)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.4.1...0.5.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.5.0...0.5.1)
+
+**Implemented enhancements:**
+
+- Add PluginManager `dict()` method to export state of manager [\#197](https://github.com/napari/npe2/pull/197) ([tlambert03](https://github.com/tlambert03))
+- Add `npe2 list` command to discover/display all currently installed plugins [\#192](https://github.com/napari/npe2/pull/192) ([tlambert03](https://github.com/tlambert03))
+
+**Fixed bugs:**
+
+- index npe1 stuff on `npe2 list` [\#198](https://github.com/napari/npe2/pull/198) ([tlambert03](https://github.com/tlambert03))
+
+**Tests & CI:**
+
+- Always mock cache in tests [\#199](https://github.com/napari/npe2/pull/199) ([tlambert03](https://github.com/tlambert03))
+
+**Documentation:**
+
+- Add mised theme type in description [\#200](https://github.com/napari/npe2/pull/200) ([Czaki](https://github.com/Czaki))
+- Add docs clarifying menus `when` and `group` [\#195](https://github.com/napari/npe2/pull/195) ([tlambert03](https://github.com/tlambert03))
+- Add docs about length requirements to display name [\#191](https://github.com/napari/npe2/pull/191) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- Remove typing-extensions imports [\#193](https://github.com/napari/npe2/pull/193) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.5.0](https://github.com/napari/npe2/tree/v0.5.0) (2022-06-21)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.4.1...v0.5.0)
 
 **Implemented enhancements:**
 
@@ -57,10 +84,6 @@
 
 - Add doc links to README [\#158](https://github.com/napari/npe2/pull/158) ([nclack](https://github.com/nclack))
 - Fix codeblock directive in docstring [\#156](https://github.com/napari/npe2/pull/156) ([melissawm](https://github.com/melissawm))
-
-**Merged pull requests:**
-
-- add changelog for v0.4.0 [\#177](https://github.com/napari/npe2/pull/177) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
 
