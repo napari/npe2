@@ -15,11 +15,17 @@ def compiled_plugin_dir(tmp_path):
     return tmp_path
 
 
-def test_compile(compiled_plugin_dir):
+def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
     """
     Test that the plugin manager can be compiled.
     """
-    mf = compile(compiled_plugin_dir, plugin_name="my-compiled-plugin")
+    with pytest.raises(ValueError, match='must have an extension of .json, .yaml, or'):
+        compile(compiled_plugin_dir, 'bad_path')
+
+    dest = tmp_path / "output.yaml"
+    mf = compile(compiled_plugin_dir, dest=dest)
     assert isinstance(mf, PluginManifest)
     assert mf.name == "my-compiled-plugin"
     assert mf.contributions.commands and len(mf.contributions.commands) == 5
+    assert dest.exists()
+    assert PluginManifest.from_file(dest) == mf

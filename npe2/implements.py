@@ -294,48 +294,14 @@ def visit(
     return contributions.ContributionPoints(**visitor.contribution_points)
 
 
-def _get_setuptools_info(src_path: Path, entry="napari.manifest") -> Dict[str, Any]:
-    import os
-    from importlib.metadata import EntryPoint
-
-    from setuptools import Distribution
-    from setuptools.command.build_py import build_py
-
-    curdir = os.getcwd()
-    try:
-        os.chdir(src_path)
-        dist = Distribution({"src_root": str(src_path)})
-        dist.parse_config_files()
-
-        builder = build_py(dist)
-        builder.finalize_options()
-
-        output = {
-            "name": dist.get_name(),
-            "packages": {
-                pkg: builder.check_package(pkg, builder.get_package_dir(pkg))
-                for pkg in builder.packages
-            },
-            "manifest": None,
-        }
-
-        if entry in dist.entry_points:
-            ep = dist.entry_points[entry][0]
-            if match := EntryPoint.pattern.search(ep):
-                manifest_file = match.groupdict()["attr"]
-                module_dir = Path(builder.get_package_dir(match.groupdict()["module"]))
-                output["manifest"] = str(module_dir / manifest_file)
-        return output
-    finally:
-        os.chdir(curdir)
-
-
 def find_packages(where: Union[str, Path] = ".") -> List[Path]:
     return [p.parent for p in Path(where).resolve().rglob("**/__init__.py")]
 
 
 def get_package_name(where: Union[str, Path] = ".") -> str:
-    return Path(where).resolve().parent.name
+    from ._setuputils import get_package_dir_info
+
+    return get_package_dir_info(where).package_name
 
 
 def compile(
