@@ -48,7 +48,7 @@ class PackageInfo:
         return ""  # pragma: no cover
 
 
-@lru_cache()
+@lru_cache
 def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
     """Attempt to *statically* get plugin info from a package directory."""
     path = Path(path).resolve()

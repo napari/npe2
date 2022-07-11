@@ -19,8 +19,8 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
     """
     Test that the plugin manager can be compiled.
     """
-    with pytest.raises(ValueError, match='must have an extension of .json, .yaml, or'):
-        compile(compiled_plugin_dir, 'bad_path')
+    with pytest.raises(ValueError, match="must have an extension of .json, .yaml, or"):
+        compile(compiled_plugin_dir, "bad_path")
 
     dest = tmp_path / "output.yaml"
     mf = compile(compiled_plugin_dir, dest=dest)
