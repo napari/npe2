@@ -1,8 +1,9 @@
-from npe2.implements import compile
-import pytest
-from pathlib import Path
 import shutil
+from pathlib import Path
 
+import pytest
+
+from npe2.implements import compile
 from npe2.manifest.schema import PluginManifest
 
 FIXTURES = Path(__file__).parent / "fixtures"

@@ -7,9 +7,7 @@ else:
     implements = D()
 
 
-@implements.widget(
-    id="some_widget", title="Create my widget", display_name="My Widget"
-)
+@implements.widget(id="some_widget", title="Create my widget", display_name="My Widget")
 class SomeWidget:
     ...
 

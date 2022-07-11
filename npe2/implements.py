@@ -361,8 +361,9 @@ def compile(
         Manifest including all discovered contribution points, combined with any
         existing contributions explicitly stated in the manifest.
     """
-    from npe2.manifest.utils import merge_contributions, merge_manifests
     import pkgutil
+
+    from npe2.manifest.utils import merge_contributions
 
     src_path = Path(src_dir)
     assert src_path.exists(), f"src_dir {src_dir} does not exist"
