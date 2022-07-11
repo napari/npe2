@@ -6,6 +6,7 @@ from typing import (
     Dict,
     Generic,
     List,
+    Literal,
     Optional,
     Type,
     TypeVar,
@@ -14,7 +15,6 @@ from typing import (
 )
 
 from pydantic import BaseModel, ValidationError
-from typing_extensions import Literal
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (

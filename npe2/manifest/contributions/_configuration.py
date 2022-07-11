@@ -25,10 +25,9 @@ SOFTWARE.
 
 """
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Set, Type, Union
 
 from pydantic import BaseModel, Extra, Field, root_validator, validator
-from typing_extensions import Literal
 
 JsonType = Union[
     Literal["string"],

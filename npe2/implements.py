@@ -4,7 +4,18 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from pydantic import BaseModel
 
@@ -249,7 +260,6 @@ def visit(
     path: Union[ModuleType, str, Path],
     plugin_name: str,
     module_name: str = "",
-    visit_comments: bool = True,
 ) -> contributions.ContributionPoints:
     """Visit a module and extract contribution points.
 
@@ -261,15 +271,6 @@ def visit(
         Name of the plugin
     module_name : str
         Module name, by default ""
-    visit_comments: bool
-        Whether to try to parse comments for commented out contributions. This
-        lets the plugin avoid depending on npe2 entirely at runtime. by default, True
-
-            # @npe2.implements.writer(
-            #     id="my_single_writer",
-            #     ...
-            # )
-            def my_writer(...): ...
 
     Returns
     -------
@@ -329,7 +330,21 @@ def _get_setuptools_info(src_path: Path, entry="napari.manifest") -> Dict[str, A
         os.chdir(curdir)
 
 
-def compile(src_dir: Union[str, Path]) -> PluginManifest:
+def find_packages(where: Union[str, Path] = ".") -> List[Path]:
+    return [p.parent for p in Path(where).resolve().rglob("**/__init__.py")]
+
+
+def get_package_name(where: Union[str, Path] = ".") -> str:
+    return Path(where).resolve().parent.name
+
+
+def compile(
+    src_dir: Union[str, Path],
+    dest: Union[str, Path, None] = None,
+    packages: Sequence[str] = (),
+    plugin_name: str = "",
+    template: str = "",
+) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
     This will discover all the contribution points in the repo and output a manifest
@@ -346,33 +361,51 @@ def compile(src_dir: Union[str, Path]) -> PluginManifest:
         Manifest including all discovered contribution points, combined with any
         existing contributions explicitly stated in the manifest.
     """
+    import pkgutil
+
+    from npe2.manifest.utils import merge_contributions
 
     src_path = Path(src_dir)
     assert src_path.exists(), f"src_dir {src_dir} does not exist"
 
-    info = _get_setuptools_info(src_path)
+    if dest is not None:
+        pdest = Path(dest)
+        suffix = pdest.suffix.lstrip(".")
+        if suffix not in {"json", "yaml", "toml"}:
+            raise ValueError(
+                f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
+            )
 
-    import pkgutil
+    _packages = find_packages(src_path)
+    if packages:
+        _packages = [p for p in _packages if p.name in packages]
 
-    from npe2.manifest.utils import merge_contributions, merge_manifests
+    if not plugin_name:
+        plugin_name = get_package_name(src_path)
 
     contribs: List[contributions.ContributionPoints] = []
-    for name, initpy in info["packages"].items():
+    for pkg_path in _packages:
         contribs.extend(
             visit(
                 module_info.module_finder.find_module(module_info.name).path,  # type: ignore  # noqa
-                plugin_name=info["name"],
-                module_name=f"{name}.{module_info.name}",
+                plugin_name=plugin_name,
+                module_name=f"{pkg_path.name}.{module_info.name}",
             )
-            for module_info in pkgutil.iter_modules([initpy.replace("__init__.py", "")])
+            for module_info in pkgutil.iter_modules([str(pkg_path)])
         )
 
     mf = PluginManifest(
-        name=info["name"],
+        name=plugin_name,
         contributions=merge_contributions(contribs),
     )
-    if (manifest := info.get("manifest")) and Path(manifest).exists():
-        original_manifest = PluginManifest.from_file(manifest)
-        mf.display_name = original_manifest.display_name
-        mf = merge_manifests([original_manifest, mf], overwrite=True)
+
+    # if (manifest := info.get("manifest")) and Path(manifest).exists():
+    #     original_manifest = PluginManifest.from_file(manifest)
+    #     mf.display_name = original_manifest.display_name
+    #     mf = merge_manifests([original_manifest, mf], overwrite=True)
+
+    if dest is not None:
+        manifest_string = getattr(mf, cast(str, suffix))(indent=2)
+        pdest.write_text(manifest_string)
+
     return mf
