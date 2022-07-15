@@ -183,8 +183,10 @@ class PackageMetadata(BaseModel):
         """Get PackageMetadata from a package name."""
         return cls.from_dist_metadata(metadata.metadata(name))
 
+    # note, the metadata.PackageMetadata hint is only valid for py 3.10
+    # before that, it was email.message.Message
     @classmethod
-    def from_dist_metadata(cls, meta: metadata.PackageMetadata) -> "PackageMetadata":
+    def from_dist_metadata(cls, meta: "metadata.PackageMetadata") -> "PackageMetadata":
         """Generate PackageMetadata from importlib.metadata.PackageMetdata."""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
         d: Dict[str, Union[str, List[str]]] = {}
