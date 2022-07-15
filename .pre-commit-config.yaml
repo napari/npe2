@@ -1,4 +1,10 @@
+ci:
+  autoupdate_schedule: monthly
+  autofix_commit_msg: "style: [pre-commit.ci] auto fixes [...]"
+  autoupdate_commit_msg: "ci: [pre-commit.ci] autoupdate"
+
 exclude: _docs/example_plugin/some_module.py
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
