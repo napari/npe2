@@ -83,8 +83,9 @@ def test_conversion_from_package_setup_py(npe1_repo, mock_npe1_pm_with_plugin):
     (npe1_repo / "setup.py").write_text(
         """from setuptools import setup
 
+NAME = 'npe1-plugin'
 setup(
-    name='npe1-plugin',
+    name=NAME,
     entry_points={"napari.plugin": ["npe1-plugin = npe1_module"]}
 )
 """
