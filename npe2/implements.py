@@ -4,13 +4,25 @@ import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from pydantic import BaseModel
 
-from .manifest import contributions
+from .manifest import PluginManifest, contributions
 
 __all__ = [
+    "compile",
     "on_activate",
     "on_deactivate",
     "PluginModuleVisitor",
@@ -20,6 +32,7 @@ __all__ = [
     "widget",
     "writer",
 ]
+
 
 T = TypeVar("T", bound=Callable[..., Any])
 _COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
@@ -244,7 +257,9 @@ class PluginModuleVisitor(ast.NodeVisitor):
 
 
 def visit(
-    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
+    path: Union[ModuleType, str, Path],
+    plugin_name: str,
+    module_name: str = "",
 ) -> contributions.ContributionPoints:
     """Visit a module and extract contribution points.
 
@@ -269,8 +284,111 @@ def visit(
         path = path.__file__
 
     visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
-    visitor.visit(ast.parse(Path(path).read_text()))
+    src_code = Path(path).read_text()
+    node = ast.parse(src_code)
+    visitor.visit(node)
+
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]
     return contributions.ContributionPoints(**visitor.contribution_points)
+
+
+def _get_setuptools_info(src_path: Path, entry="napari.manifest") -> Dict[str, Any]:
+    import os
+    from importlib.metadata import EntryPoint
+
+    from setuptools import Distribution
+    from setuptools.command.build_py import build_py
+
+    curdir = os.getcwd()
+    try:
+        os.chdir(src_path)
+        dist = Distribution({"src_root": str(src_path)})
+        dist.parse_config_files()
+
+        builder = build_py(dist)
+        builder.finalize_options()
+
+        output = {
+            "name": dist.get_name(),
+            "packages": {
+                pkg: builder.check_package(pkg, builder.get_package_dir(pkg))
+                for pkg in builder.packages
+            },
+            "manifest": None,
+        }
+
+        if entry in dist.entry_points:
+            ep = dist.entry_points[entry][0]
+            if match := EntryPoint.pattern.search(ep):
+                manifest_file = match.groupdict()["attr"]
+                module_dir = Path(builder.get_package_dir(match.groupdict()["module"]))
+                output["manifest"] = str(module_dir / manifest_file)
+        return output
+    finally:
+        os.chdir(curdir)
+
+
+def compile(
+    src_dir: Union[str, Path], dest: Union[str, Path, None] = None
+) -> PluginManifest:
+    """Compile plugin manifest from `src_dir`, where is a top-level repo.
+
+    This will discover all the contribution points in the repo and output a manifest
+    object
+
+    Parameters
+    ----------
+    src_dir : Union[str, Path]
+        Repo root. Should contain a pyproject or setup.cfg file.
+
+    Returns
+    -------
+    PluginManifest
+        Manifest including all discovered contribution points, combined with any
+        existing contributions explicitly stated in the manifest.
+    """
+
+    src_path = Path(src_dir)
+    assert src_path.exists(), f"src_dir {src_dir} does not exist"
+
+    if dest is not None:
+        pdest = Path(dest)
+        suffix = pdest.suffix.lstrip(".")
+        if suffix not in {"json", "yaml", "toml"}:
+            raise ValueError(
+                f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
+            )
+
+    info = _get_setuptools_info(src_path)
+
+    import pkgutil
+
+    from npe2.manifest.utils import merge_contributions, merge_manifests
+
+    contribs: List[contributions.ContributionPoints] = []
+    for name, initpy in info["packages"].items():
+        contribs.extend(
+            visit(
+                module_info.module_finder.find_module(module_info.name).path,  # type: ignore  # noqa
+                plugin_name=info["name"],
+                module_name=f"{name}.{module_info.name}",
+            )
+            for module_info in pkgutil.iter_modules([initpy.replace("__init__.py", "")])
+        )
+
+    mf = PluginManifest(
+        name=info["name"],
+        contributions=merge_contributions(contribs),
+    )
+    if (manifest := info.get("manifest")) and Path(manifest).exists():
+        original_manifest = PluginManifest.from_file(manifest)
+        mf.display_name = original_manifest.display_name
+        mf = merge_manifests([original_manifest, mf], overwrite=True)
+
+    if dest is not None:
+        manifest_string = getattr(mf, cast(str, suffix))(indent=2)
+        pdest.write_text(manifest_string)
+
+    return mf

@@ -41,6 +41,9 @@ _main.__doc__ = typer.style(
     (_main.__doc__ or "").format(version=__version__), fg="bright_yellow"
 )
 
+SYNTAX_THME = "monokai"
+SYNTAX_BACKGROUND = "black"
+
 
 class Format(str, Enum):
     """Valid manifest file formats."""
@@ -64,7 +67,10 @@ def _pprint_formatted(string, format: Format = Format.yaml):  # pragma: no cover
     from rich.console import Console
     from rich.syntax import Syntax
 
-    Console().print(Syntax(string, format.value, theme="fruity"))
+    syntax = Syntax(
+        string, format.value, theme=SYNTAX_THME, background_color=SYNTAX_BACKGROUND
+    )
+    Console().print(syntax)
 
 
 def _pprint_exception(err: Exception):
@@ -465,6 +471,14 @@ def cache(
                 _pprint_formatted(mf.yaml(), Format.yaml)  # pragma: no cover
             else:
                 typer.secho(f"{mf.name}: {mf.package_version}", fg=typer.colors.GREEN)
+
+
+@app.command()
+def compile(src_dir: str):
+    """Compile napari_plugin_engine plugins"""
+    from .implements import compile
+
+    _pprint_formatted(compile(src_dir).yaml(), Format.yaml)
 
 
 def main():

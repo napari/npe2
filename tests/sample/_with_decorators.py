@@ -1,12 +1,20 @@
 """This module mimics all of the contributions my-plugin...
 but is used to reverse-engineer the manifest."""
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 # to test various ways that this can be imported, since we're using static parsing.
 import npe2.implements
 import npe2.implements as impls
 from npe2 import implements
 from npe2.implements import reader
+
+# alternative pattern that does not require npe2 at runtime
+if TYPE_CHECKING:
+    from npe2 import implements as noimport
+else:
+    # create no-op `implements.anything(**kwargs)` decorator
+    D = type("D", (), {"__getattr__": lambda *_: (lambda **_: (lambda f: f))})
+    noimport = D()
 
 
 @implements.on_activate
@@ -40,7 +48,7 @@ def url_reader(path: str):
     ...
 
 
-@implements.writer(
+@noimport.writer(
     id="my_writer",
     title="My Multi-layer Writer",
     filename_extensions=["*.tif", "*.tiff"],
