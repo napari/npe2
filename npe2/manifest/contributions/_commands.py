@@ -63,22 +63,21 @@ class CommandContribution(BaseModel):
 
     short_title: Optional[str] = Field(
         None,
-        description="(Optional) Short title by which the command is represented in "
+        description="Short title by which the command is represented in "
         "the UI. Menus pick either `title` or `short_title` depending on the context "
         "in which they show commands.",
     )
     category: Optional[str] = Field(
         None,
-        description="(Optional) Category string by which the command may be grouped "
-        "in the UI",
+        description="Category string by which the command may be grouped in the UI.",
     )
     icon: Optional[Union[str, Icon]] = Field(
         None,
-        description="(Optional) Icon used to represent this command in the UI, e.g. on "
-        "buttons or in menus. These may be superqt fonticon keys, such as "
-        "`fa5s.arrow_down`",
-        # TODO: add link to superqt fonticon docs
-        # ... plugin should be required to state the dependency...
+        description="Icon used to represent this command in the UI, on "
+        "buttons or in menus. These may be [superqt](https://github.com/napari/superqt)"
+        " fonticon keys, such as `'fa6s.arrow_down'`; though not that plugins are "
+        "expected to depend on any fonticon libraries they use, e.g "
+        "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6).",
     )
     enablement: Optional[str] = Field(
         None,
