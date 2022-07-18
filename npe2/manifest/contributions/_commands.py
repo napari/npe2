@@ -82,7 +82,7 @@ class CommandContribution(BaseModel):
     enablement: Optional[str] = Field(
         None,
         description=(
-            "Condition which must be true to enable the command in the UI "
+            "Expression which must evaluate as true to enable the command in the UI "
             "(menu and keybindings). Does not prevent executing the command "
             "by other means, like the `execute_command` api."
         ),
