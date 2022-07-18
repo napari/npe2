@@ -75,7 +75,7 @@ class CommandContribution(BaseModel):
         None,
         description="Icon used to represent this command in the UI, on "
         "buttons or in menus. These may be [superqt](https://github.com/napari/superqt)"
-        " fonticon keys, such as `'fa6s.arrow_down'`; though not that plugins are "
+        " fonticon keys, such as `'fa6s.arrow_down'`; though note that plugins are "
         "expected to depend on any fonticon libraries they use, e.g "
         "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6).",
     )
