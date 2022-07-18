@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     DictIntStrAny = Dict[IntStr, Any]
     MappingIntStrAny = Mapping[IntStr, Any]
     InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
+    DisposeFunction = Callable[[], None]
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
@@ -659,18 +660,25 @@ class PluginContext:
         self.plugin_key = plugin_key
         self._command_registry = reg or PluginManager.instance().commands
         self._imports: Set[str] = set()  # modules that were imported by this plugin
-        self._disposables: Set[Callable] = set()  # functions to call when deactivating
+        # functions to call when deactivating
+        self._disposables: Set[DisposeFunction] = set()
 
     def _dispose(self):
         for dispose in self._disposables:
             dispose()
 
     def register_command(self, id: str, command: Optional[Callable] = None):
+        """Associate a callable with a command id."""
+
         def _inner(command):
             self._disposables.add(self._command_registry.register(id, command))
             return command
 
         return _inner if command is None else _inner(command)
+
+    def register_disposable(self, func: DisposeFunction):
+        """Register `func` to be executed when this plugin is deactivated."""
+        self._disposables.add(func)
 
 
 def _call_python_name(python_name: PythonName, args=()) -> Any:
