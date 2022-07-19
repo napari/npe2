@@ -664,8 +664,8 @@ class PluginContext:
         self._disposables: Set[DisposeFunction] = set()
 
     def _dispose(self):
-        for dispose in self._disposables:
-            dispose()
+        while self._disposables:
+            self._disposables.pop()()
 
     def register_command(self, id: str, command: Optional[Callable] = None):
         """Associate a callable with a command id."""
