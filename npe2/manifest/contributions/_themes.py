@@ -1,8 +1,7 @@
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, color
 from pydantic.fields import Field
-from typing_extensions import Literal
 
 
 # pydantic doesn't implement color equality?
@@ -53,7 +52,7 @@ class ThemeContribution(BaseModel):
     label: str = Field(description="Label of the color theme as shown in the UI.")
     type: Union[Literal["dark"], Literal["light"]] = Field(
         description="Base theme type, used for icons and filling in unprovided colors. "
-        "Must be either `'dark'` or "
+        "Must be either `'dark'` or  `'light'`."
     )
     colors: ThemeColors = Field(
         description=f"Theme colors. Valid keys include: {_color_keys}. All keys "

@@ -10,8 +10,6 @@ from npe2.types import PythonName
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
-SAMPLE_PLUGIN_NAME = "my-plugin"
-
 
 @pytest.fixture
 def pm(sample_path):
@@ -198,3 +196,31 @@ def test_warn_on_register_disabled(uses_sample_plugin, plugin_manager: PluginMan
     plugin_manager._manifests.pop(SAMPLE_PLUGIN_NAME)  # NOT good way to "unregister"
     with pytest.warns(UserWarning):
         plugin_manager.register(mf)
+
+
+def test_plugin_manager_dict(uses_sample_plugin, plugin_manager: PluginManager):
+    """Test exporting the plugin manager state with `dict()`."""
+    d = plugin_manager.dict()
+    assert SAMPLE_PLUGIN_NAME in d["plugins"]
+    assert "disabled" in d
+    assert "activated" in d
+
+    d = plugin_manager.dict(
+        include={"contributions", "package_metadata.version"},
+        exclude={"contributions.writers", "contributions.readers"},
+    )
+    plugin_dict = d["plugins"][SAMPLE_PLUGIN_NAME]
+    assert set(plugin_dict) == {"contributions", "package_metadata"}
+    contribs = set(plugin_dict["contributions"])
+    assert "readers" not in contribs
+    assert "writers" not in contribs
+
+
+def test_plugin_context_dispose():
+    pm = PluginManager()
+    mf = PluginManifest(name="test")
+    pm.register(mf)
+    mock = Mock()
+    pm.get_context("test").register_disposable(mock)
+    pm.deactivate("test")
+    mock.assert_called_once()

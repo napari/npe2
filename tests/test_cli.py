@@ -3,6 +3,7 @@ import sys
 import pytest
 from typer.testing import CliRunner
 
+from npe2 import __version__
 from npe2.cli import app, main
 from npe2.manifest.schema import PluginManifest
 
@@ -136,7 +137,7 @@ def test_cli_main(monkeypatch, sample_path):
     assert e.value.code == 0
 
 
-def test_cli_cache_list_empty(mock_cache):
+def test_cli_cache_list_empty():
     result = runner.invoke(app, ["cache", "--list"])
     assert "Nothing cached" in result.stdout
     assert result.exit_code == 0
@@ -156,7 +157,7 @@ def test_cli_cache_list_named(uses_npe1_plugin, mock_cache):
     assert result.exit_code == 0
 
 
-def test_cli_cache_clear_empty(mock_cache):
+def test_cli_cache_clear_empty():
     result = runner.invoke(app, ["cache", "--clear"])
     assert "Nothing to clear" in result.stdout
     assert result.exit_code == 0
@@ -175,3 +176,34 @@ def test_cli_cache_clear_named(mock_cache):
     result = runner.invoke(app, ["cache", "--clear", "not-a-plugin"])
     assert result.stdout == "Nothing to clear for plugins: not-a-plugin\n"
     assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("format", ["table", "compact", "yaml", "json"])
+@pytest.mark.parametrize("fields", [None, "name,version,author"])
+def test_cli_list(format, fields, uses_npe1_plugin):
+    result = runner.invoke(app, ["list", "-f", format, "--fields", fields])
+    assert result.exit_code == 0
+    assert "npe1-plugin" in result.output
+    if fields and "author" in fields and format != "compact":
+        assert "author" in result.output.lower()
+    else:
+        assert "author" not in result.output.lower()
+
+
+def test_cli_list_sort(uses_npe1_plugin):
+    result = runner.invoke(app, ["list", "--sort", "version"])
+    assert result.exit_code == 0
+
+    result = runner.invoke(app, ["list", "--sort", "7"])
+    assert result.exit_code
+    assert "Invalid sort value '7'" in result.output
+
+    result = runner.invoke(app, ["list", "--sort", "notaname"])
+    assert result.exit_code
+    assert "Invalid sort value 'notaname'" in result.output
+
+
+def test_cli_version():
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert __version__ in result.output

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import warnings
 from collections import Counter
@@ -8,6 +9,7 @@ from importlib import metadata
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
+    AbstractSet,
     Any,
     Callable,
     DefaultDict,
@@ -15,6 +17,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -40,6 +43,13 @@ if TYPE_CHECKING:
         ThemeContribution,
         WidgetContribution,
     )
+
+    IntStr = Union[int, str]
+    AbstractSetIntStr = AbstractSet[IntStr]
+    DictIntStrAny = Dict[IntStr, Any]
+    MappingIntStrAny = Mapping[IntStr, Any]
+    InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
+    DisposeFunction = Callable[[], None]
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
@@ -385,6 +395,11 @@ class PluginManager:
             - calls the plugin's on_deactivate() func, passing the Context.
             - calls and cleanup functions in the context's `_dispose` method.
             - emits an event
+
+        This does not:
+            - "unindex" contributions (i.e. the contributions of a deactivated plugin
+              are still visible in the index)
+            - "disable" the plugin (i.e. it can still be used).
         """
         mf = self._manifests[plugin_name]
         self.commands.unregister_manifest(mf)
@@ -398,7 +413,7 @@ class PluginManager:
         self.events.activation_changed({}, {mf.name})
 
     def enable(self, plugin_name: PluginName) -> None:
-        """Enable a plugin (which mostly means just `un-disable` it.
+        """Enable a plugin (which mostly means just `un-disable` it).
 
         This is a no-op if the plugin wasn't already disabled.
         """
@@ -412,7 +427,20 @@ class PluginManager:
         self.events.enablement_changed({plugin_name}, {})
 
     def disable(self, plugin_name: PluginName) -> None:
-        """Disable a plugin"""
+        """Disable a plugin.
+
+        'Disabled' means the plugin remains installed, but it cannot be activated,
+        and its contributions will not be indexed.  Menu items and keybindings and
+        such will not be available.
+
+        In napari, plugin disablement is persisted across sessions.
+        """
+        if self.is_disabled(plugin_name):
+            return  # pragma: no cover
+
+        with contextlib.suppress(KeyError):
+            self.deactivate(plugin_name)
+
         self._disabled_plugins.add(plugin_name)
         self._contrib.remove_contributions(plugin_name)
         self.events.enablement_changed({}, {plugin_name})
@@ -426,11 +454,10 @@ class PluginManager:
     def get_manifest(self, plugin_name: str) -> PluginManifest:
         """Get manifest for `plugin_name`"""
         key = str(plugin_name).split(".")[0]
-        try:
-            return self._manifests[key]
-        except KeyError as e:
+        if key not in self._manifests:
             msg = f"Manifest key {key!r} not found in {list(self._manifests)}"
-            raise KeyError(msg) from e
+            raise KeyError(msg)
+        return self._manifests[key]
 
     def iter_manifests(
         self, disabled: Optional[bool] = None
@@ -453,6 +480,65 @@ class PluginManager:
             elif disabled is False and self.is_disabled(key):
                 continue
             yield mf
+
+    def dict(
+        self, *, include: InclusionSet = None, exclude: InclusionSet = None
+    ) -> Dict[str, Any]:
+        """Return a dictionary with the state of the plugin manager.
+
+        `include` and `exclude` will be passed to each `PluginManifest.dict()`
+        See pydantic documentation for details:
+        https://pydantic-docs.helpmanual.io/usage/exporting_models/#modeldict
+
+        `include` and `exclude` may be a set of dotted strings, indicating
+        nested fields in the manifest model.  For example:
+
+            {'contributions.readers', 'package_metadata.description'}
+
+        will be expanded to
+
+            {
+                'contributions': {'readers': True},
+                'package_metadata': {'description': True}
+            }
+
+        This facilitates selection of nested fields on the command line.
+
+
+        Parameters
+        ----------
+        include : InclusionSet, optional
+            A set of manifest fields to include, by default all fields are included.
+        exclude : InclusionSet, optional
+            A set of manifest fields to exclude, by default no fields are excluded.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with the state of the plugin manager.  Keys will include
+
+                - `'plugins'`: dict of `{name: manifest.dict()} for discovered plugins
+                - `'disabled'`: set of disabled plugins
+                - `'activated'`: set of activated plugins
+
+        """
+        # _include =
+        out: Dict[str, Any] = {
+            "plugins": {
+                mf.name: mf.dict(
+                    include=_expand_dotted_set(include),
+                    exclude=_expand_dotted_set(exclude),
+                )
+                for mf in self.iter_manifests()
+            }
+        }
+        if not exclude or "disabled" not in exclude:
+            out["disabled"] = set(self._disabled_plugins)
+        if not exclude or "activated" not in exclude:
+            out["activated"] = {
+                name for name, ctx in self._contexts.items() if ctx._activated
+            }
+        return out
 
     def __contains__(self, name: str) -> bool:
         return name in self._manifests
@@ -592,18 +678,25 @@ class PluginContext:
         self.plugin_key = plugin_key
         self._command_registry = reg or PluginManager.instance().commands
         self._imports: Set[str] = set()  # modules that were imported by this plugin
-        self._disposables: Set[Callable] = set()  # functions to call when deactivating
+        # functions to call when deactivating
+        self._disposables: Set[DisposeFunction] = set()
 
     def _dispose(self):
-        for dispose in self._disposables:
-            dispose()
+        while self._disposables:
+            self._disposables.pop()()
 
     def register_command(self, id: str, command: Optional[Callable] = None):
+        """Associate a callable with a command id."""
+
         def _inner(command):
             self._disposables.add(self._command_registry.register(id, command))
             return command
 
         return _inner if command is None else _inner(command)
+
+    def register_disposable(self, func: DisposeFunction):
+        """Register `func` to be executed when this plugin is deactivated."""
+        self._disposables.add(func)
 
 
 def _call_python_name(python_name: PythonName, args=()) -> Any:
@@ -616,3 +709,43 @@ def _call_python_name(python_name: PythonName, args=()) -> Any:
     func = import_python_name(python_name)
     if callable(func):
         return func(*args)
+
+
+def _expand_dotted_set(inclusion_set: InclusionSet) -> InclusionSet:
+    """Expand a set of strings with dots to a dict of dicts.
+
+    Examples
+    --------
+    >>> _expand_dotted_set({'a.b', 'c', 'a.d'})
+    {'a': {'b': True, 'd': True}, 'c': True}
+
+    >>> _expand_dotted_set({'a.b', 'a.d.e', 'a'})
+    {'a'}
+
+    >>> _expand_dotted_set({'a.b', 'a.d', 'x.y.z'})
+    {'x': {'y': {'z': True}}, 'a': {'d': True, 'b': True}}
+    """
+    if not isinstance(inclusion_set, set) or all(
+        "." not in str(s) for s in inclusion_set
+    ):
+        return inclusion_set
+
+    result: Dict[IntStr, Any] = {}
+    # sort the strings based on the number of dots,
+    # so that higher level keys take precedence
+    # e.g. {'a.b', 'a.d.e', 'a'} -> {'a'}
+    for key in sorted(inclusion_set, key=lambda i: i.count("."), reverse=True):
+        if isinstance(key, str):
+            parts = key.split(".")
+            if len(parts) == 1:
+                result[key] = True
+            else:
+                cur = result
+                for part in parts[:-1]:
+                    # integer keys are used in pydantic for lists
+                    # they must remain integers
+                    _p: IntStr = int(part) if part.isdigit() else part
+                    cur = cur.setdefault(_p, {})
+                cur[parts[-1]] = True
+
+    return result

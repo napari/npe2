@@ -1,12 +1,8 @@
-from importlib.metadata import metadata
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from importlib import metadata
+from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, constr, root_validator
 from pydantic.fields import SHAPE_LIST
-from typing_extensions import Literal
-
-if TYPE_CHECKING:
-    import email.message
 
 # https://packaging.python.org/specifications/core-metadata/
 
@@ -185,14 +181,21 @@ class PackageMetadata(BaseModel):
     @classmethod
     def for_package(cls, name: str) -> "PackageMetadata":
         """Get PackageMetadata from a package name."""
-        return cls.from_dist_metadata(metadata(name))
+        return cls.from_dist_metadata(metadata.metadata(name))
 
+    # note, the metadata.PackageMetadata hint is only valid for py 3.10
+    # before that, it was email.message.Message
     @classmethod
-    def from_dist_metadata(cls, meta: "email.message.Message") -> "PackageMetadata":
-        """Accepts importlib.metadata.Distribution.metadata"""
+    def from_dist_metadata(cls, meta: "metadata.PackageMetadata") -> "PackageMetadata":
+        """Generate PackageMetadata from importlib.metadata.PackageMetdata."""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
         d: Dict[str, Union[str, List[str]]] = {}
-        for key, value in meta.items():
+        # looks like py3.10 changed the public protocol of metadata.PackageMetadata
+        # and they don't want you to rely on the Mapping interface... however, the
+        # __iter__ method doesn't iterate key value pairs, just keys, and I can't figure
+        # out how to get multi-valued fields from that (e.g. Classifier)
+        # might need to change this in the future
+        for key, value in meta.items():  # type: ignore
             key = _norm(key)
             if key in manys:
                 d.setdefault(key, []).append(value)  # type: ignore
