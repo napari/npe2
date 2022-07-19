@@ -10,8 +10,6 @@ from npe2.types import PythonName
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 
-SAMPLE_PLUGIN_NAME = "my-plugin"
-
 
 @pytest.fixture
 def pm(sample_path):
@@ -216,3 +214,13 @@ def test_plugin_manager_dict(uses_sample_plugin, plugin_manager: PluginManager):
     contribs = set(plugin_dict["contributions"])
     assert "readers" not in contribs
     assert "writers" not in contribs
+
+
+def test_plugin_context_dispose():
+    pm = PluginManager()
+    mf = PluginManifest(name="test")
+    pm.register(mf)
+    mock = Mock()
+    pm.get_context("test").register_disposable(mock)
+    pm.deactivate("test")
+    mock.assert_called_once()
