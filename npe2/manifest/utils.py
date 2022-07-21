@@ -289,18 +289,23 @@ def merge_contributions(
     if not _contribs:
         return {}  # pragma: no cover
 
-    out = _contribs[0].dict(exclude_unset=True)
+    out_dict = _contribs[0].dict(exclude_unset=True)
     if len(_contribs) <= 1:
-        return out
+        return out_dict
 
     for ctrb in _contribs[1:]:
         _renames = {}
-        existing_cmds = {c["id"] for c in out.get("commands", {})}
-        c = ctrb.dict(exclude_unset=True)
-        for cmd in list(c.get("commands", ())):
+        existing_cmds = {c["id"] for c in out_dict.get("commands", {})}
+        new_ctrb_dict = ctrb.dict(exclude_unset=True)
+        for cmd in list(new_ctrb_dict.get("commands", ())):
             cmd_id = cmd["id"]
             if cmd_id in existing_cmds:
-                if not overwrite:
+                if overwrite:
+                    # remove existing command
+                    new_ctrb_dict["commands"].remove(cmd)
+                else:
+                    # if we're not overwriting, we need to rename the command
+                    # to avoid collisions
                     i = 1
                     while cmd_id in existing_cmds:
                         if i != 1:
@@ -309,9 +314,7 @@ def merge_contributions(
                         cmd_id = f"{cmd_id}_{i}"
                         _renames[cmd["id"]] = cmd_id
                     cmd["id"] = cmd_id
-                else:
-                    c["commands"].remove(cmd)
-        for val in c.values():
+        for key, val in new_ctrb_dict.items():
             if isinstance(val, list):
                 for item in val:
                     if "command" in item:
@@ -319,5 +322,9 @@ def merge_contributions(
                         if cmd_id in _renames:
                             cmd_id = _renames[cmd_id]
                         item["command"] = cmd_id
-        out = deep_update(out, c)
-    return out
+                    if overwrite:
+                        for existing_item in list(out_dict.get(key, [])):
+                            if all(item[k] == existing_item[k] for k in item):
+                                out_dict[key].remove(existing_item)
+        out_dict = deep_update(out_dict, new_ctrb_dict)
+    return out_dict

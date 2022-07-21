@@ -67,14 +67,10 @@ def _pprint_formatted(string, format: Format = Format.yaml):  # pragma: no cover
     from rich.console import Console
     from rich.syntax import Syntax
 
-    Console().print(
-        Syntax(
-            string,
-            format.value,
-            theme=SYNTAX_THME,
-            background_color=SYNTAX_BACKGROUND,
-        )
+    syntax = Syntax(
+        string, format.value, theme=SYNTAX_THME, background_color=SYNTAX_BACKGROUND
     )
+    Console().print(syntax)
 
 
 def _pprint_exception(err: Exception):
