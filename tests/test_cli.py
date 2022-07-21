@@ -207,3 +207,8 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert __version__ in result.output
+
+
+def test_compile(compiled_plugin_dir):
+    result = runner.invoke(app, ["compile", str(compiled_plugin_dir)])
+    assert "id: my_compiled_plugin.my-plugin.generate_random_data" in result.output

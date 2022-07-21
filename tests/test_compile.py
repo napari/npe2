@@ -1,18 +1,9 @@
-import shutil
 from pathlib import Path
 
 import pytest
 
 from npe2.implements import compile
 from npe2.manifest.schema import PluginManifest
-
-FIXTURES = Path(__file__).parent / "fixtures"
-
-
-@pytest.fixture
-def compiled_plugin_dir(tmp_path):
-    shutil.copytree(FIXTURES / "my-compiled-plugin", tmp_path, dirs_exist_ok=True)
-    return tmp_path
 
 
 def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
