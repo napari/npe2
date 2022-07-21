@@ -25,7 +25,7 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
     dest = tmp_path / "output.yaml"
     mf = compile(compiled_plugin_dir, dest=dest)
     assert isinstance(mf, PluginManifest)
-    assert mf.name == "my-compiled-plugin"
+    assert mf.name == "my_compiled_plugin"
     assert mf.contributions.commands and len(mf.contributions.commands) == 5
     assert dest.exists()
     assert PluginManifest.from_file(dest) == mf

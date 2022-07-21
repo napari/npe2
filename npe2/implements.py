@@ -309,7 +309,6 @@ def compile(
     dest: Union[str, Path, None] = None,
     packages: Sequence[str] = (),
     plugin_name: str = "",
-    template: str = "",
 ) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
