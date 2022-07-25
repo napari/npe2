@@ -312,9 +312,9 @@ def list(
 def _fetch_all_manifests(doit: bool):
     """Fetch all manifests and dump to "manifests" folder."""
     if doit:
-        from npe2._fetch import fetch_all_manifests
+        from npe2 import _fetch
 
-        fetch_all_manifests()
+        _fetch._fetch_all_manifests()
         raise typer.Exit(0)
 
 

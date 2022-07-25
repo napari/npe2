@@ -272,7 +272,7 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
     FORMAT = "json"
     INDENT = None
 
-    try:
+    try:  # pragma: no cover
         mf = fetch_manifest(name, version=version)
         manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=INDENT)
 
@@ -283,7 +283,7 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
         return name, {"version": version, "error": str(e)}
 
 
-def fetch_all_manifests(dest="manifests"):
+def _fetch_all_manifests(dest="manifests"):
     from concurrent.futures import ThreadPoolExecutor
 
     dest = Path(dest)
@@ -291,6 +291,6 @@ def fetch_all_manifests(dest="manifests"):
 
     args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
     with ThreadPoolExecutor() as executor:
-        errors = list(executor.map(_try_fetch_and_write_manifest, args[8:15]))
+        errors = list(executor.map(_try_fetch_and_write_manifest, args))
     _errors = {tup[0]: tup[1] for tup in errors if tup}
     (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
