@@ -31,4 +31,4 @@ jobs:
         with:
           branch: manifests
           file_pattern: manifests/*.json
-          skip_checkout: true
+          push_options: --force
