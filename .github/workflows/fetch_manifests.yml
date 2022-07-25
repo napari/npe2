@@ -1,0 +1,32 @@
+name: Fetch manifests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  fetch:
+    name: Fetch
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: fetch
+        run: |
+          pip install -U pip
+          pip install -e .
+          npe2 fetch --all
+
+      - name: push results
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: manifests
+          FOLDER: manifests
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

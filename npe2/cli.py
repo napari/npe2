@@ -309,6 +309,12 @@ def list(
             typer.echo(template.format(**r, ncontrib=ncontrib))
 
 
+def _fetch_all_manifests():
+    from npe2._fetch import fetch_all_manifests
+
+    fetch_all_manifests()
+
+
 @app.command()
 def fetch(
     name: str,
@@ -336,6 +342,13 @@ def fetch(
         exists=False,
         help="If provided, will write manifest to filepath (must end with .yaml, "
         ".json, or .toml). Otherwise, will print to stdout.",
+    ),
+    all: Optional[bool] = typer.Option(
+        False,
+        "--all",
+        help="Fetch manifests for ALL known plugins (will be SLOW)",
+        callback=_fetch_all_manifests,
+        is_eager=True,
     ),
 ):
     """Fetch manifest from remote package.
