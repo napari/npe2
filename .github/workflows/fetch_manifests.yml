@@ -1,6 +1,8 @@
 name: Fetch manifests
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
   schedule:
     # “At 6am and 6pm”
