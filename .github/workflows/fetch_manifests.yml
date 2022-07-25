@@ -1,0 +1,34 @@
+name: Fetch manifests
+
+on:
+  workflow_dispatch:
+  schedule:
+    # “At 6am and 6pm”
+    - cron: "0 6,18 * * *"
+
+jobs:
+  fetch:
+    name: Fetch
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: fetch
+        run: |
+          pip install -U pip
+          pip install -e .
+          npe2 fetch --all
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: manifests
+          file_pattern: manifests/*.json
+          skip_checkout: true
+          push_options: --force

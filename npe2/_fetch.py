@@ -11,7 +11,7 @@ from importlib import metadata
 from io import BytesIO
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 from urllib.request import urlopen
 from zipfile import ZipFile
 
@@ -265,3 +265,32 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
     """Return hub information for a specific plugin."""
     with urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
         return json.load(r)
+
+
+def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
+    name, version, dest = args
+    FORMAT = "json"
+    INDENT = None
+
+    try:  # pragma: no cover
+        mf = fetch_manifest(name, version=version)
+        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=INDENT)
+
+        (dest / f"{name}.{FORMAT}").write_text(manifest_string)
+        print(f"✅ {name}")
+    except Exception as e:
+        print(f"❌ {name}")
+        return name, {"version": version, "error": str(e)}
+
+
+def _fetch_all_manifests(dest="manifests"):
+    from concurrent.futures import ThreadPoolExecutor
+
+    dest = Path(dest)
+    dest.mkdir(exist_ok=True)
+
+    args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
+    with ThreadPoolExecutor() as executor:
+        errors = list(executor.map(_try_fetch_and_write_manifest, args))
+    _errors = {tup[0]: tup[1] for tup in errors if tup}
+    (dest / "errors.json").write_text(json.dumps(_errors, indent=2))

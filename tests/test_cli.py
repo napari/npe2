@@ -1,4 +1,5 @@
 import sys
+from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
@@ -90,6 +91,24 @@ def test_cli_fetch(format, tmp_path, to_file, include_meta):
         assert "napari-omero" in result.stdout  # just prints the yaml
         if include_meta:
             assert "package_metadata" in result.stdout
+
+
+def test_cli_fetch_all(tmp_path):
+    import os
+
+    before = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        with patch("npe2._fetch.fetch_manifest") as mock_fetch:
+            with patch("npe2._fetch.get_hub_plugins") as mock_hub:
+                mock_hub.return_value = {"a": "0.1.0", "b": "0.2.0", "c": "0.3.0"}
+                result = runner.invoke(app, ["fetch", "--all"])
+
+        assert result.exit_code == 0
+        mock_fetch.assert_called_with("c", version="0.3.0")
+        assert (tmp_path / "manifests").exists()
+    finally:
+        os.chdir(before)
 
 
 @pytest.mark.filterwarnings("default:Failed to convert")
