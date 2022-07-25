@@ -16,15 +16,18 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
+      - uses: tlambert03/setup-qt-libs@v1
+
       - uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
       - name: fetch
         run: |
+          sudo apt-get install -y xvfb
           pip install -U pip
           pip install -e .
-          npe2 fetch --all
+          xvfb-run --auto-servernum npe2 fetch --all
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
