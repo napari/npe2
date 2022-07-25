@@ -1,12 +1,11 @@
 name: Fetch manifests
 
 on:
-  push:
   pull_request:
-  workflow_dispatch:
-  schedule:
-    # “At 6am and 6pm”
-    - cron: "0 6,18 * * *"
+  # workflow_dispatch:
+  # schedule:
+  #   # “At 6am and 6pm”
+  #   - cron: "0 6,18 * * *"
 
 jobs:
   fetch:

@@ -309,12 +309,13 @@ def list(
             typer.echo(template.format(**r, ncontrib=ncontrib))
 
 
-def _fetch_all_manifests():
+def _fetch_all_manifests(doit: bool):
     """Fetch all manifests and dump to "manifests" folder."""
-    from npe2._fetch import fetch_all_manifests
+    if doit:
+        from npe2._fetch import fetch_all_manifests
 
-    fetch_all_manifests()
-    raise typer.Exit(0)
+        fetch_all_manifests()
+        raise typer.Exit(0)
 
 
 @app.command()
