@@ -310,9 +310,11 @@ def list(
 
 
 def _fetch_all_manifests():
+    """Fetch all manifests and dump to "manifests" folder."""
     from npe2._fetch import fetch_all_manifests
 
     fetch_all_manifests()
+    raise typer.Exit(0)
 
 
 @app.command()
@@ -344,7 +346,7 @@ def fetch(
         ".json, or .toml). Otherwise, will print to stdout.",
     ),
     all: Optional[bool] = typer.Option(
-        False,
+        None,
         "--all",
         help="Fetch manifests for ALL known plugins (will be SLOW)",
         callback=_fetch_all_manifests,

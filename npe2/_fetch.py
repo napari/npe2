@@ -269,11 +269,14 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
 
 def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
     name, version, dest = args
+    FORMAT = "json"
+    INDENT = None
 
     try:
         mf = fetch_manifest(name, version=version)
-        manifest_string = mf.yaml(exclude=set(), indent=2)
-        (dest / f"{name}.yaml").write_text(manifest_string)
+        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=INDENT)
+
+        (dest / f"{name}.{FORMAT}").write_text(manifest_string)
         print(f"✅ {name}")
     except Exception as e:
         print(f"❌ {name}")
@@ -286,8 +289,8 @@ def fetch_all_manifests(dest="manifests"):
     dest = Path(dest)
     dest.mkdir(exist_ok=True)
 
-    args = [(name, ver, dest) for name, ver in get_hub_plugins().items()]
+    args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
     with ThreadPoolExecutor() as executor:
-        errors = list(executor.map(_try_fetch_and_write_manifest, args[:20]))
-
-    (dest / "errors.json").write_text(json.dumps(dict(errors), indent=2))
+        errors = list(executor.map(_try_fetch_and_write_manifest, args[10:15]))
+    _errors = {tup[0]: tup[1] for tup in errors if tup}
+    (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
