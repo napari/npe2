@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import site
 import sys
 import tempfile
@@ -16,11 +17,14 @@ from urllib.request import urlopen
 from zipfile import ZipFile
 
 from build.env import IsolatedEnvBuilder
+from importlib_metadata import PackageNotFoundError
 
-from npe2.manifest.schema import PluginManifest
+from npe2.manifest import PackageMetadata
 
 if TYPE_CHECKING:
     import build.env
+
+    from npe2.manifest import PluginManifest
 
 
 logger = getLogger(__name__)
@@ -34,6 +38,93 @@ __all__ = [
     "get_hub_plugin",
     "get_hub_plugins",
 ]
+
+
+def _manifest_from_npe2_dist(
+    dist: metadata.PathDistribution, ep: metadata.EntryPoint
+) -> PluginManifest:
+    """Extract plugin manifest from a distribution with an npe2 entry point."""
+    from npe2.manifest import PluginManifest
+
+    logger.debug("pypi wheel has npe2 entry point.")
+
+    # python 3.8 fallbacks
+    match = ep.pattern.match(ep.value)
+    assert match
+    module: str = match.groupdict()["module"]
+    attr: str = match.groupdict()["attr"]
+
+    mf_file = dist.locate_file(Path(module) / attr)
+    if not Path(mf_file).exists():
+        raise ValueError(f"manifest {mf_file} does not exist in distribution")
+
+    mf = PluginManifest.from_file(str(mf_file))
+    # manually add the package metadata from our distribution object.
+    mf.package_metadata = PackageMetadata.from_dist_metadata(dist.metadata)
+    return mf
+
+
+def _manifest_from_npe1_dist(dist: metadata.PathDistribution) -> PluginManifest:
+    """Extract plugin manifest from a distribution with an npe1 entry point."""
+    from npe2.manifest import PluginManifest
+
+    from ._inspection import find_npe1_module_contributions
+    from .manifest.utils import merge_contributions
+
+    name = dist.metadata.get("Name")
+    contribs = []
+    for ep in dist.entry_points:
+        if ep.group == NPE1_ENTRY_POINT:
+            root = dist.locate_file(ep.module.replace(".", "/"))
+            assert isinstance(root, Path)
+
+            if not (file := root / "__init__.py").exists():
+                if not (file := root.with_suffix(".py")).exists():
+                    raise FileNotFoundError(f"Could not find {ep.module} in {root}")
+            contribs.append(find_npe1_module_contributions(file, name, ep.module))
+
+    mf = PluginManifest(name=name, contributions=merge_contributions(contribs))
+    mf.package_metadata = PackageMetadata.from_dist_metadata(dist.metadata)
+    return mf
+
+
+def _manifest_from_extracted_wheel(wheel_dir: Path) -> PluginManifest:
+    """Return plugin manifest from an extracted wheel."""
+    # create a PathDistribution from the dist-info directory in the wheel
+    dist = metadata.PathDistribution(next(Path(wheel_dir).glob("*.dist-info")))
+
+    for ep in dist.entry_points:
+        # if we find an npe2 entry point, we can just use
+        # PathDistribution.locate_file to get the file.
+        if ep.group == NPE2_ENTRY_POINT:
+            return _manifest_from_npe2_dist(dist, ep)
+        elif ep.group == NPE1_ENTRY_POINT:
+            has_npe1 = True  # pragma: no cover
+    if has_npe1:
+        return _manifest_from_npe1_dist(dist)
+
+    raise ValueError("No npe2 or npe1 entry point found in wheel")
+
+
+@contextmanager
+def _guard_cwd() -> Iterator[None]:
+    """Protect current working directory from changes."""
+    current = os.getcwd()
+    try:
+        yield
+    finally:
+        os.chdir(current)
+
+
+def _build_wheel(src, dest):
+    """Build a wheel from a source directory and extract it into dest."""
+    from build.__main__ import build_package
+
+    dist = Path(src) / "dist"
+    with _guard_cwd():
+        build_package(src, dist, ["wheel"])
+        with ZipFile(next((dist).glob("*.whl"))) as zf:
+            zf.extractall(dest)
 
 
 def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
@@ -51,68 +142,17 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     PluginManifest
         Plugin manifest for package `specifier`.
     """
-    from npe2 import PluginManifest
-    from npe2.manifest import PackageMetadata
-
-    has_npe1 = False
-
-    # first just grab the wheel from pypi with no dependencies
     try:
         with _tmp_pypi_wheel_download(package, version) as td:
-            # create a PathDistribution from the dist-info directory in the wheel
-            dist = metadata.PathDistribution(next(Path(td).glob("*.dist-info")))
+            return _manifest_from_extracted_wheel(td)
+    except PackageNotFoundError:
+        with _tmp_pypi_sdist_download(package, version) as td:
 
-            for ep in dist.entry_points:
-                # if we find an npe2 entry point, we can just use
-                # PathDistribution.locate_file to get the file.
-                if ep.group == NPE2_ENTRY_POINT:
-                    logger.debug("pypi wheel has npe2 entry point.")
-                    # python 3.8 fallbacks
-                    match = ep.pattern.match(ep.value)
-                    assert match
-                    module: str = match.groupdict()["module"]
-                    attr: str = match.groupdict()["attr"]
+            src = next(p for p in td.iterdir() if p.is_dir())
+            wheel_dir = td / "wheel"
+            _build_wheel(src, wheel_dir)
 
-                    mf_file = dist.locate_file(Path(module) / attr)
-                    mf = PluginManifest.from_file(str(mf_file))
-                    # manually add the package metadata from our distribution object.
-                    mf.package_metadata = PackageMetadata.from_dist_metadata(
-                        dist.metadata
-                    )
-                    return mf
-                elif ep.group == NPE1_ENTRY_POINT:
-                    has_npe1 = True  # pragma: no cover
-            if has_npe1:
-                return _manifest_from_npe1_wheel(dist)
-    except KeyError as e:
-        if "No bdist_wheel releases found" not in str(e):
-            raise  # pragma: no cover
-        has_npe1 = True
-
-    if not has_npe1:
-        raise ValueError(f"{package} had no napari entry points.")  # pragma: no cover
-
-    logger.debug("falling back to npe1")
-    return _fetch_manifest_with_full_install(package, version=version)
-
-
-def _manifest_from_npe1_wheel(dist: metadata.PathDistribution) -> PluginManifest:
-    from ._inspection import find_npe1_module_contributions
-    from .manifest.utils import merge_contributions
-
-    name = dist.metadata.get("Name")
-    contribs = []
-    for ep in dist.entry_points:
-        if ep.group == NPE1_ENTRY_POINT:
-            root = dist.locate_file(ep.module.replace(".", "/"))
-            assert isinstance(root, Path)
-
-            if not (file := root / "__init__.py").exists():
-                if not (file := root.with_suffix(".py")).exists():
-                    raise FileNotFoundError(f"Could not find {ep.module} in {root}")
-            contribs.append(find_npe1_module_contributions(file, name, ep.module))
-
-    return PluginManifest(name=name, contributions=merge_contributions(contribs))
+            return _manifest_from_extracted_wheel(wheel_dir)
 
 
 @lru_cache
@@ -168,7 +208,9 @@ def get_pypi_url(
     if packagetype:
         if packagetype not in releases:  # pragma: no cover
             version = version or "latest"
-            raise KeyError(f'No {packagetype} releases found for version "{version}"')
+            raise PackageNotFoundError(
+                f'No {packagetype} releases found for version "{version}"'
+            )
         return releases[packagetype]["url"]
     return (releases.get("bdist_wheel") or releases["sdist"])["url"]
 
@@ -183,6 +225,63 @@ def _tmp_pypi_wheel_download(
         with ZipFile(BytesIO(f.read())) as zf:
             zf.extractall(td)
             yield Path(td)
+
+
+@contextmanager
+def _tmp_pypi_sdist_download(
+    package: str, version: Optional[str] = None
+) -> Iterator[Path]:
+    import tarfile
+
+    url = get_pypi_url(package, version=version, packagetype="sdist")
+    logger.debug(f"downloading sdist for {package} {version or ''}")
+    with tempfile.TemporaryDirectory() as td, urlopen(url) as f:
+        with tarfile.open(fileobj=f, mode="r:gz") as tar:
+            tar.extractall(td)
+            yield Path(td)
+
+
+@lru_cache
+def get_hub_plugins() -> Dict[str, str]:
+    """Return {name: latest_version} for all plugins on the hub."""
+    with urlopen("https://api.napari-hub.org/plugins") as r:
+        return json.load(r)
+
+
+@lru_cache
+def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
+    """Return hub information for a specific plugin."""
+    with urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
+        return json.load(r)
+
+
+def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
+    name, version, dest = args
+    FORMAT = "json"
+    INDENT = None
+
+    try:  # pragma: no cover
+        mf = fetch_manifest(name, version=version)
+        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=INDENT)
+
+        (dest / f"{name}.{FORMAT}").write_text(manifest_string)
+        print(f"✅ {name}")
+    except Exception as e:
+        print(f"❌ {name}")
+        return name, {"version": version, "error": str(e)}
+
+
+def _fetch_all_manifests(dest="manifests"):
+    from concurrent.futures import ProcessPoolExecutor
+
+    dest = Path(dest)
+    dest.mkdir(exist_ok=True)
+
+    args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        errors = list(executor.map(_try_fetch_and_write_manifest, args))
+    _errors = {tup[0]: tup[1] for tup in errors if tup}
+    (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
 
 
 @contextmanager
@@ -264,7 +363,7 @@ def _get_loaded_mf_or_die(package: str) -> PluginManifest:
     return mf
 
 
-def _fetch_manifest_with_full_install(
+def fetch_manifest_with_full_install(
     package: str, version: Optional[str] = None
 ) -> PluginManifest:
     """Fetch manifest for plugin by installing into an isolated environment."""
@@ -273,46 +372,3 @@ def _fetch_manifest_with_full_install(
         package, version, validate_npe1_imports=True, install_napari_if_necessary=True
     ):
         return _get_loaded_mf_or_die(package)
-
-
-@lru_cache
-def get_hub_plugins() -> Dict[str, str]:
-    """Return {name: latest_version} for all plugins on the hub."""
-    with urlopen("https://api.napari-hub.org/plugins") as r:
-        return json.load(r)
-
-
-@lru_cache
-def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
-    """Return hub information for a specific plugin."""
-    with urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
-        return json.load(r)
-
-
-def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
-    name, version, dest = args
-    FORMAT = "json"
-    INDENT = None
-
-    try:  # pragma: no cover
-        mf = fetch_manifest(name, version=version)
-        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=INDENT)
-
-        (dest / f"{name}.{FORMAT}").write_text(manifest_string)
-        print(f"✅ {name}")
-    except Exception as e:
-        print(f"❌ {name}")
-        return name, {"version": version, "error": str(e)}
-
-
-def _fetch_all_manifests(dest="manifests"):
-    from concurrent.futures import ThreadPoolExecutor
-
-    dest = Path(dest)
-    dest.mkdir(exist_ok=True)
-
-    args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
-    with ThreadPoolExecutor() as executor:
-        errors = list(executor.map(_try_fetch_and_write_manifest, args))
-    _errors = {tup[0]: tup[1] for tup in errors if tup}
-    (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
