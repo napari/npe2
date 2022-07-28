@@ -17,7 +17,6 @@ from urllib.request import urlopen
 from zipfile import ZipFile
 
 from build.env import IsolatedEnvBuilder
-from importlib_metadata import PackageNotFoundError
 
 from npe2.manifest import PackageMetadata
 
@@ -158,7 +157,7 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     try:
         with _tmp_pypi_wheel_download(package, version) as td:
             return _manifest_from_extracted_wheel(td)
-    except PackageNotFoundError:
+    except metadata.PackageNotFoundError:
         with _tmp_pypi_sdist_download(package, version) as td:
 
             src = next(p for p in td.iterdir() if p.is_dir())
