@@ -255,6 +255,32 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         )
         self.contribution_points["writers"].append(wrt_contrib)
 
+    def napari_provide_sample_data(self, node: ast.FunctionDef):
+        return_ = next(n for n in node.body if isinstance(n, ast.Return))
+        if not isinstance(return_.value, ast.Dict):
+            import warnings
+
+            warnings.warn(
+                f"napari_provide_sample_data must return a dict, not {type(return_)}"
+            )
+            return
+
+        for idx, (key, val) in enumerate(zip(return_.value.keys, return_.value.values)):
+            if isinstance(val, ast.Dict):
+                breakpoint()
+                display_name = ...
+                sample = ...
+            else:
+                sample = val
+                display_name = key.value
+
+            # sample should now either be a callabl, or a string
+            if isinstance(val, ast.Name):
+                ...
+            else:
+                breakpoint()
+            idx
+
     def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
         if isinstance(return_.value, ast.List):
@@ -269,7 +295,10 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
             else:
                 raise TypeError(f"Unexpected widget creator type: {type(wdg_creator)}")
 
-            py_name = ":".join(py_name.rsplit(".", 1))
+            if py_name:
+                py_name = ":".join(py_name.rsplit(".", 1))
+            else:
+                py_name = f"{self.module_name}:{node.name}"
             cmd_id = f"{self.plugin_name}.{wdg_creator.id}"
             cmd_contrib = contributions.CommandContribution(
                 id=cmd_id, python_name=py_name, title=wdg_creator.id
