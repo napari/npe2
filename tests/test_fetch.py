@@ -28,10 +28,9 @@ def test_get_pypi_url(version, packagetype):
 
 def test_from_pypi_wheel_bdist_missing():
     error = PackageNotFoundError("No bdist_wheel releases found")
-    p2 = patch("npe2._fetch.get_pypi_url", side_effect=error)
-    with patch("npe2._fetch.fetch_manifest_with_full_install") as mock_fetch, p2:
-        fetch_manifest("my-package")
-    mock_fetch.assert_called_once_with("my-package", version=None)
+    with patch("npe2._fetch.get_pypi_url", side_effect=error):
+        with pytest.raises(PackageNotFoundError):
+            fetch_manifest("my-package")
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
