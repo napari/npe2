@@ -81,6 +81,9 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
                     return mf
                 elif ep.group == NPE1_ENTRY_POINT:
                     has_npe1 = True  # pragma: no cover
+            if has_npe1:
+                # return _manifest_from_npe1_wheel(dist)
+                ...
     except KeyError as e:
         if "No bdist_wheel releases found" not in str(e):
             raise  # pragma: no cover
@@ -91,6 +94,23 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
 
     logger.debug("falling back to npe1")
     return _fetch_manifest_with_full_install(package, version=version)
+
+
+# def _manifest_from_npe1_wheel(dist: metadata.PathDistribution) -> PluginManifest:
+
+#     for ep in dist.entry_points:
+#         if ep.group == NPE1_ENTRY_POINT:
+#             root = dist.locate_file(ep.module.replace(".", "/"))
+#             if not (file := root / "__init__.py").exists():
+#                 if not (file := root.with_suffix(".py")).exists():
+#                     continue
+#             src = file.read_text()
+#             visitor = PluginModuleVisitor(
+#                 dist.name, ep.module, match="napari_hook_implementation"
+#             )
+#             node = ast.parse(src)
+#             visitor.visit(node)
+#     ...
 
 
 @lru_cache

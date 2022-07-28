@@ -320,7 +320,7 @@ def _fetch_all_manifests(doit: bool):
 
 @app.command()
 def fetch(
-    name: str,
+    name: List[str],
     version: Optional[str] = None,
     include_package_meta: Optional[bool] = typer.Option(
         False,
@@ -366,13 +366,14 @@ def fetch(
     if include_package_meta:
         kwargs["exclude"] = set()
 
-    mf = fetch_manifest(name, version=version)
-    manifest_string = getattr(mf, fmt.value)(**kwargs)
+    for n in name:
+        mf = fetch_manifest(n, version=version)
+        manifest_string = getattr(mf, fmt.value)(**kwargs)
 
-    if output:
-        output.write_text(manifest_string)
-    else:
-        _pprint_formatted(manifest_string, fmt)
+        if output:
+            output.write_text(manifest_string)
+        else:
+            _pprint_formatted(manifest_string, fmt)
 
 
 @app.command()
