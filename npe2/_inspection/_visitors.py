@@ -217,17 +217,43 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         except AttributeError:
             print(f"TODO: implement {hookname}")
 
-    def napari_get_reader(self, node: ast.FunctionDef):
+    def _add_command(self, node: ast.FunctionDef) -> contributions.CommandContribution:
         cmd_id = f"{self.plugin_name}.{node.name}"
         py_name = f"{self.module_name}:{node.name}"
         cmd_contrib = contributions.CommandContribution(
             id=cmd_id, python_name=py_name, title=node.name
         )
-        rdr_contrib = contributions.ReaderContribution(
-            command=cmd_id, filename_patterns=["*"], accepts_directories=True
-        )
         self.contribution_points["commands"].append(cmd_contrib)
+        return cmd_contrib
+
+    def napari_get_reader(self, node: ast.FunctionDef):
+        cmd = self._add_command(node)
+        rdr_contrib = contributions.ReaderContribution(
+            command=cmd.id, filename_patterns=["*"], accepts_directories=True
+        )
         self.contribution_points["readers"].append(rdr_contrib)
+
+    def napari_write_image(self, node: ast.FunctionDef):
+        self._parse_writer(node, "image")
+
+    def napari_write_labels(self, node: ast.FunctionDef):
+        self._parse_writer(node, "labels")
+
+    def napari_write_points(self, node: ast.FunctionDef):
+        self._parse_writer(node, "points")
+
+    def napari_write_shapes(self, node: ast.FunctionDef):
+        self._parse_writer(node, "shapes")
+
+    def napari_write_vectors(self, node: ast.FunctionDef):
+        self._parse_writer(node, "vectors")
+
+    def _parse_writer(self, node, layer_type: str):
+        cmd = self._add_command(node)
+        wrt_contrib = contributions.WriterContribution(
+            command=cmd.id, layer_types=[layer_type], display_name=layer_type
+        )
+        self.contribution_points["writers"].append(wrt_contrib)
 
     def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
