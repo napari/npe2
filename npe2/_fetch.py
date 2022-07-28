@@ -93,6 +93,7 @@ def _manifest_from_extracted_wheel(wheel_dir: Path) -> PluginManifest:
     # create a PathDistribution from the dist-info directory in the wheel
     dist = metadata.PathDistribution(next(Path(wheel_dir).glob("*.dist-info")))
 
+    has_npe1 = False
     for ep in dist.entry_points:
         # if we find an npe2 entry point, we can just use
         # PathDistribution.locate_file to get the file.
@@ -118,13 +119,25 @@ def _guard_cwd() -> Iterator[None]:
 
 def _build_wheel(src, dest):
     """Build a wheel from a source directory and extract it into dest."""
+    import subprocess
+    from unittest.mock import patch
+
     from build.__main__ import build_package
 
-    dist = Path(src) / "dist"
-    with _guard_cwd():
-        build_package(src, dist, ["wheel"])
-        with ZipFile(next((dist).glob("*.whl"))) as zf:
-            zf.extractall(dest)
+    class _QuietPopen(subprocess.Popen):
+        """Silence all the noise from build."""
+
+        def __init__(self, *args, **kwargs):
+            kwargs["stdout"] = subprocess.DEVNULL
+            kwargs["stderr"] = subprocess.DEVNULL
+            super().__init__(*args, **kwargs)
+
+    with patch("subprocess.Popen", _QuietPopen):
+        dist = Path(src) / "dist"
+        with _guard_cwd():
+            build_package(src, dist, ["wheel"])
+            with ZipFile(next((dist).glob("*.whl"))) as zf:
+                zf.extractall(dest)
 
 
 def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
@@ -278,7 +291,10 @@ def _fetch_all_manifests(dest="manifests"):
     dest.mkdir(exist_ok=True)
 
     args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
-    with ProcessPoolExecutor(max_workers=4) as executor:
+
+    # use processes instead of threads, because many of the subroutines in build
+    # and setuptools use `os.chdir()`, which is not thread-safe
+    with ProcessPoolExecutor(max_workers=8) as executor:
         errors = list(executor.map(_try_fetch_and_write_manifest, args))
     _errors = {tup[0]: tup[1] for tup in errors if tup}
     (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
