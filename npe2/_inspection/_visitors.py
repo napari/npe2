@@ -1,6 +1,7 @@
 import ast
 import inspect
 from abc import ABC, abstractmethod
+from importlib.metadata import Distribution
 from pathlib import Path
 from types import ModuleType
 from typing import (
@@ -273,7 +274,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
             assert isinstance(key, ast.Constant)
             display_name = key.value
-            key = safe_key(display_name)
+            key = safe_key(display_name)  # type: ignore
 
             # sample should now either be a callable, or a string
             if isinstance(val, ast.Name):
@@ -387,9 +388,9 @@ def find_npe2_module_contributions(
 
 
 def find_npe1_module_contributions(
-    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
+    dist: Distribution, module_name: str = ""
 ) -> contributions.ContributionPoints:
-    """Visit an npe1 module and extract contribution points.
+    """Statically visit an npe1 module and extract contribution points.
 
     Parameters
     ----------
@@ -405,15 +406,38 @@ def find_npe1_module_contributions(
     ContributionPoints
         ContributionPoints discovered in the module.
     """
-    if isinstance(path, ModuleType):
-        assert path.__file__
-        assert path.__name__
-        module_name = path.__name__
-        path = path.__file__
-
+    plugin_name = dist.metadata["Name"]
+    file = _locate_module_in_dist(dist, module_name)
     visitor = NPE1PluginModuleVisitor(plugin_name, module_name=module_name)
-    visitor.visit(ast.parse(Path(path).read_text()))
-    # if "commands" in visitor.contribution_points:
-    # compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
-    # visitor.contribution_points["commands"] = [dict(i) for i in compress]
+    visitor.visit(ast.parse(Path(file).read_text()))
+
+    # now check all of the modules that were imported by `module_name` to see
+    # if any of those had npe1 decorated functions.
+    # NOTE: we're only going 1 level deep here...
+    for name, target in visitor._names.items():
+        if not name.startswith("_"):
+            target_module = target.rsplit(".", 1)[0]
+            try:
+                file = _locate_module_in_dist(dist, target_module)
+            except FileNotFoundError:
+                # if the imported module is not in the same distribution
+                # just skip it.
+                continue
+            # NOTE: technically, this time we should restrict the allowable names
+            # to those that are imported from the original module_name ...
+            # but that's probably overkill
+            v2 = NPE1PluginModuleVisitor(plugin_name, target_module)
+            v2.visit(ast.parse(file.read_text()))
+            visitor.contribution_points.update(v2.contribution_points)
+
     return contributions.ContributionPoints(**visitor.contribution_points)
+
+
+def _locate_module_in_dist(dist: Distribution, module_name: str) -> Path:
+    root = dist.locate_file(module_name.replace(".", "/"))
+    assert isinstance(root, Path)
+
+    if not (file := root / "__init__.py").exists():
+        if not (file := root.with_suffix(".py")).exists():
+            raise FileNotFoundError(f"Could not find {module_name} in {root}")
+    return file
