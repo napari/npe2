@@ -74,7 +74,9 @@ def _manifest_from_npe1_dist(dist: metadata.PathDistribution) -> PluginManifest:
     contribs = []
     for ep in dist.entry_points:
         if ep.group == NPE1_ENTRY_POINT:
+
             root = dist.locate_file(ep.module.replace(".", "/"))
+
             assert isinstance(root, Path)
 
             if not (file := root / "__init__.py").exists():
@@ -137,6 +139,14 @@ def _build_wheel(src, dest):
             build_package(src, dist, ["wheel"])
             with ZipFile(next((dist).glob("*.whl"))) as zf:
                 zf.extractall(dest)
+
+
+def get_manifest_from_wheel(src: str) -> PluginManifest:
+    """Extract a manifest from a .whl file."""
+    with tempfile.TemporaryDirectory() as td:
+        with ZipFile(src) as zf:
+            zf.extractall(td)
+            return _manifest_from_extracted_wheel(Path(td))
 
 
 def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifest:
