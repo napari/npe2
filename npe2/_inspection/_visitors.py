@@ -50,10 +50,10 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
     implement `_process_decorated` in subclasses
     """
 
-    def __init__(self, match: str) -> None:
-        super().__init__()
-        self._names: Dict[str, str] = {}
+    def __init__(self, module_name: str, match: str) -> None:
+        self.module_name = module_name
         self._match = match
+        self._names: Dict[str, str] = {}
 
     def visit_Import(self, node: ast.Import) -> Any:  # noqa: D102
         # https://docs.python.org/3/library/ast.html#ast.Import
@@ -63,8 +63,12 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:  # noqa: D102
         # https://docs.python.org/3/library/ast.html#ast.ImportFrom
+        module = node.module
+        if node.level > 0:
+            root = self.module_name.rsplit(".", node.level)[0]
+            module = f"{root}.{module}"
         for alias in node.names:
-            self._names[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+            self._names[alias.asname or alias.name] = f"{module}.{alias.name}"
         return super().generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:  # noqa: D102
@@ -157,9 +161,8 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
     def __init__(
         self, plugin_name: str, module_name: str, match: str = "npe2.implements"
     ) -> None:
-        super().__init__(match)
+        super().__init__(module_name, match)
         self.plugin_name = plugin_name
-        self.module_name = module_name
         self.contribution_points: Dict[str, List[dict]] = {}
 
     def _process_decorated(
@@ -199,9 +202,8 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
 
 class NPE1PluginModuleVisitor(_DecoratorVisitor):
     def __init__(self, plugin_name: str, module_name: str) -> None:
-        super().__init__("napari_plugin_engine.napari_hook_implementation")
+        super().__init__(module_name, "napari_plugin_engine.napari_hook_implementation")
         self.plugin_name = plugin_name
-        self.module_name = module_name
         self.contribution_points: DefaultDict[str, list] = DefaultDict(list)
 
     def _process_decorated(
@@ -212,10 +214,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
     ):
         self.generic_visit(node)  # do this to process any imports in the function
         hookname = decorator_kwargs.get("specname", node.name)
-        try:
-            getattr(self, hookname)(node)  # TODO: make methods for each type
-        except AttributeError as e:
-            print(f"TODO: implement {hookname}")
+        getattr(self, hookname)(node)
 
     def _add_command(self, node: ast.FunctionDef) -> contributions.CommandContribution:
         cmd_id = f"{self.plugin_name}.{node.name}"
@@ -270,21 +269,19 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         contrib: contributions.SampleDataContribution
         for key, val in zip(return_.value.keys, return_.value.values):
             if isinstance(val, ast.Dict):
-                breakpoint()
-                display_name: str = ...
-                sample = ...
-            else:
-                sample = val
-                display_name = key.value
+                raise NotImplementedError("TODO: support nested dicts")
 
+            assert isinstance(key, ast.Constant)
+            display_name = key.value
             key = safe_key(display_name)
-            # sample should now either be a callabl, or a string
+
+            # sample should now either be a callable, or a string
             if isinstance(val, ast.Name):
 
-                cmd_id = f"{self.plugin_name}.{sample.id}"
-                py_name = f"{self.module_name}:{sample.id}"
+                cmd_id = f"{self.plugin_name}.{val.id}"
+                py_name = f"{self.module_name}:{val.id}"
                 cmd_contrib = contributions.CommandContribution(
-                    id=cmd_id, python_name=py_name, title=sample.id
+                    id=cmd_id, python_name=py_name, title=val.id
                 )
                 self.contribution_points["commands"].append(cmd_contrib)
                 contrib = contributions.SampleDataGenerator(
@@ -297,6 +294,35 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
                 )
 
             self.contribution_points["sample_data"].append(contrib)
+
+    def napari_experimental_provide_function(self, node: ast.FunctionDef):
+        return_ = next(n for n in node.body if isinstance(n, ast.Return))
+        if isinstance(return_.value, ast.List):
+            items: List[Optional[ast.expr]] = list(return_.value.elts)
+        else:
+            items = [return_.value]
+
+        for item in items:
+            if not isinstance(item, ast.Name):
+                raise ValueError("napari_experimental_provide_function")
+
+            py_name = self._names.get(item.id)
+            py_name = (
+                ":".join(py_name.rsplit(".", 1))
+                if py_name
+                else f"{self.module_name}:{node.name}"
+            )
+
+            cmd_id = f"{self.plugin_name}.{node.name}"
+            cmd_contrib = contributions.CommandContribution(
+                id=cmd_id, python_name=py_name, title=item.id
+            )
+
+            wdg_contrib = contributions.WidgetContribution(
+                command=cmd_id, display_name=item.id, autogenerate=True
+            )
+            self.contribution_points["commands"].append(cmd_contrib)
+            self.contribution_points["widgets"].append(wdg_contrib)
 
     def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
