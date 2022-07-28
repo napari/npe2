@@ -17,10 +17,11 @@ from zipfile import ZipFile
 
 from build.env import IsolatedEnvBuilder
 
+from npe2.manifest.schema import PluginManifest
+
 if TYPE_CHECKING:
     import build.env
 
-    from npe2.manifest.schema import PluginManifest
 
 logger = getLogger(__name__)
 
@@ -82,8 +83,7 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
                 elif ep.group == NPE1_ENTRY_POINT:
                     has_npe1 = True  # pragma: no cover
             if has_npe1:
-                # return _manifest_from_npe1_wheel(dist)
-                ...
+                return _manifest_from_npe1_wheel(dist)
     except KeyError as e:
         if "No bdist_wheel releases found" not in str(e):
             raise  # pragma: no cover
@@ -96,21 +96,23 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
     return _fetch_manifest_with_full_install(package, version=version)
 
 
-# def _manifest_from_npe1_wheel(dist: metadata.PathDistribution) -> PluginManifest:
+def _manifest_from_npe1_wheel(dist: metadata.PathDistribution) -> PluginManifest:
+    from ._inspection import find_npe1_module_contributions
 
-#     for ep in dist.entry_points:
-#         if ep.group == NPE1_ENTRY_POINT:
-#             root = dist.locate_file(ep.module.replace(".", "/"))
-#             if not (file := root / "__init__.py").exists():
-#                 if not (file := root.with_suffix(".py")).exists():
-#                     continue
-#             src = file.read_text()
-#             visitor = PluginModuleVisitor(
-#                 dist.name, ep.module, match="napari_hook_implementation"
-#             )
-#             node = ast.parse(src)
-#             visitor.visit(node)
-#     ...
+    contribs = []
+    for ep in dist.entry_points:
+        if ep.group == NPE1_ENTRY_POINT:
+            root = dist.locate_file(ep.module.replace(".", "/"))
+            assert isinstance(root, Path)
+
+            if not (file := root / "__init__.py").exists():
+                if not (file := root.with_suffix(".py")).exists():
+                    raise FileNotFoundError(f"Could not find {ep.module} in {root}")
+            contribs.append(find_npe1_module_contributions(file, dist.name, ep.module))
+
+    from .manifest.utils import merge_contributions
+
+    return PluginManifest(name=dist.name, contributions=merge_contributions(contribs))
 
 
 @lru_cache

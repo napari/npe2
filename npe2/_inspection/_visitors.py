@@ -3,7 +3,17 @@ import inspect
 from abc import ABC, abstractmethod
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from ..manifest import contributions
 
@@ -68,6 +78,11 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
         # for each in the decorator list ...
         for call in node.decorator_list:
             # https://docs.python.org/3/library/ast.html#ast.Call
+            if isinstance(call, ast.Name) and self._names.get(call.id, "").startswith(
+                self._match
+            ):
+                self._process_decorated(call.id, node, {})
+
             if not isinstance(call, ast.Call):
                 continue
             # if the function is an attribute ...
@@ -92,13 +107,15 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
                     # If the name resolves to the name of this module,
                     # then we have a hit! process the function.
                     if self._names.get(call_name) == self._match:
-                        self._process_decorated(call, node)
+                        kwargs = self._keywords_to_kwargs(call.keywords)
+                        self._process_decorated(call.func.attr, node, kwargs)
             elif isinstance(call.func, ast.Name):
                 # if the function is just a direct name (e.g. `@reader`)
                 # then we can just see if the name points to something imported from
                 # this module.
                 if self._names.get(call.func.id, "").startswith(self._match):
-                    self._process_decorated(call, node)
+                    kwargs = self._keywords_to_kwargs(call.keywords)
+                    self._process_decorated(call.func.id, node, kwargs)
         return super().generic_visit(node)
 
     def _keywords_to_kwargs(self, keywords: List[ast.keyword]) -> Dict[str, Any]:
@@ -106,7 +123,10 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
 
     @abstractmethod
     def _process_decorated(
-        self, call: ast.Call, node: Union[ast.ClassDef, ast.FunctionDef]
+        self,
+        decorator_name: str,
+        node: Union[ast.ClassDef, ast.FunctionDef],
+        decorator_kwargs: dict,
     ):
         """Process a decorated function.
 
@@ -143,16 +163,12 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         self.contribution_points: Dict[str, List[dict]] = {}
 
     def _process_decorated(
-        self, call: ast.Call, node: Union[ast.ClassDef, ast.FunctionDef]
+        self,
+        decorator_name: str,
+        node: Union[ast.ClassDef, ast.FunctionDef],
+        decorator_kwargs: dict,
     ):
-        if isinstance(call.func, ast.Attribute):
-            contrib_type = call.func.attr
-        elif isinstance(call.func, ast.Name):
-            contrib_type = call.func.id
-        else:
-            raise TypeError(f"Unexpected call type: {type(call.func)}")
-        kwargs = self._keywords_to_kwargs(call.keywords)
-        self._store_contrib(contrib_type, node.name, kwargs)
+        self._store_contrib(decorator_name, node.name, decorator_kwargs)
 
     def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
         from ..implements import CHECK_ARGS_PARAM  # circ import
@@ -179,6 +195,52 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
 
     def _qualified_pyname(self, obj_name: str) -> str:
         return f"{self.module_name}:{obj_name}"
+
+
+class NPE1PluginModuleVisitor(_DecoratorVisitor):
+    def __init__(self, plugin_name: str, module_name: str) -> None:
+        super().__init__("napari_plugin_engine.napari_hook_implementation")
+        self.plugin_name = plugin_name
+        self.module_name = module_name
+        self.contribution_points: DefaultDict[str, list] = DefaultDict(list)
+
+    def _process_decorated(
+        self,
+        decorator_name: str,
+        node: Union[ast.ClassDef, ast.FunctionDef],
+        decorator_kwargs: Dict[str, Any],
+    ):
+        self.generic_visit(node)  # do this to process any imports in the function
+        hookname = decorator_kwargs.get("specname", node.name)
+        try:
+            getattr(self, hookname)(node)  # TODO: make methods for each type
+        except AttributeError:
+            breakpoint()
+
+    def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
+        return_ = next(n for n in node.body if isinstance(n, ast.Return))
+        if isinstance(return_.value, ast.List):
+            items: List[Optional[ast.expr]] = list(return_.value.elts)
+        else:
+            items = [return_.value]
+
+        for item in items:
+            wdg_creator = item.elts[0] if isinstance(item, ast.Tuple) else item
+            if isinstance(wdg_creator, ast.Name):
+                py_name = self._names.get(wdg_creator.id, "")
+            else:
+                raise TypeError(f"Unexpected widget creator type: {type(wdg_creator)}")
+
+            py_name = ":".join(py_name.rsplit(".", 1))
+            cmd_id = f"{self.plugin_name}.{wdg_creator.id}"
+            cmd_contrib = contributions.CommandContribution(
+                id=cmd_id, python_name=py_name, title=wdg_creator.id
+            )
+            wdg_contrib = contributions.WidgetContribution(
+                command=cmd_id, display_name=wdg_creator.id
+            )
+            self.contribution_points["commands"].append(cmd_contrib)
+            self.contribution_points["widgets"].append(wdg_contrib)
 
 
 def find_npe2_module_contributions(
@@ -211,4 +273,37 @@ def find_npe2_module_contributions(
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]
+    return contributions.ContributionPoints(**visitor.contribution_points)
+
+
+def find_npe1_module_contributions(
+    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
+) -> contributions.ContributionPoints:
+    """Visit an npe1 module and extract contribution points.
+
+    Parameters
+    ----------
+    path : Union[ModuleType, str, Path]
+        Either a path to a Python module, a module object, or a string
+    plugin_name : str
+        Name of the plugin
+    module_name : str
+        Module name, by default ""
+
+    Returns
+    -------
+    ContributionPoints
+        ContributionPoints discovered in the module.
+    """
+    if isinstance(path, ModuleType):
+        assert path.__file__
+        assert path.__name__
+        module_name = path.__name__
+        path = path.__file__
+
+    visitor = NPE1PluginModuleVisitor(plugin_name, module_name=module_name)
+    visitor.visit(ast.parse(Path(path).read_text()))
+    # if "commands" in visitor.contribution_points:
+    # compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
+    # visitor.contribution_points["commands"] = [dict(i) for i in compress]
     return contributions.ContributionPoints(**visitor.contribution_points)
