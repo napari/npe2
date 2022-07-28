@@ -215,7 +215,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         try:
             getattr(self, hookname)(node)  # TODO: make methods for each type
         except AttributeError:
-            breakpoint()
+            print(f"TODO: implement {hookname}")
 
     def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
