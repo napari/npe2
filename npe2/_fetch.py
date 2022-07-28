@@ -220,7 +220,7 @@ def get_pypi_url(
     if packagetype:
         if packagetype not in releases:  # pragma: no cover
             version = version or "latest"
-            raise PackageNotFoundError(
+            raise metadata.PackageNotFoundError(
                 f'No {packagetype} releases found for version "{version}"'
             )
         return releases[packagetype]["url"]
