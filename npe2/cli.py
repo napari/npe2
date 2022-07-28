@@ -309,12 +309,20 @@ def list(
             typer.echo(template.format(**r, ncontrib=ncontrib))
 
 
-def _fetch_all_manifests(doit: bool):
+def _fetch_all_manifests(ctx, doit: bool):
     """Fetch all manifests and dump to "manifests" folder."""
     if doit:
+        import sys
+
         from npe2 import _fetch
 
-        _fetch._fetch_all_manifests()
+        dest = "manifests"
+        if "-o" in sys.argv:
+            dest = sys.argv[sys.argv.index("-o") + 1]
+        elif "--output" in sys.argv:
+            dest = sys.argv[sys.argv.index("--output") + 1]
+
+        _fetch._fetch_all_manifests(dest)
         raise typer.Exit(0)
 
 

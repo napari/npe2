@@ -288,7 +288,7 @@ def _fetch_all_manifests(dest="manifests"):
     from concurrent.futures import ProcessPoolExecutor
 
     dest = Path(dest)
-    dest.mkdir(exist_ok=True)
+    dest.mkdir(exist_ok=True, parents=True)
 
     args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
 
