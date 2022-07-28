@@ -214,7 +214,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         hookname = decorator_kwargs.get("specname", node.name)
         try:
             getattr(self, hookname)(node)  # TODO: make methods for each type
-        except AttributeError:
+        except AttributeError as e:
             print(f"TODO: implement {hookname}")
 
     def _add_command(self, node: ast.FunctionDef) -> contributions.CommandContribution:
@@ -256,6 +256,8 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         self.contribution_points["writers"].append(wrt_contrib)
 
     def napari_provide_sample_data(self, node: ast.FunctionDef):
+        from ..manifest.utils import safe_key
+
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
         if not isinstance(return_.value, ast.Dict):
             import warnings
@@ -265,21 +267,36 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
             )
             return
 
-        for idx, (key, val) in enumerate(zip(return_.value.keys, return_.value.values)):
+        contrib: contributions.SampleDataContribution
+        for key, val in zip(return_.value.keys, return_.value.values):
             if isinstance(val, ast.Dict):
                 breakpoint()
-                display_name = ...
+                display_name: str = ...
                 sample = ...
             else:
                 sample = val
                 display_name = key.value
 
+            key = safe_key(display_name)
             # sample should now either be a callabl, or a string
             if isinstance(val, ast.Name):
-                ...
+
+                cmd_id = f"{self.plugin_name}.{sample.id}"
+                py_name = f"{self.module_name}:{sample.id}"
+                cmd_contrib = contributions.CommandContribution(
+                    id=cmd_id, python_name=py_name, title=sample.id
+                )
+                self.contribution_points["commands"].append(cmd_contrib)
+                contrib = contributions.SampleDataGenerator(
+                    command=cmd_id, key=key, display_name=display_name
+                )
             else:
-                breakpoint()
-            idx
+                uri = "__dynamic__"  # TODO: make this a real uri
+                contrib = contributions.SampleDataURI(
+                    key=key, display_name=display_name, uri=uri
+                )
+
+            self.contribution_points["sample_data"].append(contrib)
 
     def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))

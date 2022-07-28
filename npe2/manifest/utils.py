@@ -298,3 +298,15 @@ def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dic
                             item["command"] = item["command"] + f"_{n + 2}"
             out = deep_update(out, c)
     return out
+
+
+def safe_key(key: str) -> str:
+    return (
+        key.lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("(", "")
+        .replace(")", "")
+        .replace("[", "")
+        .replace("]", "")
+    )

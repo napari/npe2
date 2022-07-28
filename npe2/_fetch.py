@@ -98,7 +98,9 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
 
 def _manifest_from_npe1_wheel(dist: metadata.PathDistribution) -> PluginManifest:
     from ._inspection import find_npe1_module_contributions
+    from .manifest.utils import merge_contributions
 
+    name = dist.metadata.get("Name")
     contribs = []
     for ep in dist.entry_points:
         if ep.group == NPE1_ENTRY_POINT:
@@ -108,11 +110,9 @@ def _manifest_from_npe1_wheel(dist: metadata.PathDistribution) -> PluginManifest
             if not (file := root / "__init__.py").exists():
                 if not (file := root.with_suffix(".py")).exists():
                     raise FileNotFoundError(f"Could not find {ep.module} in {root}")
-            contribs.append(find_npe1_module_contributions(file, dist.name, ep.module))
+            contribs.append(find_npe1_module_contributions(file, name, ep.module))
 
-    from .manifest.utils import merge_contributions
-
-    return PluginManifest(name=dist.name, contributions=merge_contributions(contribs))
+    return PluginManifest(name=name, contributions=merge_contributions(contribs))
 
 
 @lru_cache
