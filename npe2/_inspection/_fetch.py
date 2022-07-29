@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import site
 import sys
 import tempfile
@@ -13,12 +14,10 @@ from io import BytesIO
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
+from urllib import error, parse, request
 from urllib.request import urlopen
 from zipfile import ZipFile
-from typing import List
-from functools import lru_cache
-import re
-from urllib import request, error, parse
+
 from build.env import IsolatedEnvBuilder
 
 from npe2.manifest import PackageMetadata
@@ -280,7 +279,7 @@ def get_pypi_plugins() -> List[str]:
     return _get_packages_by_classifier(NAPARI_CLASSIFIER)
 
 
-@lru_cache()
+@lru_cache
 def _get_packages_by_classifier(classifier: str) -> List[str]:
     """Search for packages declaring ``classifier`` on PyPI
 
@@ -297,7 +296,7 @@ def _get_packages_by_classifier(classifier: str) -> List[str]:
     url = f"https://pypi.org/search/?c={parse.quote_plus(classifier)}&page="
     while True:
         try:
-            with request.urlopen(f'{url}{page}') as response:
+            with request.urlopen(f"{url}{page}") as response:
                 html = response.read().decode()
             names = PACKAGE_NAME_PATTERN.findall(html)
             versions = PACKAGE_VERSION_PATTERN.findall(html)
@@ -307,8 +306,6 @@ def _get_packages_by_classifier(classifier: str) -> List[str]:
             break
 
     return dict(sorted(packages.items()))
-
-
 
 
 def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
