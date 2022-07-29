@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from npe2 import fetch_manifest
-from npe2._fetch import (
+from npe2._inspection._fetch import (
     fetch_manifest_with_full_install,
     get_hub_plugin,
     get_hub_plugins,
@@ -28,7 +28,7 @@ def test_get_pypi_url(version, packagetype):
 
 def test_from_pypi_wheel_bdist_missing():
     error = PackageNotFoundError("No bdist_wheel releases found")
-    with patch("npe2._fetch.get_pypi_url", side_effect=error):
+    with patch("npe2._inspection._fetch.get_pypi_url", side_effect=error):
         with pytest.raises(PackageNotFoundError):
             fetch_manifest("my-package")
 

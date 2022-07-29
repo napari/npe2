@@ -315,7 +315,7 @@ def _fetch_all_manifests(doit: bool):
     if not doit:
         return
 
-    from npe2 import _fetch
+    from npe2._inspection import _fetch
 
     dest = "manifests"
     if "-o" in sys.argv:
@@ -368,7 +368,7 @@ def fetch(
     If an npe2 plugin is detected, the manifest is returned directly, otherwise
     it will be installed into a temporary directory, imported, and discovered.
     """
-    from npe2._fetch import fetch_manifest
+    from npe2 import fetch_manifest
 
     fmt = _check_output(output) if output else format
     kwargs: dict = {"indent": indent}
@@ -402,7 +402,7 @@ def convert(
     ),
 ):
     """Convert first generation napari plugin to new (manifest) format."""
-    from ._from_npe1 import convert_repository, manifest_from_npe1
+    from ._inspection._from_npe1 import convert_repository, manifest_from_npe1
 
     try:
         with warnings.catch_warnings(record=True) as w:

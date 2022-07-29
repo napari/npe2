@@ -67,8 +67,8 @@ def _manifest_from_npe1_dist(dist: metadata.PathDistribution) -> PluginManifest:
     """Extract plugin manifest from a distribution with an npe1 entry point."""
     from npe2.manifest import PluginManifest
 
-    from ._inspection import find_npe1_module_contributions
-    from .manifest.utils import merge_contributions
+    from ..manifest.utils import merge_contributions
+    from . import find_npe1_module_contributions
 
     name = dist.metadata["Name"]
     contribs = []
