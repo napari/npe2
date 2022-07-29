@@ -354,6 +354,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
                     py_name = f"{tmp.attr}.{py_name}"
                 assert isinstance(tmp.value, ast.Name)
                 py_name = f"{self._names[tmp.value.id]}.{py_name}"
+                py_name = ":".join(py_name.rsplit(".", 1))
                 obj_name = tmp.value.id
             else:
                 raise TypeError(f"Unexpected widget creator type: {type(wdg_creator)}")
