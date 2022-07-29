@@ -339,7 +339,19 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         for item in items:
             wdg_creator = item.elts[0] if isinstance(item, ast.Tuple) else item
             if isinstance(wdg_creator, ast.Name):
-                py_name = self._names.get(wdg_creator.id, "")
+                # eg `SegmentationWidget`
+                py_name = self._names[wdg_creator.id]
+                obj_name = wdg_creator.id
+            elif isinstance(wdg_creator, ast.Attribute):
+                # eg `measurement.analyze_points_layer`
+                py_name = wdg_creator.attr
+                tmp = wdg_creator
+                while isinstance(tmp.value, ast.Attribute):
+                    tmp = tmp.value
+                    py_name = f"{tmp.attr}.{py_name}"
+                assert isinstance(tmp.value, ast.Name)
+                py_name = f"{self._names[tmp.value.id]}.{py_name}"
+                obj_name = tmp.value.id
             else:
                 raise TypeError(f"Unexpected widget creator type: {type(wdg_creator)}")
 
@@ -347,12 +359,12 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
                 py_name = ":".join(py_name.rsplit(".", 1))
             else:
                 py_name = f"{self.module_name}:{node.name}"
-            cmd_id = f"{self.plugin_name}.{wdg_creator.id}"
+            cmd_id = f"{self.plugin_name}.{obj_name}"
             cmd_contrib = contributions.CommandContribution(
-                id=cmd_id, python_name=py_name, title=wdg_creator.id
+                id=cmd_id, python_name=py_name, title=obj_name
             )
             wdg_contrib = contributions.WidgetContribution(
-                command=cmd_id, display_name=wdg_creator.id
+                command=cmd_id, display_name=obj_name
             )
             self.contribution_points["commands"].append(cmd_contrib)
             self.contribution_points["widgets"].append(wdg_contrib)
