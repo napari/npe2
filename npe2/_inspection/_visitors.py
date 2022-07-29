@@ -340,8 +340,11 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
             wdg_creator = item.elts[0] if isinstance(item, ast.Tuple) else item
             if isinstance(wdg_creator, ast.Name):
                 # eg `SegmentationWidget`
-                py_name = self._names[wdg_creator.id]
                 obj_name = wdg_creator.id
+                if py_name := self._names.get(wdg_creator.id):
+                    py_name = ":".join(py_name.rsplit(".", 1))
+                else:
+                    py_name = f"{self.module_name}:{obj_name}"
             elif isinstance(wdg_creator, ast.Attribute):
                 # eg `measurement.analyze_points_layer`
                 py_name = wdg_creator.attr
@@ -355,10 +358,6 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
             else:
                 raise TypeError(f"Unexpected widget creator type: {type(wdg_creator)}")
 
-            if py_name:
-                py_name = ":".join(py_name.rsplit(".", 1))
-            else:
-                py_name = f"{self.module_name}:{node.name}"
             cmd_id = f"{self.plugin_name}.{obj_name}"
             cmd_contrib = contributions.CommandContribution(
                 id=cmd_id, python_name=py_name, title=obj_name
