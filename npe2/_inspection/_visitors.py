@@ -455,5 +455,8 @@ def _locate_module_in_dist(dist: Distribution, module_name: str) -> Path:
 
     if not (file := root / "__init__.py").exists():
         if not (file := root.with_suffix(".py")).exists():
-            raise FileNotFoundError(f"Could not find {module_name} in {root}")
+            raise FileNotFoundError(
+                f"Could not find {module_name!r} in "
+                f"in distribution for {dist.metadata['Name']}"
+            )
     return file

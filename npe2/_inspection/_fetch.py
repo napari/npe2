@@ -55,9 +55,12 @@ def _manifest_from_npe2_dist(
     module: str = match.groupdict()["module"]
     attr: str = match.groupdict()["attr"]
 
-    mf_file = dist.locate_file(Path(module) / attr)
-    if not Path(mf_file).exists():
-        raise ValueError(f"manifest {mf_file} does not exist in distribution")
+    mf_file = Path(dist.locate_file(Path(module) / attr))
+    if not mf_file.exists():
+        raise ValueError(
+            f"manifest {mf_file.name!r} does not exist in distribution "
+            f"for {dist.metadata['Name']}"
+        )
 
     mf = PluginManifest.from_file(str(mf_file))
     # manually add the package metadata from our distribution object.
