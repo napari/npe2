@@ -130,12 +130,14 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
 
 
 class NPE2PluginModuleVisitor(_DecoratorVisitor):
-    """AST visitor to find all contributions in a module.
+    """AST visitor to find all contributions in an npe2 module.
 
-    This visitor will find all the contributions in a module and store them in
-    `contribution_points`.  It works as follows:
+    This visitor will find all the contributions (things decorated with
+    `@npe2.implements`) in a module and store them in `contribution_points`.
 
-    See how decorators are found in the _DecoratorVisitor docstring.
+    It works as follows:
+
+    See how decorators are found in the docstring for `_DecoratorVisitor`.
     when a decorator is found that matches `npe2.implements` (e.g. `@implements.reader`)
 
     4. `_store_contrib` first calls `_store_command` which does the job of storing the
@@ -192,6 +194,8 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
 
 
 class NPE1PluginModuleVisitor(_DecoratorVisitor):
+    """AST visitor to find all contributions in an npe1 module."""
+
     def __init__(self, plugin_name: str, module_name: str) -> None:
         super().__init__(module_name, "napari_plugin_engine.napari_hook_implementation")
         self.plugin_name = plugin_name

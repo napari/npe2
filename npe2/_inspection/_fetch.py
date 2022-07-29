@@ -289,7 +289,7 @@ def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
     """Search for packages declaring ``classifier`` on PyPI.
 
     Returns
-    ------
+    -------
     packages : List[str]
         name of all packages at pypi that declare ``classifier``
     """
