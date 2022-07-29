@@ -276,6 +276,7 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
 
 
 def get_pypi_plugins() -> List[str]:
+    """Return {name: latest_version} for all plugins found on pypi."""
     NAPARI_CLASSIFIER = "Framework :: napari"
     return _get_packages_by_classifier(NAPARI_CLASSIFIER)
 
