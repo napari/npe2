@@ -71,15 +71,15 @@ def _manifest_from_npe1_dist(dist: metadata.PathDistribution) -> PluginManifest:
     from . import find_npe1_module_contributions
 
     name = dist.metadata["Name"]
-    contribs = []
-    for ep in dist.entry_points:
-        if ep.group == NPE1_ENTRY_POINT:
+    contribs = [
+        find_npe1_module_contributions(dist, ep.module)
+        for ep in dist.entry_points
+        if ep.group == NPE1_ENTRY_POINT
+    ]
 
-            contrib = find_npe1_module_contributions(dist, ep.module)
-
-            contribs.append(contrib)
-
-    mf = PluginManifest(name=name, contributions=merge_contributions(contribs))
+    mf = PluginManifest(
+        name=name, contributions=merge_contributions(contribs), npe1_shim=True
+    )
     mf.package_metadata = PackageMetadata.from_dist_metadata(dist.metadata)
     return mf
 
