@@ -38,6 +38,7 @@ __all__ = [
     "isolated_plugin_env",
     "get_hub_plugin",
     "get_hub_plugins",
+    "get_pypi_plugins",
 ]
 
 
@@ -277,15 +278,15 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
         return json.load(r)
 
 
-def get_pypi_plugins() -> List[str]:
+def get_pypi_plugins() -> Dict[str, str]:
     """Return {name: latest_version} for all plugins found on pypi."""
     NAPARI_CLASSIFIER = "Framework :: napari"
     return _get_packages_by_classifier(NAPARI_CLASSIFIER)
 
 
 @lru_cache
-def _get_packages_by_classifier(classifier: str) -> List[str]:
-    """Search for packages declaring ``classifier`` on PyPI
+def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
+    """Search for packages declaring ``classifier`` on PyPI.
 
     Returns
     ------
@@ -328,20 +329,21 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
         return name, {"version": version, "error": str(e)}
 
 
-def _fetch_all_manifests(dest="manifests"):
+def fetch_all_manifests(dest: str = "manifests"):
+    """Fetch all manifests for plugins on PyPI and write to ``dest`` directory."""
     from concurrent.futures import ProcessPoolExecutor
 
-    dest = Path(dest)
-    dest.mkdir(exist_ok=True, parents=True)
+    _dest = Path(dest)
+    _dest.mkdir(exist_ok=True, parents=True)
 
-    args = [(name, ver, dest) for name, ver in sorted(get_pypi_plugins().items())]
+    args = [(name, ver, _dest) for name, ver in sorted(get_pypi_plugins().items())]
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe
     with ProcessPoolExecutor(max_workers=8) as executor:
         errors = list(executor.map(_try_fetch_and_write_manifest, args))
     _errors = {tup[0]: tup[1] for tup in errors if tup}
-    (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
+    (_dest / "errors.json").write_text(json.dumps(_errors, indent=2))
 
 
 @contextmanager

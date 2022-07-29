@@ -99,10 +99,11 @@ def test_cli_fetch_all(tmp_path):
     before = os.getcwd()
     try:
         os.chdir(tmp_path)
-        with patch("npe2._inspection._fetch.get_hub_plugins") as mock_hub:
+        with patch("npe2._inspection._fetch.get_pypi_plugins") as mock_hub:
             mock_hub.return_value = {"a": "0.1.0", "b": "0.2.0", "c": "0.3.0"}
             result = runner.invoke(app, ["fetch", "--all"])
 
+        mock_hub.assert_called_once()
         assert result.exit_code == 0
         assert (tmp_path / "manifests").exists()
         assert (tmp_path / "manifests" / "errors.json").exists()

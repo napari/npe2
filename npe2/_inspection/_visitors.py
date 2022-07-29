@@ -4,17 +4,7 @@ from abc import ABC, abstractmethod
 from importlib.metadata import Distribution
 from pathlib import Path
 from types import ModuleType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Tuple, Type, Union
 
 from ..manifest import contributions
 
@@ -235,22 +225,22 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
     def napari_get_writer(self, node: ast.FunctionDef):
         # we can't convert this to an npe2 command contribution
-        pass
+        pass  # pragma: no cover
 
     def napari_write_image(self, node: ast.FunctionDef):
         self._parse_writer(node, "image")
 
     def napari_write_labels(self, node: ast.FunctionDef):
-        self._parse_writer(node, "labels")
+        self._parse_writer(node, "labels")  # pragma: no cover
 
     def napari_write_points(self, node: ast.FunctionDef):
-        self._parse_writer(node, "points")
+        self._parse_writer(node, "points")  # pragma: no cover
 
     def napari_write_shapes(self, node: ast.FunctionDef):
-        self._parse_writer(node, "shapes")
+        self._parse_writer(node, "shapes")  # pragma: no cover
 
     def napari_write_vectors(self, node: ast.FunctionDef):
-        self._parse_writer(node, "vectors")
+        self._parse_writer(node, "vectors")  # pragma: no cover
 
     def _parse_writer(self, node, layer_type: str):
         cmd = self._add_command(node)
@@ -264,17 +254,14 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
         if not isinstance(return_.value, ast.Dict):
-            import warnings
-
-            warnings.warn(
+            raise TypeError(  # pragma: no cover
                 f"napari_provide_sample_data must return a dict, not {type(return_)}"
             )
-            return
 
         contrib: contributions.SampleDataContribution
         for key, val in zip(return_.value.keys, return_.value.values):
             if isinstance(val, ast.Dict):
-                raise NotImplementedError("TODO: support nested dicts")
+                raise NotImplementedError("npe1 sample dicts-of-dicts not supported")
 
             assert isinstance(key, ast.Constant)
             display_name = key.value
@@ -302,14 +289,18 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
     def napari_experimental_provide_function(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
-        if isinstance(return_.value, ast.List):
-            items: List[Optional[ast.expr]] = list(return_.value.elts)
-        else:
-            items = [return_.value]
+
+        items = (
+            list(return_.value.elts)
+            if isinstance(return_.value, ast.List)
+            else [return_.value]  # type: ignore
+        )
 
         for item in items:
             if not isinstance(item, ast.Name):
-                raise ValueError("napari_experimental_provide_function")
+                raise NotImplementedError(  # pragma: no cover
+                    "provide function got non-name"
+                )
 
             py_name = self._names.get(item.id)
             py_name = (
@@ -331,10 +322,11 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
     def napari_experimental_provide_dock_widget(self, node: ast.FunctionDef):
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
-        if isinstance(return_.value, ast.List):
-            items: List[Optional[ast.expr]] = list(return_.value.elts)
-        else:
-            items = [return_.value]
+        items = (
+            list(return_.value.elts)
+            if isinstance(return_.value, ast.List)
+            else [return_.value]  # type: ignore
+        )
 
         for item in items:
             wdg_creator = item.elts[0] if isinstance(item, ast.Tuple) else item
@@ -349,15 +341,14 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
                 # eg `measurement.analyze_points_layer`
                 py_name = wdg_creator.attr
                 tmp = wdg_creator
-                while isinstance(tmp.value, ast.Attribute):
-                    tmp = tmp.value
-                    py_name = f"{tmp.attr}.{py_name}"
                 assert isinstance(tmp.value, ast.Name)
                 py_name = f"{self._names[tmp.value.id]}.{py_name}"
                 py_name = ":".join(py_name.rsplit(".", 1))
                 obj_name = tmp.value.id
             else:
-                raise TypeError(f"Unexpected widget creator type: {type(wdg_creator)}")
+                raise TypeError(  # pragma: no cover
+                    f"Unexpected widget creator type: {type(wdg_creator)}"
+                )
 
             cmd_id = f"{self.plugin_name}.{obj_name}"
             cmd_contrib = contributions.CommandContribution(
@@ -410,10 +401,8 @@ def find_npe1_module_contributions(
 
     Parameters
     ----------
-    path : Union[ModuleType, str, Path]
-        Either a path to a Python module, a module object, or a string
-    plugin_name : str
-        Name of the plugin
+    dist: Distribution
+        A distribution object representing an npe1 plugin to be visited.
     module_name : str
         Module name, by default ""
 

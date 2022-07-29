@@ -323,7 +323,7 @@ def _fetch_all_manifests(doit: bool):
     elif "--output" in sys.argv:  # pragma: no cover
         dest = sys.argv[sys.argv.index("--output") + 1]
 
-    _fetch._fetch_all_manifests(dest)
+    _fetch.fetch_all_manifests(dest)
     raise typer.Exit(0)
 
 
