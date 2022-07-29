@@ -7,6 +7,7 @@ import site
 import sys
 import tempfile
 import warnings
+from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import lru_cache
 from importlib import metadata
@@ -58,7 +59,7 @@ def _manifest_from_npe2_dist(
 
     mf_file = Path(dist.locate_file(Path(module) / attr))
     if not mf_file.exists():
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"manifest {mf_file.name!r} does not exist in distribution "
             f"for {dist.metadata['Name']}"
         )
@@ -106,7 +107,7 @@ def _manifest_from_extracted_wheel(wheel_dir: Path) -> PluginManifest:
     if has_npe1:
         return _manifest_from_npe1_dist(dist)
 
-    raise ValueError("No npe2 or npe1 entry point found in wheel")
+    raise ValueError("No npe2 or npe1 entry point found in wheel")  # pragma: no cover
 
 
 @contextmanager
@@ -169,13 +170,20 @@ def fetch_manifest(package: str, version: Optional[str] = None) -> PluginManifes
         with _tmp_pypi_wheel_download(package, version) as td:
             return _manifest_from_extracted_wheel(td)
     except metadata.PackageNotFoundError:
-        with _tmp_pypi_sdist_download(package, version) as td:
+        return _manifest_from_pypi_sdist(package, version)
 
-            src = next(p for p in td.iterdir() if p.is_dir())
-            wheel_dir = td / "wheel"
-            _build_wheel(src, wheel_dir)
 
-            return _manifest_from_extracted_wheel(wheel_dir)
+def _manifest_from_pypi_sdist(
+    package: str, version: Optional[str] = None
+) -> PluginManifest:
+    """Extract a manifest from a source distribution on pypi."""
+    with _tmp_pypi_sdist_download(package, version) as td:
+
+        src = next(p for p in td.iterdir() if p.is_dir())
+        wheel_dir = td / "wheel"
+        _build_wheel(src, wheel_dir)
+
+        return _manifest_from_extracted_wheel(wheel_dir)
 
 
 @lru_cache
@@ -331,8 +339,6 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
 
 def fetch_all_manifests(dest: str = "manifests"):
     """Fetch all manifests for plugins on PyPI and write to ``dest`` directory."""
-    from concurrent.futures import ProcessPoolExecutor
-
     _dest = Path(dest)
     _dest.mkdir(exist_ok=True, parents=True)
 
@@ -340,7 +346,7 @@ def fetch_all_manifests(dest: str = "manifests"):
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe
-    with ProcessPoolExecutor(max_workers=8) as executor:
+    with ProcessPoolExecutor() as executor:
         errors = list(executor.map(_try_fetch_and_write_manifest, args))
     _errors = {tup[0]: tup[1] for tup in errors if tup}
     (_dest / "errors.json").write_text(json.dumps(_errors, indent=2))

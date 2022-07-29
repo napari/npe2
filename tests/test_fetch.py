@@ -1,4 +1,5 @@
 import os
+import urllib.request
 from importlib.metadata import PackageNotFoundError
 from unittest.mock import patch
 
@@ -6,9 +7,11 @@ import pytest
 
 from npe2 import fetch_manifest
 from npe2._inspection._fetch import (
+    _manifest_from_pypi_sdist,
     fetch_manifest_with_full_install,
     get_hub_plugin,
     get_hub_plugins,
+    get_manifest_from_wheel,
     get_pypi_plugins,
     get_pypi_url,
 )
@@ -73,6 +76,20 @@ def testfetch_manifest_with_full_install():
     assert isinstance(mf, NPE1Adapter)
     assert mf.name == "napari-ndtiffs"
     assert mf.contributions
+
+
+@pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
+def test_manifest_from_sdist():
+    mf = _manifest_from_pypi_sdist("zarpaint")
+    assert mf.name == "zarpaint"
+
+
+def test_get_manifest_from_wheel(tmp_path):
+    url = "https://files.pythonhosted.org/packages/f0/cc/7f6fbce81be3eb73266f398e49df92859ba247134eb086704dd70b43819a/affinder-0.2.3-py3-none-any.whl"  # noqa
+    dest = tmp_path / "affinder-0.2.3-py3-none-any.whl"
+    urllib.request.urlretrieve(url, dest)
+    mf = get_manifest_from_wheel(dest)
+    assert mf.name == "affinder"
 
 
 def test_get_hub_plugins():
