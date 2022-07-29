@@ -15,7 +15,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 from urllib.request import urlopen
 from zipfile import ZipFile
-
+from typing import List
+from functools import lru_cache
+import re
+from urllib import request, error, parse
 from build.env import IsolatedEnvBuilder
 
 from npe2.manifest import PackageMetadata
@@ -272,6 +275,42 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
         return json.load(r)
 
 
+def get_pypi_plugins() -> List[str]:
+    NAPARI_CLASSIFIER = "Framework :: napari"
+    return _get_packages_by_classifier(NAPARI_CLASSIFIER)
+
+
+@lru_cache()
+def _get_packages_by_classifier(classifier: str) -> List[str]:
+    """Search for packages declaring ``classifier`` on PyPI
+
+    Returns
+    ------
+    packages : List[str]
+        name of all packages at pypi that declare ``classifier``
+    """
+    PACKAGE_NAME_PATTERN = re.compile('class="package-snippet__name">(.+)</span>')
+    PACKAGE_VERSION_PATTERN = re.compile('class="package-snippet__version">(.+)</span>')
+
+    packages = {}
+    page = 1
+    url = f"https://pypi.org/search/?c={parse.quote_plus(classifier)}&page="
+    while True:
+        try:
+            with request.urlopen(f'{url}{page}') as response:
+                html = response.read().decode()
+            names = PACKAGE_NAME_PATTERN.findall(html)
+            versions = PACKAGE_VERSION_PATTERN.findall(html)
+            packages.update(dict(zip(names, versions)))
+            page += 1
+        except error.HTTPError:
+            break
+
+    return dict(sorted(packages.items()))
+
+
+
+
 def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
     name, version, dest = args
     FORMAT = "json"
@@ -294,7 +333,7 @@ def _fetch_all_manifests(dest="manifests"):
     dest = Path(dest)
     dest.mkdir(exist_ok=True, parents=True)
 
-    args = [(name, ver, dest) for name, ver in sorted(get_hub_plugins().items())]
+    args = [(name, ver, dest) for name, ver in sorted(get_pypi_plugins().items())]
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe
