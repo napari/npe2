@@ -233,6 +233,10 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         )
         self.contribution_points["readers"].append(rdr_contrib)
 
+    def napari_get_writer(self, node: ast.FunctionDef):
+        # we can't convert this to an npe2 command contribution
+        pass
+
     def napari_write_image(self, node: ast.FunctionDef):
         self._parse_writer(node, "image")
 

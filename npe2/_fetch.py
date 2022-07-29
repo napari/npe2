@@ -289,7 +289,7 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
 
 
 def _fetch_all_manifests(dest="manifests"):
-    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import ProcessPoolExecutor
 
     dest = Path(dest)
     dest.mkdir(exist_ok=True, parents=True)
@@ -298,7 +298,7 @@ def _fetch_all_manifests(dest="manifests"):
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ProcessPoolExecutor(max_workers=8) as executor:
         errors = list(executor.map(_try_fetch_and_write_manifest, args))
     _errors = {tup[0]: tup[1] for tup in errors if tup}
     (dest / "errors.json").write_text(json.dumps(_errors, indent=2))
