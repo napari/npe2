@@ -78,11 +78,11 @@ def _manifest_from_npe1_dist(dist: metadata.PathDistribution) -> PluginManifest:
     from . import find_npe1_module_contributions
 
     name = dist.metadata["Name"]
-    contribs = [
-        find_npe1_module_contributions(dist, ep.module)
-        for ep in dist.entry_points
-        if ep.group == NPE1_ENTRY_POINT
-    ]
+    contribs = []
+    for ep in dist.entry_points:
+        if ep.group == NPE1_ENTRY_POINT and (match := ep.pattern.match(ep.value)):
+            module = match.group("module")
+            contribs.append(find_npe1_module_contributions(dist, module))
 
     mf = PluginManifest(
         name=name, contributions=merge_contributions(contribs), npe1_shim=True
