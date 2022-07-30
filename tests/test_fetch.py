@@ -8,13 +8,13 @@ import pytest
 from npe2 import fetch_manifest
 from npe2._inspection._fetch import (
     _manifest_from_pypi_sdist,
-    fetch_manifest_with_full_install,
     get_hub_plugin,
     get_hub_plugins,
     get_manifest_from_wheel,
     get_pypi_plugins,
     get_pypi_url,
 )
+from npe2._inspection._full_install import fetch_manifest_with_full_install
 from npe2.manifest._npe1_adapter import NPE1Adapter
 
 

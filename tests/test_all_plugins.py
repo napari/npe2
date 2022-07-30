@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from npe2._inspection._fetch import isolated_plugin_env
+from npe2._inspection._full_install import isolated_plugin_env
 from npe2.cli import app
 
 if TYPE_CHECKING:
