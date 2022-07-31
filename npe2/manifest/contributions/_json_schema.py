@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Type, Union
 
-from pydantic import BaseModel, Field, PrivateAttr, conlist, root_validator
+from pydantic import BaseModel, Field, PrivateAttr, conlist, root_validator, validator
 
 if TYPE_CHECKING:
     from jsonschema.exceptions import ValidationError
@@ -19,10 +19,36 @@ __all__ = [
     "Draft06JsonSchema",
     "Draft07JsonSchema",
 ]
+
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
 JsonTypeArray = conlist(JsonType, min_items=True, unique_items=True)
 StringArrayMin1 = conlist(str, unique_items=True, min_items=1)
 StringArray = conlist(str, unique_items=True)
+
+PY_NAME_TO_JSON_NAME = {
+    "list": "array",
+    "bool": "boolean",
+    "int": "integer",
+    "float": "number",
+    "dict": "object",
+    "str": "string",
+    "NoneType": "null",
+    "None": "null",
+}
+
+
+def _to_json_type(type_: Union[str, Type]) -> JsonType:
+    if isinstance(type_, type):
+        type_ = type_.__name__
+    type_ = str(type_).lower()
+    return PY_NAME_TO_JSON_NAME.get(type_, type_)  # type: ignore # (validated later)
+
+
+def _coerce_type_name(v):
+    """Coerce python type names to json schema type names."""
+    if isinstance(v, list):
+        return [_to_json_type(t) for t in v]
+    return _to_json_type(v)
 
 
 def _to_camel(string: str) -> str:
@@ -92,35 +118,7 @@ class _JsonSchemaBase(BaseModel):
         any_of: Any
         one_of: Any
 
-    @property
-    def has_constraint(self) -> bool:
-        return bool(_CONSTRAINT_FIELDS & self.__fields_set__)
-
-    @property
-    def has_default(self) -> bool:
-        return "default" in self.__fields_set__
-
-    @property
-    def python_type(self) -> Union[Type, List[Type]]:
-        if isinstance(self.type, list):
-            return [_python_equivalent[t] for t in self.type]
-        else:
-            return _python_equivalent[self.type]
-
-    @property
-    def is_array(self) -> bool:
-        return self.items is not None or self.type == "array"
-
-    @property
-    def is_object(self) -> bool:
-        return (
-            self.properties is not None
-            or self.type == "object"
-            and not self.all_of
-            and not self.one_of
-            and not self.any_of
-            and not getattr(self, "ref", False)  # draft 6+
-        )
+    _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
 
     @root_validator(pre=True)
     def _validate_root(cls, values: Dict[str, Any]) -> Any:
@@ -139,7 +137,46 @@ class _JsonSchemaBase(BaseModel):
         return values
 
     @property
+    def has_constraint(self) -> bool:
+        """Return True if this schema has any constraints."""
+        return bool(_CONSTRAINT_FIELDS & self.__fields_set__)
+
+    @property
+    def has_default(self) -> bool:
+        """Return True if the schema has a default value."""
+        return "default" in self.__fields_set__
+
+    @property
+    def python_type(self) -> Union[Type, List[Type]]:
+        """Return Python type equivalent(s) for this schema (JSON) type."""
+        if isinstance(self.type, list):
+            return [_python_equivalent[t] for t in self.type]
+        else:
+            return _python_equivalent[self.type]
+
+    @property
+    def is_array(self) -> bool:
+        """Return True if this schema is an array schema."""
+        return self.items is not None or self.type == "array"
+
+    @property
+    def is_object(self) -> bool:
+        """Return True if this schema is an object schema."""
+        return (
+            self.properties is not None
+            or self.type == "object"
+            and not self.all_of
+            and not self.one_of
+            and not self.any_of
+            and not getattr(self, "ref", False)  # draft 6+
+        )
+
+    @property
     def json_validator(self) -> Type[Validator]:
+        """Return jsonschema validator class for this schema.
+
+        See also `validate_instance`.
+        """
         if not hasattr(self, "_json_validator"):
             from jsonschema.validators import validator_for
 
@@ -151,6 +188,7 @@ class _JsonSchemaBase(BaseModel):
         return self._json_validator
 
     def validate_instance(self, instance: Any) -> dict:
+        """Validate an object (instance) against this schema."""
         from jsonschema.exceptions import best_match
 
         error: ValidationError = best_match(self.json_validator.iter_errors(instance))

@@ -57,7 +57,7 @@ CASES = [
     ({"type": "number", "minimum": 100}, 100, 99),
     ({"type": "number", "exclusiveMaximum": 100}, 99, 100),
     (
-        {"type": "object", "properties": {"number": {"type": "number"}}},
+        {"properties": {"number": {"type": "number"}}},
         {"number": 1600},
         {"number": "1600"},
     ),
@@ -86,6 +86,7 @@ CASES = [
         [1600, "Pennsylvania", "Avenue", "NW"],
         [24, "Sussex", "Drive"],
     ),
+    ({"type": [bool, int]}, True, "True"),
 ]
 
 
@@ -100,3 +101,11 @@ def test_config_validation(schema, valid, invalid):
 
     assert cfg.is_array is ("items" in schema or cfg.type == "array")
     assert cfg.is_object is (cfg.type == "object")
+    assert isinstance(cfg.has_constraint, bool)
+
+    # check that we can can convert json type to python type
+    for t in (
+        cfg.python_type if isinstance(cfg.python_type, list) else [cfg.python_type]
+    ):
+        assert t.__module__ == "builtins"
+    assert cfg.has_default is ("default" in schema)

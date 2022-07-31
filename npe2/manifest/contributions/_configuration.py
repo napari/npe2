@@ -2,18 +2,13 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, conlist, root_validator, validator
 
-from ._json_schema import Draft07JsonSchema, JsonType, JsonTypeArray, ValidationError
-
-PY_NAME_TO_JSON_NAME = {
-    "list": "array",
-    "bool": "boolean",
-    "int": "integer",
-    "float": "number",
-    "dict": "object",
-    "str": "string",
-    "NoneType": "null",
-    "None": "null",
-}
+from ._json_schema import (
+    Draft07JsonSchema,
+    JsonType,
+    JsonTypeArray,
+    ValidationError,
+    _coerce_type_name,
+)
 
 
 class ConfigurationProperty(Draft07JsonSchema):
@@ -33,6 +28,8 @@ class ConfigurationProperty(Draft07JsonSchema):
         "as text in the napari settings file. For boolean entries, the description "
         "(or markdownDescription) will be used as the label for the checkbox.",
     )
+    _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
+
     default: Any = Field(None, description="The default value for this property.")
 
     description: Optional[str] = Field(
@@ -110,17 +107,11 @@ class ConfigurationProperty(Draft07JsonSchema):
         "the pattern does not match.",
     )
 
-    @validator("type", pre=True)
-    def _coerce_type_name(cls, v):
-        """ceorces python type names to json schema type names."""
-        if isinstance(v, type):
-            v = v.__name__
-        v = str(v).lower()
-        return PY_NAME_TO_JSON_NAME.get(v, v)
-
     @root_validator(pre=True)
     def _validate_root(cls, values):
         values = super()._validate_root(values)
+
+        # we don't allow $ref and/or $defs in the schema
         for ignored in {"$ref", "ref", "definition", "$def"}:
             if ignored in values:
                 import warnings
@@ -132,7 +123,8 @@ class ConfigurationProperty(Draft07JsonSchema):
                 )
         return values
 
-    def validate_instance(self, instance: Any) -> dict:
+    def validate_instance(self, instance: object) -> dict:
+        """Validate an object (instance) against this schema."""
         try:
             return super().validate_instance(instance)
         except ValidationError as e:
@@ -142,6 +134,12 @@ class ConfigurationProperty(Draft07JsonSchema):
 
 
 class ConfigurationContribution(BaseModel):
+    """A configuration contribution for a plugin.
+
+    This enables plugins to provide a schema for their configurables.
+    Configuration contributions are used to generate the settings UI.
+    """
+
     title: str = Field(
         ...,
         description="The heading used for this configuration category. Words like "
