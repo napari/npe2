@@ -15,9 +15,9 @@ from typing import (
 from pydantic import BaseModel, Field, conlist, root_validator
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
+JsonTypeArray = conlist(JsonType, min_items=True, unique_items=True)
 StringArrayMin1 = conlist(str, unique_items=True, min_items=1)
 StringArray = conlist(str, unique_items=True)
-JsonTypeArray = conlist(JsonType, min_items=True, unique_items=True)
 
 
 def _to_camel(string: str) -> str:
