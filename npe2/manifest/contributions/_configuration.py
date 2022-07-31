@@ -102,6 +102,8 @@ class ConfigurationProperty(Draft07JsonSchema):
 
     @validator("type", pre=True)
     def _coerce_type_name(cls, v):
+        if isinstance(v, type):
+            v = v.__name__
         v = str(v).lower()
         return PY_NAME_TO_JSON_NAME.get(v, v)
 

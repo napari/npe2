@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Pattern,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Type, Union
 
-from pydantic import BaseModel, Field, conlist, root_validator
+from pydantic import BaseModel, Field, PrivateAttr, conlist, root_validator
+
+if TYPE_CHECKING:
+    from jsonschema.exceptions import ValidationError
+    from jsonschema.protocols import Validator
+else:
+    try:
+        from jsonschema.exceptions import ValidationError
+    except ImportError:
+        ValidationError = Exception
+
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
 JsonTypeArray = conlist(JsonType, min_items=True, unique_items=True)
@@ -53,6 +53,7 @@ _python_equivalent: Dict[Optional[str], Type] = {
 class _JsonSchemaBase(BaseModel):
     class Config:  # noqa: D106
         alias_generator = _to_camel
+        allow_population_by_field_name = True
 
     # underscore here to avoid name collision with pydantic's `schema` method
     schema_: Optional[str] = Field(None, alias="$schema")
@@ -64,7 +65,8 @@ class _JsonSchemaBase(BaseModel):
     minimum: Optional[float] = Field(None)
     max_length: Optional[int] = Field(None, ge=0)
     min_length: Optional[int] = Field(0, ge=0)
-    pattern: Optional[Pattern] = Field(None)
+    # could be Pattern. but it's easier to work with as str
+    pattern: Optional[str] = Field(None)
     max_items: Optional[int] = Field(None, ge=0)
     min_items: Optional[int] = Field(0, ge=0)
     unique_items: bool = Field(False)
@@ -73,6 +75,8 @@ class _JsonSchemaBase(BaseModel):
     enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(None)  # type: ignore  # noqa
     type: Union[JsonType, JsonTypeArray] = Field(None)  # type: ignore
     format: Optional[str] = Field(None)
+
+    _json_validator: Type[Validator] = PrivateAttr()
 
     # these will be redefined in subclasses with specific subschema types
     # just here for type-checking in the methods of this base class
@@ -115,14 +119,40 @@ class _JsonSchemaBase(BaseModel):
 
     @root_validator(pre=True)
     def _validate_root(cls, values: Dict[str, Any]) -> Any:
-        if "type" not in values and "properties" in values:
-            values["type"] = "object"
+        if "type" not in values:
+            if "properties" in values:
+                values["type"] = "object"
+            elif "items" in values:
+                values["type"] = "array"
         return values
+
+    @property
+    def json_validator(self) -> Type[Validator]:
+        if not hasattr(self, "_json_validator"):
+            from jsonschema.validators import validator_for
+
+            schema = self.dict(by_alias=True, exclude_unset=True)
+            schema["$schema"] = self.schema_
+            cls = validator_for(schema)
+            cls.check_schema(schema)
+            self._json_validator = cls(schema)
+        return self._json_validator
+
+    def validate_instance(self, instance: Any) -> dict:
+        from jsonschema.exceptions import best_match
+
+        error: ValidationError = best_match(self.json_validator.iter_errors(instance))
+        if error is not None:
+            if error.validator == "pattern" and self.pattern_error_message:
+                error.message = self.pattern_error_message
+            raise error
+        return instance
 
 
 class Draft04JsonSchema(_JsonSchemaBase):
     """Model for Draft 4 JSON Schema."""
 
+    schema_: str = Field("http://json-schema.org/draft-04/schema#", alias="$schema")
     id: Optional[str] = Field(None)
     exclusive_maximum: Optional[bool] = Field(None)
     exclusive_minimum: Optional[bool] = Field(None)
@@ -147,7 +177,7 @@ class Draft04JsonSchema(_JsonSchemaBase):
 
 class _Draft06JsonSchema(_JsonSchemaBase):
     id: Optional[str] = Field(None, alias="$id")
-    ref: Optional[str] = Field(None, alias="$ref")
+    # ref: Optional[str] = Field(None, alias="$ref")
     examples: Optional[List[Any]] = Field(None)
     exclusive_maximum: Optional[float] = Field(None)
     exclusive_minimum: Optional[float] = Field(None)
@@ -163,6 +193,8 @@ class _Draft06JsonSchema(_JsonSchemaBase):
 class Draft06JsonSchema(_Draft06JsonSchema):
     """Model for Draft 6 JSON Schema."""
 
+    schema_: str = Field("http://json-schema.org/draft-06/schema#", alias="$schema")
+
     # common to all schemas (could go in _JsonSchemaBase)
     # except we need the self-referrential type to be this class
     # and... technically, all subschemas may also be booleans as of Draft 6,
@@ -170,7 +202,7 @@ class Draft06JsonSchema(_Draft06JsonSchema):
     additional_items: Union[bool, Draft06JsonSchema, None] = Field(None)
     items: Union[Draft06JsonSchema, List[Draft06JsonSchema], None] = Field(None)
     additional_properties: Union[bool, Draft06JsonSchema, None] = Field(None)
-    definitions: Optional[Dict[str, Draft06JsonSchema]] = Field(None)
+    # definitions: Optional[Dict[str, Draft06JsonSchema]] = Field(None)
     properties: Optional[Dict[str, Draft06JsonSchema]] = Field(None)
     pattern_properties: Optional[Dict[str, Draft06JsonSchema]] = Field(None)
     all_of: Optional[List[Draft06JsonSchema]] = Field(None)
@@ -182,6 +214,7 @@ class Draft06JsonSchema(_Draft06JsonSchema):
 class Draft07JsonSchema(_Draft06JsonSchema):
     """Model for Draft 7 JSON Schema."""
 
+    schema_: str = Field("http://json-schema.org/draft-07/schema#", alias="$schema")
     comment: Optional[str] = Field(None, alias="$comment")
     read_only: bool = Field(False)
     write_only: bool = Field(False)
@@ -198,7 +231,7 @@ class Draft07JsonSchema(_Draft06JsonSchema):
     additional_items: Union[bool, Draft07JsonSchema, None] = Field(None)
     items: Union[Draft07JsonSchema, List[Draft07JsonSchema], None] = Field(None)
     additional_properties: Union[bool, Draft07JsonSchema, None] = Field(None)
-    definitions: Optional[Dict[str, Draft07JsonSchema]] = Field(None)
+    # definitions: Optional[Dict[str, Draft07JsonSchema]] = Field(None)
     properties: Optional[Dict[str, Draft07JsonSchema]] = Field(None)
     pattern_properties: Optional[Dict[str, Draft07JsonSchema]] = Field(None)
     all_of: Optional[List[Draft07JsonSchema]] = Field(None)
