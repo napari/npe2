@@ -105,10 +105,10 @@ class ConfigurationProperty(Draft07JsonSchema):
         v = str(v).lower()
         return PY_NAME_TO_JSON_NAME.get(v, v)
 
-    @root_validator
+    @root_validator(pre=True)
     def _validate_root(cls, values):
         values = super()._validate_root(values)
-        for ignored in {"$ref", "ref", "definition"}:
+        for ignored in {"$ref", "ref", "definition", "$def"}:
             if ignored in values:
                 import warnings
 
@@ -117,6 +117,7 @@ class ConfigurationProperty(Draft07JsonSchema):
                     f"ignoring {ignored} in configuration property. "
                     "Configuration schemas must be self-contained."
                 )
+        return values
 
 
 class ConfigurationContribution(BaseModel):

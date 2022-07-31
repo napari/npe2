@@ -34,10 +34,8 @@ class ContributionPoints(BaseModel):
     widgets: Optional[List[WidgetContribution]]
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
-
     menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
-
     # keybindings: Optional[List[KeyBindingContribution]]
 
     configuration: List[ConfigurationContribution] = Field(
@@ -52,5 +50,5 @@ class ContributionPoints(BaseModel):
     )
 
     @validator("configuration", pre=True)
-    def _make_list(cls, v):
+    def _to_list(cls, v):
         return v if isinstance(v, list) else [v]
