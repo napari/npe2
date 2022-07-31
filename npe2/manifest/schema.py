@@ -320,8 +320,8 @@ class PluginManifest(ImportExportModel):
                 if distribution is not None:
                     meta = PackageMetadata.from_dist_metadata(distribution.metadata)
                     mf.package_metadata = meta
-
-                    assert mf.name == meta.name, "Manifest name must match package name"
+ 
+                    assert mf.name == meta.name, f"Manifest name ({mf.name}) must match package name ({meta.name})"
                     return mf
 
         raise FileNotFoundError(  # pragma: no cover
