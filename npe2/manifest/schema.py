@@ -323,7 +323,7 @@ class PluginManifest(ImportExportModel):
 
                     assert (
                         mf.name == meta.name
-                    ), f"Manifest name ({mf.name}) must match package name ({meta.name})"
+                    ), f"The name field in the manifest ({mf.name!r}) must match the package name ({meta.name!r})"
                     return mf
 
         raise FileNotFoundError(  # pragma: no cover
