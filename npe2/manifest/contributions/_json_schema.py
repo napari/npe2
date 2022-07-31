@@ -13,7 +13,12 @@ else:
     except ImportError:
         ValidationError = Exception
 
-
+__all__ = [
+    "ValidationError",
+    "Draft04JsonSchema",
+    "Draft06JsonSchema",
+    "Draft07JsonSchema",
+]
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
 JsonTypeArray = conlist(JsonType, min_items=True, unique_items=True)
 StringArrayMin1 = conlist(str, unique_items=True, min_items=1)
@@ -124,6 +129,13 @@ class _JsonSchemaBase(BaseModel):
                 values["type"] = "object"
             elif "items" in values:
                 values["type"] = "array"
+
+        # Get around pydantic bug wherein `Optional[conlists]`` throw a
+        # 'NoneType' object is not iterable error if `None` is provided in init.
+        for conlists in ("enum", "required"):
+            if conlists in values and not values[conlists]:
+                values.pop(conlists)
+
         return values
 
     @property
@@ -143,8 +155,6 @@ class _JsonSchemaBase(BaseModel):
 
         error: ValidationError = best_match(self.json_validator.iter_errors(instance))
         if error is not None:
-            if error.validator == "pattern" and self.pattern_error_message:
-                error.message = self.pattern_error_message
             raise error
         return instance
 

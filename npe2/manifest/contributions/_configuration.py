@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, conlist, root_validator, validator
 
-from ._json_schema import Draft07JsonSchema, JsonType, JsonTypeArray
+from ._json_schema import Draft07JsonSchema, JsonType, JsonTypeArray, ValidationError
 
 PY_NAME_TO_JSON_NAME = {
     "list": "array",
@@ -131,6 +131,14 @@ class ConfigurationProperty(Draft07JsonSchema):
                     "Configuration schemas must be self-contained."
                 )
         return values
+
+    def validate_instance(self, instance: Any) -> dict:
+        try:
+            return super().validate_instance(instance)
+        except ValidationError as e:
+            if e.validator == "pattern" and self.pattern_error_message:
+                e.message = self.pattern_error_message
+            raise e
 
 
 class ConfigurationContribution(BaseModel):
