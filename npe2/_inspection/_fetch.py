@@ -313,14 +313,13 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
         return json.load(r)
 
 
-def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
-    name, version, dest = args
+def _try_fetch_and_write_manifest(args: Tuple[str, str, Path, int]):
+    name, version, dest, indent = args
     FORMAT = "json"
-    INDENT = None
 
     try:  # pragma: no cover
         mf = fetch_manifest(name, version=version)
-        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=INDENT)
+        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=indent)
 
         (dest / f"{name}.{FORMAT}").write_text(manifest_string)
         print(f"✅ {name}")
@@ -329,16 +328,18 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path]):
         return name, {"version": version, "error": str(e)}
 
 
-def fetch_all_manifests(dest: str = "manifests"):
+def fetch_all_manifests(dest: str = "manifests", indent: int = 2) -> None:
     """Fetch all manifests for plugins on PyPI and write to ``dest`` directory."""
     _dest = Path(dest)
     _dest.mkdir(exist_ok=True, parents=True)
 
-    args = [(name, ver, _dest) for name, ver in sorted(get_pypi_plugins().items())]
+    args = [
+        (name, ver, _dest, indent) for name, ver in sorted(get_pypi_plugins().items())
+    ]
 
     # use processes instead of threads, because many of the subroutines in build
     # and setuptools use `os.chdir()`, which is not thread-safe
     with ProcessPoolExecutor() as executor:
         errors = list(executor.map(_try_fetch_and_write_manifest, args))
     _errors = {tup[0]: tup[1] for tup in errors if tup}
-    (_dest / "errors.json").write_text(json.dumps(_errors, indent=2))
+    (_dest / "errors.json").write_text(json.dumps(_errors, indent=indent))
