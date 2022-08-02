@@ -99,8 +99,12 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
                     # these call names to their fully qualified names (e.g. `implements`
                     # would resolve to `npe2.implements` if the name `implements` was
                     # imported from `npe2`.)
-                    # If the name resolves to the name of this module,
+                    # If the name resolves to whatever `self._match` is,
                     # then we have a hit! process the function.
+                    # In the case of an NPE2 module visitor, the name we're trying to
+                    # match will be `npe2.implements` or `implements`.
+                    # In the case of a npe1 visitor, the name we're trying to match
+                    # will be `napari_plugin_engine.napari_hook_implementation`.
                     if self._names.get(call_name) == self._match:
                         kwargs = self._keywords_to_kwargs(call.keywords)
                         self._process_decorated(call.func.attr, node, kwargs)
