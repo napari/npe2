@@ -258,7 +258,10 @@ def deep_update(dct: dict, merge_dct: dict, copy=True) -> dict:
     return _dct
 
 
-def merge_manifests(manifests: Sequence[PluginManifest], overwrite=False):
+def merge_manifests(
+    manifests: Sequence[PluginManifest], overwrite=False
+) -> PluginManifest:
+    """Merge a sequence of PluginManifests into a single PluginManifest."""
     from npe2.manifest.schema import PluginManifest
 
     if not manifests:
@@ -282,16 +285,34 @@ def merge_manifests(manifests: Sequence[PluginManifest], overwrite=False):
     return PluginManifest(**info)
 
 
+# TODO: refactor this ugly thing
 def merge_contributions(
     contribs: Sequence[Optional[ContributionPoints]], overwrite=False
 ) -> dict:
+    """Merge a sequence of contribution points in a single dict.
+
+    Parameters
+    ----------
+    contribs : Sequence[Optional[ContributionPoints]]
+        A sequence of contribution points.  None values are ignored.
+    overwrite : bool, optional
+        If `True`, when existing command id's are encountered, they overwrite the
+        previous command. By default (`False`), the command id is incremented until
+        it is unique.
+
+    Returns
+    -------
+    dict
+        Kwargs that can be passed to `ContributionPoints(**kwargs)`
+    """
     _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
     if not _contribs:
         return {}  # pragma: no cover
 
     out_dict = _contribs[0].dict(exclude_unset=True)
     if len(_contribs) <= 1:
-        return out_dict
+        # no need to merge a single contribution
+        return out_dict  # pragma: no cover
 
     for ctrb in _contribs[1:]:
         _renames = {}
@@ -331,12 +352,6 @@ def merge_contributions(
 
 
 def safe_key(key: str) -> str:
-    return (
-        key.lower()
-        .replace(" ", "_")
-        .replace("-", "_")
-        .replace("(", "")
-        .replace(")", "")
-        .replace("[", "")
-        .replace("]", "")
-    )
+    """Remove parentheses and brackets from a string."""
+    key = re.sub(r"[ -]", "_", key.lower())
+    return re.sub(r"[\[\]\(\)]", "", key)

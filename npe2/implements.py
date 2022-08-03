@@ -1,22 +1,19 @@
 import contextlib
 from inspect import Parameter, Signature
-from pathlib import Path
-from typing import Any, Callable, List, Sequence, Type, TypeVar, Union, cast
+from typing import Any, Callable, List, Sequence, Type, TypeVar
 
 from pydantic import BaseModel
 
-from ._inspection._visitors import find_npe2_module_contributions
-from .manifest import PluginManifest, contributions
+from .manifest import contributions
 
 __all__ = [
-    "compile",
+    "CHECK_ARGS_PARAM",
     "on_activate",
     "on_deactivate",
     "reader",
     "sample_data_generator",
     "widget",
     "writer",
-    "CHECK_ARGS_PARAM",
 ]
 
 
@@ -113,85 +110,3 @@ def on_deactivate(func):
     """Mark a function to be called when a plugin is deactivated."""
     setattr(func, "npe2_on_deactivate", True)
     return func
-
-
-def find_packages(where: Union[str, Path] = ".") -> List[Path]:
-    return [p.parent for p in Path(where).resolve().rglob("**/__init__.py")]
-
-
-def get_package_name(where: Union[str, Path] = ".") -> str:
-    from ._inspection._setuputils import get_package_dir_info
-
-    return get_package_dir_info(where).package_name
-
-
-def compile(
-    src_dir: Union[str, Path],
-    dest: Union[str, Path, None] = None,
-    packages: Sequence[str] = (),
-    plugin_name: str = "",
-) -> PluginManifest:
-    """Compile plugin manifest from `src_dir`, where is a top-level repo.
-
-    This will discover all the contribution points in the repo and output a manifest
-    object
-
-    Parameters
-    ----------
-    src_dir : Union[str, Path]
-        Repo root. Should contain a pyproject or setup.cfg file.
-
-    Returns
-    -------
-    PluginManifest
-        Manifest including all discovered contribution points, combined with any
-        existing contributions explicitly stated in the manifest.
-    """
-    import pkgutil
-
-    from npe2.manifest.utils import merge_contributions
-
-    src_path = Path(src_dir)
-    assert src_path.exists(), f"src_dir {src_dir} does not exist"
-
-    if dest is not None:
-        pdest = Path(dest)
-        suffix = pdest.suffix.lstrip(".")
-        if suffix not in {"json", "yaml", "toml"}:
-            raise ValueError(
-                f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
-            )
-
-    _packages = find_packages(src_path)
-    if packages:
-        _packages = [p for p in _packages if p.name in packages]
-
-    if not plugin_name:
-        plugin_name = get_package_name(src_path)
-
-    contribs: List[contributions.ContributionPoints] = []
-    for pkg_path in _packages:
-        contribs.extend(
-            find_npe2_module_contributions(
-                module_info.module_finder.find_module(module_info.name).path,  # type: ignore  # noqa
-                plugin_name=plugin_name,
-                module_name=f"{pkg_path.name}.{module_info.name}",
-            )
-            for module_info in pkgutil.iter_modules([str(pkg_path)])
-        )
-
-    mf = PluginManifest(
-        name=plugin_name,
-        contributions=merge_contributions(contribs),
-    )
-
-    # if (manifest := info.get("manifest")) and Path(manifest).exists():
-    #     original_manifest = PluginManifest.from_file(manifest)
-    #     mf.display_name = original_manifest.display_name
-    #     mf = merge_manifests([original_manifest, mf], overwrite=True)
-
-    if dest is not None:
-        manifest_string = getattr(mf, cast(str, suffix))(indent=2)
-        pdest.write_text(manifest_string)
-
-    return mf

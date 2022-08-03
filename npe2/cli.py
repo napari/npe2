@@ -502,7 +502,7 @@ def cache(
 @app.command()
 def compile(src_dir: str):
     """Compile napari_plugin_engine plugins."""
-    from .implements import compile
+    from ._inspection import compile
 
     _pprint_formatted(compile(src_dir).yaml(), Format.yaml)
 
