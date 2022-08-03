@@ -522,5 +522,34 @@ def compile(
     _pprint_formatted(manifest_string, format)
 
 
+@app.command()
+def create(plugin_name: str):
+    """Create a new napari plugin"""
+    import subprocess
+    from shutil import which
+
+    if not which("copier"):
+        text = typer.style(
+            "This command requires the `copier` package.\n"
+            "Install it now into your current environment? [y/N]",
+            fg="yellow",
+        )
+        if not typer.prompt(text, type=bool, default=False, show_default=False):
+            raise typer.Exit("Aborted")
+
+        copier = "git+https://github.com/tlambert03/copier.git@validation"
+        subprocess.check_call([sys.executable, "-m", "pip", "install", copier])
+
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-m",
+            "copier",
+            "gh:tlambert03/napari-plugin-template",
+            plugin_name,
+        ]
+    )
+
+
 def main():
     app()
