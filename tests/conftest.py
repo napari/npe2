@@ -133,7 +133,7 @@ def mock_npe1_pm():
 @pytest.fixture
 def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
     """Mocks a fully installed local repository"""
-    from npe2._from_npe1 import metadata, plugin_packages
+    from npe2._inspection._from_npe1 import metadata, plugin_packages
 
     mock_dist = metadata.PathDistribution(npe1_repo / "npe1-plugin-0.0.1.dist-info")
 
