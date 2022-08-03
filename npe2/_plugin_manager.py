@@ -293,7 +293,7 @@ class PluginManager:
     def register(
         self, manifest_or_package: Union[PluginManifest, str], warn_disabled=True
     ) -> None:
-        """Register a plugin manifest, path to manifest file, or a plugin (package) name.
+        """Register a plugin manifest, path to manifest file, or a package name.
 
         Parameters
         ----------
