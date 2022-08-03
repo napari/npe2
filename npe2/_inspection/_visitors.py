@@ -11,7 +11,6 @@ from ..manifest import contributions
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
-_COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
 
 CONTRIB_MAP: Dict[str, Tuple[Type["BaseModel"], str]] = {
     "writer": (contributions.WriterContribution, "writers"),
@@ -180,8 +179,9 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         existing.append(contrib.dict(exclude_unset=True))
 
     def _store_command(self, name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        cmd_params = inspect.signature(contributions.CommandContribution).parameters
 
-        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in _COMMAND_PARAMS}
+        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in cmd_params}
         cmd_kwargs["python_name"] = self._qualified_pyname(name)
         cmd = contributions.CommandContribution(**cmd_kwargs)
         if cmd.id.startswith(self.plugin_name):
