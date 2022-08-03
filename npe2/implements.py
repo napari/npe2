@@ -7,14 +7,15 @@ from pydantic import BaseModel
 from .manifest import contributions
 
 __all__ = [
+    "CHECK_ARGS_PARAM",
     "on_activate",
     "on_deactivate",
     "reader",
     "sample_data_generator",
     "widget",
     "writer",
-    "CHECK_ARGS_PARAM",
 ]
+
 
 T = TypeVar("T", bound=Callable[..., Any])
 

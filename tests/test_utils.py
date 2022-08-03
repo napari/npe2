@@ -1,7 +1,13 @@
 import pytest
 
+from npe2.manifest.contributions import ContributionPoints
 from npe2.manifest.schema import PluginManifest
-from npe2.manifest.utils import Version, deep_update, merge_manifests
+from npe2.manifest.utils import (
+    Version,
+    deep_update,
+    merge_contributions,
+    merge_manifests,
+)
 
 
 def test_version():
@@ -60,6 +66,54 @@ def test_merge_manifests():
 
     assert merge_manifests([pm1]) is pm1
     assert merge_manifests([pm1, pm2]) == expected_merge
+
+
+def test_merge_contributions():
+    a = ContributionPoints(
+        commands=[
+            {"id": "plugin.command", "title": "some writer"},
+        ],
+        writers=[{"command": "plugin.command", "layer_types": ["image"]}],
+    )
+    b = ContributionPoints(
+        commands=[
+            {"id": "plugin.command", "title": "some writer"},
+        ],
+        writers=[{"command": "plugin.command", "layer_types": ["image"]}],
+    )
+    c = ContributionPoints(
+        commands=[
+            {"id": "plugin.command", "title": "some writer"},
+        ],
+        writers=[{"command": "plugin.command", "layer_types": ["image"]}],
+    )
+    expected = ContributionPoints(
+        commands=[
+            {"id": "plugin.command", "title": "some writer"},
+            {"id": "plugin.command_2", "title": "some writer"},
+            {"id": "plugin.command_3", "title": "some writer"},
+        ],
+        writers=[
+            {"command": "plugin.command", "layer_types": ["image"]},
+            {"command": "plugin.command_2", "layer_types": ["image"]},
+            {"command": "plugin.command_3", "layer_types": ["image"]},
+        ],
+    )
+
+    d = ContributionPoints(**merge_contributions((a, b, c)))
+    assert d == expected
+
+    # with overwrite, later contributions with matching command ids take precendence.
+    e = ContributionPoints(**merge_contributions((a, b, c), overwrite=True))
+    expected = ContributionPoints(
+        commands=[
+            {"id": "plugin.command", "title": "some writer"},
+        ],
+        writers=[
+            {"command": "plugin.command", "layer_types": ["image"]},
+        ],
+    )
+    assert e == a
 
 
 def test_deep_update():
