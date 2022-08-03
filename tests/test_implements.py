@@ -6,6 +6,7 @@ import pytest
 
 import npe2.implements
 from npe2 import PluginManifest
+from npe2._inspection import find_npe2_module_contributions
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 SAMPLE_MODULE_NAME = "my_plugin"
@@ -14,7 +15,7 @@ SAMPLE_DIR = Path(__file__).parent / "sample"
 
 def test_extract_manifest():
     module_with_decorators = SAMPLE_DIR / "_with_decorators.py"
-    extracted = npe2.implements.visit(
+    extracted = find_npe2_module_contributions(
         module_with_decorators,
         plugin_name=SAMPLE_PLUGIN_NAME,
         module_name=SAMPLE_MODULE_NAME,
@@ -46,7 +47,7 @@ def test_dynamic(monkeypatch):
 
     with monkeypatch.context() as m:
         m.setattr(sys, "path", sys.path + [str(SAMPLE_DIR)])
-        import _with_decorators
+        import _with_decorators  # noqa
 
         assert hasattr(_with_decorators.get_reader, "_npe2_ReaderContribution")
         info = _with_decorators.get_reader._npe2_ReaderContribution
@@ -58,7 +59,7 @@ def test_dynamic(monkeypatch):
         )
 
         # we can compile a module object as well as a string path
-        extracted = npe2.implements.visit(
+        extracted = find_npe2_module_contributions(
             _with_decorators,
             plugin_name=SAMPLE_PLUGIN_NAME,
             module_name=SAMPLE_MODULE_NAME,
