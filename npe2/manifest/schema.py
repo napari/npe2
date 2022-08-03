@@ -321,7 +321,11 @@ class PluginManifest(ImportExportModel):
                     meta = PackageMetadata.from_dist_metadata(distribution.metadata)
                     mf.package_metadata = meta
 
-                    assert mf.name == meta.name, "Manifest name must match package name"
+                    if mf.name != meta.name:
+                        raise ValueError(  # pragma: no cover
+                            f"The name field in the manifest ({mf.name!r}) "
+                            f"must match the package name ({meta.name!r})"
+                        )
                     return mf
 
         raise FileNotFoundError(  # pragma: no cover
