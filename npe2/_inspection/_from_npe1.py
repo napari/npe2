@@ -28,7 +28,12 @@ from npe2.manifest.contributions import (
     ThemeColors,
     WidgetContribution,
 )
-from npe2.manifest.utils import SHIM_NAME_PREFIX, import_python_name, merge_manifests
+from npe2.manifest.utils import (
+    SHIM_NAME_PREFIX,
+    import_python_name,
+    merge_manifests,
+    safe_key,
+)
 from npe2.types import WidgetCreator
 
 from ._setuputils import PackageInfo, get_package_dir_info
@@ -246,7 +251,7 @@ class HookImplParser:
                 _sample = sample
                 display_name = key
 
-            _key = _safe_key(key)
+            _key = safe_key(key)
             s = {"key": _key, "display_name": display_name}
             if callable(_sample):
                 # let these raise exceptions here immediately if they don't validate
@@ -406,18 +411,6 @@ class HookImplParser:
         c = CommandContribution(id=id, python_name=py_name, title=title)
         self.contributions["commands"].append(c)
         return id
-
-
-def _safe_key(key: str) -> str:
-    return (
-        key.lower()
-        .replace(" ", "_")
-        .replace("-", "_")
-        .replace("(", "")
-        .replace(")", "")
-        .replace("[", "")
-        .replace("]", "")
-    )
 
 
 def _is_magicgui_magic_factory(obj):

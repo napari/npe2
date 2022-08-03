@@ -10,7 +10,7 @@ from typing import List, Sequence
 
 from appdirs import user_cache_dir
 
-from .._from_npe1 import manifest_from_npe1
+from .._inspection._from_npe1 import manifest_from_npe1
 from ..manifest import PackageMetadata
 from .schema import PluginManifest, discovery_blocked
 

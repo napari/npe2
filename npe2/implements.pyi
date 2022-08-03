@@ -11,6 +11,8 @@ from .manifest import contributions as contributions
 
 T = TypeVar("T", bound=Callable[..., Any])
 
+CHECK_ARGS_PARAM: str
+
 def reader(
     *,
     id: str,
