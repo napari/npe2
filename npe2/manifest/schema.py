@@ -322,7 +322,7 @@ class PluginManifest(ImportExportModel):
                     mf.package_metadata = meta
 
                     if mf.name != meta.name:
-                        raise ValueError(
+                        raise ValueError(  # pragma: no cover
                             f"The name field in the manifest ({mf.name!r}) "
                             f"must match the package name ({meta.name!r})"
                         )
