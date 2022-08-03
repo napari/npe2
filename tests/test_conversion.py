@@ -2,8 +2,12 @@ from importlib.metadata import PackageNotFoundError
 
 import pytest
 
-from npe2 import _from_npe1
-from npe2._from_npe1 import convert_repository, get_top_module_path, manifest_from_npe1
+from npe2._inspection import _from_npe1
+from npe2._inspection._from_npe1 import (
+    convert_repository,
+    get_top_module_path,
+    manifest_from_npe1,
+)
 
 
 @pytest.mark.filterwarnings("ignore:The distutils package is deprecated")

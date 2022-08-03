@@ -328,3 +328,15 @@ def merge_contributions(
                                 out_dict[key].remove(existing_item)
         out_dict = deep_update(out_dict, new_ctrb_dict)
     return out_dict
+
+
+def safe_key(key: str) -> str:
+    return (
+        key.lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("(", "")
+        .replace(")", "")
+        .replace("[", "")
+        .replace("]", "")
+    )
