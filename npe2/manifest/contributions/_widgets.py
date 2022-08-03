@@ -49,7 +49,12 @@ class WidgetContribution(BaseModel, Executable[Widget]):
     ) -> Callable[..., Widget]:
         func = super().get_callable()
         if self.autogenerate:
-            from magicgui import magic_factory
+            try:
+                from magicgui import magic_factory
+            except ImportError as e:
+                raise ImportError(
+                    "To use autogeneration, you must have magicgui installed."
+                ) from e
 
             return magic_factory(func)
         return func

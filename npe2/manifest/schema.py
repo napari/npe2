@@ -190,8 +190,8 @@ class PluginManifest(ImportExportModel):
         if invalid_commands:
             raise ValueError(
                 dedent(
-                    f"""Commands identifiers must start with the current package name {mf_name!r}
-            the following commands where found to break this assumption:
+                    f"""Commands identifiers must start with the current package name
+            {mf_name!r} the following commands where found to break this assumption:
                 {invalid_commands}
             """
                 )
