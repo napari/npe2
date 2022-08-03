@@ -1,4 +1,5 @@
 import builtins
+import sys
 import warnings
 from enum import Enum
 from pathlib import Path
@@ -311,16 +312,24 @@ def list(
 
 def _fetch_all_manifests(doit: bool):
     """Fetch all manifests and dump to "manifests" folder."""
-    if doit:
-        from npe2 import _fetch
+    if not doit:
+        return
 
-        _fetch._fetch_all_manifests()
-        raise typer.Exit(0)
+    from npe2._inspection import _fetch
+
+    dest = "manifests"
+    if "-o" in sys.argv:
+        dest = sys.argv[sys.argv.index("-o") + 1]
+    elif "--output" in sys.argv:  # pragma: no cover
+        dest = sys.argv[sys.argv.index("--output") + 1]
+
+    _fetch.fetch_all_manifests(dest)
+    raise typer.Exit(0)
 
 
 @app.command()
 def fetch(
-    name: str,
+    name: List[str],
     version: Optional[str] = None,
     include_package_meta: Optional[bool] = typer.Option(
         False,
@@ -359,20 +368,21 @@ def fetch(
     If an npe2 plugin is detected, the manifest is returned directly, otherwise
     it will be installed into a temporary directory, imported, and discovered.
     """
-    from npe2._fetch import fetch_manifest
+    from npe2 import fetch_manifest
 
     fmt = _check_output(output) if output else format
     kwargs: dict = {"indent": indent}
     if include_package_meta:
         kwargs["exclude"] = set()
 
-    mf = fetch_manifest(name, version=version)
-    manifest_string = getattr(mf, fmt.value)(**kwargs)
+    for n in name:
+        mf = fetch_manifest(n, version=version)
+        manifest_string = getattr(mf, fmt.value)(**kwargs)
 
-    if output:
-        output.write_text(manifest_string)
-    else:
-        _pprint_formatted(manifest_string, fmt)
+        if output:
+            output.write_text(manifest_string)
+        else:
+            _pprint_formatted(manifest_string, fmt)
 
 
 @app.command()
@@ -392,7 +402,7 @@ def convert(
     ),
 ):
     """Convert first generation napari plugin to new (manifest) format."""
-    from ._from_npe1 import convert_repository, manifest_from_npe1
+    from ._inspection._from_npe1 import convert_repository, manifest_from_npe1
 
     try:
         with warnings.catch_warnings(record=True) as w:
