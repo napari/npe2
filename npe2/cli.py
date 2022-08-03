@@ -42,6 +42,9 @@ _main.__doc__ = typer.style(
     (_main.__doc__ or "").format(version=__version__), fg="bright_yellow"
 )
 
+SYNTAX_THME = "monokai"
+SYNTAX_BACKGROUND = "black"
+
 
 class Format(str, Enum):
     """Valid manifest file formats."""
@@ -65,7 +68,10 @@ def _pprint_formatted(string, format: Format = Format.yaml):  # pragma: no cover
     from rich.console import Console
     from rich.syntax import Syntax
 
-    Console().print(Syntax(string, format.value, theme="fruity"))
+    syntax = Syntax(
+        string, format.value, theme=SYNTAX_THME, background_color=SYNTAX_BACKGROUND
+    )
+    Console().print(syntax)
 
 
 def _pprint_exception(err: Exception):
@@ -491,6 +497,29 @@ def cache(
                 _pprint_formatted(mf.yaml(), Format.yaml)  # pragma: no cover
             else:
                 typer.secho(f"{mf.name}: {mf.package_version}", fg=typer.colors.GREEN)
+
+
+@app.command()
+def compile(
+    src_dir: str,
+    output: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        exists=False,
+        help="If provided, will write manifest to filepath (must end with .yaml, "
+        ".json, or .toml). Otherwise, will print to stdout.",
+    ),
+    format: Format = typer.Option(
+        "yaml", "-f", "--format", help="Markdown format to use."
+    ),
+):
+    """Compile @npe2.implements contributions to generate a manifest."""
+    from . import _inspection
+
+    manifest = _inspection.compile(src_dir, dest=output)
+    manifest_string = getattr(manifest, format.value)(indent=2)
+    _pprint_formatted(manifest_string, format)
 
 
 def main():
