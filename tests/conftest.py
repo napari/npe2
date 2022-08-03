@@ -1,3 +1,4 @@
+import shutil
 import sys
 from importlib import abc, metadata
 from pathlib import Path
@@ -8,6 +9,8 @@ import pytest
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest import _npe1_adapter
 
+FIXTURES = Path(__file__).parent / "fixtures"
+
 
 @pytest.fixture
 def sample_path():
@@ -17,6 +20,12 @@ def sample_path():
 @pytest.fixture
 def sample_manifest(sample_path):
     return PluginManifest.from_file(sample_path / "my_plugin" / "napari.yaml")
+
+
+@pytest.fixture
+def compiled_plugin_dir(tmp_path):
+    shutil.copytree(FIXTURES / "my-compiled-plugin", tmp_path, dirs_exist_ok=True)
+    return tmp_path
 
 
 @pytest.fixture
@@ -133,7 +142,7 @@ def mock_npe1_pm():
 @pytest.fixture
 def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
     """Mocks a fully installed local repository"""
-    from npe2._from_npe1 import metadata, plugin_packages
+    from npe2._inspection._from_npe1 import plugin_packages
 
     mock_dist = metadata.PathDistribution(npe1_repo / "npe1-plugin-0.0.1.dist-info")
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import warnings
 from collections import Counter
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
     DictIntStrAny = Dict[IntStr, Any]
     MappingIntStrAny = Mapping[IntStr, Any]
     InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
+    DisposeFunction = Callable[[], None]
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
@@ -291,7 +293,7 @@ class PluginManager:
     def register(
         self, manifest_or_package: Union[PluginManifest, str], warn_disabled=True
     ) -> None:
-        """Register a plugin manifest, path to manifest file, or a plugin (package) name.
+        """Register a plugin manifest, path to manifest file, or a package name.
 
         Parameters
         ----------
@@ -393,6 +395,11 @@ class PluginManager:
             - calls the plugin's on_deactivate() func, passing the Context.
             - calls and cleanup functions in the context's `_dispose` method.
             - emits an event
+
+        This does not:
+            - "unindex" contributions (i.e. the contributions of a deactivated plugin
+              are still visible in the index)
+            - "disable" the plugin (i.e. it can still be used).
         """
         mf = self._manifests[plugin_name]
         self.commands.unregister_manifest(mf)
@@ -406,7 +413,7 @@ class PluginManager:
         self.events.activation_changed({}, {mf.name})
 
     def enable(self, plugin_name: PluginName) -> None:
-        """Enable a plugin (which mostly means just `un-disable` it.
+        """Enable a plugin (which mostly means just `un-disable` it).
 
         This is a no-op if the plugin wasn't already disabled.
         """
@@ -420,7 +427,20 @@ class PluginManager:
         self.events.enablement_changed({plugin_name}, {})
 
     def disable(self, plugin_name: PluginName) -> None:
-        """Disable a plugin"""
+        """Disable a plugin.
+
+        'Disabled' means the plugin remains installed, but it cannot be activated,
+        and its contributions will not be indexed.  Menu items and keybindings and
+        such will not be available.
+
+        In napari, plugin disablement is persisted across sessions.
+        """
+        if self.is_disabled(plugin_name):
+            return  # pragma: no cover
+
+        with contextlib.suppress(KeyError):
+            self.deactivate(plugin_name)
+
         self._disabled_plugins.add(plugin_name)
         self._contrib.remove_contributions(plugin_name)
         self.events.enablement_changed({}, {plugin_name})
@@ -434,11 +454,10 @@ class PluginManager:
     def get_manifest(self, plugin_name: str) -> PluginManifest:
         """Get manifest for `plugin_name`"""
         key = str(plugin_name).split(".")[0]
-        try:
-            return self._manifests[key]
-        except KeyError as e:
+        if key not in self._manifests:
             msg = f"Manifest key {key!r} not found in {list(self._manifests)}"
-            raise KeyError(msg) from e
+            raise KeyError(msg)
+        return self._manifests[key]
 
     def iter_manifests(
         self, disabled: Optional[bool] = None
@@ -659,18 +678,25 @@ class PluginContext:
         self.plugin_key = plugin_key
         self._command_registry = reg or PluginManager.instance().commands
         self._imports: Set[str] = set()  # modules that were imported by this plugin
-        self._disposables: Set[Callable] = set()  # functions to call when deactivating
+        # functions to call when deactivating
+        self._disposables: Set[DisposeFunction] = set()
 
     def _dispose(self):
-        for dispose in self._disposables:
-            dispose()
+        while self._disposables:
+            self._disposables.pop()()
 
     def register_command(self, id: str, command: Optional[Callable] = None):
+        """Associate a callable with a command id."""
+
         def _inner(command):
             self._disposables.add(self._command_registry.register(id, command))
             return command
 
         return _inner if command is None else _inner(command)
+
+    def register_disposable(self, func: DisposeFunction):
+        """Register `func` to be executed when this plugin is deactivated."""
+        self._disposables.add(func)
 
 
 def _call_python_name(python_name: PythonName, args=()) -> Any:

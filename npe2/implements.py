@@ -1,47 +1,27 @@
-import ast
 import contextlib
-import inspect
 from inspect import Parameter, Signature
 from pathlib import Path
-from types import ModuleType
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Callable, List, Sequence, Type, TypeVar, Union, cast
 
 from pydantic import BaseModel
 
+from ._inspection._visitors import find_npe2_module_contributions
 from .manifest import PluginManifest, contributions
 
 __all__ = [
     "compile",
     "on_activate",
     "on_deactivate",
-    "PluginModuleVisitor",
     "reader",
     "sample_data_generator",
-    "visit",
     "widget",
     "writer",
+    "CHECK_ARGS_PARAM",
 ]
 
 
 T = TypeVar("T", bound=Callable[..., Any])
-_COMMAND_PARAMS = inspect.signature(contributions.CommandContribution).parameters
-CONTRIB_MAP: Dict[str, Tuple[Type[BaseModel], str]] = {
-    "writer": (contributions.WriterContribution, "writers"),
-    "reader": (contributions.ReaderContribution, "readers"),
-    "sample_data_generator": (contributions.SampleDataGenerator, "sample_data"),
-    "widget": (contributions.WidgetContribution, "widgets"),
-}
+
 CHECK_ARGS_PARAM = "ensure_args_valid"
 
 
@@ -135,203 +115,21 @@ def on_deactivate(func):
     return func
 
 
-class PluginModuleVisitor(ast.NodeVisitor):
-    """AST visitor to find all contributions in a module.
-
-    This visitor will find all the contributions in a module and store them in
-    `contribution_points`.  It works as follows:
-
-    1. Visit all `Import` and `ImportFrom` nodes in the module, storing their import
-       names in `_names` so we can look them up later.  For example, if the module
-       had the line `from npe2 import implements as impls` at the top, then the
-       `visit_ImportFrom` method would add the entry:
-       `self._names['impls'] = 'npe2.implements'`
-       This way, we know that an `@impls` found later in the module is referring to
-       `npe2.implements`.
-    2. Visit all `FunctionDef` and `ClassDef` nodes in the module and check their
-       decorators with `_find_decorators`
-    3. In `_find_decorators` we check to see if the name of any of the decorators
-       resolves to the something from this module (i.e., if it's being decorated with
-       something from `npe2.implements`).  If it is, then we call `_store_contrib`...
-    4. `_store_contrib` first calls `_store_command` which does the job of storing the
-       fully-resolved `python_name` for the function being decorated, and creates a
-       CommandContribution. `_store_contrib` will then create the appropriate
-       contribution type (e.g. `npe2.implements.reader` will instantiate a
-       `ReaderContribution`), set its `command` entry to the `id` of the just-created
-       `CommandContribution`, then store it in `contribution_points`.
-    5. When the visitor is finished, we can create an instance of `ContributionPoints`
-       using `ContributionPoints(**visitor.contribution_points)`, then add it to a
-       manifest.
-    """
-
-    def __init__(self, plugin_name: str, module_name: str) -> None:
-        super().__init__()
-        self.plugin_name = plugin_name
-        self.module_name = module_name
-        self.contribution_points: Dict[str, List[dict]] = {}
-        self._names: Dict[str, str] = {}
-
-    def visit_Import(self, node: ast.Import) -> Any:  # noqa: D102
-        # https://docs.python.org/3/library/ast.html#ast.Import
-        for alias in node.names:
-            self._names[alias.asname or alias.name] = alias.name
-        return super().generic_visit(node)
-
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:  # noqa: D102
-        # https://docs.python.org/3/library/ast.html#ast.ImportFrom
-        for alias in node.names:
-            self._names[alias.asname or alias.name] = f"{node.module}.{alias.name}"
-        return super().generic_visit(node)
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:  # noqa: D102
-        # https://docs.python.org/3/library/ast.html#ast.FunctionDef
-        self._find_decorators(node)
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> Any:  # noqa: D102
-        self._find_decorators(node)
-
-    def _find_decorators(self, node: Union[ast.ClassDef, ast.FunctionDef]):
-        # for each in the decorator list ...
-        for call in node.decorator_list:
-            # https://docs.python.org/3/library/ast.html#ast.Call
-            # if the function is an attribute ...
-            # (e.g in `@npe2.implements.reader`, `reader` is an attribute of
-            # implements, which is an attribute of npe2)
-            if not isinstance(call, ast.Call):
-                continue
-            if isinstance(call.func, ast.Attribute):
-                # then go up the chain of attributes until we get to a root Name
-                val = call.func.value
-                _names = []
-                while isinstance(val, ast.Attribute):
-                    _names.append(val.attr)
-                    val = val.value
-                if isinstance(val, ast.Name):
-                    _names.append(val.id)
-                    # finally, we can build the fully resolved call name of the
-                    # decorator (e.g. `@npe2.implements`, or `@implements`)
-                    call_name = ".".join(reversed(_names))
-                    # we then check the `_names` we gathered above to resolve these
-                    # call names to their fully qualified names (e.g. `implements`
-                    # would resolve to `npe2.implements` if the name `implements` was
-                    # imported from `npe2`.)
-                    # If the name resolves to the name of this module,
-                    # then we have a hit! Store the contribution.
-                    if self._names.get(call_name) == __name__:
-                        kwargs = self._keywords_to_kwargs(call.keywords)
-                        self._store_contrib(call.func.attr, node.name, kwargs)
-            elif isinstance(call.func, ast.Name):
-                # if the function is just a direct name (e.g. `@reader`)
-                # then we can just see if the name points to something imported from
-                # this module.
-                if self._names.get(call.func.id, "").startswith(__name__):
-                    kwargs = self._keywords_to_kwargs(call.keywords)
-                    self._store_contrib(call.func.id, node.name, kwargs)
-        return super().generic_visit(node)
-
-    def _keywords_to_kwargs(self, keywords: List[ast.keyword]) -> Dict[str, Any]:
-        return {str(k.arg): ast.literal_eval(k.value) for k in keywords}
-
-    def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
-        kwargs.pop(CHECK_ARGS_PARAM, None)
-        ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
-        contrib = ContribClass(**self._store_command(name, kwargs))
-        existing: List[dict] = self.contribution_points.setdefault(contrib_name, [])
-        existing.append(contrib.dict(exclude_unset=True))
-
-    def _store_command(self, name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
-        cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in _COMMAND_PARAMS}
-        cmd_kwargs["python_name"] = self._qualified_pyname(name)
-        cmd = contributions.CommandContribution(**cmd_kwargs)
-        if cmd.id.startswith(self.plugin_name):
-            n = len(self.plugin_name)
-            cmd.id = cmd.id[n:]
-        cmd.id = f"{self.plugin_name}.{cmd.id.lstrip('.')}"
-        cmd_contribs: List[dict] = self.contribution_points.setdefault("commands", [])
-        cmd_contribs.append(cmd.dict(exclude_unset=True))
-        kwargs["command"] = cmd.id
-        return kwargs
-
-    def _qualified_pyname(self, obj_name: str) -> str:
-        return f"{self.module_name}:{obj_name}"
+def find_packages(where: Union[str, Path] = ".") -> List[Path]:
+    return [p.parent for p in Path(where).resolve().rglob("**/__init__.py")]
 
 
-def visit(
-    path: Union[ModuleType, str, Path],
-    plugin_name: str,
-    module_name: str = "",
-) -> contributions.ContributionPoints:
-    """Visit a module and extract contribution points.
+def get_package_name(where: Union[str, Path] = ".") -> str:
+    from ._inspection._setuputils import get_package_dir_info
 
-    Parameters
-    ----------
-    path : Union[ModuleType, str, Path]
-        Either a path to a Python module, a module object, or a string
-    plugin_name : str
-        Name of the plugin
-    module_name : str
-        Module name, by default ""
-
-    Returns
-    -------
-    ContributionPoints
-        ContributionPoints discovered in the module.
-    """
-    if isinstance(path, ModuleType):
-        assert path.__file__
-        assert path.__name__
-        module_name = path.__name__
-        path = path.__file__
-
-    visitor = PluginModuleVisitor(plugin_name, module_name=module_name)
-    src_code = Path(path).read_text()
-    node = ast.parse(src_code)
-    visitor.visit(node)
-
-    if "commands" in visitor.contribution_points:
-        compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
-        visitor.contribution_points["commands"] = [dict(i) for i in compress]
-    return contributions.ContributionPoints(**visitor.contribution_points)
-
-
-def _get_setuptools_info(src_path: Path, entry="napari.manifest") -> Dict[str, Any]:
-    import os
-    from importlib.metadata import EntryPoint
-
-    from setuptools import Distribution
-    from setuptools.command.build_py import build_py
-
-    curdir = os.getcwd()
-    try:
-        os.chdir(src_path)
-        dist = Distribution({"src_root": str(src_path)})
-        dist.parse_config_files()
-
-        builder = build_py(dist)
-        builder.finalize_options()
-
-        output = {
-            "name": dist.get_name(),
-            "packages": {
-                pkg: builder.check_package(pkg, builder.get_package_dir(pkg))
-                for pkg in builder.packages
-            },
-            "manifest": None,
-        }
-
-        if entry in dist.entry_points:
-            ep = dist.entry_points[entry][0]
-            if match := EntryPoint.pattern.search(ep):
-                manifest_file = match.groupdict()["attr"]
-                module_dir = Path(builder.get_package_dir(match.groupdict()["module"]))
-                output["manifest"] = str(module_dir / manifest_file)
-        return output
-    finally:
-        os.chdir(curdir)
+    return get_package_dir_info(where).package_name
 
 
 def compile(
-    src_dir: Union[str, Path], dest: Union[str, Path, None] = None
+    src_dir: Union[str, Path],
+    dest: Union[str, Path, None] = None,
+    packages: Sequence[str] = (),
+    plugin_name: str = "",
 ) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
@@ -349,6 +147,9 @@ def compile(
         Manifest including all discovered contribution points, combined with any
         existing contributions explicitly stated in the manifest.
     """
+    import pkgutil
+
+    from npe2.manifest.utils import merge_contributions
 
     src_path = Path(src_dir)
     assert src_path.exists(), f"src_dir {src_dir} does not exist"
@@ -361,31 +162,33 @@ def compile(
                 f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
             )
 
-    info = _get_setuptools_info(src_path)
+    _packages = find_packages(src_path)
+    if packages:
+        _packages = [p for p in _packages if p.name in packages]
 
-    import pkgutil
-
-    from npe2.manifest.utils import merge_contributions, merge_manifests
+    if not plugin_name:
+        plugin_name = get_package_name(src_path)
 
     contribs: List[contributions.ContributionPoints] = []
-    for name, initpy in info["packages"].items():
+    for pkg_path in _packages:
         contribs.extend(
-            visit(
+            find_npe2_module_contributions(
                 module_info.module_finder.find_module(module_info.name).path,  # type: ignore  # noqa
-                plugin_name=info["name"],
-                module_name=f"{name}.{module_info.name}",
+                plugin_name=plugin_name,
+                module_name=f"{pkg_path.name}.{module_info.name}",
             )
-            for module_info in pkgutil.iter_modules([initpy.replace("__init__.py", "")])
+            for module_info in pkgutil.iter_modules([str(pkg_path)])
         )
 
     mf = PluginManifest(
-        name=info["name"],
+        name=plugin_name,
         contributions=merge_contributions(contribs),
     )
-    if (manifest := info.get("manifest")) and Path(manifest).exists():
-        original_manifest = PluginManifest.from_file(manifest)
-        mf.display_name = original_manifest.display_name
-        mf = merge_manifests([original_manifest, mf], overwrite=True)
+
+    # if (manifest := info.get("manifest")) and Path(manifest).exists():
+    #     original_manifest = PluginManifest.from_file(manifest)
+    #     mf.display_name = original_manifest.display_name
+    #     mf = merge_manifests([original_manifest, mf], overwrite=True)
 
     if dest is not None:
         manifest_string = getattr(mf, cast(str, suffix))(indent=2)
