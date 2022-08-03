@@ -22,8 +22,6 @@ from typing import (
     cast,
 )
 
-import magicgui
-
 from npe2.manifest import PluginManifest
 from npe2.manifest.contributions import (
     CommandContribution,
@@ -415,6 +413,14 @@ class HookImplParser:
         return id
 
 
+def _is_magicgui_magic_factory(obj):
+    try:
+        import magicgui
+    except ImportError:
+        return False
+    return isinstance(obj, magicgui._magicgui.MagicFactory)
+
+
 def _python_name(
     obj: Any, hook: Callable = None, hook_idx: Optional[int] = None
 ) -> str:
@@ -457,7 +463,7 @@ def _python_name(
                     break
 
     # trick if it's a magic_factory
-    if isinstance(obj, magicgui._magicgui.MagicFactory):
+    if _is_magicgui_magic_factory(obj):
         f = obj.keywords.get("function")
         if f:
             v = getattr(f, "__globals__", {}).get(getattr(f, "__name__", ""))
