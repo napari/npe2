@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from npe2.implements import compile
+from npe2._inspection import compile
 from npe2.manifest.schema import PluginManifest
 
 
@@ -14,7 +14,7 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
         compile(compiled_plugin_dir, "bad_path")
 
     dest = tmp_path / "output.yaml"
-    mf = compile(compiled_plugin_dir, dest=dest)
+    mf = compile(compiled_plugin_dir, dest=dest, packages=["my_module"])
     assert isinstance(mf, PluginManifest)
     assert mf.name == "my_compiled_plugin"
     assert mf.contributions.commands and len(mf.contributions.commands) == 5
