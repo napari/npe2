@@ -1,6 +1,5 @@
-import pkgutil
 from pathlib import Path
-from typing import List, Sequence, Union, cast
+from typing import Iterator, List, Sequence, Tuple, Union, cast
 
 from ..manifest import PluginManifest, contributions
 from ..manifest.utils import merge_contributions
@@ -9,6 +8,7 @@ from ._visitors import find_npe2_module_contributions
 
 
 def find_packages(where: Union[str, Path] = ".") -> List[Path]:
+    """Return all folders that have an __init__.py file"""
     return [p.parent for p in Path(where).resolve().rglob("**/__init__.py")]
 
 
@@ -59,14 +59,16 @@ def compile(
 
     contribs: List[contributions.ContributionPoints] = []
     for pkg_path in _packages:
-        contribs.extend(
-            find_npe2_module_contributions(
-                module_info.module_finder.find_module(module_info.name).path,  # type: ignore  # noqa
+        top_mod = pkg_path.name
+        # TODO: add more tests with more complicated package structures
+        # make sure we're not double detecting and/or missing stuff.
+        for mod_path, mod_name in _iter_modules(pkg_path):
+            contrib = find_npe2_module_contributions(
+                mod_path,
                 plugin_name=plugin_name,
-                module_name=f"{pkg_path.name}.{module_info.name}",
+                module_name=f"{top_mod}.{mod_name}" if mod_name else top_mod,
             )
-            for module_info in pkgutil.iter_modules([str(pkg_path)])
-        )
+            contribs.append(contrib)
 
     mf = PluginManifest(
         name=plugin_name,
@@ -78,3 +80,9 @@ def compile(
         pdest.write_text(manifest_string)
 
     return mf
+
+
+def _iter_modules(path: Path) -> Iterator[Tuple[Path, str]]:
+    """Return all python modules in path"""
+    for p in path.glob("*.py"):
+        yield p, "" if p.name == "__init__.py" else p.stem
