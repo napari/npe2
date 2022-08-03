@@ -500,11 +500,26 @@ def cache(
 
 
 @app.command()
-def compile(src_dir: str):
-    """Compile napari_plugin_engine plugins."""
-    from ._inspection import compile
+def compile(
+    src_dir: str,
+    output: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        exists=False,
+        help="If provided, will write manifest to filepath (must end with .yaml, "
+        ".json, or .toml). Otherwise, will print to stdout.",
+    ),
+    format: Format = typer.Option(
+        "yaml", "-f", "--format", help="Markdown format to use."
+    ),
+):
+    """Compile @npe2.implements contributions to generate a manifest."""
+    from . import _inspection
 
-    _pprint_formatted(compile(src_dir).yaml(), Format.yaml)
+    manifest = _inspection.compile(src_dir, dest=output)
+    manifest_string = getattr(manifest, format.value)(indent=2)
+    _pprint_formatted(manifest_string, format)
 
 
 def main():
