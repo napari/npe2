@@ -76,11 +76,15 @@ def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
         node = ast.parse(setup_py.read_text())
         visitor = _SetupVisitor()
         visitor.visit(node)
-        info.package_name = visitor.get("name")
-        for group, vals in visitor.get("entry_points", {}).items():
-            for val in vals if isinstance(vals, list) else [vals]:
-                name, _, value = val.partition("=")
-                info.entry_points.append(EntryPoint(name.strip(), value.strip(), group))
+        if not info.package_name:
+            info.package_name = visitor.get("name")
+        if not info.entry_points:
+            for group, vals in visitor.get("entry_points", {}).items():
+                for val in vals if isinstance(vals, list) else [vals]:
+                    name, _, value = val.partition("=")
+                    info.entry_points.append(
+                        EntryPoint(name.strip(), value.strip(), group)
+                    )
 
     # # check for pyproject.toml
     # pyproject_toml = path / "pyproject.toml"
