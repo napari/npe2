@@ -514,7 +514,7 @@ def compile(
         "yaml", "-f", "--format", help="Markdown format to use."
     ),
 ):
-    """Compile napari_plugin_engine plugins."""
+    """Compile @npe2.implements contributions to generate a manifest."""
     from . import _inspection
 
     manifest = _inspection.compile(src_dir, dest=output)
