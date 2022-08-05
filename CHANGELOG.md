@@ -1,8 +1,33 @@
 # Changelog
 
-## [0.5.2](https://github.com/napari/npe2/tree/0.5.2) (2022-07-24)
+## [v0.6.0](https://github.com/napari/npe2/tree/v0.6.0) (2022-08-05)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.5.1...0.5.2)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.5.2...v0.6.0)
+
+**Implemented enhancements:**
+
+- Add \(refactor\) configuration contribution, allowing plugins to declare a schema for their configurables [\#219](https://github.com/napari/npe2/pull/219) ([tlambert03](https://github.com/tlambert03))
+- npe1 module ast visitor \(for faster fetch without install\) [\#217](https://github.com/napari/npe2/pull/217) ([tlambert03](https://github.com/tlambert03))
+- Compile plugins using `npe2.implements` [\#186](https://github.com/napari/npe2/pull/186) ([tlambert03](https://github.com/tlambert03))
+
+**Fixed bugs:**
+
+- fix name validator to allow periods [\#227](https://github.com/napari/npe2/pull/227) ([tlambert03](https://github.com/tlambert03))
+- fix: delay inspection of command params [\#223](https://github.com/napari/npe2/pull/223) ([tlambert03](https://github.com/tlambert03))
+- Improve error message on schema validation [\#220](https://github.com/napari/npe2/pull/220) ([Czaki](https://github.com/Czaki))
+
+**Tests & CI:**
+
+- ci: remove fetch\_manifests [\#224](https://github.com/napari/npe2/pull/224) ([tlambert03](https://github.com/tlambert03))
+- run io\_utils tests first [\#222](https://github.com/napari/npe2/pull/222) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- build: remove magicgui dependency [\#218](https://github.com/napari/npe2/pull/218) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.5.2](https://github.com/napari/npe2/tree/v0.5.2) (2022-07-24)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.5.1...v0.5.2)
 
 **Implemented enhancements:**
 
@@ -22,6 +47,10 @@
 **Documentation:**
 
 - Fix documentation links [\#208](https://github.com/napari/npe2/pull/208) ([melissawm](https://github.com/melissawm))
+
+**Merged pull requests:**
+
+- changelog v0.5.2 [\#213](https://github.com/napari/npe2/pull/213) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.5.1](https://github.com/napari/npe2/tree/v0.5.1) (2022-06-27)
 
