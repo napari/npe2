@@ -38,10 +38,11 @@ class ConfigurationProperty(Draft07JsonSchema):
         "field, except for booleans, where the description is used as the label for "
         "the checkbox. See also `markdown_description`.",
     )
-    markdown_description: Optional[str] = Field(
-        None,
-        description="If you use `markdown_description` instead of `description`, your "
-        "setting description will be rendered as Markdown in the settings UI.",
+    description_format: Literal["markdown", "plain"] = Field(
+        "markdown",
+        description="By default (`markdown`) your `description`, will be parsed "
+        "as CommonMark (with `markdown_it`) and rendered as rich text. To render as "
+        "plain text, set this value to `plain`.",
     )
 
     enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(  # type: ignore # noqa: E501
@@ -54,43 +55,30 @@ class ConfigurationProperty(Draft07JsonSchema):
         description="If you provide a list of items under the `enum` field, you may "
         "provide `enum_descriptions` to add descriptive text for each enum.",
     )
-    markdown_enum_descriptions: List[str] = Field(
-        default_factory=list,
-        description="If you use `markdown_enum_descriptions` instead of "
-        "`enum_descriptions`, your descriptions will be rendered as Markdown",
+    enum_descriptions_format: Literal["markdown", "plain"] = Field(
+        "markdown",
+        description="By default (`markdown`) your `enum_description`s, will be parsed "
+        "as CommonMark (with `markdown_it`) and rendered as rich text. To render as "
+        "plain text, set this value to `plain`.",
     )
-    # NOTE:
-    # If you set both of these deprecation properties, deprecation_message will be
-    # shown in the hover and the problems view, and markdown_deprecation_message will
-    # be rendered as markdown in the settings UI.
+
     deprecation_message: Optional[str] = Field(
         None,
         description="If you set deprecationMessage, the setting will get a warning "
         "underline with your specified message. It won't show up in the settings "
         "UI unless it is configured by the user.",
     )
-    markdown_deprecation_message: Optional[str] = Field(
-        None,
-        description="If you set markdown_deprecation_message, the setting will get a "
-        "warning underline with your specified message. It won't show up in the "
-        "settings UI unless it is configured by the user.",
+    deprecation_message_format: Literal["markdown", "plain"] = Field(
+        "markdown",
+        description="By default (`markdown`) your `deprecation_message`, will be "
+        "parsed as CommonMark (with `markdown_it`) and rendered as rich text. To "
+        "render as plain text, set this value to `plain`.",
     )
 
-    scope: Literal["application"] = Field(
-        "application",
-        description="A configuration setting can have one of the following scopes:\n"
-        "  - `application`: Applies globally, can only be configured in user settings",
-        # TODO: add support for these additional scopes
-        # "  - `machine`: Machine specific settings that can be set only in user "
-        # "settings or only in remote settings. For example, an installation path which"
-        # " shouldn't be shared across machines.\n"
-        # "  - `window`: Viewer (instance) specific settings which can be configured"
-        # "in user or workspace settings.",  # this should be the default
-    )
     edit_presentation: Literal["singleline", "multiline"] = Field(
         "singleline",
-        description="A string setting can be rendered with a multiline text input if "
-        'it sets "edit_presentation": "multiline"',
+        description="By default, string settings will be rendered with a single-line "
+        "editor. To render with a multi-line editor, set this value to `multiline`.",
     )
     order: Optional[int] = Field(
         None,
