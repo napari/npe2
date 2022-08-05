@@ -29,13 +29,14 @@ contributions:
     - id: my-plugin.some_function_widget
       title: Create widget from my function
       python_name: my_plugin:make_widget_from_function
-  configuration: # call it settings?
-    properties:
-      my_plugin.reader.lazy:
-        type: boolean
-        default: false
-        title: Load lazily
-        description: Whether to load images lazily with dask
+  configuration:
+    - title: My Plugin
+      properties:
+        my_plugin.reader.lazy:
+          type: boolean
+          default: false
+          title: Load lazily
+          description: Whether to load images lazily with dask
   readers:
     - command: my-plugin.some_reader
       filename_patterns: ["*.fzy", "*.fzzy"]
