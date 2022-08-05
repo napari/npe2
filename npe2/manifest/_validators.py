@@ -1,6 +1,6 @@
 import re
 
-_package_name = "([a-zA-Z][a-zA-Z0-9_-]+)"
+_package_name = "([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])"
 _python_identifier = "([a-zA-Z_][a-zA-Z_0-9]*)"  # noqa
 
 # how do we deal with keywords ?
@@ -9,11 +9,13 @@ _python_identifier = "([a-zA-Z_][a-zA-Z_0-9]*)"  # noqa
 # `npe2_tester.False.if.for.in` ?
 _identifier_plus_dash = "(?:[a-zA-Z_][a-zA-Z_0-9-]+)"
 _dotted_name = f"(?:(?:{_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
-PACKAGE_NAME_PATTERN = re.compile(f"^{_package_name}$")
+PACKAGE_NAME_PATTERN = re.compile(f"^{_package_name}$", re.IGNORECASE)
 DOTTED_NAME_PATTERN = re.compile(_dotted_name)
 DISPLAY_NAME_PATTERN = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
 PYTHON_NAME_PATTERN = re.compile(f"^({_dotted_name}):({_dotted_name})$")
-COMMAND_ID_PATTERN = re.compile(f"^(({_package_name}\\.)*{_python_identifier})$")
+COMMAND_ID_PATTERN = re.compile(
+    f"^(({_package_name}\\.)*{_python_identifier})$", re.IGNORECASE
+)
 
 
 def command_id(id: str) -> str:
@@ -26,9 +28,12 @@ def command_id(id: str) -> str:
 
 
 def package_name(name: str) -> str:
-    """Assert that `name` is a valid python name: e.g. `module.submodule:funcname`"""
+    """Assert that `name` is a valid package name in accordance with PEP-0508."""
     if name and not PACKAGE_NAME_PATTERN.match(name):
-        raise ValueError(f"{name!r} is not a valid python package name.")
+        raise ValueError(
+            f"{name!r} is not a valid python package name. "
+            "See https://peps.python.org/pep-0508/#names "
+        )
     return name
 
 
