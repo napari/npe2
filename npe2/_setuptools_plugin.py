@@ -18,8 +18,8 @@ from setuptools import Distribution
 from setuptools.command.build_py import build_py
 
 if TYPE_CHECKING:
-    from typing import Any, Union
     from distutils.cmd import Command
+    from typing import Any, Union
 
     PathT = Union["os.PathLike[str]", str]
 
@@ -196,4 +196,4 @@ def finalize_npe2(dist: Distribution):
         dist.config = config
         for cmd in ("build", "sdist"):
             if base := dist.get_command_class(cmd):
-                cast('Command', base).sub_commands.insert(0, ("npe2_compile", None))
+                cast("Command", base).sub_commands.insert(0, ("npe2_compile", None))
