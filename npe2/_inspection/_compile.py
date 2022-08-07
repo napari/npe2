@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Iterator, List, Sequence, Tuple, Union, cast
 
 from ..manifest import PluginManifest, contributions
-from ..manifest.utils import merge_contributions
+from ..manifest.utils import merge_contributions, merge_manifests
 from ._setuputils import get_package_dir_info
 from ._visitors import find_npe2_module_contributions
 
@@ -21,6 +21,7 @@ def compile(
     dest: Union[str, Path, None] = None,
     packages: Sequence[str] = (),
     plugin_name: str = "",
+    template: str = "",
 ) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
@@ -50,6 +51,9 @@ def compile(
                 f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
             )
 
+    if template:
+        template_mf = PluginManifest.from_file(template)
+
     _packages = find_packages(src_path)
     if packages:
         _packages = [p for p in _packages if p.name in packages]
@@ -74,6 +78,9 @@ def compile(
         name=plugin_name,
         contributions=merge_contributions(contribs),
     )
+
+    if template:
+        mf = merge_manifests([template_mf, mf], overwrite=True)
 
     if dest is not None:
         manifest_string = getattr(mf, cast(str, suffix))(indent=2)

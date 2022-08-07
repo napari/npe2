@@ -12,16 +12,18 @@ import os
 import re
 import sys
 import warnings
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, cast
 
 from setuptools import Distribution
 from setuptools.command.build_py import build_py
 
 if TYPE_CHECKING:
     from typing import Any, Union
+    from distutils.cmd import Command
 
     PathT = Union["os.PathLike[str]", str]
 
+NPE2_ENTRY = "napari.manifest"
 DEBUG = bool(os.environ.get("SETUPTOOLS_NPE2_DEBUG"))
 EP_PATTERN = re.compile(
     r"(?P<module>[\w.]+)\s*(:\s*(?P<attr>[\w.]+)\s*)?((?P<extras>\[.*\])\s*)?$"
@@ -82,6 +84,7 @@ class Configuration:
         write_to: PathT | None = None,
         write_to_template: str | None = None,
         dist_name: str | None = None,
+        template: str | None = None,
     ):
         self._relative_to = None if relative_to is None else os.fspath(relative_to)
         self._root = "."
@@ -89,6 +92,7 @@ class Configuration:
         self.write_to = write_to
         self.write_to_template = write_to_template
         self.dist_name = dist_name
+        self.template = template
 
     @property
     def relative_to(self) -> str | None:
@@ -143,27 +147,33 @@ class Configuration:
 
 
 def _mf_entry_from_dist(dist: Distribution) -> Optional[Tuple[str, str]]:
+    """Return (module, attr) for a distribution's npe2 entry point."""
     eps: dict = getattr(dist, "entry_points", {})
-    if napari_entrys := eps.get("napari.manifest", []):
+    if napari_entrys := eps.get(NPE2_ENTRY, []):
         if match := EP_PATTERN.search(napari_entrys[0]):
             return match.group("module"), match.group("attr")
+    return None
 
 
 class npe2_compile(build_py):
     def run(self) -> None:
+        trace("RUN npe2_compile")
         if ep := _mf_entry_from_dist(self.distribution):
-            from npe2.implements import compile
+            from npe2._inspection._compile import compile
 
             module, attr = ep
             src = self.distribution.src_root or os.getcwd()
             dest = os.path.join(self.get_package_dir(module), attr)
-            compile(src, dest)
+            compile(src, dest, template=self.distribution.config.template)
         else:
             name = self.distribution.metadata.name
-            trace(f"no 'napari.manifest' found in entry_points for {name}")
+            trace(f"no {NPE2_ENTRY!r} found in entry_points for {name}")
 
 
 def finalize_npe2(dist: Distribution):
+    # this hook is declared in the setuptools.finalize_distribution_options
+    # entry point in our setup.cfg
+    # https://setuptools.pypa.io/en/latest/userguide/extension.html#customizing-distribution-options
     trace("finalize hook", vars(dist.metadata))
     dist_name = dist.metadata.name
     if dist_name is None:
@@ -171,13 +181,19 @@ def finalize_npe2(dist: Distribution):
     if not os.path.isfile("pyproject.toml"):
         return
     if dist_name == "npe2":
+        # if we're packaging npe2 itself, don't do anything
         return
     try:
+        # config will *only* be detected if there is a [tool.npe2]
+        # section in pyproject.toml.  This is how plugins opt in
+        # to the npe2 compile feature during build
         config = Configuration.from_file(dist_name=dist_name)
     except LookupError as e:
         trace(e)
     else:
-        # do something with config
-        for cmd in ("bdist_wheel", "sdist"):
+        # inject our `npe2_compile` command to be called whenever we're building an
+        # sdist or a wheel
+        dist.config = config
+        for cmd in ("build", "sdist"):
             if base := dist.get_command_class(cmd):
-                base.sub_commands.insert(0, ("npe2_compile", None))
+                cast('Command', base).sub_commands.insert(0, ("npe2_compile", None))

@@ -273,9 +273,10 @@ def merge_manifests(
     assert (
         len({mf.package_version for mf in manifests}) == 1
     ), "All manifests must have same version"
-    assert (
-        len({mf.display_name for mf in manifests}) == 1
-    ), "All manifests must have same display_name"
+    if not overwrite:
+        assert (
+            len({mf.display_name for mf in manifests}) == 1
+        ), "All manifests must have same display_name"
 
     mf0 = manifests[0]
     info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
