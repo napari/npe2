@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from textwrap import dedent
 from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
@@ -172,11 +171,9 @@ class PluginManifest(ImportExportModel):
         current_version = Version.parse(SCHEMA_VERSION)
         if current_version < declared_version:
             raise ValueError(
-                dedent(
-                    f"The declared schema version '{declared_version}' is "
-                    f"newer than npe2's schema version: '{current_version}'. You may "
-                    "need to upgrade npe2."
-                )
+                f"The declared schema version '{declared_version}' is "
+                f"newer than npe2's schema version: '{current_version}'. You may "
+                "need to upgrade npe2."
             )
 
         mf_name = values.get("name")
@@ -185,17 +182,14 @@ class PluginManifest(ImportExportModel):
             invalid_commands.extend(
                 command.id
                 for command in values["contributions"].commands or []
-                if not command.id.startswith(mf_name)
+                if not command.id.startswith(f"{mf_name}.")
             )
 
         if invalid_commands:
             raise ValueError(
-                dedent(
-                    f"""Commands identifiers must start with the current package name
-            {mf_name!r} the following commands where found to break this assumption:
-                {invalid_commands}
-            """
-                )
+                "Commands identifiers must start with the current package name "
+                f"followed by a dot: '{mf_name}'. The following commands do not: "
+                f"{invalid_commands}"
             )
 
         if not values.get("display_name"):

@@ -1,4 +1,3 @@
-from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, validator
@@ -36,13 +35,11 @@ class CommandContribution(BaseModel):
 
     id: str = Field(
         ...,
-        description=dedent(
-            "A unique identifier used to reference this command. While this may look "
-            "like a python fully qualified name this does *not* refer to a python "
-            "object; this identifier is specific to napari.  It must begin with "
-            "the name of the package, and include only alphanumeric characters, plus "
-            "dashes and underscores."
-        ),
+        description="A unique identifier used to reference this command. While this may"
+        " look like a python fully qualified name this does *not* refer to a python "
+        "object; this identifier is specific to napari.  It must begin with "
+        "the name of the package, and include only alphanumeric characters, plus "
+        "dashes and underscores.",
     )
     _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 

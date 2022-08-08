@@ -153,6 +153,13 @@ def test_dotted_name_with_command():
             name="plugin.plugin-sample",
             contributions={"commands": [{"id": "plugin.command", "title": "Sample"}]},
         )
+    with pytest.raises(ValidationError, match="must begin with the package name"):
+        PluginManifest(
+            name="plugin.plugin-sample",
+            contributions={
+                "commands": [{"id": "plugin.plugin-samplecommand", "title": "Sample"}]
+            },
+        )
 
     PluginManifest(
         name="plugin.plugin-sample",
