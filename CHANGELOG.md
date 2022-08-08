@@ -1,6 +1,14 @@
 # Changelog
 
-## [v0.6.0](https://github.com/napari/npe2/tree/v0.6.0) (2022-08-05)
+## [v0.6.1](https://github.com/napari/npe2/tree/v0.6.1) (2022-08-08)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.6.0...v0.6.1)
+
+**Fixed bugs:**
+
+- fix command id validation when dot in package name [\#230](https://github.com/napari/npe2/pull/230) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.6.0](https://github.com/napari/npe2/tree/v0.6.0) (2022-08-07)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.5.2...v0.6.0)
 
@@ -23,6 +31,7 @@
 
 **Merged pull requests:**
 
+- v0.6.0 changelog [\#229](https://github.com/napari/npe2/pull/229) ([github-actions[bot]](https://github.com/apps/github-actions))
 - build: remove magicgui dependency [\#218](https://github.com/napari/npe2/pull/218) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.5.2](https://github.com/napari/npe2/tree/v0.5.2) (2022-07-24)

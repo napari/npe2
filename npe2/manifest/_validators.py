@@ -21,8 +21,9 @@ COMMAND_ID_PATTERN = re.compile(
 def command_id(id: str) -> str:
     if id and not COMMAND_ID_PATTERN.match(id):
         raise ValueError(
-            f"{id!r} is not a valid command id. Note: it can only contain alphanumeric"
-            " characters, plus dashes and underscores."
+            f"{id!r} is not a valid command id. It must begin with the package name "
+            "followed by a period, then may can only contain alphanumeric "
+            "characters and underscores."
         )
     return id
 
