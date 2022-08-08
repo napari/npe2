@@ -21,7 +21,7 @@ def compile(
     dest: Union[str, Path, None] = None,
     packages: Sequence[str] = (),
     plugin_name: str = "",
-    template: str = "",
+    template: Union[str, Path, None] = None,
 ) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
@@ -32,6 +32,20 @@ def compile(
     ----------
     src_dir : Union[str, Path]
         Repo root. Should contain a pyproject or setup.cfg file.
+    dest : Union[str, Path, None]
+        If provided, path where output manifest should be written.
+    packages : Sequence[str]
+        List of packages to include in the manifest.  By default, all packages
+        (subfolders that have an `__init__.py`) will be included.
+    plugin_name : str
+        Name of the plugin. If not provided, the name will be derived from the
+        package structure (this assumes a setuptools package.)
+    template : Union[str, Path, None]
+        If provided, path to a template manifest file to use. This file can contain
+        "non-command" contributions, like `display_name`, or `themes`, etc...
+        In the case of conflicts (discovered, decoratated contributions with the same
+        id as something in the template), discovered contributions will take
+        precedence.
 
     Returns
     -------
@@ -39,7 +53,6 @@ def compile(
         Manifest including all discovered contribution points, combined with any
         existing contributions explicitly stated in the manifest.
     """
-
     src_path = Path(src_dir)
     assert src_path.exists(), f"src_dir {src_dir} does not exist"
 
@@ -51,7 +64,7 @@ def compile(
                 f"dest {dest!r} must have an extension of .json, .yaml, or .toml"
             )
 
-    if template:
+    if template is not None:
         template_mf = PluginManifest.from_file(template)
 
     _packages = find_packages(src_path)
@@ -79,7 +92,7 @@ def compile(
         contributions=merge_contributions(contribs),
     )
 
-    if template:
+    if template is not None:
         mf = merge_manifests([template_mf, mf], overwrite=True)
 
     if dest is not None:
