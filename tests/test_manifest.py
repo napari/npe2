@@ -145,3 +145,18 @@ def test_from_package_name_err():
     with pytest.raises(ValueError) as e:
         PluginManifest._from_package_or_name("nonsense")
     assert "Could not find manifest for 'nonsense'" in str(e.value)
+
+
+def test_dotted_name_with_command():
+    with pytest.raises(ValidationError, match="must start with the current package"):
+        PluginManifest(
+            name="plugin.plugin-sample",
+            contributions={"commands": [{"id": "plugin.command", "title": "Sample"}]},
+        )
+
+    PluginManifest(
+        name="plugin.plugin-sample",
+        contributions={
+            "commands": [{"id": "plugin.plugin-sample.command", "title": "Sample"}]
+        },
+    )

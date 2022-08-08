@@ -6,7 +6,7 @@ from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import Iterator, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -180,12 +180,13 @@ class PluginManifest(ImportExportModel):
             )
 
         mf_name = values.get("name")
-        invalid_commands = []
+        invalid_commands: List[str] = []
         if values.get("contributions") is not None:
-            for command in values["contributions"].commands or []:
-                id_start_actual = command.id.split(".")[0]
-                if mf_name != id_start_actual:
-                    invalid_commands.append(command.id)
+            invalid_commands.extend(
+                command.id
+                for command in values["contributions"].commands or []
+                if not command.id.startswith(mf_name)
+            )
 
         if invalid_commands:
             raise ValueError(
