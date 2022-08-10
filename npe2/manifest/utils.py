@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from functools import total_ordering
+from functools import cached_property, total_ordering
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
@@ -74,10 +74,12 @@ class Executable(Generic[R]):
             _registry = PluginManager.instance().commands
         return _registry.get(self.command)
 
-    @property
-    def plugin_name(self: ProvidesCommand):
-        # takes advantage of the fact that command always starts with manifest.name
-        return self.command.split(".")[0]
+    @cached_property
+    def plugin_name(self: ProvidesCommand) -> str:
+        from .._plugin_manager import PluginManager
+
+        # CAUTION: this only works for the global plugin manager instance
+        return PluginManager.instance()._plugin_for(self.command)
 
 
 @total_ordering

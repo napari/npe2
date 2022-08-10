@@ -5,6 +5,7 @@ import os
 import warnings
 from collections import Counter
 from fnmatch import fnmatch
+from functools import lru_cache
 from importlib import metadata
 from pathlib import Path
 from typing import (
@@ -453,11 +454,10 @@ class PluginManager:
 
     def get_manifest(self, plugin_name: str) -> PluginManifest:
         """Get manifest for `plugin_name`"""
-        key = str(plugin_name).split(".")[0]
-        if key not in self._manifests:
-            msg = f"Manifest key {key!r} not found in {list(self._manifests)}"
+        if plugin_name not in self._manifests:
+            msg = f"Manifest key {plugin_name!r} not found in {list(self._manifests)}"
             raise KeyError(msg)
-        return self._manifests[key]
+        return self._manifests[plugin_name]
 
     def iter_manifests(
         self, disabled: Optional[bool] = None
@@ -664,6 +664,13 @@ class PluginManager:
 
         # Nothing got found
         return None, path
+
+    @lru_cache  # noqa: B019
+    def _plugin_for(self, command_id: str) -> PluginName:
+        for key in sorted(self._manifests, key=len, reverse=True):
+            if command_id.startswith(f"{key}."):
+                return key
+        raise KeyError(f"No plugin provides command {command_id}")  # pragma: no cover
 
 
 class PluginContext:
