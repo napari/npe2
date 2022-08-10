@@ -456,6 +456,9 @@ class PluginManager:
     def get_manifest(self, plugin_name: str) -> PluginManifest:
         """Get manifest for `plugin_name`"""
         if plugin_name not in self._manifests:
+            with contextlib.suppress(KeyError):
+                plugin_name = self._plugin_for(plugin_name)
+        if plugin_name not in self._manifests:
             msg = f"Manifest key {plugin_name!r} not found in {list(self._manifests)}"
             raise KeyError(msg)
         return self._manifests[plugin_name]
