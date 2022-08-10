@@ -57,8 +57,9 @@ PluginName = str  # this is `PluginManifest.name`
 
 
 class _ContributionsIndex:
-    def __init__(self) -> None:
+    def __init__(self, plugin_manager: PluginManager) -> None:
         self._indexed: Set[str] = set()
+        self._plugin_manager = plugin_manager
         self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
         self._readers: List[Tuple[str, ReaderContribution]] = []
         self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = []
@@ -105,13 +106,13 @@ class _ContributionsIndex:
         self._readers = [
             (pattern, reader)
             for pattern, reader in self._readers
-            if reader.plugin_name != key
+            if self._plugin_manager._plugin_for(reader.command) != key
         ]
 
         self._writers = [
             (layer_type, min_, max_, writer)
             for layer_type, min_, max_, writer in self._writers
-            if writer.plugin_name != key
+            if self._plugin_manager._plugin_for(writer.command) != key
         ]
 
         self._indexed.remove(key)
@@ -219,7 +220,7 @@ class PluginManager:
         self._disabled_plugins: Set[PluginName] = set(disable)
         self._command_registry = reg or CommandRegistry()
         self._contexts: Dict[PluginName, PluginContext] = {}
-        self._contrib = _ContributionsIndex()
+        self._contrib = _ContributionsIndex(self)
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
         self._npe1_adapters: List[NPE1Adapter] = []
@@ -272,7 +273,7 @@ class PluginManager:
             By default `False`.
         """
         if clear:
-            self._contrib = _ContributionsIndex()
+            self._contrib = _ContributionsIndex(self)
             self._manifests.clear()
 
         with self.events.plugins_registered.paused(lambda a, b: (a[0] | b[0],)):
