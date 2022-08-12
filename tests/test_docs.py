@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ def test_example_manifest():
 
 @pytest.mark.github_main_only
 def test_render_docs(tmp_path, monkeypatch):
+    sys.path.append(str(DOCS_DIR.parent))
     from _docs.render import main
 
     assert not list(tmp_path.glob("*.md"))
