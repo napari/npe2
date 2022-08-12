@@ -71,7 +71,7 @@ class PluginManifest(ImportExportModel):
         description="Whether this plugin should be searchable and visible in "
         "the built-in plugin installer and the napari hub. By default (`'public'`) "
         "all plugins are visible. To prevent your plugin from appearing in search "
-        "results, change this to `'private'`.",
+        "results, change this to `'hidden'`.",
     )
 
     # Plugins rely on certain guarantees to interoperate propertly with the
