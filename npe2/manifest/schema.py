@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -64,6 +64,14 @@ class PluginManifest(ImportExportModel):
 
     _validate_display_name = validator("display_name", allow_reuse=True)(
         _validators.display_name
+    )
+
+    visibility: Literal["public", "hidden"] = Field(
+        "public",
+        description="Whether this plugin should be searchable and visible in "
+        "the built-in plugin installer and the napari hub. By default (`'public'`) "
+        "all plugins are visible. To prevent your plugin from appearing in search "
+        "results, change this to `'private'`.",
     )
 
     # Plugins rely on certain guarantees to interoperate propertly with the
@@ -159,6 +167,10 @@ class PluginManifest(ImportExportModel):
     @property
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
+
+    @property
+    def is_visible(self) -> bool:
+        return self.visibility == "public"
 
     @validator("contributions", pre=True)
     def _coerce_none_contributions(cls, value):

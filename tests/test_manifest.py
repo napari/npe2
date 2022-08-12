@@ -167,3 +167,14 @@ def test_dotted_name_with_command():
             "commands": [{"id": "plugin.plugin-sample.command", "title": "Sample"}]
         },
     )
+
+
+def test_visibility():
+    mf = PluginManifest(name="myplugin")
+    assert mf.is_visible
+
+    mf = PluginManifest(name="myplugin", visibility="hidden")
+    assert not mf.is_visible
+
+    with pytest.raises(ValidationError):
+        mf = PluginManifest(name="myplugin", visibility="other")
