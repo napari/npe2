@@ -48,13 +48,6 @@ def _mutator_python_name_starts_with_number(data):
     data["contributions"]["commands"][0]["python_name"] = "1starts_with_number"
 
 
-def _mutator_no_contributes_extra_field(data):
-    """extra fields not permitted"""
-    # Contributions used to be called contributes.
-    data["invalid_extra_name"] = data["contributions"]
-    del data["contributions"]
-
-
 def _mutator_writer_requires_non_empty_layer_types(data):
     """layer_types must not be empty"""
     data["contributions"]["writers"][0]["layer_types"] = []
@@ -89,7 +82,6 @@ def _mutator_schema_version_too_high(data):
         _mutator_python_name_no_colon,
         _mutator_python_name_locals,
         _mutator_python_name_starts_with_number,
-        _mutator_no_contributes_extra_field,
         _mutator_writer_requires_non_empty_layer_types,
         _mutator_writer_invalid_layer_type_constraint,
         _mutator_writer_invalid_file_extension_1,
