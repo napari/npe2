@@ -178,3 +178,7 @@ def test_visibility():
 
     with pytest.raises(ValidationError):
         mf = PluginManifest(name="myplugin", visibility="other")
+
+
+def test_icon():
+    PluginManifest(name="myplugin", icon="my_plugin:myicon.png")

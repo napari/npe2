@@ -77,5 +77,5 @@ def icon_path(v: str) -> str:
                 f"{v} is not a valid icon URL. It must start with 'https://'"
             )
         return v
-    assert isinstance(v, str), f"{v} must be a string"  # pragma: no cover
+    assert isinstance(v, str), f"{v} must be a string"
     return v
