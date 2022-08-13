@@ -2,6 +2,7 @@ name: my-plugin
 display_name: My Plugin
 on_activate: my_plugin:activate
 on_deactivate: my_plugin:deactivate
+icon: https://picsum.photos/256
 contributions:
   commands:
     - id: my-plugin.hello_world
