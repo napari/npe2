@@ -81,7 +81,9 @@ class Executable(GenericModel, Generic[R]):
             from importlib.metadata import distributions
 
             # look for a package name in the command id
-            dists = sorted((d.name for d in distributions()), key=len, reverse=True)
+            dists = sorted(
+                (d.metadata["Name"] for d in distributions()), key=len, reverse=True
+            )
             for name in dists:
                 if self.command.startswith(name):  # pragma: no cover
                     self._plugin_name = name
