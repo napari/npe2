@@ -73,6 +73,11 @@ def _mutator_schema_version_too_high(data):
     data["schema_version"] = "999.999.999"
 
 
+def _mutator_invalid_icon(data):
+    """is not a valid icon URL. It must start with 'https://'"""
+    data["icon"] = "http://example.com/icon.png"
+
+
 @pytest.mark.parametrize(
     "mutator",
     [
@@ -87,6 +92,7 @@ def _mutator_schema_version_too_high(data):
         _mutator_writer_invalid_file_extension_1,
         _mutator_writer_invalid_file_extension_2,
         _mutator_schema_version_too_high,
+        _mutator_invalid_icon,
     ],
 )
 def test_invalid(mutator, uses_sample_plugin):

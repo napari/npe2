@@ -66,3 +66,16 @@ def display_name(v: str) -> str:
             "non-word character."
         )
     return v
+
+
+def icon_path(v: str) -> str:
+    if not v:
+        return ""
+    if v.startswith("http"):
+        if not v.startswith("https://"):
+            raise ValueError(
+                f"{v} is not a valid icon URL. It must start with 'https://'"
+            )
+        return v
+    assert isinstance(v, str), f"{v} must be a string"
+    return v
