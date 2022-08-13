@@ -74,6 +74,17 @@ class PluginManifest(ImportExportModel):
         "results, change this to `'hidden'`.",
     )
 
+    icon: str = Field(
+        "",
+        description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
+        "for Retina screens). May be one of:\n"
+        "  - a secure (https) URL\n"
+        "  - a path to arelative to to the manifest file\n"
+        "  - a string in the format `{package}:{resource}`, where `package` and "
+        "`resource` are arguments to `importlib.resources.path(package, resource)`, "
+        "(e.g. `top_module.some_folder:my_logo.png`).",
+    )
+
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
     # around python packaging, command api's, etc. Together these form a
