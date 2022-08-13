@@ -35,7 +35,7 @@ class DiscoverResults(NamedTuple):
 class PluginManifest(ImportExportModel):
     class Config:
         underscore_attrs_are_private = True
-        extra = Extra.forbid
+        extra = Extra.ignore
         validate_assignment = True
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
