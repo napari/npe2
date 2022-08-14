@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from contextlib import contextmanager
+from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
@@ -24,6 +25,27 @@ logger = getLogger(__name__)
 SCHEMA_VERSION = "0.1.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
+
+
+class Category(str, Enum):
+    """Broad plugin categories, values for PluginManifest.categories."""
+
+    Acquisition = "Acquisition"
+    Annotation = "Annotation"
+    Data = "Data"
+    Denoising = "Denoising"
+    Image_Processing = "Image Processing"
+    IO = "IO"
+    Machine_Learning = "Machine Learning"
+    Measurement = "Measurement"
+    Segmentation = "Segmentation"
+    Themes = "Themes"
+    Transformations = "Transformations"
+    Utilities = "Utilities"
+    Visualization = "Visualization"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class DiscoverResults(NamedTuple):
@@ -86,6 +108,12 @@ class PluginManifest(ImportExportModel):
     )
     _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
+    categories: List[Category] = Field(
+        default_factory=list,
+        description="A list of categories that this plugin belongs to. This is used to "
+        "help users discover your plugin. Allowed values:\n"
+        f"`[{', '.join(Category)}]`",
+    )
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
     # around python packaging, command api's, etc. Together these form a
