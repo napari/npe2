@@ -258,7 +258,7 @@ def fetch_manifest(
         except metadata.PackageNotFoundError:
             return _manifest_from_pypi_sdist(package_or_url, version)
         except error.HTTPError:
-            pass
+            pass  # pragma: no cover
     raise ValueError(  # pragma: no cover
         f"Could not interpret {package_or_url!r} as a PYPI package name or URL to a "
         "wheel or source distribution/zip file."
