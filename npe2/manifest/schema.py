@@ -45,7 +45,7 @@ class Category(str, Enum):
     Visualization = "Visualization"
 
     def __str__(self) -> str:
-        return self.value
+        return self.value  # pragma: no cover
 
 
 class DiscoverResults(NamedTuple):
