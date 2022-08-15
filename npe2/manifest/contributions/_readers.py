@@ -1,13 +1,13 @@
 from functools import wraps
 from typing import List, Optional
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import Extra, Field
 
 from ...types import ReaderFunction
 from ..utils import Executable, v2_to_v1
 
 
-class ReaderContribution(BaseModel, Executable[Optional[ReaderFunction]]):
+class ReaderContribution(Executable[Optional[ReaderFunction]]):
     """Contribute a file reader.
 
     Readers may be associated with specific **filename_patterns** (e.g. "*.tif",
