@@ -531,7 +531,7 @@ def create(plugin_name: str):
     if not which("copier"):
         text = typer.style(
             "This command requires the `copier` package.\n"
-            "Install it now into your current environment? [y/N]",
+            "Install it now into your current environment with pip? [y/N]",
             fg="yellow",
         )
         if not typer.prompt(text, type=bool, default=False, show_default=False):
