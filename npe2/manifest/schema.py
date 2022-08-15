@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -16,7 +16,7 @@ from . import _validators
 from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
-from .utils import Version
+from .utils import Executable, Version
 
 logger = getLogger(__name__)
 
@@ -65,6 +65,26 @@ class PluginManifest(ImportExportModel):
     _validate_display_name = validator("display_name", allow_reuse=True)(
         _validators.display_name
     )
+
+    visibility: Literal["public", "hidden"] = Field(
+        "public",
+        description="Whether this plugin should be searchable and visible in "
+        "the built-in plugin installer and the napari hub. By default (`'public'`) "
+        "all plugins are visible. To prevent your plugin from appearing in search "
+        "results, change this to `'hidden'`.",
+    )
+
+    icon: str = Field(
+        "",
+        description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
+        "for Retina screens). May be one of:\n"
+        "  - a secure (https) URL\n"
+        "  - a path relative to the manifest file, (must be shipped in the sdist)\n"
+        "  - a string in the format `{package}:{resource}`, where `package` and "
+        "`resource` are arguments to `importlib.resources.path(package, resource)`, "
+        "(e.g. `top_module.some_folder:my_logo.png`).",
+    )
+    _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
@@ -135,11 +155,17 @@ class PluginManifest(ImportExportModel):
     def __init__(self, **data):
         super().__init__(**data)
         if self.package_metadata is None and self.name:
-            try:
+            with suppress(metadata.PackageNotFoundError):
                 meta = metadata.distribution(self.name).metadata
                 self.package_metadata = PackageMetadata.from_dist_metadata(meta)
-            except metadata.PackageNotFoundError:
-                pass
+
+        if not self.npe1_shim:
+            # assign plugin name on all contributions that have a private
+            # _plugin_name field.
+            for _, value in self.contributions or ():
+                for item in value if isinstance(value, list) else [value]:
+                    if isinstance(item, Executable):
+                        item._plugin_name = self.name
 
     def __hash__(self):
         return hash((self.name, self.package_version))
@@ -159,6 +185,10 @@ class PluginManifest(ImportExportModel):
     @property
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
+
+    @property
+    def is_visible(self) -> bool:
+        return self.visibility == "public"
 
     @validator("contributions", pre=True)
     def _coerce_none_contributions(cls, value):
