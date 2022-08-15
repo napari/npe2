@@ -21,7 +21,7 @@ from .utils import Executable, Version
 logger = getLogger(__name__)
 
 
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
 
