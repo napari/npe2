@@ -43,7 +43,8 @@ class Category(str, Enum):
     Transformations = "Transformations"
     Utilities = "Utilities"
     Visualization = "Visualization"
-
+    Simulation = "Simulation"
+    
     def __str__(self) -> str:
         return self.value  # pragma: no cover
 
