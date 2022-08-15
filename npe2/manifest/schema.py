@@ -196,17 +196,20 @@ class PluginManifest(ImportExportModel):
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
+        mf_name = values.get("name")
+
         # validate schema version
         declared_version = Version.parse(values.get("schema_version", ""))
         current_version = Version.parse(SCHEMA_VERSION)
         if current_version < declared_version:
-            raise ValueError(
-                f"The declared schema version '{declared_version}' is "
-                f"newer than npe2's schema version: '{current_version}'. You may "
-                "need to upgrade npe2."
+            import warnings
+
+            warnings.warn(
+                f"The declared schema version for plugin {mf_name!r} "
+                f"({declared_version}) is newer than npe2's schema version "
+                f"({current_version}). Things may break, you should upgrade npe2."
             )
 
-        mf_name = values.get("name")
         invalid_commands: List[str] = []
         if values.get("contributions") is not None:
             invalid_commands.extend(
