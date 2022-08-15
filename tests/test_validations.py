@@ -48,13 +48,6 @@ def _mutator_python_name_starts_with_number(data):
     data["contributions"]["commands"][0]["python_name"] = "1starts_with_number"
 
 
-def _mutator_no_contributes_extra_field(data):
-    """extra fields not permitted"""
-    # Contributions used to be called contributes.
-    data["invalid_extra_name"] = data["contributions"]
-    del data["contributions"]
-
-
 def _mutator_writer_requires_non_empty_layer_types(data):
     """layer_types must not be empty"""
     data["contributions"]["writers"][0]["layer_types"] = []
@@ -75,11 +68,6 @@ def _mutator_writer_invalid_file_extension_2(data):
     data["contributions"]["writers"][0]["filename_extensions"] = ["."]
 
 
-def _mutator_schema_version_too_high(data):
-    """The declared schema version '999.999.999' is newer than npe2's schema version"""
-    data["schema_version"] = "999.999.999"
-
-
 def _mutator_invalid_icon(data):
     """is not a valid icon URL. It must start with 'https://'"""
     data["icon"] = "http://example.com/icon.png"
@@ -94,12 +82,10 @@ def _mutator_invalid_icon(data):
         _mutator_python_name_no_colon,
         _mutator_python_name_locals,
         _mutator_python_name_starts_with_number,
-        _mutator_no_contributes_extra_field,
         _mutator_writer_requires_non_empty_layer_types,
         _mutator_writer_invalid_layer_type_constraint,
         _mutator_writer_invalid_file_extension_1,
         _mutator_writer_invalid_file_extension_2,
-        _mutator_schema_version_too_high,
         _mutator_invalid_icon,
     ],
 )
@@ -117,6 +103,13 @@ def test_invalid(mutator, uses_sample_plugin):
     with pytest.raises(ValidationError) as excinfo:
         PluginManifest(**data)
     assert mutator.__doc__ in str(excinfo.value)
+
+
+def test_schema_version_too_high():
+    with pytest.warns(
+        UserWarning, match=r"\(999.999.999\) is newer than npe2's schema version"
+    ):
+        PluginManifest(name="sample", schema_version="999.999.999")
 
 
 def test_invalid_python_name(uses_sample_plugin):
