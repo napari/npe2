@@ -68,11 +68,6 @@ def _mutator_writer_invalid_file_extension_2(data):
     data["contributions"]["writers"][0]["filename_extensions"] = ["."]
 
 
-def _mutator_schema_version_too_high(data):
-    """The declared schema version '999.999.999' is newer than npe2's schema version"""
-    data["schema_version"] = "999.999.999"
-
-
 def _mutator_invalid_icon(data):
     """is not a valid icon URL. It must start with 'https://'"""
     data["icon"] = "http://example.com/icon.png"
@@ -91,7 +86,6 @@ def _mutator_invalid_icon(data):
         _mutator_writer_invalid_layer_type_constraint,
         _mutator_writer_invalid_file_extension_1,
         _mutator_writer_invalid_file_extension_2,
-        _mutator_schema_version_too_high,
         _mutator_invalid_icon,
     ],
 )
@@ -109,6 +103,13 @@ def test_invalid(mutator, uses_sample_plugin):
     with pytest.raises(ValidationError) as excinfo:
         PluginManifest(**data)
     assert mutator.__doc__ in str(excinfo.value)
+
+
+def test_schema_version_too_high():
+    with pytest.warns(
+        UserWarning, match=r"\(999.999.999\) is newer than npe2's schema version"
+    ):
+        PluginManifest(name="sample", schema_version="999.999.999")
 
 
 def test_invalid_python_name(uses_sample_plugin):
