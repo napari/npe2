@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
@@ -17,7 +17,7 @@ from . import _validators
 from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
-from .utils import Version
+from .utils import Executable, Version
 
 logger = getLogger(__name__)
 
@@ -183,11 +183,17 @@ class PluginManifest(ImportExportModel):
     def __init__(self, **data):
         super().__init__(**data)
         if self.package_metadata is None and self.name:
-            try:
+            with suppress(metadata.PackageNotFoundError):
                 meta = metadata.distribution(self.name).metadata
                 self.package_metadata = PackageMetadata.from_dist_metadata(meta)
-            except metadata.PackageNotFoundError:
-                pass
+
+        if not self.npe1_shim:
+            # assign plugin name on all contributions that have a private
+            # _plugin_name field.
+            for _, value in self.contributions or ():
+                for item in value if isinstance(value, list) else [value]:
+                    if isinstance(item, Executable):
+                        item._plugin_name = self.name
 
     def __hash__(self):
         return hash((self.name, self.package_version))

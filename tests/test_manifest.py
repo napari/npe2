@@ -182,3 +182,28 @@ def test_visibility():
 
 def test_icon():
     PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
+
+
+def test_dotted_plugin_name():
+    """Test that"""
+    name = "some.namespaced.plugin"
+    cmd_id = f"{name}.frame_rate_widget"
+    mf = PluginManifest(
+        name=name,
+        contributions={
+            "commands": [
+                {
+                    "id": cmd_id,
+                    "title": "open my widget",
+                }
+            ],
+            "widgets": [
+                {
+                    "command": cmd_id,
+                    "display_name": "Plot frame rate",
+                }
+            ],
+        },
+    )
+    assert mf.contributions.widgets
+    assert mf.contributions.widgets[0].plugin_name == name
