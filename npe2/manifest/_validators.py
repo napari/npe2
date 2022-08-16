@@ -60,7 +60,7 @@ def python_name(name: str) -> str:
 def display_name(v: str) -> str:
     if not DISPLAY_NAME_PATTERN.match(v):
         raise ValueError(
-            f"{v} is not a valid display_name. It must be 3-40 characters long, "
+            f"{v} is not a valid display_name. It must be 3-90 characters long, "
             "and must not begin or end with an underscore, white space, or "
             "non-word character."
         )
