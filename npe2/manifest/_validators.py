@@ -11,7 +11,7 @@ _identifier_plus_dash = "(?:[a-zA-Z_][a-zA-Z_0-9-]+)"
 _dotted_name = f"(?:(?:{_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
 PACKAGE_NAME_PATTERN = re.compile(f"^{_package_name}$", re.IGNORECASE)
 DOTTED_NAME_PATTERN = re.compile(_dotted_name)
-DISPLAY_NAME_PATTERN = re.compile(r"^[^\W_].{1,89}$")
+DISPLAY_NAME_PATTERN = re.compile(r"^[^\W_].{2,89}$")
 PYTHON_NAME_PATTERN = re.compile(f"^({_dotted_name}):({_dotted_name})$")
 COMMAND_ID_PATTERN = re.compile(
     f"^(({_package_name}\\.)*{_python_identifier})$", re.IGNORECASE
