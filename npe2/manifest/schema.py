@@ -56,10 +56,10 @@ class PluginManifest(ImportExportModel):
     display_name: str = Field(
         "",
         description="User-facing text to display as the name of this plugin. "
-        "Must be 3-40 characters long, containing printable word characters, "
-        "and must not begin or end with an underscore, white space, or "
-        "non-word character. If not provided, the manifest `name` will be used as the "
-        "display name.",
+        "Must be 3-90 characters long. If not provided, the manifest `name` will be "
+        "used as the display name.",
+        min_length=3,
+        max_length=90,
     )
 
     _validate_display_name = validator("display_name", allow_reuse=True)(
