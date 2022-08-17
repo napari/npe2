@@ -11,7 +11,7 @@ _identifier_plus_dash = "(?:[a-zA-Z_][a-zA-Z_0-9-]+)"
 _dotted_name = f"(?:(?:{_identifier_plus_dash}\\.)*{_identifier_plus_dash})"
 PACKAGE_NAME_PATTERN = re.compile(f"^{_package_name}$", re.IGNORECASE)
 DOTTED_NAME_PATTERN = re.compile(_dotted_name)
-DISPLAY_NAME_PATTERN = re.compile(r"^[^\W_][\w -~]{1,38}[^\W_]$")
+DISPLAY_NAME_PATTERN = re.compile(r"^[^\W_][\w -~:.'\"]{1,88}[^\W_]$")
 PYTHON_NAME_PATTERN = re.compile(f"^({_dotted_name}):({_dotted_name})$")
 COMMAND_ID_PATTERN = re.compile(
     f"^(({_package_name}\\.)*{_python_identifier})$", re.IGNORECASE
@@ -60,8 +60,7 @@ def python_name(name: str) -> str:
 def display_name(v: str) -> str:
     if not DISPLAY_NAME_PATTERN.match(v):
         raise ValueError(
-            f"{v} is not a valid display_name.  The display_name must "
-            "be 3-40 characters long, containing printable word characters, "
+            f"{v} is not a valid display_name. It must be 3-90 characters long, "
             "and must not begin or end with an underscore, white space, or "
             "non-word character."
         )
