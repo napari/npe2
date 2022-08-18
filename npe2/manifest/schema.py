@@ -33,7 +33,6 @@ class Category(str, Enum):
     Acquisition = "Acquisition"
     Annotation = "Annotation"
     Data = "Data"
-    Denoising = "Denoising"
     Image_Processing = "Image Processing"
     IO = "IO"
     Machine_Learning = "Machine Learning"
