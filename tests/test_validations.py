@@ -173,12 +173,11 @@ def test_valid_mutations(mutator, uses_sample_plugin):
 @pytest.mark.parametrize(
     "display_name",
     [
-        "Here there everywhere and more with giggles and friends",
+        "Here there everywhere and more with giggles and friends on top of a mountainside drinking tea",  # noqa
         "ab",
+        "a   ",
         " abc",
-        "abc ",
         "_abc",
-        "abc_",
         "abc♱",
     ],
 )
@@ -193,6 +192,7 @@ def test_invalid_display_names(display_name, uses_sample_plugin):
     [
         "Some Cell & Stru买cture Segmenter",
         "Segment Blobs and Things with Membranes",
+        "Segment: and Things.2 with Membranes ~= 8",
         "abc",
         "abc䜁䜂",
     ],
