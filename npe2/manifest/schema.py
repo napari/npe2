@@ -30,19 +30,39 @@ NPE1_ENTRY_POINT = "napari.plugin"
 class Category(str, Enum):
     """Broad plugin categories, values for PluginManifest.categories."""
 
+    # drive devices (webcams, microscopes, etc) to acquire data
     Acquisition = "Acquisition"
+    # tools that facilitate labeling, marking, and, erm, "annotating" data within napari
     Annotation = "Annotation"
-    Data = "Data"
+    # Sample datasets for training, demonstration, learning, etc...
+    Dataset = "Dataset"
+    # Routines that take in numerical arrays and generally return new arrays or datasets
+    # (e.g. scikit image stuff, deconvolution, super-res reconstruction, etc...)
     Image_Processing = "Image Processing"
+    # Plugins that read from and/or write to files or data streams
+    # not supported natively by napari
     IO = "IO"
+    # Plugins that employ machine learning: may facilitate either training or prediction
     Machine_Learning = "Machine Learning"
+    # Tools that extract measurements (i.e. into tabular, graph, or other data formats),
+    # such as region properties, etc...
     Measurement = "Measurement"
+    # tools that identify objects and/or boundaries in datasets
+    # (including, but not limited to, images)
     Segmentation = "Segmentation"
-    Themes = "Themes"
-    Transformations = "Transformations"
-    Utilities = "Utilities"
-    Visualization = "Visualization"
+    # tools that simulate some physical process.
+    # microscope/PSF generators, optics simulators, astronomy simulations, etc...
     Simulation = "Simulation"
+    # plugins that modify the look and feel of napari
+    Themes = "Themes"
+    # linear and or nonlinear registrations, general data transformations and mappings
+    Transformations = "Transformations"
+    # Conveniences, widgets, etc... stuff that could conceivably be "core"
+    # but which is community-supported
+    Utilities = "Utilities"
+    # tools for plotting, rendering, and visualization
+    # (on top of those provided by napari)
+    Visualization = "Visualization"
 
     def __str__(self) -> str:
         return self.value  # pragma: no cover
