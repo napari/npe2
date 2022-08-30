@@ -43,7 +43,8 @@ class Category(str, Enum):
     # not supported natively by napari
     IO = "IO"
     # Plugins that employ machine learning: may facilitate either training or prediction
-    Machine_Learning = "Machine Learning"
+    # Machine_Learning = "Machine Learning"
+
     # Tools that extract measurements (i.e. into tabular, graph, or other data formats),
     # such as region properties, etc...
     Measurement = "Measurement"
