@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from contextlib import contextmanager, suppress
+from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
@@ -24,6 +25,48 @@ logger = getLogger(__name__)
 SCHEMA_VERSION = "0.2.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
+
+
+class Category(str, Enum):
+    """Broad plugin categories, values for PluginManifest.categories."""
+
+    # drive devices (webcams, microscopes, etc) to acquire data
+    Acquisition = "Acquisition"
+    # tools that facilitate labeling, marking, and, erm, "annotating" data within napari
+    Annotation = "Annotation"
+    # Sample datasets for training, demonstration, learning, etc...
+    Dataset = "Dataset"
+    # Routines that take in numerical arrays and generally return new arrays or datasets
+    # (e.g. scikit image stuff, deconvolution, super-res reconstruction, etc...)
+    Image_Processing = "Image Processing"
+    # Plugins that read from and/or write to files or data streams
+    # not supported natively by napari
+    IO = "IO"
+    # Plugins that employ machine learning: may facilitate either training or prediction
+    # Machine_Learning = "Machine Learning"
+
+    # Tools that extract measurements (i.e. into tabular, graph, or other data formats),
+    # such as region properties, etc...
+    Measurement = "Measurement"
+    # tools that identify objects and/or boundaries in datasets
+    # (including, but not limited to, images)
+    Segmentation = "Segmentation"
+    # tools that simulate some physical process.
+    # microscope/PSF generators, optics simulators, astronomy simulations, etc...
+    Simulation = "Simulation"
+    # plugins that modify the look and feel of napari
+    Themes = "Themes"
+    # linear and or nonlinear registrations, general data transformations and mappings
+    Transformations = "Transformations"
+    # Conveniences, widgets, etc... stuff that could conceivably be "core"
+    # but which is community-supported
+    Utilities = "Utilities"
+    # tools for plotting, rendering, and visualization
+    # (on top of those provided by napari)
+    Visualization = "Visualization"
+
+    def __str__(self) -> str:
+        return self.value  # pragma: no cover
 
 
 class DiscoverResults(NamedTuple):
@@ -87,6 +130,12 @@ class PluginManifest(ImportExportModel):
     )
     _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
+    categories: List[Category] = Field(
+        default_factory=list,
+        description="A list of categories that this plugin belongs to. This is used to "
+        "help users discover your plugin. Allowed values:\n"
+        f"`[{', '.join(Category)}]`",
+    )
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
     # around python packaging, command api's, etc. Together these form a
