@@ -13,14 +13,14 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/PyCQA/flake8
-    rev: 5.0.2
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies:
         - flake8-typing-imports
         - flake8-bugbear
   - repo: https://github.com/myint/autoflake
-    rev: v1.4
+    rev: v1.5.3
     hooks:
       - id: autoflake
         args: ["--in-place", "--remove-all-unused-imports"]
@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
       - id: black
   - repo: https://github.com/asottile/pyupgrade
