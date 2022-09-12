@@ -105,6 +105,8 @@ def _pprint_table(
             val = ""
             if isinstance(r, dict):
                 val = ", ".join(f"{k} ({v})" for k, v in r.items())
+            elif isinstance(r, type([])):
+                val = ", ".join(str(entry) for entry in r)
             elif r:
                 val = str(r).replace("True", EMOJI_TRUE).replace("False", EMOJI_FALSE)
             strings.append(val)
@@ -212,9 +214,20 @@ def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
             # extact nested fields
             if not val and "." in field:
                 parts = field.split(".")
-                val = info
-                while parts and hasattr(val, "__getitem__"):
-                    val = val[parts.pop(0)]
+                val = [info]
+                while parts:
+                    part = parts.pop(0)
+                    new_val = []
+                    for cur_val in val:
+                        if hasattr(cur_val, "__getitem__"):
+                            if isinstance(cur_val[part], type([])):
+                                new_val.extend(cur_val[part])
+                            else:
+                                new_val.append(cur_val[part])
+                    val = new_val
+
+                if len(val) == 1:
+                    val = val[0]
 
             # negate fields starting with !
             if field.startswith("!"):
