@@ -107,7 +107,7 @@ def _pprint_table(
                 val = ", ".join(f"{k} ({v})" for k, v in r.items())
             # list if overridden by function name
             elif isinstance(r, type([])):
-                val = ", ".join(str(entry) for entry in r)
+                val = ", ".join(str(_) for _ in r)
             elif r:
                 val = str(r).replace("True", EMOJI_TRUE).replace("False", EMOJI_FALSE)
             strings.append(val)

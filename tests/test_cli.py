@@ -203,7 +203,7 @@ def test_cli_list(format, fields, uses_npe1_plugin):
     assert "npe1-plugin" in result.output
     if fields and "author" in fields and format != "compact":
         assert "author" in result.output.lower()
-    elif format != "compact":
+    elif format != "compact" and format != "table":
         assert "author" not in result.output.lower()
         for widget in (
             "My Widget",
@@ -213,6 +213,14 @@ def test_cli_list(format, fields, uses_npe1_plugin):
             "local function",
         ):
             assert widget.lower() in result.output.lower()
+    elif format == "table":
+        for widget in (
+            "my widget, my other",
+            "widget, local widget",
+            "some function, local",
+            "function",
+        ):
+            assert widget in result.output.lower()
     else:
         assert "author" not in result.output.lower()
 
