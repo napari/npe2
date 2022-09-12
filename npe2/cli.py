@@ -105,6 +105,7 @@ def _pprint_table(
             val = ""
             if isinstance(r, dict):
                 val = ", ".join(f"{k} ({v})" for k, v in r.items())
+            # list if overridden by function name
             elif isinstance(r, type([])):
                 val = ", ".join(str(entry) for entry in r)
             elif r:
@@ -220,6 +221,7 @@ def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
                     new_val = []
                     for cur_val in val:
                         if hasattr(cur_val, "__getitem__"):
+                            # list if overridden by function name
                             if isinstance(cur_val[part], type([])):
                                 new_val.extend(cur_val[part])
                             else:
