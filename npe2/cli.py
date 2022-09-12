@@ -246,7 +246,7 @@ def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
 @app.command()
 def list(
     fields: str = typer.Option(
-        "name,version,npe2,contributions,
+        "name,version,npe2,contributions",
         help="Comma seperated list of fields to include in the output."
         "Names may contain dots, indicating nested manifest fields "
         "(`contributions.readers`). Fields names prefixed with `!` will be "
