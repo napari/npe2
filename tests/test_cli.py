@@ -206,12 +206,12 @@ def test_cli_list(format, fields, uses_npe1_plugin):
     elif format != "compact":
         assert "author" not in result.output.lower()
         for widget in (
-                "My Widget",
-                "My Other Widget",
-                "Local Widget",
-                "some function",
-                "local function"
-            ):
+            "My Widget",
+            "My Other Widget",
+            "Local Widget",
+            "some function",
+            "local function",
+        ):
             assert widget.lower() in result.output.lower()
     else:
         assert "author" not in result.output.lower()
