@@ -556,6 +556,9 @@ class PluginManager:
     def __getitem__(self, name: str) -> PluginManifest:
         return self.get_manifest(name)
 
+    def __len__(self) -> int:
+        return len(self._manifests)
+
     # Accessing Contributions
 
     def get_command(self, command_id: str) -> CommandContribution:
