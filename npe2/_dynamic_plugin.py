@@ -105,7 +105,7 @@ class DynamicPlugin:
 
         If unset, will use the global plugin manager instance.
         """
-        return self._pm or PluginManager.instance()
+        return self._pm if self._pm is not None else PluginManager.instance()
 
     @plugin_manager.setter
     def plugin_manager(self, pm: Optional[PluginManager]) -> None:
