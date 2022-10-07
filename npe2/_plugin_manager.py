@@ -272,7 +272,7 @@ class PluginManager:
         
         Returns
         -------
-        dicover_count : int
+        discover_count : int
             Number of discovered plugins
             
         """
