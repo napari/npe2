@@ -269,12 +269,12 @@ class PluginManager:
         include_npe1 : bool
             Whether to detect npe1 plugins as npe1_adapters during discovery.
             By default `False`.
-        
+
         Returns
         -------
         discover_count : int
             Number of discovered plugins
-            
+
         """
         if clear:
             self._contrib = _ContributionsIndex()
