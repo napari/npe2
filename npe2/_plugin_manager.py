@@ -254,7 +254,7 @@ class PluginManager:
 
     def discover(
         self, paths: Sequence[str] = (), clear=False, include_npe1=False
-    ) -> None:
+    ) -> int:
         """Discover and index plugin manifests in the environment.
 
         Parameters
@@ -269,10 +269,18 @@ class PluginManager:
         include_npe1 : bool
             Whether to detect npe1 plugins as npe1_adapters during discovery.
             By default `False`.
+
+        Returns
+        -------
+        discover_count : int
+            Number of discovered plugins
+
         """
         if clear:
             self._contrib = _ContributionsIndex()
             self._manifests.clear()
+
+        count = 0
 
         with self.events.plugins_registered.paused(lambda a, b: (a[0] | b[0],)):
             for result in PluginManifest.discover(paths=paths):
@@ -282,6 +290,8 @@ class PluginManager:
                     and (include_npe1 or not isinstance(result.manifest, NPE1Adapter))
                 ):
                     self.register(result.manifest, warn_disabled=False)
+                    count += 1
+        return count
 
     def index_npe1_adapters(self):
         """Import and index any/all npe1 adapters."""
@@ -545,6 +555,9 @@ class PluginManager:
 
     def __getitem__(self, name: str) -> PluginManifest:
         return self.get_manifest(name)
+
+    def __len__(self) -> int:
+        return len(self._manifests)
 
     # Accessing Contributions
 
