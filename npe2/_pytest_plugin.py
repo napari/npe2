@@ -10,7 +10,7 @@ from npe2 import DynamicPlugin, PluginManager, PluginManifest
 class TestPluginManager(PluginManager):
     """A PluginManager subclass suitable for use in testing."""
 
-    def discover(self, *_, **__) -> None:
+    def discover(self, *_, **__) -> int:
         """Discovery is blocked in the TestPluginManager."""
         import warnings
 
@@ -18,7 +18,7 @@ class TestPluginManager(PluginManager):
             "TestPluginManager is unable to discover plugins. "
             "Please use `tmp_plugin()` to add a plugin to this plugin manager."
         )
-        return None
+        return 0
 
     def tmp_plugin(
         self,

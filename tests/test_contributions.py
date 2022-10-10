@@ -56,6 +56,7 @@ def test_writer_priority():
 
         writers = list(pm.iter_compatible_writers(["image"]))
         assert writers[0].command == "my_plugin.my_writer1"
+        assert len(pm) == 1
 
 
 @pytest.mark.parametrize(
