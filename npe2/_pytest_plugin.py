@@ -16,7 +16,8 @@ class TestPluginManager(PluginManager):
 
         warnings.warn(
             "TestPluginManager is unable to discover plugins. "
-            "Please use `tmp_plugin()` to add a plugin to this plugin manager."
+            "Please use `tmp_plugin()` to add a plugin to this plugin manager.",
+            stacklevel=2
         )
         return 0
 
