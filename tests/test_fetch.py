@@ -94,7 +94,7 @@ def test_get_manifest_from_wheel(tmp_path):
 
 def test_get_hub_plugins():
     plugins = get_hub_plugins()
-    assert "napari-svg" in plugins
+    assert len(plugins)>0
 
 
 def test_get_hub_plugin():
@@ -103,8 +103,8 @@ def test_get_hub_plugin():
 
 
 def test_get_pypi_plugins():
-    info = get_pypi_plugins()
-    assert "napari-svg" in info
+    plugins = get_pypi_plugins()
+    assert len(plugins)>0
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
