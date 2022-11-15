@@ -94,7 +94,7 @@ def test_get_manifest_from_wheel(tmp_path):
 
 def test_get_hub_plugins():
     plugins = get_hub_plugins()
-    assert len(plugins)>0
+    assert len(plugins) > 0
 
 
 def test_get_hub_plugin():
@@ -104,7 +104,7 @@ def test_get_hub_plugin():
 
 def test_get_pypi_plugins():
     plugins = get_pypi_plugins()
-    assert len(plugins)>0
+    assert len(plugins) > 0
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
