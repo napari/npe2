@@ -108,3 +108,6 @@ npe2/_version.py
 # ignore everything that gets rendered from _docs
 docs/plugins/*.md
 schema.json
+
+# OSX Files
+.DS_Store
