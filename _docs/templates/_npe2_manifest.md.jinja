@@ -54,10 +54,13 @@ more than a single contribution type).
 Both [YAML](https://yaml.org/) and [TOML](https://toml.io/en/) are supported
 manifest formats, though YAML is the "default" and more common format.
 ```
+
+::::{tab-set}
 {% for format in ['yaml', 'toml'] %}
-````{tabbed} {{format}}
+:::{tab-item} {{format}}
 ```{{format}}
 {{ example[format]() }}
 ```
-````
+:::
 {% endfor -%}
+::::

@@ -103,7 +103,8 @@ and a `vectors` layer, because `vectors` is not listed in the `layer_types`.
 
 ### Writer example
 
-````{tabbed} npe2
+::::{tab-set}
+:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -119,9 +120,9 @@ for field details.
 ```yaml
 {{ 'writers'|example_contribution }}
 ```
-````
+:::
 
-````{tabbed} napari-plugin-engine
+::::{tab-item} napari-plugin-engine
 
 ```{admonition} Deprecated!
 This demonstrates the now-deprecated `napari-plugin-engine` pattern.
@@ -154,4 +155,5 @@ def napari_write_points(path: str, data: Any, meta: dict) -> Optional[str]:
         Otherwise, if nothing was done, return ``None``.
     """
 ```
-````
+:::
+::::
