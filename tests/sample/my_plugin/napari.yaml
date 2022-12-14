@@ -75,6 +75,7 @@ contributions:
     - label: "SampleTheme"
       id: "sample_theme"
       type: "dark"
+      syntax_style: "default"
       colors:
         canvas: "#000000"
         console: "#000000"
@@ -84,6 +85,7 @@ contributions:
         secondary: "#f8f8f2"
         highlight: "#e6db74"
         text: "#a1ef34"
+        icon: "#a1ef34"
         warning: "#f92672"
         current: "#66d9ef"
   sample_data:
