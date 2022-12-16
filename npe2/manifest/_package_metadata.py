@@ -174,7 +174,11 @@ class PackageMetadata(BaseModel):
     def _validate_root(cls, values):
         if "metadata_version" not in values:
             fields = cls.__fields__
-            mins = {fields[n].field_info.extra.get("min_ver", "1.0") for n in values}
+            mins = {
+                fields[n].field_info.extra.get("min_ver", "1.0")
+                for n in values
+                if n in fields
+            }
             values["metadata_version"] = str(max(float(x) for x in mins))
         return values
 
