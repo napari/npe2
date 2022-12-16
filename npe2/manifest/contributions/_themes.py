@@ -54,6 +54,7 @@ class ThemeContribution(BaseModel):
         description="Base theme type, used for icons and filling in unprovided colors. "
         "Must be either `'dark'` or  `'light'`."
     )
+    syntax_style: Optional[str]
     colors: ThemeColors = Field(
         description=f"Theme colors. Valid keys include: {_color_keys}. All keys "
         "are optional. Color values can be defined via:\n"

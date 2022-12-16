@@ -113,7 +113,7 @@ class LayerTypeConstraint(BaseModel):
         return cls(layer_type=lt, bounds=bounds)
 
 
-class WriterContribution(BaseModel, Executable[List[str]]):
+class WriterContribution(Executable[List[str]]):
     r"""Contribute a layer writer.
 
     Writers accept data from one or more layers and write them to file. Writers declare

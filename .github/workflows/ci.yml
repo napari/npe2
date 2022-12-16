@@ -10,7 +10,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   test:
     name: ${{ matrix.platform }} (${{ matrix.python-version }})
     runs-on: ${{ matrix.platform }}
@@ -31,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[docs,testing]
+          pip install -e .[json,docs,testing]
 
       - name: Test Main docs build
         run: pytest --color yes -m github_main_only
@@ -59,12 +58,12 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: "3.9"
       - name: Install
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ./napari-from-github
-          python -m pip install -e .
+          python -m pip install -e .[json]
           # bare minimum required to test napari/plugins
           python -m pip install pytest scikit-image[data] zarr xarray hypothesis matplotlib
 
@@ -79,7 +78,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Build schema
         run: |
           python -m pip install --upgrade pip

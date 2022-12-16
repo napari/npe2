@@ -145,3 +145,65 @@ def test_from_package_name_err():
     with pytest.raises(ValueError) as e:
         PluginManifest._from_package_or_name("nonsense")
     assert "Could not find manifest for 'nonsense'" in str(e.value)
+
+
+def test_dotted_name_with_command():
+    with pytest.raises(ValidationError, match="must start with the current package"):
+        PluginManifest(
+            name="plugin.plugin-sample",
+            contributions={"commands": [{"id": "plugin.command", "title": "Sample"}]},
+        )
+    with pytest.raises(ValidationError, match="must begin with the package name"):
+        PluginManifest(
+            name="plugin.plugin-sample",
+            contributions={
+                "commands": [{"id": "plugin.plugin-samplecommand", "title": "Sample"}]
+            },
+        )
+
+    PluginManifest(
+        name="plugin.plugin-sample",
+        contributions={
+            "commands": [{"id": "plugin.plugin-sample.command", "title": "Sample"}]
+        },
+    )
+
+
+def test_visibility():
+    mf = PluginManifest(name="myplugin")
+    assert mf.is_visible
+
+    mf = PluginManifest(name="myplugin", visibility="hidden")
+    assert not mf.is_visible
+
+    with pytest.raises(ValidationError):
+        mf = PluginManifest(name="myplugin", visibility="other")
+
+
+def test_icon():
+    PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
+
+
+def test_dotted_plugin_name():
+    """Test that"""
+    name = "some.namespaced.plugin"
+    cmd_id = f"{name}.frame_rate_widget"
+    mf = PluginManifest(
+        name=name,
+        contributions={
+            "commands": [
+                {
+                    "id": cmd_id,
+                    "title": "open my widget",
+                }
+            ],
+            "widgets": [
+                {
+                    "command": cmd_id,
+                    "display_name": "Plot frame rate",
+                }
+            ],
+        },
+    )
+    assert mf.contributions.widgets
+    assert mf.contributions.widgets[0].plugin_name == name

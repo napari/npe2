@@ -7,7 +7,7 @@ Here is a list of all available **Contributions**:
 {# list all contributions first #}
 {%- for name, contrib in contributions.items() %}
 {%- if not contrib.hide_docs %}
-- [`{{ name }}`](#contributions-{{ name|replace('_', '-') }})
+- [`{{ name }}`](contributions-{{ name|replace('_', '-') }})
 {%- endif -%}
 {% endfor %}
 
@@ -18,7 +18,7 @@ is being discussed.
 {# now, iterate through all contributions and show fields and #}
 {%- for contrib_name, contrib in contributions.items() -%}
 {% if not contrib.hide_docs -%}
-(contributions-{{contrib_name}})=
+(contributions-{{ contrib_name|replace('_', '-') }})=
 ## `contributions.{{contrib_name}}`
 {# check if this is a single type, or a union #}
 {%- if contrib['items']['anyOf'] is defined %}
@@ -40,7 +40,7 @@ This contribution accepts {{ type_names|length }} schema types
 {{ type.description }}
 
 {% if contrib_name|has_guide %}
-See the [{{ contrib_name.title()|replace('_', ' ') }} Guide](./guides.html#{{ contrib_name|replace('_', '-') }}-contribution-guide)
+See the [{{ contrib_name.title()|replace('_', ' ') }} Guide]({{ contrib_name|replace('_', '-') }}-contribution-guide)
 for more details on implementing this contribution.
 {% endif %}
 

@@ -53,7 +53,7 @@ specification:
    autogenerate a widget using `magicgui.magicgui`.  In the first generation
    `napari_plugin_engine`, this was the `napari_experimental_provide_function`
    hook specification.  In the new `npe2` pattern, one uses the `autogenerate`
-   field in the [WidgetContribution](./contributions.html#contributions-widgets).
+   field in the [WidgetContribution](contributions-widgets).
 
 
 ### Widget example
@@ -69,8 +69,7 @@ specification:
 
 **manifest**
 
-See [Widgets contribution reference](./contributions.html#contributions-widgets)
-for field details.
+See [Widgets contribution reference](contributions-widgets) for field details.
 
 ```yaml
 {{ 'widgets'|example_contribution }}
@@ -85,7 +84,7 @@ This demonstrates the now-deprecated `napari-plugin-engine` pattern.
 
 **python implementation**
 
-[hook_specification](https://napari.org/plugins/stable/npe1.html#napari.plugins.hook_specifications.napari_experimental_provide_dock_widget)
+[hook_specification](https://napari.org/stable/plugins/npe1.html#napari.plugins.hook_specifications.napari_experimental_provide_dock_widget)
 
 ```python
 from qtpy.QtWidgets import QWidget

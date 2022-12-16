@@ -1,10 +1,10 @@
-from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, validator
 
 from ...types import PythonName
 from .. import _validators
+from ._icon import Icon
 
 if TYPE_CHECKING:
     from ..._command_registry import CommandRegistry
@@ -35,13 +35,11 @@ class CommandContribution(BaseModel):
 
     id: str = Field(
         ...,
-        description=dedent(
-            "A unique identifier used to reference this command. While this may look "
-            "like a python fully qualified name this does *not* refer to a python "
-            "object; this identifier is specific to napari.  It must begin with "
-            "the name of the package, and include only alphanumeric characters, plus "
-            "dashes and underscores."
-        ),
+        description="A unique identifier used to reference this command. While this may"
+        " look like a python fully qualified name this does *not* refer to a python "
+        "object; this identifier is specific to napari.  It must begin with "
+        "the name of the package, and include only alphanumeric characters, plus "
+        "dashes and underscores.",
     )
     _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
@@ -60,31 +58,32 @@ class CommandContribution(BaseModel):
     )
     _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
-    # short_title: Optional[str] = Field(
-    #     None,
-    #     description="Short title by which the command is "
-    #     "represented in the UI",
-    # )
-    # category: Optional[str] = Field(
-    #     None,
-    #     description="Category string by the command is grouped in the UI",
-    # )
-    # icon: Optional[Union[str, Icon]] = Field(
-    #     None,
-    #     description=(
-    #         "Icon which is used to represent the command in the UI."
-    #         " Either a file path, an object with file paths for dark and light"
-    #         "themes, or a theme icon references, like `$(zap)`"
-    #     ),
-    # )
-    # enablement: Optional[str] = Field(
-    #     None,
-    #     description=(
-    #         "Condition which must be true to enable the command in the UI "
-    #         "(menu and keybindings). Does not prevent executing the command "
-    #         "by other means, like the `executeCommand` api."
-    #     ),
-    # )
+    short_title: Optional[str] = Field(
+        None,
+        description="Short title by which the command is represented in "
+        "the UI. Menus pick either `title` or `short_title` depending on the context "
+        "in which they show commands.",
+    )
+    category: Optional[str] = Field(
+        None,
+        description="Category string by which the command may be grouped in the UI.",
+    )
+    icon: Optional[Union[str, Icon]] = Field(
+        None,
+        description="Icon used to represent this command in the UI, on "
+        "buttons or in menus. These may be [superqt](https://github.com/napari/superqt)"
+        " fonticon keys, such as `'fa6s.arrow_down'`; though note that plugins are "
+        "expected to depend on any fonticon libraries they use, e.g "
+        "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6).",
+    )
+    enablement: Optional[str] = Field(
+        None,
+        description=(
+            "Expression which must evaluate as true to enable the command in the UI "
+            "(menu and keybindings). Does not prevent executing the command "
+            "by other means, like the `execute_command` api."
+        ),
+    )
 
     class Config:
         extra = Extra.forbid

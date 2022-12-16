@@ -1,8 +1,9 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from ._commands import CommandContribution
+from ._configuration import ConfigurationContribution
 from ._menus import MenuItem
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
@@ -33,12 +34,21 @@ class ContributionPoints(BaseModel):
     widgets: Optional[List[WidgetContribution]]
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
-
     menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
-
-    # configuration: Optional[JsonSchemaObject]
     # keybindings: Optional[List[KeyBindingContribution]]
 
-    class Config:
-        docs_exclude = {"menus", "submenus"}
+    configuration: List[ConfigurationContribution] = Field(
+        default_factory=list,
+        hide_docs=True,
+        description="Configuration options for this plugin."
+        "This section can either be a single object, representing a single category of"
+        "settings, or an array of objects, representing multiple categories of"
+        "settings. If there are multiple categories of settings, the Settings editor"
+        "will show a submenu in the table of contents for that extension, and the title"
+        "keys will be used for the submenu entry names.",
+    )
+
+    @validator("configuration", pre=True)
+    def _to_list(cls, v):
+        return v if isinstance(v, list) else [v]

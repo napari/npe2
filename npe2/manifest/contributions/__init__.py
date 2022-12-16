@@ -1,4 +1,5 @@
 from ._commands import CommandContribution
+from ._configuration import ConfigurationContribution, ConfigurationProperty
 from ._contributions import ContributionPoints
 from ._menus import MenuCommand, MenuItem, Submenu
 from ._readers import ReaderContribution
@@ -10,6 +11,8 @@ from ._writers import LayerType, LayerTypeConstraint, WriterContribution
 
 __all__ = [
     "CommandContribution",
+    "ConfigurationContribution",
+    "ConfigurationProperty",
     "ContributionPoints",
     "LayerType",
     "LayerTypeConstraint",

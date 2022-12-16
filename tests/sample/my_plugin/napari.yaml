@@ -2,6 +2,7 @@ name: my-plugin
 display_name: My Plugin
 on_activate: my_plugin:activate
 on_deactivate: my_plugin:deactivate
+icon: https://picsum.photos/256
 contributions:
   commands:
     - id: my-plugin.hello_world
@@ -29,13 +30,14 @@ contributions:
     - id: my-plugin.some_function_widget
       title: Create widget from my function
       python_name: my_plugin:make_widget_from_function
-  configuration: # call it settings?
-    properties:
-      my_plugin.reader.lazy:
-        type: boolean
-        default: false
-        title: Load lazily
-        description: Whether to load images lazily with dask
+  configuration:
+    - title: My Plugin
+      properties:
+        my_plugin.reader.lazy:
+          type: boolean
+          default: false
+          title: Load lazily
+          description: Whether to load images lazily with dask
   readers:
     - command: my-plugin.some_reader
       filename_patterns: ["*.fzy", "*.fzzy"]
@@ -73,6 +75,7 @@ contributions:
     - label: "SampleTheme"
       id: "sample_theme"
       type: "dark"
+      syntax_style: "default"
       colors:
         canvas: "#000000"
         console: "#000000"
@@ -82,6 +85,7 @@ contributions:
         secondary: "#f8f8f2"
         highlight: "#e6db74"
         text: "#a1ef34"
+        icon: "#a1ef34"
         warning: "#f92672"
         current: "#66d9ef"
   sample_data:

@@ -18,21 +18,16 @@ from typing import (
     Union,
 )
 
+from pydantic import PrivateAttr
+from pydantic.generics import GenericModel
+
 from ..types import PythonName
 
 if TYPE_CHECKING:
-    from typing import Protocol
-
     from npe2.manifest.schema import PluginManifest
 
     from .._command_registry import CommandRegistry
     from .contributions import ContributionPoints
-
-    class ProvidesCommand(Protocol):
-        command: str
-
-        def get_callable(self, _registry: Optional[CommandRegistry] = None):
-            ...
 
 
 def v1_to_v2(path):
@@ -51,11 +46,13 @@ SHIM_NAME_PREFIX = "__npe1shim__."
 
 
 # TODO: add ParamSpec when it's supported better by mypy
-class Executable(Generic[R]):
+class Executable(GenericModel, Generic[R]):
     command: str
+    # plugin_name gets populated in `PluginManifest.__init__`
+    _plugin_name: str = PrivateAttr("")
 
     def exec(
-        self: ProvidesCommand,
+        self,
         args: tuple = (),
         kwargs: dict = None,
         _registry: Optional[CommandRegistry] = None,
@@ -65,7 +62,7 @@ class Executable(Generic[R]):
         return self.get_callable(_registry)(*args, **kwargs)
 
     def get_callable(
-        self: ProvidesCommand,
+        self,
         _registry: Optional[CommandRegistry] = None,
     ) -> Callable[..., R]:
         if _registry is None:
@@ -75,9 +72,27 @@ class Executable(Generic[R]):
         return _registry.get(self.command)
 
     @property
-    def plugin_name(self: ProvidesCommand):
-        # takes advantage of the fact that command always starts with manifest.name
-        return self.command.split(".")[0]
+    def plugin_name(self) -> str:
+        """Return the manifest/plugin name for this contribution."""
+        if not self._plugin_name:
+            # we will likely never get here if the contribution was created
+            # as a member of a PluginManifest.
+            # But if not, we can use a couple heuristics...
+            from importlib.metadata import distributions
+
+            # look for a package name in the command id
+            dists = sorted(
+                (d.metadata["Name"] for d in distributions()), key=len, reverse=True
+            )
+            for name in dists:
+                if self.command.startswith(name):  # pragma: no cover
+                    self._plugin_name = name
+                    break
+            else:
+                # just split on the first period.
+                # Will break for package names with periods
+                self._plugin_name = self.command.split(".")[0]
+        return self._plugin_name
 
 
 @total_ordering
@@ -258,7 +273,10 @@ def deep_update(dct: dict, merge_dct: dict, copy=True) -> dict:
     return _dct
 
 
-def merge_manifests(manifests: Sequence[PluginManifest]):
+def merge_manifests(
+    manifests: Sequence[PluginManifest], overwrite=False
+) -> PluginManifest:
+    """Merge a sequence of PluginManifests into a single PluginManifest."""
     from npe2.manifest.schema import PluginManifest
 
     if not manifests:
@@ -276,25 +294,79 @@ def merge_manifests(manifests: Sequence[PluginManifest]):
 
     mf0 = manifests[0]
     info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
-    info["contributions"] = merge_contributions([m.contributions for m in manifests])
+    info["contributions"] = merge_contributions(
+        [m.contributions for m in manifests], overwrite=overwrite
+    )
     return PluginManifest(**info)
 
 
-def merge_contributions(contribs: Sequence[Optional[ContributionPoints]]) -> dict:
+# TODO: refactor this ugly thing
+def merge_contributions(
+    contribs: Sequence[Optional[ContributionPoints]], overwrite=False
+) -> dict:
+    """Merge a sequence of contribution points in a single dict.
+
+    Parameters
+    ----------
+    contribs : Sequence[Optional[ContributionPoints]]
+        A sequence of contribution points.  None values are ignored.
+    overwrite : bool, optional
+        If `True`, when existing command id's are encountered, they overwrite the
+        previous command. By default (`False`), the command id is incremented until
+        it is unique.
+
+    Returns
+    -------
+    dict
+        Kwargs that can be passed to `ContributionPoints(**kwargs)`
+    """
     _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
     if not _contribs:
         return {}  # pragma: no cover
 
-    out = _contribs[0].dict(exclude_unset=True)
-    if len(_contribs) > 1:
-        for n, ctrb in enumerate(_contribs[1:]):
-            c = ctrb.dict(exclude_unset=True)
-            for cmd in c.get("commands", ()):
-                cmd["id"] = cmd["id"] + f"_{n + 2}"
-            for val in c.values():
-                if isinstance(val, list):
-                    for item in val:
-                        if "command" in item:
-                            item["command"] = item["command"] + f"_{n + 2}"
-            out = deep_update(out, c)
-    return out
+    out_dict = _contribs[0].dict(exclude_unset=True)
+    if len(_contribs) <= 1:
+        # no need to merge a single contribution
+        return out_dict  # pragma: no cover
+
+    for ctrb in _contribs[1:]:
+        _renames = {}
+        existing_cmds = {c["id"] for c in out_dict.get("commands", {})}
+        new_ctrb_dict = ctrb.dict(exclude_unset=True)
+        for cmd in list(new_ctrb_dict.get("commands", ())):
+            cmd_id = cmd["id"]
+            if cmd_id in existing_cmds:
+                if overwrite:
+                    # remove existing command
+                    new_ctrb_dict["commands"].remove(cmd)
+                else:
+                    # if we're not overwriting, we need to rename the command
+                    # to avoid collisions
+                    i = 1
+                    while cmd_id in existing_cmds:
+                        if i != 1:
+                            cmd_id = cmd_id[:-2]
+                        i += 1
+                        cmd_id = f"{cmd_id}_{i}"
+                        _renames[cmd["id"]] = cmd_id
+                    cmd["id"] = cmd_id
+        for key, val in new_ctrb_dict.items():
+            if isinstance(val, list):
+                for item in val:
+                    if "command" in item:
+                        cmd_id = item["command"]
+                        if cmd_id in _renames:
+                            cmd_id = _renames[cmd_id]
+                        item["command"] = cmd_id
+                    if overwrite:
+                        for existing_item in list(out_dict.get(key, [])):
+                            if all(item[k] == existing_item[k] for k in item):
+                                out_dict[key].remove(existing_item)
+        out_dict = deep_update(out_dict, new_ctrb_dict)
+    return out_dict
+
+
+def safe_key(key: str) -> str:
+    """Remove parentheses and brackets from a string."""
+    key = re.sub(r"[ -]", "_", key.lower())
+    return re.sub(r"[\[\]\(\)]", "", key)

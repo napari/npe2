@@ -1,15 +1,14 @@
 # flake8: noqa
-import ast
-from pathlib import Path
-from types import ModuleType
-from typing import Any, Callable, Dict, List, TypeVar, Union
+from typing import Any, Callable, List, TypeVar
 
-from _typeshed import Incomplete
 from pydantic import BaseModel as BaseModel
 
+from .manifest import PluginManifest as PluginManifest
 from .manifest import contributions as contributions
 
 T = TypeVar("T", bound=Callable[..., Any])
+
+CHECK_ARGS_PARAM: str
 
 def reader(
     *,
@@ -57,20 +56,3 @@ def on_activate(func):
 
 def on_deactivate(func):
     """Mark a function to be called when a plugin is deactivated."""
-
-class PluginModuleVisitor(ast.NodeVisitor):
-    """AST visitor to find all contributions in a module."""
-
-    plugin_name: str
-    module_name: str
-    contribution_points: Dict[str, List[dict]]
-    def __init__(self, plugin_name: str, module_name: str) -> None: ...
-    def visit_Import(self, node: ast.Import) -> Any: ...
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any: ...
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any: ...
-    def visit_ClassDef(self, node: ast.ClassDef) -> Any: ...
-
-def visit(
-    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ...
-) -> contributions.ContributionPoints:
-    """Visit a module and extract contribution points."""

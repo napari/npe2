@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from pydantic import BaseModel
 from pydantic.fields import Field
+from pydantic.generics import GenericModel
 
 from ...types import LayerData
 from ..utils import Executable
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ..._command_registry import CommandRegistry
 
 
-class _SampleDataContribution(BaseModel, ABC):
+class _SampleDataContribution(GenericModel, ABC):
     """Contribute sample data for use in napari.
 
     Sample data can take the form of a **command** that returns layer data, or a simple

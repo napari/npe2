@@ -1,8 +1,69 @@
 # Changelog
 
-## [0.5.1](https://github.com/napari/npe2/tree/0.5.1) (2022-06-26)
+## [v0.6.1](https://github.com/napari/npe2/tree/v0.6.1) (2022-08-08)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.5.0...0.5.1)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.6.0...v0.6.1)
+
+**Fixed bugs:**
+
+- fix command id validation when dot in package name [\#230](https://github.com/napari/npe2/pull/230) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.6.0](https://github.com/napari/npe2/tree/v0.6.0) (2022-08-07)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.5.2...v0.6.0)
+
+**Implemented enhancements:**
+
+- Add \(refactor\) configuration contribution, allowing plugins to declare a schema for their configurables [\#219](https://github.com/napari/npe2/pull/219) ([tlambert03](https://github.com/tlambert03))
+- npe1 module ast visitor \(for faster fetch without install\) [\#217](https://github.com/napari/npe2/pull/217) ([tlambert03](https://github.com/tlambert03))
+- Compile plugins using `npe2.implements` [\#186](https://github.com/napari/npe2/pull/186) ([tlambert03](https://github.com/tlambert03))
+
+**Fixed bugs:**
+
+- fix name validator to allow periods [\#227](https://github.com/napari/npe2/pull/227) ([tlambert03](https://github.com/tlambert03))
+- fix: delay inspection of command params [\#223](https://github.com/napari/npe2/pull/223) ([tlambert03](https://github.com/tlambert03))
+- Improve error message on schema validation [\#220](https://github.com/napari/npe2/pull/220) ([Czaki](https://github.com/Czaki))
+
+**Tests & CI:**
+
+- ci: remove fetch\_manifests [\#224](https://github.com/napari/npe2/pull/224) ([tlambert03](https://github.com/tlambert03))
+- run io\_utils tests first [\#222](https://github.com/napari/npe2/pull/222) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- v0.6.0 changelog [\#229](https://github.com/napari/npe2/pull/229) ([github-actions[bot]](https://github.com/apps/github-actions))
+- build: remove magicgui dependency [\#218](https://github.com/napari/npe2/pull/218) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.5.2](https://github.com/napari/npe2/tree/v0.5.2) (2022-07-24)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.5.1...v0.5.2)
+
+**Implemented enhancements:**
+
+- feat: deactivate on disable [\#212](https://github.com/napari/npe2/pull/212) ([tlambert03](https://github.com/tlambert03))
+- feat: add register\_disposable [\#211](https://github.com/napari/npe2/pull/211) ([tlambert03](https://github.com/tlambert03))
+- add back command enablement, category, short\_title, and icon [\#210](https://github.com/napari/npe2/pull/210) ([tlambert03](https://github.com/tlambert03))
+- add version to cli [\#205](https://github.com/napari/npe2/pull/205) ([tlambert03](https://github.com/tlambert03))
+
+**Fixed bugs:**
+
+- Fix `npe2 list` when a dotted field key is empty [\#203](https://github.com/napari/npe2/pull/203) ([tlambert03](https://github.com/tlambert03))
+
+**Refactors:**
+
+- Split out `from_npe1` setuptools package inspection into new module [\#206](https://github.com/napari/npe2/pull/206) ([tlambert03](https://github.com/tlambert03))
+
+**Documentation:**
+
+- Fix documentation links [\#208](https://github.com/napari/npe2/pull/208) ([melissawm](https://github.com/melissawm))
+
+**Merged pull requests:**
+
+- changelog v0.5.2 [\#213](https://github.com/napari/npe2/pull/213) ([tlambert03](https://github.com/tlambert03))
+
+## [v0.5.1](https://github.com/napari/npe2/tree/v0.5.1) (2022-06-27)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.5.0...v0.5.1)
 
 **Implemented enhancements:**
 
@@ -25,6 +86,7 @@
 
 **Merged pull requests:**
 
+- changelog v0.5.1 [\#201](https://github.com/napari/npe2/pull/201) ([tlambert03](https://github.com/tlambert03))
 - Remove typing-extensions imports [\#193](https://github.com/napari/npe2/pull/193) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.5.0](https://github.com/napari/npe2/tree/v0.5.0) (2022-06-21)
