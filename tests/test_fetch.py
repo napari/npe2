@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from npe2 import fetch_manifest
+from npe2 import PluginManifest, fetch_manifest
 from npe2._inspection._fetch import (
     _manifest_from_pypi_sdist,
     get_hub_plugin,
@@ -94,7 +94,7 @@ def test_get_manifest_from_wheel(tmp_path):
 
 def test_get_hub_plugins():
     plugins = get_hub_plugins()
-    assert "napari-svg" in plugins
+    assert len(plugins) > 0
 
 
 def test_get_hub_plugin():
@@ -103,5 +103,20 @@ def test_get_hub_plugin():
 
 
 def test_get_pypi_plugins():
-    info = get_pypi_plugins()
-    assert "napari-svg" in info
+    plugins = get_pypi_plugins()
+    assert len(plugins) > 0
+
+
+@pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://files.pythonhosted.org/packages/fb/01/e59bc1d6ac96f84ce9d7a46cc5422250e047958ead6c5693ed386cf94003/napari_dv-0.3.0.tar.gz",  # noqa
+        "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",  # noqa
+        "git+https://github.com/DragaDoncila/example-plugin.git",
+        # this one doesn't use setuptools_scm, can check direct zip without clone
+        "https://github.com/jo-mueller/napari-stl-exporter/archive/refs/heads/main.zip",
+    ],
+)
+def test_fetch_urls(url):
+    assert isinstance(fetch_manifest(url), PluginManifest)

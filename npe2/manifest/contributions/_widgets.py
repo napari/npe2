@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import Extra, Field
 
 from ...types import Widget
 from ..utils import Executable
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ..._command_registry import CommandRegistry
 
 
-class WidgetContribution(BaseModel, Executable[Widget]):
+class WidgetContribution(Executable[Widget]):
     """Contribute a widget that can be added to the napari viewer.
 
     Widget contributions point to a **command** that, when called, returns a widget

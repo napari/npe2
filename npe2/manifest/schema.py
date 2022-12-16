@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
+from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Iterator, List, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union
 
 from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
@@ -16,14 +17,56 @@ from . import _validators
 from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
-from .utils import Version
+from .utils import Executable, Version
 
 logger = getLogger(__name__)
 
 
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
+
+
+class Category(str, Enum):
+    """Broad plugin categories, values for PluginManifest.categories."""
+
+    # drive devices (webcams, microscopes, etc) to acquire data
+    Acquisition = "Acquisition"
+    # tools that facilitate labeling, marking, and, erm, "annotating" data within napari
+    Annotation = "Annotation"
+    # Sample datasets for training, demonstration, learning, etc...
+    Dataset = "Dataset"
+    # Routines that take in numerical arrays and generally return new arrays or datasets
+    # (e.g. scikit image stuff, deconvolution, super-res reconstruction, etc...)
+    Image_Processing = "Image Processing"
+    # Plugins that read from and/or write to files or data streams
+    # not supported natively by napari
+    IO = "IO"
+    # Plugins that employ machine learning: may facilitate either training or prediction
+    # Machine_Learning = "Machine Learning"
+
+    # Tools that extract measurements (i.e. into tabular, graph, or other data formats),
+    # such as region properties, etc...
+    Measurement = "Measurement"
+    # tools that identify objects and/or boundaries in datasets
+    # (including, but not limited to, images)
+    Segmentation = "Segmentation"
+    # tools that simulate some physical process.
+    # microscope/PSF generators, optics simulators, astronomy simulations, etc...
+    Simulation = "Simulation"
+    # plugins that modify the look and feel of napari
+    Themes = "Themes"
+    # linear and or nonlinear registrations, general data transformations and mappings
+    Transformations = "Transformations"
+    # Conveniences, widgets, etc... stuff that could conceivably be "core"
+    # but which is community-supported
+    Utilities = "Utilities"
+    # tools for plotting, rendering, and visualization
+    # (on top of those provided by napari)
+    Visualization = "Visualization"
+
+    def __str__(self) -> str:
+        return self.value  # pragma: no cover
 
 
 class DiscoverResults(NamedTuple):
@@ -35,7 +78,7 @@ class DiscoverResults(NamedTuple):
 class PluginManifest(ImportExportModel):
     class Config:
         underscore_attrs_are_private = True
-        extra = Extra.forbid
+        extra = Extra.ignore
         validate_assignment = True
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
@@ -56,16 +99,43 @@ class PluginManifest(ImportExportModel):
     display_name: str = Field(
         "",
         description="User-facing text to display as the name of this plugin. "
-        "Must be 3-40 characters long, containing printable word characters, "
-        "and must not begin or end with an underscore, white space, or "
-        "non-word character. If not provided, the manifest `name` will be used as the "
-        "display name.",
+        "Must be 3-90 characters long and must not begin or end with an underscore, "
+        "white space, or non-word character. If not provided, the manifest `name` "
+        "will be used as the display name.",
+        min_length=3,
+        max_length=90,
     )
 
     _validate_display_name = validator("display_name", allow_reuse=True)(
         _validators.display_name
     )
 
+    visibility: Literal["public", "hidden"] = Field(
+        "public",
+        description="Whether this plugin should be searchable and visible in "
+        "the built-in plugin installer and the napari hub. By default (`'public'`) "
+        "all plugins are visible. To prevent your plugin from appearing in search "
+        "results, change this to `'hidden'`.",
+    )
+
+    icon: str = Field(
+        "",
+        description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
+        "for Retina screens). May be one of:\n"
+        "  - a secure (https) URL\n"
+        "  - a path relative to the manifest file, (must be shipped in the sdist)\n"
+        "  - a string in the format `{package}:{resource}`, where `package` and "
+        "`resource` are arguments to `importlib.resources.path(package, resource)`, "
+        "(e.g. `top_module.some_folder:my_logo.png`).",
+    )
+    _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
+
+    categories: List[Category] = Field(
+        default_factory=list,
+        description="A list of categories that this plugin belongs to. This is used to "
+        "help users discover your plugin. Allowed values:\n"
+        f"`[{', '.join(Category)}]`",
+    )
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
     # around python packaging, command api's, etc. Together these form a
@@ -135,11 +205,17 @@ class PluginManifest(ImportExportModel):
     def __init__(self, **data):
         super().__init__(**data)
         if self.package_metadata is None and self.name:
-            try:
+            with suppress(metadata.PackageNotFoundError):
                 meta = metadata.distribution(self.name).metadata
                 self.package_metadata = PackageMetadata.from_dist_metadata(meta)
-            except metadata.PackageNotFoundError:
-                pass
+
+        if not self.npe1_shim:
+            # assign plugin name on all contributions that have a private
+            # _plugin_name field.
+            for _, value in self.contributions or ():
+                for item in value if isinstance(value, list) else [value]:
+                    if isinstance(item, Executable):
+                        item._plugin_name = self.name
 
     def __hash__(self):
         return hash((self.name, self.package_version))
@@ -160,23 +236,30 @@ class PluginManifest(ImportExportModel):
     def author(self) -> Optional[str]:
         return self.package_metadata.author if self.package_metadata else None
 
+    @property
+    def is_visible(self) -> bool:
+        return self.visibility == "public"
+
     @validator("contributions", pre=True)
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
     @root_validator
     def _validate_root(cls, values: dict) -> dict:
+        mf_name = values.get("name")
+
         # validate schema version
         declared_version = Version.parse(values.get("schema_version", ""))
         current_version = Version.parse(SCHEMA_VERSION)
         if current_version < declared_version:
-            raise ValueError(
-                f"The declared schema version '{declared_version}' is "
-                f"newer than npe2's schema version: '{current_version}'. You may "
-                "need to upgrade npe2."
+            import warnings
+
+            warnings.warn(
+                f"The declared schema version for plugin {mf_name!r} "
+                f"({declared_version}) is newer than npe2's schema version "
+                f"({current_version}). Things may break, you should upgrade npe2."
             )
 
-        mf_name = values.get("name")
         invalid_commands: List[str] = []
         if values.get("contributions") is not None:
             invalid_commands.extend(

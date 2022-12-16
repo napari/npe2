@@ -386,7 +386,7 @@ def fetch(
         manifest_string = getattr(mf, fmt.value)(**kwargs)
 
         if output:
-            output.write_text(manifest_string)
+            output.write_text(manifest_string, encoding="utf-8")
         else:
             _pprint_formatted(manifest_string, fmt)
 

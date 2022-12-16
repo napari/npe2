@@ -167,3 +167,43 @@ def test_dotted_name_with_command():
             "commands": [{"id": "plugin.plugin-sample.command", "title": "Sample"}]
         },
     )
+
+
+def test_visibility():
+    mf = PluginManifest(name="myplugin")
+    assert mf.is_visible
+
+    mf = PluginManifest(name="myplugin", visibility="hidden")
+    assert not mf.is_visible
+
+    with pytest.raises(ValidationError):
+        mf = PluginManifest(name="myplugin", visibility="other")
+
+
+def test_icon():
+    PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
+
+
+def test_dotted_plugin_name():
+    """Test that"""
+    name = "some.namespaced.plugin"
+    cmd_id = f"{name}.frame_rate_widget"
+    mf = PluginManifest(
+        name=name,
+        contributions={
+            "commands": [
+                {
+                    "id": cmd_id,
+                    "title": "open my widget",
+                }
+            ],
+            "widgets": [
+                {
+                    "command": cmd_id,
+                    "display_name": "Plot frame rate",
+                }
+            ],
+        },
+    )
+    assert mf.contributions.widgets
+    assert mf.contributions.widgets[0].plugin_name == name
