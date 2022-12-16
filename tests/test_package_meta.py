@@ -17,3 +17,24 @@ def test_package_metadata_version():
 
 def test_hashable():
     hash(PackageMetadata(name="test", version="1.0"))
+
+
+def test_package_metadata_extra_field():
+    pkg = {
+        "name": "test",
+        "version": "1.0",
+        "maintainer": "bob",
+        "extra_field_that_is_definitely_not_in_the_model": False,
+    }
+
+    try:
+        p = PackageMetadata(**pkg)
+    except Exception:
+        raise AssertionError(
+            "failed to parse PackageMetadata from a dict with an extra field"
+        )
+
+    assert p.name == "test"
+    assert p.version == "1.0"
+    assert p.maintainer == "bob"
+    assert not hasattr(p, "extra_field_that_is_definitely_not_in_the_model")
