@@ -5,6 +5,7 @@ except ImportError:
 __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
 
+
 from ._dynamic_plugin import DynamicPlugin
 from ._inspection._fetch import fetch_manifest, get_manifest_from_wheel
 from ._plugin_manager import PluginContext, PluginManager

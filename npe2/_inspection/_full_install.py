@@ -12,9 +12,9 @@ from importlib import metadata
 from logging import getLogger
 from typing import TYPE_CHECKING, Iterator, Optional
 
-from build.env import IsolatedEnv, IsolatedEnvBuilder
-
 if TYPE_CHECKING:
+    from build.env import IsolatedEnv
+
     from npe2.manifest import PluginManifest
 
 logger = getLogger(__name__)
@@ -56,6 +56,10 @@ def isolated_plugin_env(
     build.env.IsolatedEnv
         env object that has an `install` method.
     """
+    # it's important that this import be lazy, otherwise we'll get a circular
+    # import when serving as a setuptools plugin with `python -m build`
+    from build.env import IsolatedEnvBuilder
+
     with IsolatedEnvBuilder() as env:
         # install the package
         pkg = f"{package}=={version}" if version else package
