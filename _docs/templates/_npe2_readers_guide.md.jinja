@@ -26,7 +26,8 @@ otherwise, they will not be invoked when a directory is passed to `viewer.open`.
 
 ### Reader example
 
-````{tabbed} npe2
+::::{tab-set}
+:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -42,9 +43,9 @@ for field details.
 ```yaml
 {{ 'readers'|example_contribution }}
 ```
-````
+:::
 
-````{tabbed} napari-plugin-engine
+:::{tab-item} napari-plugin-engine
 
 ```{admonition} Deprecated!
 This demonstrates the now-deprecated `napari-plugin-engine` pattern.
@@ -72,4 +73,5 @@ def xyz_file_reader(path: PathOrPaths) -> List[LayerData]:
     layer_properties = {"name": "etc..."}
     return [(data, layer_properties)]
 ```
-````
+:::
+::::
