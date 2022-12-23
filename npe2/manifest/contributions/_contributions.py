@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, validator
 
 from ._commands import CommandContribution
 from ._configuration import ConfigurationContribution
+from ._keybindings import KeyBindingContribution
 from ._menus import MenuItem
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
@@ -15,6 +16,7 @@ from ._writers import WriterContribution
 __all__ = [
     "ContributionPoints",
     "CommandContribution",
+    "KeyBindingContribution",
     "MenuItem",
     "ReaderContribution",
     "SampleDataContribution",
@@ -36,7 +38,7 @@ class ContributionPoints(BaseModel):
     themes: Optional[List[ThemeContribution]]
     menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, hide_docs=True)
     submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=True)
-    # keybindings: Optional[List[KeyBindingContribution]]
+    keybindings: Optional[List[KeyBindingContribution]] = Field(None, hide_docs=True)
 
     configuration: List[ConfigurationContribution] = Field(
         default_factory=list,
