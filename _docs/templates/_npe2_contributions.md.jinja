@@ -56,12 +56,14 @@ for more details on implementing this contribution.
 {% endfor %}
 
 ### {{ contrib_name.title()|replace("_", " ") }} example
+::::{tab-set}
 {% for format in ['yaml', 'toml'] %}
-````{tabbed} {{format}}
+:::{tab-item} {{format}}
 ```{{format}}
 {{ contrib_name|example_contribution(format) }}
 ```
-````
+:::
 {% endfor -%}
+::::
 {% endif %}
 {% endfor %}

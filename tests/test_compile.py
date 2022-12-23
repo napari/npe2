@@ -20,3 +20,12 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
     assert mf.contributions.commands and len(mf.contributions.commands) == 5
     assert dest.exists()
     assert PluginManifest.from_file(dest) == mf
+
+
+def test_compile_with_template(compiled_plugin_dir: Path, tmp_path: Path):
+    """Test building from a template with npe2 compile."""
+    template = tmp_path / "template.yaml"
+    template.write_text("name: my_compiled_plugin\ndisplay_name: Display Name\n")
+    mf = compile(compiled_plugin_dir, template=template)
+    assert mf.name == "my_compiled_plugin"
+    assert mf.display_name == "Display Name"

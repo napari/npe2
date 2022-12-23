@@ -12,7 +12,8 @@ or **Sample Data Function** that generates layer data on demand.
 
 ### Sample Data example
 
-````{tabbed} npe2
+::::{tab-set}
+:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -28,9 +29,9 @@ for field details.
 ```yaml
 {{ 'sample_data'|example_contribution }}
 ```
-````
+:::
 
-````{tabbed} napari-plugin-engine
+:::{tab-item} napari-plugin-engine
 
 ```{admonition} Deprecated!
 This demonstrates the now-deprecated `napari-plugin-engine` pattern.
@@ -59,4 +60,5 @@ def napari_provide_sample_data():
         }
     }
 ```
-````
+:::
+::::
