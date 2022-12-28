@@ -391,6 +391,9 @@ class HookImplParser:
     def napari_write_vectors(self, impl: HookImplementation):
         self._parse_writer(impl, "vectors")
 
+    def napari_write_graph(self, impl: HookImplementation):
+        self._parse_writer(impl, "graph")
+
     def _parse_writer(self, impl: HookImplementation, layer: str):
         id = self.add_command(impl)
         self.contributions["writers"].append(

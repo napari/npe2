@@ -14,6 +14,7 @@ class LayerType(str, Enum):
     surface = "surface"
     tracks = "tracks"
     vectors = "vectors"
+    graph = "graph"
 
 
 class LayerTypeConstraint(BaseModel):

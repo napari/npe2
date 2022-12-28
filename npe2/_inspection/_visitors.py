@@ -250,6 +250,9 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
     def napari_write_vectors(self, node: ast.FunctionDef):
         self._parse_writer(node, "vectors")  # pragma: no cover
 
+    def napari_write_graph(self, node: ast.FunctionDef):
+        self._parse_writer(node, "graph")  # pragma: no cover
+
     def _parse_writer(self, node, layer_type: str):
         cmd = self._add_command(node)
         wrt_contrib = contributions.WriterContribution(

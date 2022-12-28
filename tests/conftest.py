@@ -124,6 +124,7 @@ def mock_npe1_pm():
         def napari_write_shapes(path, data, meta): ...  # noqa: E704
         def napari_write_surface(path, data, meta): ...  # noqa: E704
         def napari_write_vectors(path, data, meta): ...  # noqa: E704
+        def napari_write_graph(path, data, meta): ...  # noqa: E704
         def napari_experimental_provide_function(): ...  # type: ignore  # noqa: E704
         def napari_experimental_provide_dock_widget(): ...  # type: ignore  # noqa: E704
         def napari_experimental_provide_theme(): ...  # type: ignore  # noqa: E704
