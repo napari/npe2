@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import io
+import itertools
 import json
 import os
 import re
 import subprocess
 import tempfile
+import xmlrpc.client
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import lru_cache
@@ -376,27 +378,59 @@ def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
 
     Returns
     -------
-    packages : List[str]
+    packages : Dict[str, str]
         name of all packages at pypi that declare ``classifier``
     """
+    # first try the xmlrpc api - this should be fast
+    try:
+        with xmlrpc.client.ServerProxy("https://pypi.org/pypi") as proxy:
+            pkgs = proxy.browse([classifier])
+            # type narrowing for mypy
+            assert (
+                isinstance(pkgs, list)
+                and isinstance(pkgs[0], list)
+                and isinstance(pkgs[0][0], str)
+            )
+    except (xmlrpc.client.Fault, xmlrpc.client.ProtocolError, AssertionError) as e:
+        if isinstance(e, xmlrpc.client.Fault):
+            logger.warning(
+                f"The PyPI XMLRPC API returned Fault {e.faultCode}: '{e.faultString}'"
+            )
+        elif isinstance(e, xmlrpc.client.ProtocolError):
+            logger.warning(
+                f"The PyPI XMLRPC API returned ProtocolError {e.errcode}: '{e.errmsg}'"
+            )
+        elif isinstance(e, AssertionError):
+            logger.warning("The PyPI XMLRPC API returned unrecognized output.")
+        logger.warning(
+            "The PyPI XMLRPC API is considered legacy - "
+            "this method may now be deprecated."
+        )
+    else:
+        return {name: version for name, version in pkgs}
+
+    # fall back to scraping the search UI if that fails
     PACKAGE_NAME_PATTERN = re.compile('class="package-snippet__name">(.+)</span>')
     PACKAGE_VERSION_PATTERN = re.compile('class="package-snippet__version">(.+)</span>')
 
-    packages = {}
-    page = 1
-    url = f"https://pypi.org/search/?c={parse.quote_plus(classifier)}&page="
-    while True:
+    packages: Dict[str, str] = {}
+    url = (
+        "https://pypi.org/search/?q="
+        # sort by most recently created for stability
+        "&o=-created"
+        f"&c={parse.quote_plus(classifier)}&page="
+    )
+    for page in itertools.count(1):
         try:
             with request.urlopen(f"{url}{page}") as response:
                 html = response.read().decode()
             names = PACKAGE_NAME_PATTERN.findall(html)
             versions = PACKAGE_VERSION_PATTERN.findall(html)
-            packages.update(dict(zip(names, versions)))
-            page += 1
+            packages.update(zip(names, versions))
         except error.HTTPError:
             break
 
-    return dict(sorted(packages.items()))
+    return packages
 
 
 def get_pypi_plugins() -> Dict[str, str]:

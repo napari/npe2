@@ -1,21 +1,33 @@
 import os
 import urllib.request
+import xmlrpc.client
 from importlib.metadata import PackageNotFoundError
 from unittest.mock import patch
 
 import pytest
 
 from npe2 import PluginManifest, fetch_manifest
+from npe2._inspection._fetch import _get_packages_by_classifier  # uses lru_cache
+from npe2._inspection._fetch import _pypi_info  # uses lru_cache
+from npe2._inspection._fetch import get_hub_plugin  # uses lru_cache
+from npe2._inspection._fetch import get_hub_plugins  # uses lru_cache
 from npe2._inspection._fetch import (
     _manifest_from_pypi_sdist,
-    get_hub_plugin,
-    get_hub_plugins,
     get_manifest_from_wheel,
     get_pypi_plugins,
     get_pypi_url,
 )
 from npe2._inspection._full_install import fetch_manifest_with_full_install
 from npe2.manifest._npe1_adapter import NPE1Adapter
+
+
+@pytest.fixture(autouse=True)
+def clear_cached():
+    """Clear cached functions to make sure we're testing everything."""
+    get_hub_plugin.cache_clear()
+    get_hub_plugins.cache_clear()
+    _pypi_info.cache_clear()
+    _get_packages_by_classifier.cache_clear()
 
 
 def test_fetch_npe2_manifest():
@@ -104,7 +116,27 @@ def test_get_hub_plugin():
 
 def test_get_pypi_plugins():
     plugins = get_pypi_plugins()
-    assert len(plugins) > 0
+    assert "napari-svg" in plugins
+
+
+@pytest.mark.parametrize(
+    "error",
+    (
+        xmlrpc.client.Fault(123, "RuntimeError"),
+        xmlrpc.client.ProtocolError(
+            "pypi.org/",
+            405,
+            "Method Not Allowed",
+            {},
+        ),
+    ),
+    ids=("Fault", "ProtocolError"),
+)
+def test_get_pypi_plugins_xmlrpc_error(error):
+    # force scraping by making the xmlrpc api return a fault/error
+    with patch("npe2._inspection._fetch.xmlrpc.client.ServerProxy", side_effect=error):
+        plugins = get_pypi_plugins()
+        assert "napari-svg" in plugins
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
