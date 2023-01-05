@@ -139,6 +139,26 @@ def test_get_pypi_plugins_xmlrpc_error(error):
         assert "napari-svg" in plugins
 
 
+def test_get_pypi_plugins_equivalence():
+    # get the plugins via xmlrpc api
+    xmlrpc_plugins = get_pypi_plugins()
+
+    # clear the cache and fetch again with scraping
+    _get_packages_by_classifier.cache_clear()
+    with patch(
+        "npe2._inspection._fetch.xmlrpc.client.ServerProxy",
+        side_effect=xmlrpc.client.Fault(123, "RuntimeError"),
+    ):
+        scraped_plugins = get_pypi_plugins()
+
+    # test xmlrpc returns a strict superset of scraping
+    # i.e.:
+    # * xmlrpc contains *at least* the plugins found by scraping
+    # * scraping and xmlrpc methods return the same versions
+    assert all(k in xmlrpc_plugins for k in scraped_plugins)
+    assert scraped_plugins == {k: xmlrpc_plugins[k] for k in scraped_plugins}
+
+
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
 @pytest.mark.parametrize(
     "url",

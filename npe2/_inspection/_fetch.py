@@ -29,6 +29,8 @@ from unittest.mock import patch
 from urllib import error, parse, request
 from zipfile import ZipFile
 
+from packaging.version import Version
+
 from npe2.manifest import PackageMetadata
 
 if TYPE_CHECKING:
@@ -381,6 +383,7 @@ def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
     packages : Dict[str, str]
         name of all packages at pypi that declare ``classifier``
     """
+    packages: Dict[str, str] = {}
     # first try the xmlrpc api - this should be fast
     try:
         with xmlrpc.client.ServerProxy("https://pypi.org/pypi") as proxy:
@@ -407,13 +410,19 @@ def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
             "this method may now be deprecated."
         )
     else:
-        return {name: version for name, version in pkgs}
+        for name, version in pkgs:
+            v0 = Version(packages.setdefault(name, version))
+            v = Version(version)
+            if v0 < v and (
+                (v0.is_prerelease and v.is_prerelease) or not v.is_prerelease
+            ):
+                packages[name] = version
+        return packages
 
     # fall back to scraping the search UI if that fails
     PACKAGE_NAME_PATTERN = re.compile('class="package-snippet__name">(.+)</span>')
     PACKAGE_VERSION_PATTERN = re.compile('class="package-snippet__version">(.+)</span>')
 
-    packages: Dict[str, str] = {}
     url = (
         "https://pypi.org/search/?q="
         # sort by most recently created for stability
