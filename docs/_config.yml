@@ -59,8 +59,8 @@ sphinx:
         - "https://napari-plugin-engine.readthedocs.io/en/latest/"
         - "https://napari-plugin-engine.readthedocs.io/en/latest/objects.inv"
       magicgui:
-        - "https://napari.org/magicgui/"
-        - "https://napari.org/magicgui/objects.inv"
+        - "https://pyapp-kit.github.io/magicgui/"
+        - "https://pyapp-kit.github.io/magicgui/objects.inv"
       napari:
         - "https://napari.org/"
         - "https://napari.org/docs/dev/objects.inv"
