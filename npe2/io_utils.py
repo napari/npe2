@@ -197,7 +197,6 @@ def _write(
     return_writer: bool = False,
     _pm: Optional[PluginManager] = None,
 ) -> Union[List[str], Tuple[List[str], WriterContribution]]:
-
     if not layer_data:
         raise ValueError("Must provide layer data")
     if _pm is None:

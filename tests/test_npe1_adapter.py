@@ -71,7 +71,6 @@ def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
         "manifest_from_npe1",
         wraps=_npe1_adapter.manifest_from_npe1,  # type: ignore
     ) as mock:
-
         # if we clear the cache, it should import again
         mf = pm.get_manifest("npe1-plugin")
         assert isinstance(mf, _npe1_adapter.NPE1Adapter)

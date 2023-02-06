@@ -44,7 +44,6 @@ def test_extract_manifest():
 
 
 def test_dynamic(monkeypatch):
-
     with monkeypatch.context() as m:
         m.setattr(sys, "path", sys.path + [str(SAMPLE_DIR)])
         import _with_decorators  # noqa

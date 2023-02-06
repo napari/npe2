@@ -377,7 +377,6 @@ class PluginManifest(ImportExportModel):
         entry_point: metadata.EntryPoint,
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
-
         assert (match := entry_point.pattern.match(entry_point.value))
         module = match.group("module")
 

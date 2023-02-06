@@ -277,7 +277,6 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
             # sample should now either be a callable, or a string
             if isinstance(val, ast.Name):
-
                 cmd_id = f"{self.plugin_name}.{val.id}"
                 py_name = f"{self.module_name}:{val.id}"
                 cmd_contrib = contributions.CommandContribution(

@@ -126,7 +126,6 @@ def manifest_from_npe1(
         package_name = "dynamic"
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
     elif isinstance(plugin, str):
-
         modules = []
         plugin_name = plugin
         for pp in plugin_packages():
@@ -227,7 +226,6 @@ class HookImplParser:
             )
 
     def napari_get_reader(self, impl: HookImplementation):
-
         patterns = _guess_fname_patterns(impl.function)
 
         self.contributions["readers"].append(
@@ -279,7 +277,6 @@ class HookImplParser:
 
         for idx, item in enumerate(items):
             try:
-
                 cmd = f"{self.package}.{item.__name__}"
                 py_name = _python_name(
                     item, impl.function, hook_idx=idx if self.adapter else None

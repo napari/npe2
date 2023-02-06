@@ -13,7 +13,6 @@ SAMPLE_PLUGIN_NAME = "my-plugin"
 
 @pytest.fixture
 def pm(sample_path):
-
     pm = PluginManager()
     pm.discover()
     assert len(pm._manifests) == 0
@@ -164,7 +163,6 @@ def _assert_sample_enabled(plugin_manager: PluginManager, enabled=True):
 
 
 def test_enable_disable(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
-
     _assert_sample_enabled(plugin_manager)
     # just to test the enabled= kwarg on iter_manifests
     # (this would show *only* disabled plugins)
