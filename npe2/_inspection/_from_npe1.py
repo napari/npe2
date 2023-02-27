@@ -4,7 +4,7 @@ import re
 import sys
 import warnings
 from configparser import ConfigParser
-from functools import lru_cache
+from functools import lru_cache, partial
 from importlib import import_module, metadata
 from logging import getLogger
 from pathlib import Path
@@ -411,11 +411,7 @@ class HookImplParser:
 
 
 def _is_magicgui_magic_factory(obj):
-    try:
-        import magicgui
-    except ImportError:
-        return False
-    return isinstance(obj, magicgui._magicgui.MagicFactory)
+    return "magicgui" in sys.modules and isinstance(obj, partial)
 
 
 def _python_name(
