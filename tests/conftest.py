@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest import _npe1_adapter
 

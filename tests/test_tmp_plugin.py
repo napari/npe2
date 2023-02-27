@@ -1,4 +1,5 @@
 import pytest
+
 from npe2 import DynamicPlugin, PluginManager
 from npe2.manifest.contributions import SampleDataGenerator
 

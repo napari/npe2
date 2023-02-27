@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pytest
+
 from npe2 import PluginManifest
 
 DOCS_DIR = Path(__file__).parent.parent / "_docs"

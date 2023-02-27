@@ -3,6 +3,7 @@ from functools import partial
 from unittest.mock import Mock
 
 import pytest
+
 from npe2 import DynamicPlugin, PluginManager, PluginManifest
 from npe2.manifest.contributions import (
     CommandContribution,

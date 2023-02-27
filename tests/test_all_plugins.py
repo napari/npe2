@@ -4,6 +4,7 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
 import pytest
+
 from npe2._inspection._full_install import isolated_plugin_env
 from npe2.cli import app
 

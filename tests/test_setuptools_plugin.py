@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+
 from npe2 import PluginManifest
 
 ROOT = Path(__file__).parent.parent

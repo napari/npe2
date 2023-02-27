@@ -2,6 +2,7 @@ import sys
 from unittest.mock import Mock, patch
 
 import pytest
+
 from npe2._command_registry import CommandHandler, CommandRegistry
 from npe2._plugin_manager import PluginManager
 from npe2.manifest.schema import PluginManifest

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from npe2._inspection import compile
 from npe2.manifest.schema import PluginManifest
 

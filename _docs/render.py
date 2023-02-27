@@ -15,6 +15,7 @@ from urllib.request import urlopen
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest.contributions import ContributionPoints
 from npe2.manifest.utils import Executable

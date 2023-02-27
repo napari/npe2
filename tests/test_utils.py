@@ -1,4 +1,5 @@
 import pytest
+
 from npe2.manifest.contributions import ContributionPoints
 from npe2.manifest.schema import PluginManifest
 from npe2.manifest.utils import (

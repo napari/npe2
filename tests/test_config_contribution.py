@@ -1,4 +1,5 @@
 import pytest
+
 from npe2.manifest.contributions import ConfigurationContribution, ConfigurationProperty
 from npe2.manifest.contributions._json_schema import ValidationError
 

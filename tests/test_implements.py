@@ -2,8 +2,9 @@ import sys
 from contextlib import nullcontext
 from pathlib import Path
 
-import npe2.implements
 import pytest
+
+import npe2.implements
 from npe2 import PluginManifest
 from npe2._inspection import find_npe2_module_contributions
 

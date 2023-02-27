@@ -3,10 +3,11 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pytest
+from typer.testing import CliRunner
+
 from npe2 import __version__
 from npe2.cli import app, main
 from npe2.manifest.schema import PluginManifest
-from typer.testing import CliRunner
 
 runner = CliRunner()
 

@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
+
 from npe2 import PluginManager
 from npe2.manifest import _npe1_adapter, utils
 from npe2.manifest.contributions import SampleDataGenerator

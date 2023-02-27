@@ -28,6 +28,7 @@ line-length = 88
 [tool.ruff]
 line-length = 88
 target-version = "py38"
+fix = true
 src = ["npe2", "tests"]
 select = [
     "E", "F", "W", #flake8
