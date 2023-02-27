@@ -1,4 +1,3 @@
-# flake8: noqa
 from typing import Any, Callable, List, TypeVar
 
 from pydantic import BaseModel as BaseModel
@@ -25,7 +24,7 @@ def writer(
     id: str,
     title: str,
     layer_types: List[str],
-    filename_extensions: List[str] = [],
+    filename_extensions: List[str] = [],  # noqa: B006
     display_name: str = "",
     ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
