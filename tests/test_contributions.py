@@ -1,3 +1,4 @@
+from functools import partial
 import json
 from unittest.mock import Mock
 
@@ -95,7 +96,6 @@ def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tm
 
 
 def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
-    from magicgui._magicgui import MagicFactory
 
     widgets = list(plugin_manager.iter_widgets())
     assert len(widgets) == 2
@@ -105,7 +105,7 @@ def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
 
     assert widgets[1].command == f"{SAMPLE_PLUGIN_NAME}.some_function_widget"
     w = widgets[1].get_callable()
-    assert isinstance(w, MagicFactory)
+    assert isinstance(w, partial)
 
 
 def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
