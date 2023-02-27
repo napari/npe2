@@ -2,12 +2,13 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from ...types import PythonName
-from .. import _validators
+from npe2.manifest import _validators
+from npe2.types import PythonName
+
 from ._icon import Icon
 
 if TYPE_CHECKING:
-    from ..._command_registry import CommandRegistry
+    from npe2._command_registry import CommandRegistry
 
 
 class CommandContribution(BaseModel):
@@ -91,13 +92,13 @@ class CommandContribution(BaseModel):
     def exec(
         self,
         args: tuple = (),
-        kwargs: dict = None,
+        kwargs: Optional[dict] = None,
         _registry: Optional["CommandRegistry"] = None,
     ) -> Any:
         if kwargs is None:
             kwargs = {}
         if _registry is None:
-            from ..._plugin_manager import PluginManager
+            from npe2._plugin_manager import PluginManager
 
             _registry = PluginManager.instance().commands
         return _registry.execute(self.id, args, kwargs)

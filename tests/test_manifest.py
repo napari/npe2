@@ -3,11 +3,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from pydantic import ValidationError
-
 from npe2 import PluginManifest
 from npe2.manifest import PackageMetadata
 from npe2.manifest.schema import ENTRY_POINT
+from pydantic import ValidationError
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
 SAMPLE_MODULE_NAME = "my_plugin"

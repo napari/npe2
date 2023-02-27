@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from pydantic.fields import Field
 from pydantic.generics import GenericModel
 
-from ...types import LayerData
-from ..utils import Executable
+from npe2.manifest.utils import Executable
+from npe2.types import LayerData
 
 if TYPE_CHECKING:
-    from ..._command_registry import CommandRegistry
+    from npe2._command_registry import CommandRegistry
 
 
 class _SampleDataContribution(GenericModel, ABC):
@@ -63,7 +63,7 @@ class SampleDataURI(_SampleDataContribution):
     )
 
     def open(self, *args, **kwargs) -> List[LayerData]:
-        from ...io_utils import read
+        from npe2.io_utils import read
 
         return read([self.uri], plugin_name=self.reader_plugin, stack=False)
 

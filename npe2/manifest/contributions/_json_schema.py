@@ -82,7 +82,7 @@ _python_equivalent: Dict[Optional[str], Type] = {
 
 
 class _JsonSchemaBase(BaseModel):
-    class Config:  # noqa: D106
+    class Config:
         alias_generator = _to_camel
         allow_population_by_field_name = True
 

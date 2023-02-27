@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from pydantic import Extra, Field
 
-from ...types import ReaderFunction
-from ..utils import Executable, v2_to_v1
+from npe2.manifest.utils import Executable, v2_to_v1
+from npe2.types import ReaderFunction
 
 
 class ReaderContribution(Executable[Optional[ReaderFunction]]):

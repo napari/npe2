@@ -35,7 +35,7 @@ def _main(
     """npe2: napari plugin engine (v{version})
 
     For additional help on a specific command: type 'npe2 [command] --help'
-    """  # noqa D400
+    """
 
 
 _main.__doc__ = typer.style(
@@ -431,7 +431,7 @@ def convert(
     except Exception as e:
         msg = f"Conversion failed:\n{type(e).__name__}: {e}"
         typer.secho(msg, fg=typer.colors.RED, bold=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     if dry_run or not path.is_dir():
         if path.is_dir():

@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest import _npe1_adapter
 
@@ -85,7 +84,7 @@ def uses_npe1_plugin(npe1_repo):
     sys.meta_path.append(Importer())
     sys.path.append(str(npe1_repo))
     try:
-        pkgs = site.getsitepackages() + [str(npe1_repo)]
+        pkgs = [*site.getsitepackages(), str(npe1_repo)]
         with patch("site.getsitepackages", return_value=pkgs):
             yield
     finally:
@@ -115,18 +114,18 @@ def mock_npe1_pm():
 
     # fmt: off
     class HookSpecs:
-        def napari_provide_sample_data(): ...  # type: ignore  # noqa: E704
-        def napari_get_reader(path): ...  # noqa: E704
-        def napari_get_writer(path, layer_types): ...  # noqa: E704
-        def napari_write_image(path, data, meta): ...  # noqa: E704
-        def napari_write_labels(path, data, meta): ...  # noqa: E704
-        def napari_write_points(path, data, meta): ...  # noqa: E704
-        def napari_write_shapes(path, data, meta): ...  # noqa: E704
-        def napari_write_surface(path, data, meta): ...  # noqa: E704
-        def napari_write_vectors(path, data, meta): ...  # noqa: E704
-        def napari_experimental_provide_function(): ...  # type: ignore  # noqa: E704
-        def napari_experimental_provide_dock_widget(): ...  # type: ignore  # noqa: E704
-        def napari_experimental_provide_theme(): ...  # type: ignore  # noqa: E704
+        def napari_provide_sample_data(): ...  # type: ignore
+        def napari_get_reader(path): ...
+        def napari_get_writer(path, layer_types): ...
+        def napari_write_image(path, data, meta): ...
+        def napari_write_labels(path, data, meta): ...
+        def napari_write_points(path, data, meta): ...
+        def napari_write_shapes(path, data, meta): ...
+        def napari_write_surface(path, data, meta): ...
+        def napari_write_vectors(path, data, meta): ...
+        def napari_experimental_provide_function(): ...  # type: ignore
+        def napari_experimental_provide_dock_widget(): ...  # type: ignore
+        def napari_experimental_provide_theme(): ...  # type: ignore
     # fmt: on
 
     for m in dir(HookSpecs):

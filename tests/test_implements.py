@@ -2,9 +2,8 @@ import sys
 from contextlib import nullcontext
 from pathlib import Path
 
-import pytest
-
 import npe2.implements
+import pytest
 from npe2 import PluginManifest
 from npe2._inspection import find_npe2_module_contributions
 
@@ -44,19 +43,18 @@ def test_extract_manifest():
 
 
 def test_dynamic(monkeypatch):
-
     with monkeypatch.context() as m:
-        m.setattr(sys, "path", sys.path + [str(SAMPLE_DIR)])
-        import _with_decorators  # noqa
+        m.setattr(sys, "path", [*sys.path, str(SAMPLE_DIR)])
+        import _with_decorators
 
         assert hasattr(_with_decorators.get_reader, "_npe2_ReaderContribution")
         info = _with_decorators.get_reader._npe2_ReaderContribution
-        assert info == dict(
-            id="some_reader",
-            title="Some Reader",
-            filename_patterns=["*.fzy", "*.fzzy"],
-            accepts_directories=True,
-        )
+        assert info == {
+            "id": "some_reader",
+            "title": "Some Reader",
+            "filename_patterns": ["*.fzy", "*.fzzy"],
+            "accepts_directories": True,
+        }
 
         # we can compile a module object as well as a string path
         extracted = find_npe2_module_contributions(
@@ -72,7 +70,7 @@ def test_dynamic(monkeypatch):
 def test_decorator_arg_check(check):
     """Check that the decorators don't check arguments at runtime unless instructed."""
     # tilde is wrong and filename_patterns is missing
-    kwargs = dict(id="some_id", tilde="some_title")
+    kwargs = {"id": "some_id", "tilde": "some_title"}
     kwargs[npe2.implements.CHECK_ARGS_PARAM] = check
     ctx = pytest.raises(TypeError) if check else nullcontext()
     with ctx:

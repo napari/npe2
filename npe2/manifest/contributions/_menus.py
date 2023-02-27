@@ -2,7 +2,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
-from ..utils import Executable
+from npe2.manifest.utils import Executable
 
 
 # user provides this

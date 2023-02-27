@@ -1,5 +1,4 @@
 import pytest
-
 from npe2.manifest.contributions import ContributionPoints
 from npe2.manifest.schema import PluginManifest
 from npe2.manifest.utils import (
@@ -14,7 +13,7 @@ def test_version():
     v = Version.parse(b"0.1.2")
 
     assert v == "0.1.2"
-    assert v > dict(major=0, minor=1, patch=0)
+    assert v > {"major": 0, "minor": 1, "patch": 0}
     assert v <= (0, 2, 0)
     assert v == Version(0, 1, 2)
     assert list(v) == [0, 1, 2, None, None]

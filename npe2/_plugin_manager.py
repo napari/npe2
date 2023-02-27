@@ -492,7 +492,10 @@ class PluginManager:
             yield mf
 
     def dict(
-        self, *, include: InclusionSet = None, exclude: InclusionSet = None
+        self,
+        *,
+        include: Optional[InclusionSet] = None,
+        exclude: Optional[InclusionSet] = None,
     ) -> Dict[str, Any]:
         """Return a dictionary with the state of the plugin manager.
 

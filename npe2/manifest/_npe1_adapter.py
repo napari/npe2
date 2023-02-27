@@ -10,8 +10,9 @@ from typing import List, Sequence
 
 from appdirs import user_cache_dir
 
-from .._inspection._from_npe1 import manifest_from_npe1
-from ..manifest import PackageMetadata
+from npe2._inspection._from_npe1 import manifest_from_npe1
+from npe2.manifest import PackageMetadata
+
 from .schema import PluginManifest, discovery_blocked
 
 logger = logging.getLogger(__name__)
@@ -140,5 +141,5 @@ def _is_editable_install(dist: metadata.Distribution) -> bool:
     i.e: if the package isn't in site-packages or user site-packages.
     """
     root = str(dist.locate_file(""))
-    installed_paths = site.getsitepackages() + [site.getusersitepackages()]
+    installed_paths = [*site.getsitepackages(), site.getusersitepackages()]
     return all(loc not in root for loc in installed_paths)

@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from pydantic import BaseModel
-
 from npe2 import PluginContext
 from npe2.types import PathOrPaths
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     import napari.types

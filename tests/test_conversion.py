@@ -1,7 +1,6 @@
 from importlib.metadata import PackageNotFoundError
 
 import pytest
-
 from npe2._inspection import _from_npe1
 from npe2._inspection._from_npe1 import (
     convert_repository,

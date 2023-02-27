@@ -12,7 +12,8 @@ from pydantic import Extra, Field, ValidationError, root_validator, validator
 from pydantic.error_wrappers import ErrorWrapper
 from pydantic.main import BaseModel, ModelMetaclass
 
-from ..types import PythonName
+from npe2.types import PythonName
+
 from . import _validators
 from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
@@ -377,7 +378,6 @@ class PluginManifest(ImportExportModel):
         entry_point: metadata.EntryPoint,
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
-
         assert (match := entry_point.pattern.match(entry_point.value))
         module = match.group("module")
 
@@ -494,11 +494,11 @@ def _noop(*_, **__):
 @contextmanager
 def discovery_blocked():
     orig = PluginManifest.discover
-    setattr(PluginManifest, "discover", _noop)
+    PluginManifest.discover = _noop  # type: ignore [assignment]
     try:
         yield
     finally:
-        setattr(PluginManifest, "discover", orig)
+        PluginManifest.discover = orig  # type: ignore [assignment]
 
 
 @contextmanager

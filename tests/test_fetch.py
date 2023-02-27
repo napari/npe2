@@ -4,7 +4,6 @@ from importlib.metadata import PackageNotFoundError
 from unittest.mock import patch
 
 import pytest
-
 from npe2 import PluginManifest, fetch_manifest
 from npe2._inspection._fetch import (
     _manifest_from_pypi_sdist,

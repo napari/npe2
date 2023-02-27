@@ -3,11 +3,10 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pytest
-from typer.testing import CliRunner
-
 from npe2 import __version__
 from npe2.cli import app, main
 from npe2.manifest.schema import PluginManifest
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -19,7 +18,7 @@ def test_cli_validate_ok(sample_path, debug, imports, monkeypatch):
     if debug:
         cmd += [debug]
     with monkeypatch.context() as m:
-        m.setattr(sys, "path", sys.path + [str(sample_path)])
+        m.setattr(sys, "path", [*sys.path, str(sample_path)])
         result = runner.invoke(app, cmd)
     assert "✔ Manifest for 'My Plugin' valid!" in result.stdout
     assert result.exit_code == 0

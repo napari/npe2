@@ -3,9 +3,8 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from magicgui import magic_factory
-from qtpy.QtWidgets import QWidget
-
 from npe2.types import LayerData, PathOrPaths, ReaderFunction
+from qtpy.QtWidgets import QWidget
 
 if TYPE_CHECKING:
     import napari.types

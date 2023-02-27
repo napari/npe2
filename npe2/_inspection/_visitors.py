@@ -6,7 +6,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Tuple, Type, Union
 
-from ..manifest import contributions
+from npe2.manifest import contributions
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -45,13 +45,13 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
         self._match = match
         self._names: Dict[str, str] = {}
 
-    def visit_Import(self, node: ast.Import) -> Any:  # noqa: D102
+    def visit_Import(self, node: ast.Import) -> Any:
         # https://docs.python.org/3/library/ast.html#ast.Import
         for alias in node.names:
             self._names[alias.asname or alias.name] = alias.name
         return super().generic_visit(node)
 
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:  # noqa: D102
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
         # https://docs.python.org/3/library/ast.html#ast.ImportFrom
         module = node.module
         if node.level > 0:
@@ -61,11 +61,11 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
             self._names[alias.asname or alias.name] = f"{module}.{alias.name}"
         return super().generic_visit(node)
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:  # noqa: D102
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
         # https://docs.python.org/3/library/ast.html#ast.FunctionDef
         self._find_decorators(node)
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> Any:  # noqa: D102
+    def visit_ClassDef(self, node: ast.ClassDef) -> Any:
         self._find_decorators(node)
 
     def _find_decorators(self, node: Union[ast.ClassDef, ast.FunctionDef]):
@@ -170,7 +170,7 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         self._store_contrib(decorator_name, node.name, decorator_kwargs)
 
     def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
-        from ..implements import CHECK_ARGS_PARAM  # circ import
+        from npe2.implements import CHECK_ARGS_PARAM  # circ import
 
         kwargs.pop(CHECK_ARGS_PARAM, None)
         ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
@@ -258,7 +258,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         self.contribution_points["writers"].append(wrt_contrib)
 
     def napari_provide_sample_data(self, node: ast.FunctionDef):
-        from ..manifest.utils import safe_key
+        from npe2.manifest.utils import safe_key
 
         return_ = next(n for n in node.body if isinstance(n, ast.Return))
         if not isinstance(return_.value, ast.Dict):
@@ -277,7 +277,6 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
             # sample should now either be a callable, or a string
             if isinstance(val, ast.Name):
-
                 cmd_id = f"{self.plugin_name}.{val.id}"
                 py_name = f"{self.module_name}:{val.id}"
                 cmd_contrib = contributions.CommandContribution(
