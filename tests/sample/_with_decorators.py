@@ -1,3 +1,4 @@
+# mypy: disable-error-code=empty-body
 """This module mimics all of the contributions my-plugin...
 but is used to reverse-engineer the manifest."""
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple

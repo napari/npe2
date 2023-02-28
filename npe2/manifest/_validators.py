@@ -1,7 +1,7 @@
 import re
 
 _package_name = "([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])"
-_python_identifier = "([a-zA-Z_][a-zA-Z_0-9]*)"  # noqa
+_python_identifier = "([a-zA-Z_][a-zA-Z_0-9]*)"
 
 # how do we deal with keywords ?
 # do we try to validate ? Or do we just

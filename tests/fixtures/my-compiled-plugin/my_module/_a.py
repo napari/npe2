@@ -1,3 +1,4 @@
+# mypy: disable-error-code=empty-body
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 # alternative pattern that does not require npe2 at runtime

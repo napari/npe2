@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic.fields import Field
 
-from ..utils import Executable
+from npe2.manifest.utils import Executable
 
 
 class KeyBindingContribution(Executable):

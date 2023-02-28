@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import Iterator, List, Sequence, Tuple, Union, cast
 
-from ..manifest import PluginManifest, contributions
-from ..manifest.utils import merge_contributions, merge_manifests
+from npe2.manifest import PluginManifest, contributions
+from npe2.manifest.utils import merge_contributions, merge_manifests
+
 from ._setuputils import get_package_dir_info
 from ._visitors import find_npe2_module_contributions
 

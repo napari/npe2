@@ -4,7 +4,7 @@ import re
 import sys
 import warnings
 from configparser import ConfigParser
-from functools import lru_cache
+from functools import lru_cache, partial
 from importlib import import_module, metadata
 from logging import getLogger
 from pathlib import Path
@@ -100,7 +100,7 @@ def plugin_packages() -> List[PackageInfo]:
 
 def manifest_from_npe1(
     plugin: Union[str, metadata.Distribution, None] = None,
-    module: Any = None,
+    module: Optional[Any] = None,
     adapter=False,
 ) -> PluginManifest:
     """Return manifest object given npe1 plugin or package name.
@@ -126,7 +126,6 @@ def manifest_from_npe1(
         package_name = "dynamic"
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
     elif isinstance(plugin, str):
-
         modules = []
         plugin_name = plugin
         for pp in plugin_packages():
@@ -227,7 +226,6 @@ class HookImplParser:
             )
 
     def napari_get_reader(self, impl: HookImplementation):
-
         patterns = _guess_fname_patterns(impl.function)
 
         self.contributions["readers"].append(
@@ -279,7 +277,6 @@ class HookImplParser:
 
         for idx, item in enumerate(items):
             try:
-
                 cmd = f"{self.package}.{item.__name__}"
                 py_name = _python_name(
                     item, impl.function, hook_idx=idx if self.adapter else None
@@ -414,15 +411,11 @@ class HookImplParser:
 
 
 def _is_magicgui_magic_factory(obj):
-    try:
-        import magicgui
-    except ImportError:
-        return False
-    return isinstance(obj, magicgui._magicgui.MagicFactory)
+    return "magicgui" in sys.modules and isinstance(obj, partial)
 
 
 def _python_name(
-    obj: Any, hook: Callable = None, hook_idx: Optional[int] = None
+    obj: Any, hook: Optional[Callable] = None, hook_idx: Optional[int] = None
 ) -> str:
     """Get resolvable python name for `obj` returned from an npe1 `hook` implentation.
 

@@ -88,7 +88,7 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
         return _store_attrs
 
     # set the signature and return the decorator
-    setattr(_deco, "__signature__", signature)
+    _deco.__signature__ = signature  # type: ignore
     return _deco
 
 
@@ -102,11 +102,11 @@ sample_data_generator = _build_decorator(contributions.SampleDataGenerator)
 
 def on_activate(func):
     """Mark a function to be called when a plugin is activated."""
-    setattr(func, "npe2_on_activate", True)
+    func.npe2_on_activate = True
     return func
 
 
 def on_deactivate(func):
     """Mark a function to be called when a plugin is deactivated."""
-    setattr(func, "npe2_on_deactivate", True)
+    func.npe2_on_deactivate = True
     return func

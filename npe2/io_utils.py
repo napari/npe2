@@ -56,7 +56,7 @@ def read_get_reader(
     path: Union[str, Sequence[str]],
     *,
     plugin_name: Optional[str] = None,
-    stack: bool = None,
+    stack: Optional[bool] = None,
 ) -> Tuple[List[LayerData], ReaderContribution]:
     """Variant of `read` that also returns the `ReaderContribution` used."""
     if stack is None:
@@ -197,7 +197,6 @@ def _write(
     return_writer: bool = False,
     _pm: Optional[PluginManager] = None,
 ) -> Union[List[str], Tuple[List[str], WriterContribution]]:
-
     if not layer_data:
         raise ValueError("Must provide layer data")
     if _pm is None:

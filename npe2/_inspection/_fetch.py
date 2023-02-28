@@ -76,8 +76,8 @@ def _manifest_from_npe2_dist(
 def _manifest_from_npe1_dist(dist: metadata.PathDistribution) -> PluginManifest:
     """Extract plugin manifest from a distribution with an npe1 entry point."""
     from npe2.manifest import PluginManifest
+    from npe2.manifest.utils import merge_contributions
 
-    from ..manifest.utils import merge_contributions
     from . import find_npe1_module_contributions
 
     name = dist.metadata["Name"]
@@ -175,8 +175,8 @@ def _get_manifest_from_wheel_url(url: str) -> PluginManifest:
 
     Examples
     --------
-    $ npe2 fetch https://files.pythonhosted.org/packages/b0/93/a00a1ee154d5ce3540dd5ae081dc53fcfa7498f34ba68a7345ac027a4f96/pycudadecon-0.3.0-py3-none-any.whl  # noqa
-    """
+    $ npe2 fetch https://files.pythonhosted.org/packages/b0/93/a00a1ee154d5ce3540dd5ae081dc53fcfa7498f34ba68a7345ac027a4f96/pycudadecon-0.3.0-py3-none-any.whl
+    """  # noqa
     with _tmp_zip_download(url) as wheel_dir:
         return _manifest_from_extracted_wheel(wheel_dir)
 
@@ -186,8 +186,8 @@ def _get_manifest_from_targz_url(url: str) -> PluginManifest:
 
     Examples
     --------
-    $ npe2 fetch https://files.pythonhosted.org/packages/4a/84/de031ba465f183c319cb37633c49dfebd57f1ff42bc9744db3f80f7f4093/pycudadecon-0.3.0.tar.gz  # noqa
-    """
+    $ npe2 fetch https://files.pythonhosted.org/packages/4a/84/de031ba465f183c319cb37633c49dfebd57f1ff42bc9744db3f80f7f4093/pycudadecon-0.3.0.tar.gz
+    """  # noqa
     with _tmp_targz_download(url) as targz_path:
         src_dir = next(Path(targz_path).iterdir())  # find first directory
         return _build_src_and_extract_manifest(src_dir)
@@ -234,9 +234,9 @@ def fetch_manifest(
     >>> fetch_manifest("https://github.com/tlambert03/napari-dv")
     >>> fetch_manifest("git+https://github.com/tlambert03/napari-dv.git")
     >>> fetch_manifest("https://github.com/org/project/archive/refs/heads/master.zip")
-    >>> fetch_manifest("https://files.pythonhosted.org/.../package-0.3.0-py3-none-any.whl")  # noqa
+    >>> fetch_manifest("https://files.pythonhosted.org/.../package-0.3.0-py3-none-any.whl")
     >>> fetch_manifest("https://files.pythonhosted.org/.../package-0.3.0.tar.gz")
-    """
+    """  # noqa
     # not on PyPI check various URL forms
     if package_or_url.startswith(("http", "git+http")):
         if package_or_url.endswith(".zip"):

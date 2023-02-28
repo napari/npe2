@@ -29,10 +29,10 @@ def test_package_metadata_extra_field():
 
     try:
         p = PackageMetadata(**pkg)
-    except Exception:
+    except Exception as e:
         raise AssertionError(
             "failed to parse PackageMetadata from a dict with an extra field"
-        )
+        ) from e
 
     assert p.name == "test"
     assert p.version == "1.0"

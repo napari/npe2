@@ -1,3 +1,4 @@
+# mypy: disable-error-code=empty-body
 """Convenience module to access methods on the global PluginManager singleton."""
 from __future__ import annotations
 
@@ -28,7 +29,10 @@ def discover(paths: Sequence[str] = (), clear=False, include_npe1=False) -> None
 
 
 def dict(
-    self, *, include: InclusionSet = None, exclude: InclusionSet = None
+    self,
+    *,
+    include: Optional[InclusionSet] = None,
+    exclude: Optional[InclusionSet] = None,
 ) -> Dict[str, Any]:
     """Return a dictionary with the state of the plugin manager."""
 
@@ -113,9 +117,9 @@ def iter_widgets() -> Iterator[contributions.WidgetContribution]:
     """Iterate over discovered WidgetContributions."""
 
 
-def iter_sample_data() -> Iterator[
-    Tuple[PluginName, List[contributions.SampleDataContribution]]
-]:
+def iter_sample_data() -> (
+    Iterator[Tuple[PluginName, List[contributions.SampleDataContribution]]]
+):
     """Iterates over (plugin_name, [sample_contribs])."""
 
 

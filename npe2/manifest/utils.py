@@ -21,12 +21,12 @@ from typing import (
 from pydantic import PrivateAttr
 from pydantic.generics import GenericModel
 
-from ..types import PythonName
+from npe2.types import PythonName
 
 if TYPE_CHECKING:
+    from npe2._command_registry import CommandRegistry
     from npe2.manifest.schema import PluginManifest
 
-    from .._command_registry import CommandRegistry
     from .contributions import ContributionPoints
 
 
@@ -54,7 +54,7 @@ class Executable(GenericModel, Generic[R]):
     def exec(
         self,
         args: tuple = (),
-        kwargs: dict = None,
+        kwargs: Optional[dict] = None,
         _registry: Optional[CommandRegistry] = None,
     ) -> R:
         if kwargs is None:
@@ -66,7 +66,7 @@ class Executable(GenericModel, Generic[R]):
         _registry: Optional[CommandRegistry] = None,
     ) -> Callable[..., R]:
         if _registry is None:
-            from .._plugin_manager import PluginManager
+            from npe2._plugin_manager import PluginManager
 
             _registry = PluginManager.instance().commands
         return _registry.get(self.command)

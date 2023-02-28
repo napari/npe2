@@ -139,5 +139,5 @@ class _SetupVisitor(ast.NodeVisitor):
             return tuple(self._get_val(k) for k in node.elts)
         return str(node)  # pragma: no cover
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: Optional[Any] = None) -> Any:
         return self._setup_kwargs.get(key, default)
