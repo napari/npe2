@@ -135,6 +135,9 @@ class _ContributionsIndex:
             return
         assert isinstance(path, str)
 
+        # use lower() to make matching case-insensitive
+        path = path.lower()
+
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
@@ -142,7 +145,8 @@ class _ContributionsIndex:
             # but would we yield duplicate anymore.
             # above does not have have the unseen check either.
             # it's easy to make an iterable version if we wish, or use more-itertools.
-            yield from {r for pattern, r in self._readers if fnmatch(path, pattern)}
+            # match against pattern.lower() to make matching case insensitive
+            yield from {r for pattern, r in self._readers if fnmatch(path, pattern.lower())}
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
