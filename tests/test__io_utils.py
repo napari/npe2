@@ -14,7 +14,7 @@ def test_read(uses_sample_plugin):
 
 def test_read_with_unknown_plugin(uses_sample_plugin):
     # no such plugin name.... skips over the sample plugin & error is specific
-    with pytest.raises(ValueError, match="Plugin nope was selected"):
+    with pytest.raises(ValueError, match="Plugin 'nope' was selected"):
         read(["some.fzzy"], plugin_name="nope", stack=False)
 
 

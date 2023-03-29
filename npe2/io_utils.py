@@ -165,7 +165,7 @@ def _read(
 
     if plugin_name:
         raise ValueError(
-            f"Plugin {plugin_name} was selected to open "
+            f"Plugin {plugin_name!r} was selected to open "
             + f"{paths!r}, but returned no data."
         )
     raise ValueError(f"No readers returned data for {paths!r}")
