@@ -158,11 +158,9 @@ def _read(
         if plugin_name and not rdr.command.startswith(plugin_name):
             continue
         read_func = rdr.exec(kwargs={"path": paths, "stack": stack})
-        print(read_func)
         if read_func is not None:
             # if the reader function raises an exception here, we don't try to catch it
             if layer_data := read_func(paths, stack=stack):
-                print(layer_data)
                 return (layer_data, rdr) if return_reader else layer_data
 
     if plugin_name:
