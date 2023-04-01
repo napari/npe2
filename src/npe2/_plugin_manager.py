@@ -135,6 +135,10 @@ class _ContributionsIndex:
             return
         assert isinstance(path, str)
 
+        # lower case the extension for checking manifest pattern
+        base, ext = os.path.splitext(path)
+        path = base + ext.lower()
+
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
