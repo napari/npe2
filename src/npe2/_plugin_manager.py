@@ -134,7 +134,7 @@ class _ContributionsIndex:
         if not path:
             return
         assert isinstance(path, str)
-        
+
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
