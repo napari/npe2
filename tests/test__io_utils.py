@@ -12,10 +12,16 @@ def test_read(uses_sample_plugin):
     assert read(["some.fzzy"], stack=False) == [(None,)]
 
 
-def test_read_with_plugin(uses_sample_plugin):
-    # no such plugin name.... but skips over the sample plugin
-    with pytest.raises(ValueError):
+def test_read_with_unknown_plugin(uses_sample_plugin):
+    # no such plugin name.... skips over the sample plugin & error is specific
+    with pytest.raises(ValueError, match="Plugin 'nope' was selected"):
         read(["some.fzzy"], plugin_name="nope", stack=False)
+
+
+def test_read_with_no_plugin():
+    # no plugin passed and none registered
+    with pytest.raises(ValueError, match="No readers returned"):
+        read(["some.nope"], stack=False)
 
 
 def test_read_return_reader(uses_sample_plugin):
