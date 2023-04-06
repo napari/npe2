@@ -76,11 +76,7 @@ finalize_npe2 = "npe2._setuptools_plugin:finalize_npe2"
 
 
 [tool.check-manifest]
-ignore = [
-    "src/npe2/_version.py",
-    ".pre-commit-config.yaml",
-    ".github_changelog_generator",
-]
+ignore = []
 
 [tool.pytest.ini_options]
 filterwarnings = ["error:::npe2"]
