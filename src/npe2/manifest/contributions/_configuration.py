@@ -107,7 +107,8 @@ class ConfigurationProperty(Draft07JsonSchema):
                 del values[ignored]
                 warnings.warn(
                     f"ignoring {ignored} in configuration property. "
-                    "Configuration schemas must be self-contained."
+                    "Configuration schemas must be self-contained.",
+                    stacklevel=2,
                 )
         return values
 
