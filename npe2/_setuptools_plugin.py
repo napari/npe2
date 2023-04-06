@@ -58,13 +58,15 @@ def _check_absolute_root(root: PathT, relative_to: PathT | None) -> str:
             and os.path.commonpath([root, relative_to]) != relative_to
         ):
             warnings.warn(
-                f"absolute root path '{root}' overrides relative_to '{relative_to}'"
+                f"absolute root path '{root}' overrides relative_to '{relative_to}'",
+                stacklevel=2,
             )
         if os.path.isdir(relative_to):
             warnings.warn(
                 "relative_to is expected to be a file,"
                 " its the directory {relative_to!r}\n"
-                "assuming the parent directory was passed"
+                "assuming the parent directory was passed",
+                stacklevel=2,
             )
             trace("dir", relative_to)
             root = os.path.join(relative_to, root)

@@ -104,7 +104,8 @@ class NPE1Adapter(PluginManifest):
             except Exception as e:
                 warnings.warn(
                     "Error importing contributions for first-generation "
-                    f"napari plugin {self.name!r}: {e}"
+                    f"napari plugin {self.name!r}: {e}",
+                    stacklevel=2,
                 )
                 return
 

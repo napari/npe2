@@ -258,7 +258,8 @@ class PluginManifest(ImportExportModel):
             warnings.warn(
                 f"The declared schema version for plugin {mf_name!r} "
                 f"({declared_version}) is newer than npe2's schema version "
-                f"({current_version}). Things may break, you should upgrade npe2."
+                f"({current_version}). Things may break, you should upgrade npe2.",
+                stacklevel=2,
             )
 
         invalid_commands: List[str] = []
@@ -494,11 +495,11 @@ def _noop(*_, **__):
 @contextmanager
 def discovery_blocked():
     orig = PluginManifest.discover
-    PluginManifest.discover = _noop  # type: ignore [assignment]
+    PluginManifest.discover = _noop  # type: ignore [method-assign]
     try:
         yield
     finally:
-        PluginManifest.discover = orig  # type: ignore [assignment]
+        PluginManifest.discover = orig  # type: ignore [method-assign]
 
 
 @contextmanager

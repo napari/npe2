@@ -16,7 +16,8 @@ class TestPluginManager(PluginManager):
 
         warnings.warn(
             "TestPluginManager is unable to discover plugins. "
-            "Please use `tmp_plugin()` to add a plugin to this plugin manager."
+            "Please use `tmp_plugin()` to add a plugin to this plugin manager.",
+            stacklevel=2,
         )
         return 0
 
@@ -62,7 +63,8 @@ class TestPluginManager(PluginManager):
             if package or name:  # pragma: no cover
                 warnings.warn(
                     "`manifest` overrides the `package` and `name` arguments. "
-                    "Please provide only one."
+                    "Please provide only one.",
+                    stacklevel=2,
                 )
             if isinstance(manifest, PluginManifest):
                 mf = manifest
@@ -71,7 +73,8 @@ class TestPluginManager(PluginManager):
         elif package:
             if name:  # pragma: no cover
                 warnings.warn(
-                    "`package` overrides the `name` argument. Please provide only one."
+                    "`package` overrides the `name` argument. Please provide only one.",
+                    stacklevel=2,
                 )
             mf = PluginManifest.from_distribution(package)
         else:

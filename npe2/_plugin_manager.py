@@ -338,7 +338,8 @@ class PluginManager:
             if warn_disabled:
                 warnings.warn(
                     f"Disabled plugin {manifest.name!r} was registered, but will not "
-                    "be indexed. Use `warn_disabled=False` to suppress this message."
+                    "be indexed. Use `warn_disabled=False` to suppress this message.",
+                    stacklevel=2,
                 )
         elif isinstance(manifest, NPE1Adapter):
             self._npe1_adapters.append(manifest)

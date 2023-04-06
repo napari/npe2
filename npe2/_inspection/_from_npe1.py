@@ -206,7 +206,8 @@ class HookImplParser:
                     getattr(self, impl.specname)(impl)
                 except Exception as e:  # pragma: no cover
                     warnings.warn(
-                        f"Failed to convert {impl.specname} in {self.package!r}: {e}"
+                        f"Failed to convert {impl.specname} in {self.package!r}: {e}",
+                        stacklevel=2,
                     )
 
     def napari_experimental_provide_theme(self, impl: HookImplementation):
@@ -299,7 +300,7 @@ class HookImplParser:
                     f"Error converting function [{idx}] "
                     f"from {impl.function.__module__!r}:\n{e}"
                 )
-                warnings.warn(msg)
+                warnings.warn(msg, stacklevel=2)
 
     def napari_experimental_provide_dock_widget(self, impl: HookImplementation):
         WidgetCallable = Union[Callable, Tuple[Callable, dict]]
@@ -318,7 +319,9 @@ class HookImplParser:
             if not callable(wdg_creator) and isinstance(
                 kwargs, dict
             ):  # pragma: no cover
-                warnings.warn(f"Invalid widget spec: {wdg_creator}, {kwargs}")
+                warnings.warn(
+                    f"Invalid widget spec: {wdg_creator}, {kwargs}", stacklevel=2
+                )
                 continue
 
             try:
@@ -332,7 +335,7 @@ class HookImplParser:
                     f"Error converting dock widget [{idx}] "
                     f"from {impl.function.__module__!r}:\n{e}"
                 )
-                warnings.warn(msg)
+                warnings.warn(msg, stacklevel=2)
 
     def _create_widget_contrib(
         self,
@@ -369,7 +372,8 @@ class HookImplParser:
     def napari_get_writer(self, impl: HookImplementation):
         warnings.warn(
             f"Found a multi-layer writer in {self.package!r} - {impl.specname!r}, "
-            "but it's not convertable. Please add the writer manually."
+            "but it's not convertable. Please add the writer manually.",
+            stacklevel=2,
         )
         return NotImplemented  # pragma: no cover
 
@@ -559,7 +563,8 @@ def convert_repository(
            ],
        }},
        package_data={{"{info.top_module}": ["{mf_name}"]}},
-"""
+""",
+            stacklevel=2,
         )
 
     # write the yaml to top_module/napari.yaml
