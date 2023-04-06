@@ -1,5 +1,2 @@
-graft tests
-graft docs
-
 include CHANGELOG.md
 include Makefile

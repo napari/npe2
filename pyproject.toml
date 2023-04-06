@@ -89,7 +89,9 @@ ignore = [
     "src/npe2/_version.py",
     ".pre-commit-config.yaml",
     ".github_changelog_generator",
+    "tests/**/*",
     "_docs/**/*",
+    "docs/**/*",
     "codecov.yml",
 ]
 
