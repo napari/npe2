@@ -162,6 +162,12 @@ def _read(
             # if the reader function raises an exception here, we don't try to catch it
             if layer_data := read_func(paths, stack=stack):
                 return (layer_data, rdr) if return_reader else layer_data
+
+    if plugin_name:
+        raise ValueError(
+            f"Plugin {plugin_name!r} was selected to open "
+            + f"{paths!r}, but returned no data."
+        )
     raise ValueError(f"No readers returned data for {paths!r}")
 
 
