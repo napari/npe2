@@ -1,2 +1,10 @@
 include CHANGELOG.md
 include Makefile
+
+recursive-include tests *
+
+exclude codecov.yml
+recursive-exclude docs *
+recursive-exclude _docs *
+
+global-exclude */__pycache__/*
