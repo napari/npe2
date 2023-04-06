@@ -58,7 +58,8 @@ specification:
 
 ### Widget example
 
-````{tabbed} npe2
+::::{tab-set}
+:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -73,9 +74,9 @@ See [Widgets contribution reference](contributions-widgets) for field details.
 ```yaml
 {{ 'widgets'|example_contribution }}
 ```
-````
+:::
 
-````{tabbed} napari-plugin-engine
+:::{tab-item} napari-plugin-engine
 
 ```{admonition} Deprecated!
 This demonstrates the now-deprecated `napari-plugin-engine` pattern.
@@ -130,4 +131,5 @@ def napari_experimental_provide_dock_widget():
 def napari_experimental_provide_function():
     return [threshold]
 ```
-````
+:::
+::::

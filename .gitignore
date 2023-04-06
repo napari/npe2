@@ -103,7 +103,7 @@ ENV/
 
 # IDE settings
 .vscode/
-npe2/_version.py
+src/npe2/_version.py
 
 # ignore everything that gets rendered from _docs
 docs/plugins/*.md

@@ -23,5 +23,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Automatic changelog update
-          title: Automatic Changelog update
+          title: changelog ${{ github.event.inputs.next_tag }}
           branch: update-changelog

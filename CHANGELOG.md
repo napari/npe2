@@ -1,5 +1,41 @@
 # Changelog
 
+## [v0.6.2](https://github.com/napari/npe2/tree/v0.6.2) (2023-01-12)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.6.1...v0.6.2)
+
+**Implemented enhancements:**
+
+- Expose `syntax_style` [\#261](https://github.com/napari/npe2/pull/261) ([brisvag](https://github.com/brisvag))
+- enable keybinding contribution [\#254](https://github.com/napari/npe2/pull/254) ([kne42](https://github.com/kne42))
+- Add count of discovered plugins [\#248](https://github.com/napari/npe2/pull/248) ([Czaki](https://github.com/Czaki))
+- fix: relax display name validation [\#242](https://github.com/napari/npe2/pull/242) ([tlambert03](https://github.com/tlambert03))
+- feat: add more fetch sources [\#240](https://github.com/napari/npe2/pull/240) ([tlambert03](https://github.com/tlambert03))
+- feat: add category [\#239](https://github.com/napari/npe2/pull/239) ([tlambert03](https://github.com/tlambert03))
+- bug: ignore extra fields on manifest [\#237](https://github.com/napari/npe2/pull/237) ([tlambert03](https://github.com/tlambert03))
+- feat: add icon to manifest [\#235](https://github.com/napari/npe2/pull/235) ([tlambert03](https://github.com/tlambert03))
+- add visibility field [\#234](https://github.com/napari/npe2/pull/234) ([tlambert03](https://github.com/tlambert03))
+
+**Fixed bugs:**
+
+- Fix PackageMetadata validation error with extra provided field [\#256](https://github.com/napari/npe2/pull/256) ([aganders3](https://github.com/aganders3))
+- fix: alternate fix for dotted plugin\_name [\#238](https://github.com/napari/npe2/pull/238) ([tlambert03](https://github.com/tlambert03))
+
+**Tests & CI:**
+
+- fix flaky fetch tests [\#255](https://github.com/napari/npe2/pull/255) ([nclack](https://github.com/nclack))
+
+**Documentation:**
+
+- Move to sphinx-design tabs [\#259](https://github.com/napari/npe2/pull/259) ([melissawm](https://github.com/melissawm))
+- Fix a few broken links [\#258](https://github.com/napari/npe2/pull/258) ([melissawm](https://github.com/melissawm))
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump styfle/cancel-workflow-action from 0.10.1 to 0.11.0 [\#252](https://github.com/napari/npe2/pull/252) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump styfle/cancel-workflow-action from 0.10.0 to 0.10.1 [\#246](https://github.com/napari/npe2/pull/246) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Add setuptools plugin to compile manifest at build [\#194](https://github.com/napari/npe2/pull/194) ([tlambert03](https://github.com/tlambert03))
+
 ## [v0.6.1](https://github.com/napari/npe2/tree/v0.6.1) (2022-08-08)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.6.0...v0.6.1)
@@ -7,6 +43,10 @@
 **Fixed bugs:**
 
 - fix command id validation when dot in package name [\#230](https://github.com/napari/npe2/pull/230) ([tlambert03](https://github.com/tlambert03))
+
+**Merged pull requests:**
+
+- changelog v0.6.1 [\#231](https://github.com/napari/npe2/pull/231) ([tlambert03](https://github.com/tlambert03))
 
 ## [v0.6.0](https://github.com/napari/npe2/tree/v0.6.0) (2022-08-07)
 
@@ -117,7 +157,7 @@
 
 ## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.4.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.4.0)
 
 **Implemented enhancements:**
 
@@ -147,13 +187,13 @@
 - Add doc links to README [\#158](https://github.com/napari/npe2/pull/158) ([nclack](https://github.com/nclack))
 - Fix codeblock directive in docstring [\#156](https://github.com/napari/npe2/pull/156) ([melissawm](https://github.com/melissawm))
 
-## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
-
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.3.0)
-
 ## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0.rc0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.3.0.rc0)
+
+## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0)
 
 **Implemented enhancements:**
 

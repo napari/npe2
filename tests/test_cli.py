@@ -19,7 +19,7 @@ def test_cli_validate_ok(sample_path, debug, imports, monkeypatch):
     if debug:
         cmd += [debug]
     with monkeypatch.context() as m:
-        m.setattr(sys, "path", sys.path + [str(sample_path)])
+        m.setattr(sys, "path", [*sys.path, str(sample_path)])
         result = runner.invoke(app, cmd)
     assert "✔ Manifest for 'My Plugin' valid!" in result.stdout
     assert result.exit_code == 0

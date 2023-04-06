@@ -3,12 +3,90 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
+# https://peps.python.org/pep-0621/
+[project]
+name = "npe2"
+dynamic = ["version"]
+description = "napari plugin engine v2"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Talley Lambert", email = "talley.lambert@gmail.com" },
+    { name = "Nathan Clack" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Typing :: Typed",
+]
+dependencies = [
+    "PyYAML",
+    "appdirs",
+    "build",
+    "psygnal>=0.3.0",
+    "pydantic<2",
+    "pytomlpp",
+    "rich",
+    "typer",
+]
+
+[project.urls]
+homepage = "https://github.com/napari/npe2"
+repository = "https://github.com/napari/npe2"
+
+# https://peps.python.org/pep-0621/#dependencies-optional-dependencies
+[project.optional-dependencies]
+testing = [
+    "magicgui",
+    "napari-plugin-engine",
+    "napari-svg",
+    "numpy",
+    "pytest",
+    "pytest-cov",
+    "jsonschema",
+]
+dev = ["black", "ipython", "isort", "mypy", "pre-commit"]
+docs = ["Jinja2", "magicgui>=0.3.3"]
+json = ["jsonschema"]
+
+# Entry points
+# https://peps.python.org/pep-0621/#entry-points
+# same as console_scripts entry point
+[project.scripts]
+npe2 = "npe2.cli:main"
+
+[project.entry-points."distutils.commands"]
+npe2_compile = "npe2._setuptools_plugin:npe2_compile"
+
+[project.entry-points."pytest11"]
+npe2 = "npe2._pytest_plugin"
+
+[project.entry-points."setuptools.finalize_distribution_options"]
+finalize_npe2 = "npe2._setuptools_plugin:finalize_npe2"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.pyi", "py.typed"]
+
 [tool.setuptools_scm]
-write_to = "npe2/_version.py"
+write_to = "src/npe2/_version.py"
 
 [tool.check-manifest]
 ignore = [
-    "npe2/_version.py",
+    "src/npe2/_version.py",
     ".pre-commit-config.yaml",
     ".github_changelog_generator",
 ]
@@ -23,3 +101,69 @@ markers = [
 [tool.black]
 target-version = ['py38', 'py39', 'py310']
 line-length = 88
+
+# https://github.com/charliermarsh/ruff
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+fix = true
+src = ["src/npe2", "tests"]
+select = [
+    "E",
+    "F",
+    "W",   #flake8
+    "UP",  # pyupgrade
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "TID", # flake8-tidy-imports
+    "RUF", # ruff-specific rules
+]
+
+[tool.ruff.per-file-ignores]
+"src/npe2/cli.py" = ["B008", "A00"]
+
+[tool.ruff.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.ruff.isort]
+known-first-party = ['npe2']
+
+# https://mypy.readthedocs.io/en/stable/config_file.html
+[tool.mypy]
+files = "src/**/*.py"
+warn_unused_configs = true
+warn_unused_ignores = true
+check_untyped_defs = true
+implicit_reexport = false
+show_column_numbers = true
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "src/npe2/manifest/contributions/_keybindings.py",
+    "src/npe2/manifest/menus.py",
+    "src/npe2/manifest/package_metadata.py",
+    # due to all of the isolated sub-environments and sub-processes,
+    # it's really hard to get coverage on the setuptools plugin.
+    "src/npe2/_setuptools_plugin.py",
+]
+
+# https://coverage.readthedocs.io/en/6.4/config.html
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise AssertionError",
+    "@overload",
+    "@abstractmethod",
+    "except ImportError",
+    "\\.\\.\\.",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
