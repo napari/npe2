@@ -16,7 +16,8 @@ def test_read_with_unknown_plugin(uses_sample_plugin):
     # no such plugin name.... skips over the sample plugin & error is specific
     with pytest.raises(ValueError, match="Plugin 'nope' was selected"):
         read(["some.fzzy"], plugin_name="nope", stack=False)
-        
+
+
 def test_read_uppercase_extension(uses_sample_plugin):
     # sample plugin hard-codes lower case and returns this error
     # so the error ensures the matching was case-insensitive

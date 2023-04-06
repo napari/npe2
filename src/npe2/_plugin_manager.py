@@ -147,7 +147,9 @@ class _ContributionsIndex:
             # above does not have have the unseen check either.
             # it's easy to make an iterable version if we wish, or use more-itertools.
             # match against pattern.lower() to make matching case insensitive
-            yield from {r for pattern, r in self._readers if fnmatch(path, pattern.lower())}
+            yield from {
+                r for pattern, r in self._readers if fnmatch(path, pattern.lower())
+            }
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
