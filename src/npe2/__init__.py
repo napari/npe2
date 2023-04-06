@@ -2,7 +2,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("npe2")
-except PackageNotFoundError:
+except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 __author__ = "Talley Lambert"
 __email__ = "talley.lambert@gmail.com"
