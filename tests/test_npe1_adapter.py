@@ -167,7 +167,7 @@ def test_adapter_error_on_import():
 
     with pytest.warns(UserWarning) as record:
         with patch.object(_npe1_adapter, "manifest_from_npe1", wraps=err):
-            adapter.contributions
+            _ = adapter.contributions
     assert "Error importing contributions for" in str(record[0])
 
 
@@ -181,4 +181,4 @@ def test_adapter_cache_fail(uses_npe1_plugin, mock_cache):
 
     with patch.object(_npe1_adapter.NPE1Adapter, "_save_to_cache", err):
         # shouldn't reraise the error
-        mf.contributions
+        _ = mf.contributions
