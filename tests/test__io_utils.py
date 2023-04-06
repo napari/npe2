@@ -16,6 +16,19 @@ def test_read_with_unknown_plugin(uses_sample_plugin):
     # no such plugin name.... skips over the sample plugin & error is specific
     with pytest.raises(ValueError, match="Plugin 'nope' was selected"):
         read(["some.fzzy"], plugin_name="nope", stack=False)
+        
+def test_read_uppercase_extension(uses_sample_plugin):
+    # sample plugin hard-codes lower case and returns this error
+    # so the error ensures the matching was case-insensitive
+    # and that the sample plugin received full path (with case)
+    with pytest.raises(ValueError, match="Test plugin should"):
+        read(["some.FZZY"], stack=False)
+
+
+def test_read_with_plugin(uses_sample_plugin):
+    # no such plugin name.... but skips over the sample plugin
+    with pytest.raises(ValueError):
+        read(["some.fzzy"], plugin_name="nope", stack=False)
 
 
 def test_read_with_no_plugin():
@@ -28,6 +41,16 @@ def test_read_return_reader(uses_sample_plugin):
     data, reader = read_get_reader("some.fzzy")
     assert data == [(None,)]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+
+def test_read_uppercase_extension_return_reader(uses_sample_plugin):
+    # sample plugin hard-codes lower case and returns this error
+    # so the error ensures the matching was case-insensitive
+    # and that the sample plugin received full path (with case)
+    with pytest.raises(ValueError, match="Test plugin should"):
+        data, reader = read_get_reader("some.FZZY")
+        assert data == [(None,)]
+        assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 def test_read_return_reader_with_stack(uses_sample_plugin):
