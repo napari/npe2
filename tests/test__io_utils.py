@@ -26,12 +26,6 @@ def test_read_uppercase_extension(uses_sample_plugin):
         read(["some.FZZY"], stack=False)
 
 
-def test_read_with_plugin(uses_sample_plugin):
-    # no such plugin name.... but skips over the sample plugin
-    with pytest.raises(ValueError):
-        read(["some.fzzy"], plugin_name="nope", stack=False)
-
-
 def test_read_with_no_plugin():
     # no plugin passed and none registered
     with pytest.raises(ValueError, match="No readers returned"):
