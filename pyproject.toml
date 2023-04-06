@@ -78,6 +78,9 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"*" = ["*.pyi", "py.typed"]
+
 [tool.setuptools_scm]
 write_to = "src/npe2/_version.py"
 
@@ -86,7 +89,8 @@ ignore = [
     "src/npe2/_version.py",
     ".pre-commit-config.yaml",
     ".github_changelog_generator",
-    "tests/**/*",
+    "_docs/**/*",
+    "codecov.yml",
 ]
 
 [tool.pytest.ini_options]
