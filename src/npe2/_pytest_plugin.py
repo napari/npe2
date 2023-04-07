@@ -1,3 +1,4 @@
+import logging
 import warnings
 from typing import Optional, Union
 from unittest.mock import patch
@@ -6,18 +7,17 @@ import pytest
 
 from npe2 import DynamicPlugin, PluginManager, PluginManifest
 
+logger = logging.getLogger(__name__)
+
 
 class TestPluginManager(PluginManager):
     """A PluginManager subclass suitable for use in testing."""
 
     def discover(self, *_, **__) -> int:
         """Discovery is blocked in the TestPluginManager."""
-        import warnings
-
-        warnings.warn(
-            "TestPluginManager is unable to discover plugins. "
-            "Please use `tmp_plugin()` to add a plugin to this plugin manager.",
-            stacklevel=2,
+        logger.warning(
+            "NOTE: TestPluginManager refusing to discover plugins. "
+            "You may add plugins to this test plugin manager using `tmp_plugin()`."
         )
         return 0
 

@@ -14,9 +14,11 @@ def test_something_1(npe2pm):
 CASE2 = """
 import pytest
 
-def test_something_2(npe2pm):
-    with pytest.warns(UserWarning, match='unable to discover plugins'):
-        npe2pm.discover()
+def test_something_2(npe2pm, caplog):
+    npe2pm.discover()
+    assert "TestPluginManager refusing to discover plugins" in caplog.text
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelname == "WARNING"
 """
 
 CASE3 = """
