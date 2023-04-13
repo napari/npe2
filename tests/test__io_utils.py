@@ -2,7 +2,15 @@
 
 import pytest
 
-from npe2 import read, read_get_reader, write, write_get_writer
+from npe2 import (
+    DynamicPlugin,
+    PluginManager,
+    io_utils,
+    read,
+    read_get_reader,
+    write,
+    write_get_writer,
+)
 from npe2.types import FullLayerData
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
@@ -72,3 +80,17 @@ def test_writer_single_layer_api_exec(uses_sample_plugin):
     # This writer doesn't do anything but type check.
     paths = write("test/path", [([], {}, "labels")])
     assert len(paths) == 1
+
+
+def test_read_non_global_pm():
+    pm = PluginManager()
+    plugin = DynamicPlugin("my-plugin", plugin_manager=pm)
+
+    @plugin.contribute.reader
+    def read_path(path):
+        def _reader(path):
+            return [(None,)]
+
+        return _reader
+
+    assert io_utils._read(["some.fzzy"], stack=False, _pm=pm) == [(None,)]
