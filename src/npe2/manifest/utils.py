@@ -59,7 +59,8 @@ class Executable(GenericModel, Generic[R]):
     ) -> R:
         if kwargs is None:
             kwargs = {}
-        return self.get_callable(_registry)(*args, **kwargs)
+        reg = _registry or kwargs.pop("_registry", None)
+        return self.get_callable(reg)(*args, **kwargs)
 
     def get_callable(
         self,
