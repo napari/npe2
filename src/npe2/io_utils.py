@@ -157,7 +157,9 @@ def _read(
     for rdr in _pm.iter_compatible_readers(paths):
         if plugin_name and not rdr.command.startswith(plugin_name):
             continue
-        read_func = rdr.exec(kwargs={"path": paths, "stack": stack})
+        read_func = rdr.exec(
+            kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
+        )
         if read_func is not None:
             # if the reader function raises an exception here, we don't try to catch it
             if layer_data := read_func(paths, stack=stack):
