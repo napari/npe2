@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import urllib
 import warnings
 from collections import Counter
 from fnmatch import fnmatch
@@ -135,14 +136,15 @@ class _ContributionsIndex:
             return
         assert isinstance(path, str)
 
-        # lower case the extension for checking manifest pattern
-        base = os.path.splitext(Path(path).stem)[0]
-        ext = "".join(Path(path).suffixes)
-        path = base + ext.lower()
-
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
+            # ensure not a URI
+            if urllib.parse.urlparse(path).scheme == "":
+                # lower case the extension for checking manifest pattern
+                base = os.path.splitext(Path(path).stem)[0]
+                ext = "".join(Path(path).suffixes)
+                path = base + ext.lower()
             # not sure about the set logic as it won't be lazy anymore,
             # but would we yield duplicate anymore.
             # above does not have have the unseen check either.
