@@ -26,14 +26,6 @@ def test_read_with_unknown_plugin(uses_sample_plugin):
         read(["some.fzzy"], plugin_name="nope", stack=False)
 
 
-def test_read_uppercase_extension(uses_sample_plugin):
-    # sample plugin hard-codes lower case and returns this error
-    # so the error ensures the matching was case-insensitive
-    # and that the sample plugin received full path (with case)
-    with pytest.raises(ValueError, match="Test plugin should"):
-        read(["some.FZZY"], stack=False)
-
-
 def test_read_with_no_plugin():
     # no plugin passed and none registered
     with pytest.raises(ValueError, match="No readers returned"):
@@ -44,16 +36,6 @@ def test_read_return_reader(uses_sample_plugin):
     data, reader = read_get_reader("some.fzzy")
     assert data == [(None,)]
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
-
-
-def test_read_uppercase_extension_return_reader(uses_sample_plugin):
-    # sample plugin hard-codes lower case and returns this error
-    # so the error ensures the matching was case-insensitive
-    # and that the sample plugin received full path (with case)
-    with pytest.raises(ValueError, match="Test plugin should"):
-        data, reader = read_get_reader("some.FZZY")
-        assert data == [(None,)]
-        assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 def test_read_return_reader_with_stack(uses_sample_plugin):
@@ -112,3 +94,91 @@ def test_read_non_global_pm():
         return _reader
 
     assert io_utils._read(["some.fzzy"], stack=False, _pm=pm) == [(None,)]
+
+
+def test_read_uppercase_extension():
+    pm = PluginManager()
+    plugin = DynamicPlugin("tif-plugin", plugin_manager=pm)
+    path = "something.TIF"
+
+    # reader should be compatible despite lowercase pattern
+    @plugin.contribute.reader(filename_patterns=["*.tif"])
+    def get_read(path):
+        if path.lower() != path:
+            # if this error is raised we can be certain path is unchanged
+            raise ValueError("Given path contains capitals.")
+
+        def read(paths):
+            return [(None,)]
+
+        return read
+
+    with pytest.raises(ValueError, match="Given path contains capitals."):
+        io_utils._read([path], stack=False, _pm=pm)
+
+
+@pytest.mark.parametrize(
+    "path", ["some_zarr_directory.ZARR", "some_zarr_directory.Zarr"]
+)
+def test_read_zarr_variants(path: str):
+    pm = PluginManager()
+    plugin = DynamicPlugin("zarr-plugin", plugin_manager=pm)
+
+    # reader should be compatible despite lowercase pattern
+    @plugin.contribute.reader(filename_patterns=["*.zarr"])
+    def get_read(path):
+        if path.lower() != path:
+            # if this error is raised we can be certain path is unchanged
+            raise ValueError("Given path contains capitals.")
+
+        def read(paths):
+            return [(None,)]
+
+        return read
+
+    with pytest.raises(ValueError, match="Given path contains capitals."):
+        io_utils._read([path], stack=False, _pm=pm)
+
+
+@pytest.mark.parametrize(
+    "path", ["some_two_ext_file.TAR.gz", "some_two_ext_file.TAR.GZ"]
+)
+def test_read_tar_gz_variants(path: str):
+    pm = PluginManager()
+    plugin = DynamicPlugin("tar-gz-plugin", plugin_manager=pm)
+
+    # reader should be compatible despite lowercase pattern
+    @plugin.contribute.reader(filename_patterns=["*.tar.gz"])
+    def get_read(path):
+        if path.lower() != path:
+            # if this error is raised we can be certain path is unchanged
+            raise ValueError("Given path contains capitals.")
+
+        def read(paths):
+            return [(None,)]
+
+        return read
+
+    with pytest.raises(ValueError, match="Given path contains capitals."):
+        io_utils._read([path], stack=False, _pm=pm)
+
+
+@pytest.mark.parametrize("path", ["some_directory.Final", "some_directory.FINAL"])
+def test_read_directory_variants(path: str):
+    pm = PluginManager()
+    plugin = DynamicPlugin("directory-plugin", plugin_manager=pm)
+
+    # reader should be compatible despite lowercase pattern
+    @plugin.contribute.reader(filename_patterns=["*.final"], accepts_directories=True)
+    def get_read(path):
+        if path.lower() != path:
+            # if this error is raised we can be certain path is unchanged
+            raise ValueError("Given path contains capitals.")
+
+        def read(paths):
+            return [(None,)]
+
+        return read
+
+    with pytest.raises(ValueError, match="Given path contains capitals."):
+        io_utils._read([path], stack=False, _pm=pm)

@@ -136,7 +136,8 @@ class _ContributionsIndex:
         assert isinstance(path, str)
 
         # lower case the extension for checking manifest pattern
-        base, ext = os.path.splitext(path)
+        base = os.path.splitext(Path(path).stem)[0]
+        ext = "".join(Path(path).suffixes)
         path = base + ext.lower()
 
         if os.path.isdir(path):
