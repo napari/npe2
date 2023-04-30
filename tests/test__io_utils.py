@@ -125,7 +125,7 @@ def test_read_zarr_variants(path: str):
     plugin = DynamicPlugin("zarr-plugin", plugin_manager=pm)
 
     # reader should be compatible despite lowercase pattern
-    @plugin.contribute.reader(filename_patterns=["*.zarr"])
+    @plugin.contribute.reader(filename_patterns=["*.zarr"], accepts_directories=True)
     def get_read(path):
         if path.lower() != path:
             # if this error is raised we can be certain path is unchanged
