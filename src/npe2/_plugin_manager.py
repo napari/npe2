@@ -140,7 +140,7 @@ class _ContributionsIndex:
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
             # ensure not a URI
-            if urllib.parse.urlparse(path).scheme == "":
+            if not urllib.parse.urlparse(path).scheme:
                 # lower case the extension for checking manifest pattern
                 base = os.path.splitext(Path(path).stem)[0]
                 ext = "".join(Path(path).suffixes)
