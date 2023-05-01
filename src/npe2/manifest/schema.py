@@ -368,7 +368,9 @@ class PluginManifest(ImportExportModel):
 
                 except Exception as e:
                     logger.error(
-                        "{} -> {!r} could not be imported: {}".format(ENTRY_POINT, dist.metadata["Name"], e)
+                        "{} -> {!r} could not be imported: {}".format(
+                            ENTRY_POINT, dist.metadata["Name"], e
+                        )
                     )
                     yield DiscoverResults(None, dist, e)
 
