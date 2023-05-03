@@ -1,4 +1,5 @@
 # extra underscore in name to run this first
+from pathlib import Path
 
 import pytest
 
@@ -96,14 +97,17 @@ def test_read_non_global_pm():
     assert io_utils._read(["some.fzzy"], stack=False, _pm=pm) == [(None,)]
 
 
-def test_read_uppercase_extension():
+def test_read_uppercase_extension(tmp_path: Path):
     pm = PluginManager()
     plugin = DynamicPlugin("tif-plugin", plugin_manager=pm)
+
     path = "something.TIF"
+    mock_file = tmp_path / path
+    mock_file.touch()
 
     # reader should be compatible despite lowercase pattern
     @plugin.contribute.reader(filename_patterns=["*.tif"])
-    def get_read(path):
+    def get_read(path=mock_file):
         if path.lower() != path:
             # if this error is raised we can be certain path is unchanged
             raise ValueError("Given path contains capitals.")
@@ -114,7 +118,7 @@ def test_read_uppercase_extension():
         return read
 
     with pytest.raises(ValueError, match="Given path contains capitals."):
-        io_utils._read([path], stack=False, _pm=pm)
+        io_utils._read([str(mock_file)], stack=False, _pm=pm)
 
 
 @pytest.mark.parametrize(
@@ -145,13 +149,16 @@ def test_read_zarr_variants(path: str, tmp_path: Path):
 @pytest.mark.parametrize(
     "path", ["some_two_ext_file.TAR.gz", "some_two_ext_file.TAR.GZ"]
 )
-def test_read_tar_gz_variants(path: str):
+def test_read_tar_gz_variants(path: str, tmp_path: Path):
     pm = PluginManager()
     plugin = DynamicPlugin("tar-gz-plugin", plugin_manager=pm)
 
+    mock_file = tmp_path / path
+    mock_file.touch()
+
     # reader should be compatible despite lowercase pattern
     @plugin.contribute.reader(filename_patterns=["*.tar.gz"])
-    def get_read(path):
+    def get_read(path=mock_file):
         if path.lower() != path:
             # if this error is raised we can be certain path is unchanged
             raise ValueError("Given path contains capitals.")
@@ -162,7 +169,7 @@ def test_read_tar_gz_variants(path: str):
         return read
 
     with pytest.raises(ValueError, match="Given path contains capitals."):
-        io_utils._read([path], stack=False, _pm=pm)
+        io_utils._read([str(mock_file)], stack=False, _pm=pm)
 
 
 @pytest.mark.parametrize("path", ["some_directory.Final", "some_directory.FINAL"])
@@ -185,4 +192,4 @@ def test_read_directory_variants(path: str, tmp_path: Path):
         return read
 
     with pytest.raises(ValueError, match="Given path contains capitals."):
-        io_utils._read([str(new_path)], stack=False, _pm=pm)
+        io_utils._read([str(new_dir)], stack=False, _pm=pm)
