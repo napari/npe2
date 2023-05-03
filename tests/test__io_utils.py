@@ -139,7 +139,7 @@ def test_read_zarr_variants(path: str, tmp_path: Path):
         return read
 
     with pytest.raises(ValueError, match="Given path contains capitals."):
-        io_utils._read([path], stack=False, _pm=pm)
+        io_utils._read([str(new_dir)], stack=False, _pm=pm)
 
 
 @pytest.mark.parametrize(
