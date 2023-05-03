@@ -121,7 +121,7 @@ def test_read_uppercase_extension():
     "path", ["some_zarr_directory.ZARR", "some_zarr_directory.Zarr"]
 )
 def test_read_zarr_variants(path: str, tmp_path: Path):
-    new_dir = tmp_path / path 
+    new_dir = tmp_path / path
     new_dir.mkdir()
     pm = PluginManager()
     plugin = DynamicPlugin("zarr-plugin", plugin_manager=pm)
@@ -167,7 +167,7 @@ def test_read_tar_gz_variants(path: str):
 
 @pytest.mark.parametrize("path", ["some_directory.Final", "some_directory.FINAL"])
 def test_read_directory_variants(path: str, tmp_path: Path):
-    new_dir = tmp_path / path 
+    new_dir = tmp_path / path
     new_dir.mkdir()
     pm = PluginManager()
     plugin = DynamicPlugin("directory-plugin", plugin_manager=pm)
