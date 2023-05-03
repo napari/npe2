@@ -1,5 +1,34 @@
 # Changelog
 
+## [v0.7.0](https://github.com/napari/npe2/tree/v0.7.0) (2023-04-14)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.6.2...v0.7.0)
+
+**Fixed bugs:**
+
+- fix: pass command registry to rdr.exec in io\_utils.\_read [\#285](https://github.com/napari/npe2/pull/285) ([tlambert03](https://github.com/tlambert03))
+- fix: use logger instead of warning for TestPluginManager.discover [\#283](https://github.com/napari/npe2/pull/283) ([tlambert03](https://github.com/tlambert03))
+- Add specific error when reader plugin was chosen but failed [\#276](https://github.com/napari/npe2/pull/276) ([DragaDoncila](https://github.com/DragaDoncila))
+
+**Tests & CI:**
+
+- Fix tests: use npe1 version \(0.1.2\) of napari-ndtiffs [\#277](https://github.com/napari/npe2/pull/277) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+- ci: update pre-commit, use ruff and fix mypy [\#273](https://github.com/napari/npe2/pull/273) ([tlambert03](https://github.com/tlambert03))
+- Switch from GabrielBB/xvfb-action to aganders3/headless-gui [\#269](https://github.com/napari/npe2/pull/269) ([Czaki](https://github.com/Czaki))
+
+**Refactors:**
+
+- refactor: use src layout and pyproject.toml [\#281](https://github.com/napari/npe2/pull/281) ([tlambert03](https://github.com/tlambert03))
+
+**Documentation:**
+
+- Fix link to magicgui objects.inv in intersphinx [\#270](https://github.com/napari/npe2/pull/270) ([melissawm](https://github.com/melissawm))
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump peter-evans/create-pull-request from 4 to 5 [\#284](https://github.com/napari/npe2/pull/284) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Pin pydantic bellow 2.0 [\#279](https://github.com/napari/npe2/pull/279) ([Czaki](https://github.com/Czaki))
+
 ## [v0.6.2](https://github.com/napari/npe2/tree/v0.6.2) (2023-01-12)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.6.1...v0.6.2)
@@ -32,6 +61,7 @@
 
 **Merged pull requests:**
 
+- changelog v0.6.2 [\#268](https://github.com/napari/npe2/pull/268) ([github-actions[bot]](https://github.com/apps/github-actions))
 - ci\(dependabot\): bump styfle/cancel-workflow-action from 0.10.1 to 0.11.0 [\#252](https://github.com/napari/npe2/pull/252) ([dependabot[bot]](https://github.com/apps/dependabot))
 - ci\(dependabot\): bump styfle/cancel-workflow-action from 0.10.0 to 0.10.1 [\#246](https://github.com/napari/npe2/pull/246) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Add setuptools plugin to compile manifest at build [\#194](https://github.com/napari/npe2/pull/194) ([tlambert03](https://github.com/tlambert03))
@@ -157,7 +187,7 @@
 
 ## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.4.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.4.0)
 
 **Implemented enhancements:**
 
@@ -187,13 +217,13 @@
 - Add doc links to README [\#158](https://github.com/napari/npe2/pull/158) ([nclack](https://github.com/nclack))
 - Fix codeblock directive in docstring [\#156](https://github.com/napari/npe2/pull/156) ([melissawm](https://github.com/melissawm))
 
-## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
-
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.3.0.rc0)
-
 ## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.3.0)
+
+## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0.rc0)
 
 **Implemented enhancements:**
 
