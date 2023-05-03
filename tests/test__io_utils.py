@@ -166,7 +166,9 @@ def test_read_tar_gz_variants(path: str):
 
 
 @pytest.mark.parametrize("path", ["some_directory.Final", "some_directory.FINAL"])
-def test_read_directory_variants(path: str):
+def test_read_directory_variants(path: str, tmp_path: Path):
+    new_dir = tmp_path / path 
+    new_dir.mkdir()
     pm = PluginManager()
     plugin = DynamicPlugin("directory-plugin", plugin_manager=pm)
 
