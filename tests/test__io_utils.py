@@ -173,7 +173,7 @@ def test_read_directory_variants(path: str, tmp_path: Path):
     plugin = DynamicPlugin("directory-plugin", plugin_manager=pm)
 
     # reader should be compatible despite lowercase pattern
-    @plugin.contribute.reader(filename_patterns=["*.final"], accepts_directories=True)
+    @plugin.contribute.reader(filename_patterns=["*"], accepts_directories=True)
     def get_read(path):
         if path.lower() != path:
             # if this error is raised we can be certain path is unchanged
