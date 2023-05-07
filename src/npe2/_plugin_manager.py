@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import urllib
 import warnings
 from collections import Counter
 from fnmatch import fnmatch
@@ -138,11 +139,20 @@ class _ContributionsIndex:
         if os.path.isdir(path):
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
+            # ensure not a URI
+            if not urllib.parse.urlparse(path).scheme:
+                # lower case the extension for checking manifest pattern
+                base = os.path.splitext(Path(path).stem)[0]
+                ext = "".join(Path(path).suffixes)
+                path = base + ext.lower()
             # not sure about the set logic as it won't be lazy anymore,
             # but would we yield duplicate anymore.
             # above does not have have the unseen check either.
             # it's easy to make an iterable version if we wish, or use more-itertools.
-            yield from {r for pattern, r in self._readers if fnmatch(path, pattern)}
+            # match against pattern.lower() to make matching case insensitive
+            yield from {
+                r for pattern, r in self._readers if fnmatch(path, pattern.lower())
+            }
 
     def iter_compatible_writers(
         self, layer_types: Sequence[str]
