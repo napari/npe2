@@ -507,6 +507,7 @@ def _camel_to_spaces(val):
 
 def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
     dist = metadata.distribution(package_name)
+    # import pdb; pdb.set_trace()
     if not top_module:
         top_mods = (dist.read_text("top_level.txt") or "").strip().splitlines()
         if not top_mods:
@@ -517,7 +518,13 @@ def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
         top_module = top_mods[0]
 
     path = Path(dist.locate_file(top_module))
-    assert path.is_dir()
+    if not path.is_dir():
+        for f_path in dist.files:
+            if "__editable__" in f_path.name:
+                path = Path(f_path.read_text().strip()) / top_module
+                break
+
+    assert path.is_dir(), f"Could not find top level module {top_module} using {path}"
     return path
 
 
