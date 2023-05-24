@@ -4,7 +4,6 @@ import warnings
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence
-from traceback import print_exc
 
 import typer
 
@@ -430,7 +429,6 @@ def convert(
             typer.echo()
 
     except Exception as e:
-        print_exc()
         msg = f"Conversion failed:\n{type(e).__name__}: {e}"
         typer.secho(msg, fg=typer.colors.RED, bold=True)
         raise typer.Exit(1) from e

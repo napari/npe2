@@ -507,7 +507,6 @@ def _camel_to_spaces(val):
 
 def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
     dist = metadata.distribution(package_name)
-    # import pdb; pdb.set_trace()
     if not top_module:
         top_mods = (dist.read_text("top_level.txt") or "").strip().splitlines()
         if not top_mods:
