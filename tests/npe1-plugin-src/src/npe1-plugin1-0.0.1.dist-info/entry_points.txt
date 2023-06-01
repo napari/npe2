@@ -1,2 +1,0 @@
-[napari.plugin]
-npe1-plugin1 = npe1_module1
