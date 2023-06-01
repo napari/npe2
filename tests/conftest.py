@@ -69,11 +69,6 @@ def npe1_repo():
 
 
 @pytest.fixture
-def npe1_repo1():
-    return Path(__file__).parent / "npe1-plugin-src"
-
-
-@pytest.fixture
 def uses_npe1_plugin(npe1_repo):
     import site
 
@@ -104,23 +99,6 @@ def npe1_plugin_module(npe1_repo):
 
     npe1_module_path = npe1_repo / "npe1_module" / "__init__.py"
     spec = spec_from_file_location("npe1_module", npe1_module_path)
-    assert spec
-    module = module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)  # type: ignore
-    try:
-        yield module
-    finally:
-        del sys.modules[spec.name]
-
-
-@pytest.fixture
-def npe1_plugin_src_module(npe1_repo1):
-    import sys
-    from importlib.util import module_from_spec, spec_from_file_location
-
-    npe1_module_path = npe1_repo1 / "src" / "npe1_module1" / "__init__.py"
-    spec = spec_from_file_location("npe1_module1", npe1_module_path)
     assert spec
     module = module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -191,41 +169,6 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
                     new_manifest.unlink()
                 if (npe1_repo / "setup.py").exists():
                     (npe1_repo / "setup.py").unlink()
-
-
-@pytest.fixture
-def mock_npe1_src_pm_with_plugin(npe1_repo1, npe1_plugin_src_module):
-    """Mocks a fully installed local repository"""
-    from npe2._inspection._from_npe1 import plugin_packages
-
-    mock_dist = metadata.PathDistribution(
-        npe1_repo1 / "src" / "npe1-plugin1-0.0.1.dist-info"
-    )
-    assert (npe1_repo1 / "src" / "npe1-plugin1-0.0.1.dist-info").exists()
-
-    def _dists():
-        return [mock_dist]
-
-    def _from_name(name):
-        if name == "npe1-plugin1":
-            return mock_dist
-        raise metadata.PackageNotFoundError(name)
-
-    setup_cfg = npe1_repo1 / "setup.cfg"
-    new_manifest = npe1_repo1 / "src" / "npe1_module1" / "napari.yaml"
-    with patch.object(metadata, "distributions", new=_dists):
-        with patch.object(metadata.Distribution, "from_name", new=_from_name):
-            cfg = setup_cfg.read_text()
-            plugin_packages.cache_clear()
-            try:
-                yield mock_npe1_pm
-            finally:
-                plugin_packages.cache_clear()
-                setup_cfg.write_text(cfg)
-                if new_manifest.exists():
-                    new_manifest.unlink()
-                if (npe1_repo1 / "setup.py").exists():
-                    (npe1_repo1 / "setup.py").unlink()
 
 
 @pytest.fixture(autouse=True)
