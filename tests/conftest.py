@@ -175,12 +175,15 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
                 if (npe1_repo / "setup.py").exists():
                     (npe1_repo / "setup.py").unlink()
 
+
 @pytest.fixture
 def mock_npe1_src_pm_with_plugin(npe1_repo1, npe1_plugin_module):
     """Mocks a fully installed local repository"""
     from npe2._inspection._from_npe1 import plugin_packages
 
-    mock_dist = metadata.PathDistribution(npe1_repo1 / "src" / "npe1-plugin1-0.0.1.dist-info")
+    mock_dist = metadata.PathDistribution(
+        npe1_repo1 / "src" / "npe1-plugin1-0.0.1.dist-info"
+    )
     assert (npe1_repo1 / "src" / "npe1-plugin1-0.0.1.dist-info").exists()
 
     def _dists():
