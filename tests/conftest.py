@@ -115,6 +115,23 @@ def npe1_plugin_module(npe1_repo):
 
 
 @pytest.fixture
+def npe1_plugin_src_module(npe1_repo1):
+    import sys
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    npe1_module_path = npe1_repo1 / "src" / "npe1_module1" / "__init__.py"
+    spec = spec_from_file_location("npe1_module1", npe1_module_path)
+    assert spec
+    module = module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)  # type: ignore
+    try:
+        yield module
+    finally:
+        del sys.modules[spec.name]
+
+
+@pytest.fixture
 def mock_npe1_pm():
     from napari_plugin_engine import PluginManager, napari_hook_specification
 
@@ -177,7 +194,7 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
 
 
 @pytest.fixture
-def mock_npe1_src_pm_with_plugin(npe1_repo1, npe1_plugin_module):
+def mock_npe1_src_pm_with_plugin(npe1_repo1, npe1_plugin_src_module):
     """Mocks a fully installed local repository"""
     from npe2._inspection._from_npe1 import plugin_packages
 
