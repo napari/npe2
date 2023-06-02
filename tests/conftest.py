@@ -1,6 +1,5 @@
 import shutil
 import sys
-import shutil
 from importlib import abc, metadata
 from pathlib import Path
 from unittest.mock import patch
@@ -188,10 +187,9 @@ def mock_npe1_pm_with_plugin_editable(npe1_repo, npe1_plugin_module, tmp_path):
 
     with record_path.open("w") as f:
         f.write("\n".join(record_content))
-    
+
     with open(tmp_path / "__editable__.npe1-plugin-0.0.1.pth", "w") as f:
         f.write(str(npe1_repo))
-
 
     mock_dist = metadata.PathDistribution(dist_path)
 
@@ -218,7 +216,6 @@ def mock_npe1_pm_with_plugin_editable(npe1_repo, npe1_plugin_module, tmp_path):
                     new_manifest.unlink()
                 if (npe1_repo / "setup.py").exists():
                     (npe1_repo / "setup.py").unlink()
-
 
 
 @pytest.fixture(autouse=True)
