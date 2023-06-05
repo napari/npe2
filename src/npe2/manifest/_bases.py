@@ -78,7 +78,7 @@ class ImportExportModel(BaseModel):
             try:
                 import tomllib
             except ImportError:
-                import tomli as tomllib
+                import tomli as tomllib  # type: ignore [no-redef]
 
             loader = tomllib.load
         elif path.suffix.lower() in (".yaml", ".yml"):
@@ -86,7 +86,7 @@ class ImportExportModel(BaseModel):
         else:
             raise ValueError(f"unrecognized file extension: {path}")  # pragma: no cover
 
-        with open(path, mode='rb') as f:
+        with open(path, mode="rb") as f:
             data = loader(f) or {}
 
         if path.name == "pyproject.toml":

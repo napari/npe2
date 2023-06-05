@@ -39,7 +39,7 @@ def _lazy_tomli_load(data: str) -> dict[str, Any]:
     try:
         import tomllib
     except ImportError:
-        import tomli as tomllib
+        import tomli as tomllib  # type: ignore [no-redef]
 
     return tomllib.loads(data)
 
