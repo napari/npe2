@@ -86,7 +86,7 @@ class ImportExportModel(BaseModel):
         else:
             raise ValueError(f"unrecognized file extension: {path}")  # pragma: no cover
 
-        with open(path, mode='rb') as f:
+        with open(path, mode="rb") as f:
             data = loader(f) or {}
 
         if path.name == "pyproject.toml":
