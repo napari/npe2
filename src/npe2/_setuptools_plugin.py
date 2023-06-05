@@ -36,9 +36,12 @@ def trace(*k: object) -> None:
 
 
 def _lazy_tomli_load(data: str) -> dict[str, Any]:
-    from pytomlpp import loads
+    try:
+        import tomllib
+    except ImportError:
+        import tomli as tomllib
 
-    return loads(data)
+    return tomllib.loads(data)
 
 
 def _read_dist_name_from_setup_cfg() -> str | None:
