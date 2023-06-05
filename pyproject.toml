@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -49,7 +50,7 @@ repository = "https://github.com/napari/npe2"
 testing = [
     "magicgui",
     "napari-plugin-engine",
-    "napari-svg",
+    "napari-svg==0.1.5",
     "numpy",
     "pytest",
     "pytest-cov",
