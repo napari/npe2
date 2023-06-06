@@ -376,6 +376,9 @@ class HookImplParser:
             stacklevel=2,
         )
         return NotImplemented  # pragma: no cover
+    
+    def napari_write_graph(self, impl: HookImplementation):
+        self._parse_writer(impl, "graph")
 
     def napari_write_image(self, impl: HookImplementation):
         self._parse_writer(impl, "image")
@@ -391,9 +394,6 @@ class HookImplParser:
 
     def napari_write_vectors(self, impl: HookImplementation):
         self._parse_writer(impl, "vectors")
-
-    def napari_write_graph(self, impl: HookImplementation):
-        self._parse_writer(impl, "graph")
 
     def _parse_writer(self, impl: HookImplementation, layer: str):
         id = self.add_command(impl)
