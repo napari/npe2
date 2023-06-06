@@ -7,6 +7,7 @@ from npe2.manifest.utils import Executable
 
 
 class LayerType(str, Enum):
+    graph = "graph"
     image = "image"
     labels = "labels"
     points = "points"
@@ -14,7 +15,6 @@ class LayerType(str, Enum):
     surface = "surface"
     tracks = "tracks"
     vectors = "vectors"
-    graph = "graph"
 
 
 class LayerTypeConstraint(BaseModel):
