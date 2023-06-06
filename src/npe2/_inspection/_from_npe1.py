@@ -376,7 +376,7 @@ class HookImplParser:
             stacklevel=2,
         )
         return NotImplemented  # pragma: no cover
-    
+
     def napari_write_graph(self, impl: HookImplementation):
         self._parse_writer(impl, "graph")
 
