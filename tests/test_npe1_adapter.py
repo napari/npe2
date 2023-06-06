@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager
 from npe2.manifest import _npe1_adapter, utils
@@ -71,7 +70,6 @@ def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
         "manifest_from_npe1",
         wraps=_npe1_adapter.manifest_from_npe1,  # type: ignore
     ) as mock:
-
         # if we clear the cache, it should import again
         mf = pm.get_manifest("npe1-plugin")
         assert isinstance(mf, _npe1_adapter.NPE1Adapter)
@@ -135,7 +133,7 @@ def test_adapter_pyname_dock_widget(uses_npe1_plugin, mock_cache):
 
     with patch.object(utils, "_import_npe1_shim", wraps=utils._import_npe1_shim) as m:
         caller = wdg_contrib.get_callable()
-        assert isinstance(caller, MagicFactory)
+        assert isinstance(caller, partial)
         assert "<locals>.local_widget" in caller.keywords["function"].__qualname__
         pyname = (
             f"{SHIM_NAME_PREFIX}npe1_module:napari_experimental_provide_dock_widget_2"
@@ -147,7 +145,7 @@ def test_adapter_pyname_dock_widget(uses_npe1_plugin, mock_cache):
             w for w in widgets if w.display_name == "local function" and w.autogenerate
         )
         caller2 = wdg_contrib2.get_callable()
-        assert isinstance(caller2, MagicFactory)
+        assert isinstance(caller2, partial)
         assert "<locals>.local_function" in caller2.keywords["function"].__qualname__
         pyname = f"{SHIM_NAME_PREFIX}npe1_module:napari_experimental_provide_function_1"
         m.assert_called_once_with(pyname)
@@ -169,7 +167,7 @@ def test_adapter_error_on_import():
 
     with pytest.warns(UserWarning) as record:
         with patch.object(_npe1_adapter, "manifest_from_npe1", wraps=err):
-            adapter.contributions
+            _ = adapter.contributions
     assert "Error importing contributions for" in str(record[0])
 
 
@@ -183,4 +181,4 @@ def test_adapter_cache_fail(uses_npe1_plugin, mock_cache):
 
     with patch.object(_npe1_adapter.NPE1Adapter, "_save_to_cache", err):
         # shouldn't reraise the error
-        mf.contributions
+        _ = mf.contributions

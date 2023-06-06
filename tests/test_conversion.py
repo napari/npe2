@@ -125,10 +125,6 @@ def test_conversion_package_is_not_a_plugin():
         manifest_from_npe1("pytest")
 
 
-def test_convert_repo():
-    convert_repository
-
-
 def test_get_top_module_path(mock_npe1_pm_with_plugin):
     get_top_module_path("npe1-plugin")
 

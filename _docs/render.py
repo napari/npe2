@@ -6,7 +6,7 @@ import os
 import re
 import sys
 from contextlib import contextmanager
-from functools import lru_cache
+from functools import lru_cache, partial
 from inspect import getsource
 from pathlib import Path
 from types import FunctionType
@@ -15,7 +15,6 @@ from urllib.request import urlopen
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from magicgui._magicgui import MagicFactory
 
 from npe2 import PluginManager, PluginManifest
 from npe2.manifest.contributions import ContributionPoints
@@ -103,7 +102,7 @@ def _build_example(contrib: Executable) -> str:
 
     if not callable(func):
         return ""
-    if isinstance(func, MagicFactory):
+    if isinstance(func, partial):
         func = func.keywords["function"]
     source = inspect.getsource(func)
 
