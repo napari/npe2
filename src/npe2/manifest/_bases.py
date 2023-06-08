@@ -3,7 +3,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Dict, Optional, Union
 
-import pytomlpp as toml
 import yaml
 from pydantic import BaseModel, PrivateAttr
 
@@ -30,10 +29,12 @@ class ImportExportModel(BaseModel):
         **kwargs
             passed to `BaseModel.json()`
         """
+        import tomli_w
+
         d = self._serialized_data(**kwargs)
         if pyproject:
             d = {"tool": {"napari": d}}
-        return toml.dumps(d)
+        return tomli_w.dumps(d)
 
     def yaml(self, **kwargs) -> str:
         """Generate serialized `yaml` string for this model.
@@ -74,13 +75,18 @@ class ImportExportModel(BaseModel):
         if path.suffix.lower() == ".json":
             loader = json.load
         elif path.suffix.lower() == ".toml":
-            loader = toml.load
+            try:
+                import tomllib
+            except ImportError:
+                import tomli as tomllib  # type: ignore [no-redef]
+
+            loader = tomllib.load
         elif path.suffix.lower() in (".yaml", ".yml"):
             loader = yaml.safe_load
         else:
             raise ValueError(f"unrecognized file extension: {path}")  # pragma: no cover
 
-        with open(path, encoding="utf-8") as f:
+        with open(path, mode="rb") as f:
             data = loader(f) or {}
 
         if path.name == "pyproject.toml":
