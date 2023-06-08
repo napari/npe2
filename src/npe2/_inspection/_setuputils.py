@@ -86,18 +86,6 @@ def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
                         EntryPoint(name.strip(), value.strip(), group)
                     )
 
-    # # check for pyproject.toml
-    # pyproject_toml = path / "pyproject.toml"
-    # if pyproject_toml.exists():
-    #     info.pyproject_toml = pyproject_toml
-    #     with open(pyproject_toml, "r") as f:
-    #         data = pytomlpp.load(f)
-    #     if project := data.get("project"):
-    #         info.package_name = project.get("name", "")
-    #         for group, ep in project.get('entry-points', {}).items():
-    #             for name, value in ep.items():
-    #                 info.entry_points.append(EntryPoint(name, value, group))
-
     return info
 
 
