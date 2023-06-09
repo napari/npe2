@@ -154,9 +154,9 @@ def example_contribution(
     if format == "yaml":
         return yaml.safe_dump(output, sort_keys=False)
     if format == "toml":
-        import pytomlpp as toml
+        import tomli_w
 
-        return toml.dumps(output)
+        return tomli_w.dumps(output)
     if format == "json":
         return json.dumps(output)
     raise ValueError("Invalid format: {format}.  Must be 'yaml', 'toml' or 'json'.")
