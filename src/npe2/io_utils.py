@@ -155,7 +155,7 @@ def _read(
         _pm = PluginManager.instance()
 
     for rdr in _pm.iter_compatible_readers(paths):
-        if plugin_name and not rdr.command.startswith(plugin_name):
+        if plugin_name and rdr.plugin_name != plugin_name:
             continue
         read_func = rdr.exec(
             kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
