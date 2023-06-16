@@ -64,3 +64,6 @@ class ThemeContribution(BaseModel):
         '   - RGB/RGBA strings: `"rgb(255, 255, 255)"`, `"rgba(255, 255, 255, 0.5)`"\n'
         '   - HSL strings: "`hsl(270, 60%, 70%)"`, `"hsl(270, 60%, 70%, .5)`"\n'
     )
+    font_size: str = Field(
+        description="Font size (in points, pt) used in the application."
+    )
