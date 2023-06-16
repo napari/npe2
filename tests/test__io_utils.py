@@ -44,7 +44,7 @@ def test_read_uses_correct_passed_plugin(tmp_path):
     mock_file.touch()
 
     @long_name_plugin.contribute.reader(filename_patterns=["*.fzzy"])
-    def get_read(path=mock_file):
+    def get_read_long(path=mock_file):
         raise ValueError(f"Uhoh, {long_name} was chosen, but given plugin was {short_name}")
 
     @short_name_plugin.contribute.reader(filename_patterns=["*.fzzy"])
