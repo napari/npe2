@@ -32,6 +32,30 @@ def test_read_with_no_plugin():
     with pytest.raises(ValueError, match="No readers returned"):
         read(["some.nope"], stack=False)
 
+def test_read_uses_correct_passed_plugin(tmp_path):
+    pm = PluginManager()
+    long_name = "gooby-again"
+    short_name = "gooby"
+    long_name_plugin = DynamicPlugin(long_name, plugin_manager=pm)
+    short_name_plugin = DynamicPlugin(short_name, plugin_manager=pm)
+
+    path = "something.fzzy"
+    mock_file = tmp_path / path
+    mock_file.touch()
+
+    @long_name_plugin.contribute.reader(filename_patterns=["*.fzzy"])
+    def get_read(path=mock_file):
+        raise ValueError(f"Uhoh, {long_name} was chosen, but given plugin was {short_name}")
+
+    @short_name_plugin.contribute.reader(filename_patterns=["*.fzzy"])
+    def get_read(path=mock_file):
+        def read(paths):
+            return [(None,)]
+        return read
+
+    # "gooby-again" isn't used even though given plugin starts with the same name
+    # if an error is thrown here, it means we selected the wrong plugin
+    io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
 
 def test_read_return_reader(uses_sample_plugin):
     data, reader = read_get_reader("some.fzzy")
