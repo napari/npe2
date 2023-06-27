@@ -154,9 +154,22 @@ def _read(
     if _pm is None:
         _pm = PluginManager.instance()
 
-    for rdr in _pm.iter_compatible_readers(paths):
-        if plugin_name and rdr.plugin_name != plugin_name:
-            continue
+    rdrs = list(_pm.iter_compatible_readers(paths))
+    if plugin_name:
+        # user might have passed 'plugin.reader_contrib' as the command
+        plugin, contrib = tuple(plugin_name.split('.')) if '.' in plugin_name else (plugin_name, None)
+        chosen_compatible_readers = list(filter(lambda rdr: rdr.plugin_name == plugin, rdrs))
+        if contrib:
+            chosen_compatible_readers = list(filter(lambda rdr: rdr.command.split('.')[1] == contrib, chosen_compatible_readers))
+        if not chosen_compatible_readers:
+            raise ValueError(f"Given reader '{plugin_name}' is not a compatible reader for {paths}. "
+                             + (f"Available readers for {paths} are: {[rdr.command for rdr in rdrs]}" if rdrs else \
+                                "No compatible readers are available."
+                             ))
+    else:
+        chosen_compatible_readers = rdrs
+
+    for rdr in chosen_compatible_readers:
         read_func = rdr.exec(
             kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
         )
@@ -166,10 +179,10 @@ def _read(
                 return (layer_data, rdr) if return_reader else layer_data
 
     if plugin_name:
-        raise ValueError(
-            f"Plugin {plugin_name!r} was selected to open "
-            + f"{paths!r}, but returned no data."
-        )
+            raise ValueError(
+                f"Plugin {plugin_name!r} was selected to open "
+                + f"{paths!r}, but returned no data."
+            )
     raise ValueError(f"No readers returned data for {paths!r}")
 
 
