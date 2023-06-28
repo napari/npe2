@@ -80,10 +80,21 @@ def test_read_uses_correct_passed_plugin(tmp_path):
     # if an error is thrown here, it means we selected the wrong plugin
     io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
 
-def test_read_fails_with_chosen_plugin():
+def test_read_fails():
     pm = PluginManager()
     plugin_name = 'always-fails'
+    plugin = DynamicPlugin(plugin_name, plugin_manager=pm)
+    plugin.register()
 
+    @plugin.contribute.reader(filename_patterns=["*.fzzy"])
+    def get_read(path):
+        return None
+
+    with pytest.raises(ValueError, match=f"Reader {plugin_name!r} was selected"):
+        io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
+    
+    with pytest.raises(ValueError, match=f"No readers returned data"):
+        io_utils._read(["some.fzzy"], stack=False, _pm=pm)
 
 
 def test_read_with_reader_contribution_plugin(uses_sample_plugin):
