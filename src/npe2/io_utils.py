@@ -178,9 +178,7 @@ def _read(
 
 
 def get_compatible_readers_by_choice(
-    plugin_name: Union[str, None], 
-    paths: Union[str, Sequence[str]], 
-    pm: PluginManager
+    plugin_name: Union[str, None], paths: Union[str, Sequence[str]], pm: PluginManager
 ):
     """Returns compatible readers filtered by validated plugin choice.
 
