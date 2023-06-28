@@ -190,18 +190,28 @@ def get_compatible_readers_by_choice(
     it is not compatible with the given paths, or no compatible
     readers can be found for paths (if no plugin was chosen).
 
-    Args:
-        plugin_name: _description_
-        paths: _description_
-        _pm: _description_
+    Parameters
+    ----------
+    plugin_name: Union[str, None]
+        name of chosen plugin, or None
+    paths: Union[str, Sequence[str]]
+        paths to read
+    pm: PluginManager
+        plugin manager instance to check for readers
 
-    Raises:
-        ValueError: If the given reader doesn't exist
-        ValueError: If there are no compatible readers
-        ValueError: If the given reader is not compatible
+    Raises
+    ------        
+    ValueError
+        If the given reader doesn't exist
+    ValueError
+        If there are no compatible readers
+    ValueError
+        If the given reader is not compatible
 
-    Returns:
-        _description_
+    Returns
+    -------
+    compat_readers : List[ReaderContribution]
+        Compatible readers for plugin choice
     """
     compat_readers = list(pm.iter_compatible_readers(paths))
     compat_reader_names = sorted([rdr.plugin_name for rdr in compat_readers])
