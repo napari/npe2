@@ -80,19 +80,25 @@ def test_read_uses_correct_passed_plugin(tmp_path):
     # if an error is thrown here, it means we selected the wrong plugin
     io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
 
+def test_read_fails_with_chosen_plugin():
+    pm = PluginManager()
+    plugin_name = 'always-fails'
+
+
 
 def test_read_with_reader_contribution_plugin(uses_sample_plugin):
-    assert read(
-        ["some.fzzy"], stack=False, plugin_name=f"{SAMPLE_PLUGIN_NAME}.some_reader"
-    ) == [(None,)]
+    paths = ["some.fzzy"]
+    chosen_reader = f"{SAMPLE_PLUGIN_NAME}.some_reader"
+    assert read(paths, stack=False, plugin_name=chosen_reader) == [(None,)]
 
     # if the wrong contribution is passed we get useful error message
+    chosen_reader = f"{SAMPLE_PLUGIN_NAME}.not_a_reader"
     with pytest.raises(
         ValueError,
-        match="Given reader 'my-plugin.not_a_reader' is not a compatible reader",
+        match=f"Given reader {chosen_reader!r} does not exist.",
     ) as e:
         read(
-            ["some.fzzy"], stack=False, plugin_name=f"{SAMPLE_PLUGIN_NAME}.not_a_reader"
+            paths, stack=False, plugin_name=chosen_reader
         )
     assert "Available readers for" in str(e)
 

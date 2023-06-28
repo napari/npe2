@@ -189,6 +189,8 @@ def get_compatible_readers_by_choice(plugin_name, paths, _pm):
         try:
             # note that get_manifest works with a full command e.g. my-plugin.my-reader
             _pm.get_manifest(plugin_name)
+            if '.' in plugin_name:
+                _pm.get_command(plugin_name)
         except KeyError:
             raise ValueError(
                 f"Given reader {plugin_name!r} does not exist. {helper_error_message}"
