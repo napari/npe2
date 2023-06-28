@@ -154,6 +154,8 @@ def _read(
     if _pm is None:
         _pm = PluginManager.instance()
 
+    # get readers compatible with paths and chosen plugin - raise errors if
+    # choices are invalid or there's nothing to try
     chosen_compatible_readers = get_compatible_readers_by_choice(
         plugin_name, paths, _pm
     )
@@ -175,8 +177,33 @@ def _read(
     raise ValueError(f"No readers returned data for {paths!r}")
 
 
-def get_compatible_readers_by_choice(plugin_name, paths, _pm):
-    compat_readers = list(_pm.iter_compatible_readers(paths))
+def get_compatible_readers_by_choice(
+    plugin_name: Union[str, None], 
+    paths: Union[str, Sequence[str]], 
+    pm: PluginManager
+):
+    """Returns compatible readers filtered by validated plugin choice.
+
+    Checks that plugin_name is an existing plugin (and command if
+    a specific contribution was passed), and that it is compatible
+    with paths. Raises ValueError if given plugin doesn't exist,
+    it is not compatible with the given paths, or no compatible
+    readers can be found for paths (if no plugin was chosen).
+
+    Args:
+        plugin_name: _description_
+        paths: _description_
+        _pm: _description_
+
+    Raises:
+        ValueError: If the given reader doesn't exist
+        ValueError: If there are no compatible readers
+        ValueError: If the given reader is not compatible
+
+    Returns:
+        _description_
+    """
+    compat_readers = list(pm.iter_compatible_readers(paths))
     compat_reader_names = sorted([rdr.plugin_name for rdr in compat_readers])
     helper_error_message = (
         f"Available readers for {paths!r} are: {compat_reader_names!r}."
@@ -188,9 +215,9 @@ def get_compatible_readers_by_choice(plugin_name, paths, _pm):
     if plugin_name:
         try:
             # note that get_manifest works with a full command e.g. my-plugin.my-reader
-            _pm.get_manifest(plugin_name)
+            pm.get_manifest(plugin_name)
             if "." in plugin_name:
-                _pm.get_command(plugin_name)
+                pm.get_command(plugin_name)
         except KeyError:
             raise ValueError(
                 f"Given reader {plugin_name!r} does not exist. {helper_error_message}"
