@@ -194,7 +194,7 @@ def get_compatible_readers_by_choice(plugin_name, paths, _pm):
         except KeyError:
             raise ValueError(
                 f"Given reader {plugin_name!r} does not exist. {helper_error_message}"
-            )
+            ) from None
 
     if not len(compat_reader_names):
         raise ValueError(helper_error_message)
