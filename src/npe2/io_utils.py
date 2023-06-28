@@ -198,7 +198,7 @@ def get_compatible_readers_by_choice(
         plugin manager instance to check for readers
 
     Raises
-    ------        
+    ------
     ValueError
         If the given reader doesn't exist
     ValueError
