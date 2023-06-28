@@ -31,6 +31,7 @@ def test_read_with_unknown_plugin(uses_sample_plugin):
         read(paths, plugin_name=chosen_reader, stack=False)
     assert f"Available readers for {paths!r} are: {[SAMPLE_PLUGIN_NAME]!r}" in str(e)
 
+
 def test_read_with_unknown_plugin_no_readers(uses_sample_plugin):
     paths = ["some.nope"]
     chosen_reader = "not-a-plugin"
@@ -38,13 +39,13 @@ def test_read_with_unknown_plugin_no_readers(uses_sample_plugin):
         ValueError, match=f"Given reader {chosen_reader!r} does not exist."
     ) as e:
         read(paths, plugin_name=chosen_reader, stack=False)
-    assert 'No compatible readers are available' in str(e)
+    assert "No compatible readers are available" in str(e)
 
 
 def test_read_with_no_plugin():
     # no plugin passed and none registered
     paths = ["some.nope"]
-    with pytest.raises(ValueError, match=f"No compatible readers are available"):
+    with pytest.raises(ValueError, match="No compatible readers are available"):
         read(paths, stack=False)
 
 

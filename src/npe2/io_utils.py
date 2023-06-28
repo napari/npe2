@@ -154,7 +154,9 @@ def _read(
     if _pm is None:
         _pm = PluginManager.instance()
 
-    chosen_compatible_readers = get_compatible_readers_by_choice(plugin_name, paths, _pm)
+    chosen_compatible_readers = get_compatible_readers_by_choice(
+        plugin_name, paths, _pm
+    )
 
     for rdr in chosen_compatible_readers:
         read_func = rdr.exec(
@@ -172,14 +174,15 @@ def _read(
         )
     raise ValueError(f"No readers returned data for {paths!r}")
 
+
 def get_compatible_readers_by_choice(plugin_name, paths, _pm):
     compat_readers = list(_pm.iter_compatible_readers(paths))
     compat_reader_names = sorted([rdr.plugin_name for rdr in compat_readers])
     helper_error_message = (
-                f"Available readers for {paths!r} are: {compat_reader_names!r}."
-                if compat_reader_names
-                else f"No compatible readers are available for {paths!r}."
-            )
+        f"Available readers for {paths!r} are: {compat_reader_names!r}."
+        if compat_reader_names
+        else f"No compatible readers are available for {paths!r}."
+    )
 
     # check whether plugin even exists.
     if plugin_name:
@@ -187,7 +190,9 @@ def get_compatible_readers_by_choice(plugin_name, paths, _pm):
             # note that get_manifest works with a full command e.g. my-plugin.my-reader
             _pm.get_manifest(plugin_name)
         except KeyError:
-            raise ValueError(f"Given reader {plugin_name!r} does not exist. {helper_error_message}")
+            raise ValueError(
+                f"Given reader {plugin_name!r} does not exist. {helper_error_message}"
+            )
 
     if not len(compat_reader_names):
         raise ValueError(helper_error_message)
@@ -195,10 +200,12 @@ def get_compatible_readers_by_choice(plugin_name, paths, _pm):
     # user didn't make a choice and we have some readers to try, return them
     if not plugin_name:
         return compat_readers
-    
+
     # user made a choice and it exists, but it may not be a compatible reader
     plugin, contrib = (
-        tuple(plugin_name.split(".", maxsplit=1)) if "." in plugin_name else (plugin_name, None)
+        tuple(plugin_name.split(".", maxsplit=1))
+        if "." in plugin_name
+        else (plugin_name, None)
     )
     chosen_compatible_readers = list(
         filter(lambda rdr: rdr.plugin_name == plugin, compat_readers)
@@ -217,6 +224,7 @@ def get_compatible_readers_by_choice(plugin_name, paths, _pm):
             + helper_error_message
         )
     return chosen_compatible_readers
+
 
 @overload
 def _write(
