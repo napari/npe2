@@ -23,24 +23,29 @@ def test_read(uses_sample_plugin):
 
 def test_read_with_unknown_plugin(uses_sample_plugin):
     # no such plugin name.... skips over the sample plugin & error is specific
+    paths = ["some.fzzy"]
+    chosen_reader = "not-a-plugin"
     with pytest.raises(
-        ValueError, match="Given reader 'nope' is not a compatible reader"
-    ):
-        read(["some.fzzy"], plugin_name="nope", stack=False)
-
+        ValueError, match=f"Given reader {chosen_reader!r} does not exist."
+    ) as e:
+        read(paths, plugin_name=chosen_reader, stack=False)
+    assert f"Available readers for {paths!r} are: {[SAMPLE_PLUGIN_NAME]!r}" in str(e)
 
 def test_read_with_unknown_plugin_no_readers(uses_sample_plugin):
+    paths = ["some.nope"]
+    chosen_reader = "not-a-plugin"
     with pytest.raises(
-        ValueError, match="Given reader 'nope' is not a compatible reader"
-    ):
-        read(["some.nope"], plugin_name="nope", stack=False)
-    # assert 'No compatible readers are available.' in str(e)
+        ValueError, match=f"Given reader {chosen_reader!r} does not exist."
+    ) as e:
+        read(paths, plugin_name=chosen_reader, stack=False)
+    assert 'No compatible readers are available' in str(e)
 
 
 def test_read_with_no_plugin():
     # no plugin passed and none registered
-    with pytest.raises(ValueError, match="No readers returned"):
-        read(["some.nope"], stack=False)
+    paths = ["some.nope"]
+    with pytest.raises(ValueError, match=f"No compatible readers are available"):
+        read(paths, stack=False)
 
 
 def test_read_uses_correct_passed_plugin(tmp_path):
@@ -49,6 +54,9 @@ def test_read_uses_correct_passed_plugin(tmp_path):
     short_name = "gooby"
     long_name_plugin = DynamicPlugin(long_name, plugin_manager=pm)
     short_name_plugin = DynamicPlugin(short_name, plugin_manager=pm)
+
+    long_name_plugin.register()
+    short_name_plugin.register()
 
     path = "something.fzzy"
     mock_file = tmp_path / path
