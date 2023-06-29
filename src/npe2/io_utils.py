@@ -248,7 +248,8 @@ def _get_compatible_readers_by_choice(
         else (plugin_name, None)
     )
     chosen_compatible_readers = [
-        rdr for rdr in compat_readers
+        rdr
+        for rdr in compat_readers
         if rdr.plugin_name == plugin
         and (not passed_contrib or rdr.command == plugin_name)
     ]
