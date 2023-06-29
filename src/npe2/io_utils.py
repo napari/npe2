@@ -242,11 +242,7 @@ def _get_compatible_readers_by_choice(
         return compat_readers
 
     # user made a choice and it exists, but it may not be a compatible reader
-    plugin, contrib = (
-        tuple(plugin_name.split(".", maxsplit=1))
-        if passed_contrib
-        else (plugin_name, None)
-    )
+    plugin, _, contrib = plugin_name.partition(".")
     chosen_compatible_readers = [
         rdr
         for rdr in compat_readers
