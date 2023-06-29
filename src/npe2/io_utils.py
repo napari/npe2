@@ -247,16 +247,11 @@ def _get_compatible_readers_by_choice(
         if passed_contrib
         else (plugin_name, None)
     )
-    chosen_compatible_readers = list(
-        filter(lambda rdr: rdr.plugin_name == plugin, compat_readers)
-    )
-    if contrib:
-        chosen_compatible_readers = list(
-            filter(
-                lambda rdr: rdr.command.split(".")[1] == contrib,
-                chosen_compatible_readers,
-            )
-        )
+    chosen_compatible_readers = [
+        rdr for rdr in compat_readers
+        if rdr.plugin_name == plugin
+        and (not passed_contrib or rdr.command == plugin_name)
+    ]
     # the user's choice is not compatible with the paths. let them know what is
     if not chosen_compatible_readers:
         raise ValueError(
