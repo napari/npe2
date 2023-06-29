@@ -234,7 +234,8 @@ def _get_compatible_readers_by_choice(
                 f"Given reader {plugin_name!r} does not exist. {helper_error_message}"
             ) from None
 
-    if not len(compat_reader_names):
+    # no choice was made and there's no readers to try
+    if not plugin_name and not len(compat_reader_names):
         raise ValueError(helper_error_message)
 
     # user didn't make a choice and we have some readers to try, return them

@@ -98,6 +98,21 @@ def test_read_fails():
         io_utils._read(["some.fzzy"], stack=False, _pm=pm)
 
 
+def test_read_with_incompatible_reader(uses_sample_plugin):
+    paths = ["some.notfzzy"]
+    chosen_reader = f"{SAMPLE_PLUGIN_NAME}"
+    with pytest.raises(
+        ValueError, match=f"Given reader {chosen_reader!r} is not a compatible reader"
+    ):
+        read(paths, stack=False, plugin_name=chosen_reader)
+
+
+def test_read_with_no_compatible_reader():
+    paths = ["some.notfzzy"]
+    with pytest.raises(ValueError, match="No compatible readers are available"):
+        read(paths, stack=False)
+
+
 def test_read_with_reader_contribution_plugin(uses_sample_plugin):
     paths = ["some.fzzy"]
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.some_reader"
