@@ -128,6 +128,28 @@ def test_read_with_reader_contribution_plugin(uses_sample_plugin):
     assert "Available readers for" in str(e)
 
 
+def test_available_readers_show_commands(uses_sample_plugin):
+    paths = ["some.fzzy"]
+    chosen_reader = "not-a-plugin.not-a-reader"
+    with pytest.raises(
+        ValueError,
+        match=f"Given reader {chosen_reader!r} does not exist.",
+    ) as e:
+        read(paths, stack=False, plugin_name=chosen_reader)
+    assert "Available readers " in str(e)
+    assert f"{SAMPLE_PLUGIN_NAME}.some_reader" in str(e)
+
+    chosen_reader = "not-a-plugin"
+    with pytest.raises(
+        ValueError,
+        match=f"Given reader {chosen_reader!r} does not exist.",
+    ) as e:
+        read(paths, stack=False, plugin_name=chosen_reader)
+    assert "Available readers " in str(e)
+    assert f"{SAMPLE_PLUGIN_NAME}.some_reader" not in str(e)
+    assert f"{SAMPLE_PLUGIN_NAME}" in str(e)
+
+
 def test_read_return_reader(uses_sample_plugin):
     data, reader = read_get_reader("some.fzzy")
     assert data == [(None,)]
