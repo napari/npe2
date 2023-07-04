@@ -90,7 +90,7 @@ class DynamicPlugin:
         self.plugin_manager.unregister(self.manifest.name)
 
     def register(self) -> None:
-        """Remove this plugin from its plugin manager."""
+        """Register this plugin with its plugin manager."""
         self.plugin_manager.register(self.manifest)
 
     def clear(self) -> None:
