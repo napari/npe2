@@ -30,8 +30,8 @@ specification:
    from qtpy.QtWidgets import QWidget
 
    class MyPluginWidget(QWidget):
-       def __init__(self, viewer: 'napari.viewer.Viewer'):
-           super().__init__()
+       def __init__(self, viewer: 'napari.viewer.Viewer', parent=None):
+           super().__init__(parent)
            self._viewer = viewer
    ```
 
