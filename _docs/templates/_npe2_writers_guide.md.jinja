@@ -58,7 +58,7 @@ by the corresponding writer contribution in the manifest).
    ```python
    DataType = Any  # usually something like a numpy array, but varies by layer
    LayerAttributes = dict
-   LayerName = Literal["image", "labels", "points", "shapes", "surface", "tracks", "vectors"]
+   LayerName = Literal["graph", "image", "labels", "points", "shapes", "surface", "tracks", "vectors"]
    FullLayerData = Tuple[DataType, LayerAttributes, LayerName]
    MultiWriterFunction = Callable[[str, List[FullLayerData]], List[str]]
    ```
