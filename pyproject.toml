@@ -1,7 +1,10 @@
 # pyproject.toml
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 # https://peps.python.org/pep-0621/
 [project]
@@ -33,7 +36,8 @@ dependencies = [
     "build",
     "psygnal>=0.3.0",
     "pydantic<2",
-    "pytomlpp",
+    "tomli-w",
+    "tomli; python_version < '3.11'",
     "rich",
     "typer",
 ]
@@ -72,25 +76,9 @@ npe2 = "npe2._pytest_plugin"
 [project.entry-points."setuptools.finalize_distribution_options"]
 finalize_npe2 = "npe2._setuptools_plugin:finalize_npe2"
 
-[tool.setuptools]
-package-dir = { "" = "src" }
-include-package-data = true
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-"*" = ["*.pyi", "py.typed"]
-
-[tool.setuptools_scm]
-write_to = "src/npe2/_version.py"
 
 [tool.check-manifest]
-ignore = [
-    "src/npe2/_version.py",
-    ".pre-commit-config.yaml",
-    ".github_changelog_generator",
-]
+ignore = []
 
 [tool.pytest.ini_options]
 filterwarnings = ["error:::npe2"]
