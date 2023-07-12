@@ -159,6 +159,7 @@ def _read(
     chosen_compatible_readers = _get_compatible_readers_by_choice(
         plugin_name, paths, _pm
     )
+    assert chosen_compatible_readers, "Expected an exception before this point"
 
     for rdr in chosen_compatible_readers:
         read_func = rdr.exec(
