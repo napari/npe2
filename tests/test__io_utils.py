@@ -1,5 +1,6 @@
 # extra underscore in name to run this first
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -126,6 +127,13 @@ def test_read_with_reader_contribution_plugin(uses_sample_plugin):
     ) as e:
         read(paths, stack=False, plugin_name=chosen_reader)
     assert "Available readers for" in str(e)
+
+
+def test_read_assertion_with_no_compatible_readers(uses_sample_plugin):
+    paths = ["some.noreader"]
+    with patch("npe2.io_utils._get_compatible_readers_by_choice", return_value=[]):
+        with pytest.raises(AssertionError, match="No readers to try."):
+            read(paths, stack=False)
 
 
 def test_available_readers_show_commands(uses_sample_plugin):
