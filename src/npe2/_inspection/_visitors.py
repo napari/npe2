@@ -235,6 +235,9 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         # we can't convert this to an npe2 command contribution
         pass  # pragma: no cover
 
+    def napari_write_graph(self, node: ast.FunctionDef):
+        self._parse_writer(node, "graph")  # pragma: no cover
+
     def napari_write_image(self, node: ast.FunctionDef):
         self._parse_writer(node, "image")
 
