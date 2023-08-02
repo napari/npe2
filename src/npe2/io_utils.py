@@ -154,9 +154,16 @@ def _read(
     if _pm is None:
         _pm = PluginManager.instance()
 
-    for rdr in _pm.iter_compatible_readers(paths):
-        if plugin_name and rdr.plugin_name != plugin_name:
-            continue
+    # get readers compatible with paths and chosen plugin - raise errors if
+    # choices are invalid or there's nothing to try
+    chosen_compatible_readers = _get_compatible_readers_by_choice(
+        plugin_name, paths, _pm
+    )
+    assert (
+        chosen_compatible_readers
+    ), "No readers to try. Expected an exception before this point."
+
+    for rdr in chosen_compatible_readers:
         read_func = rdr.exec(
             kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
         )
@@ -167,10 +174,92 @@ def _read(
 
     if plugin_name:
         raise ValueError(
-            f"Plugin {plugin_name!r} was selected to open "
+            f"Reader {plugin_name!r} was selected to open "
             + f"{paths!r}, but returned no data."
         )
     raise ValueError(f"No readers returned data for {paths!r}")
+
+
+def _get_compatible_readers_by_choice(
+    plugin_name: Union[str, None], paths: Union[str, Sequence[str]], pm: PluginManager
+):
+    """Returns compatible readers filtered by validated plugin choice.
+
+    Checks that plugin_name is an existing plugin (and command if
+    a specific contribution was passed), and that it is compatible
+    with paths. Raises ValueError if given plugin doesn't exist,
+    it is not compatible with the given paths, or no compatible
+    readers can be found for paths (if no plugin was chosen).
+
+    Parameters
+    ----------
+    plugin_name: Union[str, None]
+        name of chosen plugin, or None
+    paths: Union[str, Sequence[str]]
+        paths to read
+    pm: PluginManager
+        plugin manager instance to check for readers
+
+    Raises
+    ------
+    ValueError
+        If the given reader doesn't exist
+    ValueError
+        If there are no compatible readers
+    ValueError
+        If the given reader is not compatible
+
+    Returns
+    -------
+    compat_readers : List[ReaderContribution]
+        Compatible readers for plugin choice
+    """
+    passed_contrib = plugin_name and ("." in plugin_name)
+    compat_readers = list(pm.iter_compatible_readers(paths))
+    compat_reader_names = sorted(
+        {(rdr.command if passed_contrib else rdr.plugin_name) for rdr in compat_readers}
+    )
+    helper_error_message = (
+        f"Available readers for {paths!r} are: {compat_reader_names!r}."
+        if compat_reader_names
+        else f"No compatible readers are available for {paths!r}."
+    )
+
+    # check whether plugin even exists.
+    if plugin_name:
+        try:
+            # note that get_manifest works with a full command e.g. my-plugin.my-reader
+            pm.get_manifest(plugin_name)
+            if passed_contrib:
+                pm.get_command(plugin_name)
+        except KeyError:
+            raise ValueError(
+                f"Given reader {plugin_name!r} does not exist. {helper_error_message}"
+            ) from None
+
+    # no choice was made and there's no readers to try
+    if not plugin_name and not len(compat_reader_names):
+        raise ValueError(helper_error_message)
+
+    # user didn't make a choice and we have some readers to try, return them
+    if not plugin_name:
+        return compat_readers
+
+    # user made a choice and it exists, but it may not be a compatible reader
+    plugin, _, _ = plugin_name.partition(".")
+    chosen_compatible_readers = [
+        rdr
+        for rdr in compat_readers
+        if rdr.plugin_name == plugin
+        and (not passed_contrib or rdr.command == plugin_name)
+    ]
+    # the user's choice is not compatible with the paths. let them know what is
+    if not chosen_compatible_readers:
+        raise ValueError(
+            f"Given reader {plugin_name!r} is not a compatible reader for {paths!r}. "
+            + helper_error_message
+        )
+    return chosen_compatible_readers
 
 
 @overload

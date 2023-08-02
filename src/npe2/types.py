@@ -46,7 +46,7 @@ class ArrayLike(Protocol):
 
 
 LayerName = Literal[
-    "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
+    "graph", "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
 ]
 Metadata = Dict
 DataType = Union[ArrayLike, Sequence[ArrayLike]]
