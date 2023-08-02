@@ -1,5 +1,31 @@
 # Changelog
 
+## [v0.7.1](https://github.com/napari/npe2/tree/v0.7.1) (2023-07-16)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.0...v0.7.1)
+
+**Implemented enhancements:**
+
+- feat: support python3.11 [\#293](https://github.com/napari/npe2/pull/293) ([tlambert03](https://github.com/tlambert03))
+- add graph layer  [\#292](https://github.com/napari/npe2/pull/292) ([JoOkuma](https://github.com/JoOkuma))
+
+**Fixed bugs:**
+
+- fix: use constraints in napari tests [\#298](https://github.com/napari/npe2/pull/298) ([Czaki](https://github.com/Czaki))
+- Use full `plugin_name` when finding chosen `reader` rather than `startswith` [\#297](https://github.com/napari/npe2/pull/297) ([DragaDoncila](https://github.com/DragaDoncila))
+- Change ArrayLike type to use read only properties [\#289](https://github.com/napari/npe2/pull/289) ([andy-sweet](https://github.com/andy-sweet))
+- Bugfix: use .lower\(\) to make paths & pattern fnmatch case  insensitive [\#275](https://github.com/napari/npe2/pull/275) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+
+**Documentation:**
+
+- Fix typo in `DynamicPlugin` [\#304](https://github.com/napari/npe2/pull/304) ([lucyleeow](https://github.com/lucyleeow))
+- DOCS: Widget guide should consistently use parent=None kwarg in examples [\#302](https://github.com/napari/npe2/pull/302) ([GenevieveBuckley](https://github.com/GenevieveBuckley))
+
+**Merged pull requests:**
+
+- remove tomlpp [\#294](https://github.com/napari/npe2/pull/294) ([tlambert03](https://github.com/tlambert03))
+- Use hatchling as build backend [\#282](https://github.com/napari/npe2/pull/282) ([tlambert03](https://github.com/tlambert03))
+
 ## [v0.7.0](https://github.com/napari/npe2/tree/v0.7.0) (2023-04-14)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.6.2...v0.7.0)
@@ -26,6 +52,7 @@
 
 **Merged pull requests:**
 
+- chore: changelog v0.7.0 [\#286](https://github.com/napari/npe2/pull/286) ([tlambert03](https://github.com/tlambert03))
 - ci\(dependabot\): bump peter-evans/create-pull-request from 4 to 5 [\#284](https://github.com/napari/npe2/pull/284) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Pin pydantic bellow 2.0 [\#279](https://github.com/napari/npe2/pull/279) ([Czaki](https://github.com/Czaki))
 
@@ -187,7 +214,7 @@
 
 ## [v0.4.0](https://github.com/napari/npe2/tree/v0.4.0) (2022-06-13)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.4.0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.4.0)
 
 **Implemented enhancements:**
 
@@ -217,13 +244,13 @@
 - Add doc links to README [\#158](https://github.com/napari/npe2/pull/158) ([nclack](https://github.com/nclack))
 - Fix codeblock directive in docstring [\#156](https://github.com/napari/npe2/pull/156) ([melissawm](https://github.com/melissawm))
 
-## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
-
-[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0.rc0...v0.3.0)
-
 ## [v0.3.0.rc0](https://github.com/napari/npe2/tree/v0.3.0.rc0) (2022-04-05)
 
-[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0.rc0)
+[Full Changelog](https://github.com/napari/npe2/compare/v0.3.0...v0.3.0.rc0)
+
+## [v0.3.0](https://github.com/napari/npe2/tree/v0.3.0) (2022-04-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.2.2...v0.3.0)
 
 **Implemented enhancements:**
 

@@ -1,3 +1,4 @@
+import sys
 from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, color
@@ -63,4 +64,8 @@ class ThemeContribution(BaseModel):
         "   - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`\n"
         '   - RGB/RGBA strings: `"rgb(255, 255, 255)"`, `"rgba(255, 255, 255, 0.5)`"\n'
         '   - HSL strings: "`hsl(270, 60%, 70%)"`, `"hsl(270, 60%, 70%, .5)`"\n'
+    )
+    font_size: str = Field(
+        default="12pt" if sys.platform == "darwin" else "9pt",
+        description="Font size (in points, pt) used in the application.",
     )
