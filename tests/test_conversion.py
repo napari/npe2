@@ -68,6 +68,30 @@ def test_conversion_from_package(npe1_repo, mock_npe1_pm_with_plugin):
     assert "Is this package already converted?" in str(e.value)
 
 
+@pytest.mark.filterwarnings("ignore:Failed to convert napari_provide_sample_data")
+@pytest.mark.filterwarnings("ignore:Error converting function")
+@pytest.mark.filterwarnings("ignore:Error converting dock widget")
+def test_conversion_from_package_editable(npe1_repo, mock_npe1_pm_with_plugin_editable):
+    setup_cfg = npe1_repo / "setup.cfg"
+    before = setup_cfg.read_text()
+    convert_repository(npe1_repo, dry_run=True)
+    assert setup_cfg.read_text() == before
+    assert not (npe1_repo / "npe1_module" / "napari.yaml").exists()
+    convert_repository(npe1_repo, dry_run=False)
+    new_setup = setup_cfg.read_text()
+    assert new_setup != before
+    assert (
+        "[options.entry_points]\n"
+        "napari.manifest = \n	npe1-plugin = npe1_module:napari.yaml"
+    ) in new_setup
+    assert "[options.package_data]\nnpe1_module = napari.yaml" in new_setup
+    assert (npe1_repo / "npe1_module" / "napari.yaml").is_file()
+
+    with pytest.raises(ValueError) as e:
+        convert_repository(npe1_repo)
+    assert "Is this package already converted?" in str(e.value)
+
+
 def _assert_expected_errors(record: pytest.WarningsRecorder):
     assert len(record) == 4
     msg = str(record[0].message)
