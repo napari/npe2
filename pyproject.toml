@@ -137,6 +137,7 @@ source = ["src"]
 omit = [
     "src/npe2/manifest/contributions/_keybindings.py",
     "src/npe2/manifest/menus.py",
+    "src/npe2/__main__.py",
     "src/npe2/manifest/package_metadata.py",
     # due to all of the isolated sub-environments and sub-processes,
     # it's really hard to get coverage on the setuptools plugin.

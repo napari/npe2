@@ -172,6 +172,53 @@ def mock_npe1_pm_with_plugin(npe1_repo, npe1_plugin_module):
                     (npe1_repo / "setup.py").unlink()
 
 
+@pytest.fixture
+def mock_npe1_pm_with_plugin_editable(npe1_repo, npe1_plugin_module, tmp_path):
+    """Mocks a fully installed local repository"""
+    from npe2._inspection._from_npe1 import plugin_packages
+
+    dist_path = tmp_path / "npe1-plugin-0.0.1.dist-info"
+    shutil.copytree(npe1_repo / "npe1-plugin-0.0.1.dist-info", dist_path)
+
+    record_path = dist_path / "RECORD"
+
+    record_content = record_path.read_text().splitlines()
+    record_content.pop(-1)
+    record_content.append("__editable__.npe1-plugin-0.0.1.pth")
+
+    with record_path.open("w") as f:
+        f.write("\n".join(record_content))
+
+    with open(tmp_path / "__editable__.npe1-plugin-0.0.1.pth", "w") as f:
+        f.write(str(npe1_repo))
+
+    mock_dist = metadata.PathDistribution(dist_path)
+
+    def _dists():
+        return [mock_dist]
+
+    def _from_name(name):
+        if name == "npe1-plugin":
+            return mock_dist
+        raise metadata.PackageNotFoundError(name)
+
+    setup_cfg = npe1_repo / "setup.cfg"
+    new_manifest = npe1_repo / "npe1_module" / "napari.yaml"
+    with patch.object(metadata, "distributions", new=_dists):
+        with patch.object(metadata.Distribution, "from_name", new=_from_name):
+            cfg = setup_cfg.read_text()
+            plugin_packages.cache_clear()
+            try:
+                yield mock_npe1_pm
+            finally:
+                plugin_packages.cache_clear()
+                setup_cfg.write_text(cfg)
+                if new_manifest.exists():
+                    new_manifest.unlink()
+                if (npe1_repo / "setup.py").exists():
+                    (npe1_repo / "setup.py").unlink()
+
+
 @pytest.fixture(autouse=True)
 def mock_cache(tmp_path, monkeypatch):
     with monkeypatch.context() as m:
