@@ -207,7 +207,9 @@ class ContributionDecorator(Generic[C]):
         ...
 
     @overload
-    def __call__(self, func: Literal[None] = None, **kwargs) -> Callable[[T], T]:
+    def __call__(
+        self, func: Optional[Literal[None]] = None, **kwargs
+    ) -> Callable[[T], T]:
         ...
 
     def __call__(
