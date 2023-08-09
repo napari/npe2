@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, TypeVar
+from typing import Any, Callable, TypeVar
 
 from pydantic import BaseModel as BaseModel
 
@@ -13,7 +13,7 @@ def reader(
     *,
     id: str,
     title: str,
-    filename_patterns: List[str],
+    filename_patterns: list[str],
     accepts_directories: bool = False,
     ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
@@ -23,8 +23,8 @@ def writer(
     *,
     id: str,
     title: str,
-    layer_types: List[str],
-    filename_extensions: List[str] = [],  # noqa: B006
+    layer_types: list[str],
+    filename_extensions: list[str] = [],  # noqa: B006
     display_name: str = "",
     ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:

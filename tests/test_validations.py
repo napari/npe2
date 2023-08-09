@@ -162,7 +162,7 @@ def _valid_mutator_no_contributions_None(data):
 def test_valid_mutations(mutator, uses_sample_plugin):
     assert mutator.__name__.startswith("_valid")
 
-    pm = list(PluginManifest.discover())[0]
+    pm = next(iter(PluginManifest.discover()))
     assert pm.manifest
     # make sure the data is a copy as we'll mutate it
     data = json.loads(pm.manifest.json(exclude_unset=True))

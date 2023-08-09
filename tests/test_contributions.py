@@ -85,10 +85,10 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
 def test_basic_iter_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
     tmp_path = str(tmp_path)
     assert not list(plugin_manager.iter_compatible_readers(""))
-    reader = list(plugin_manager.iter_compatible_readers(tmp_path))[0]
+    reader = next(iter(plugin_manager.iter_compatible_readers(tmp_path)))
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
-    reader = list(plugin_manager.iter_compatible_readers([tmp_path, tmp_path]))[0]
+    reader = next(iter(plugin_manager.iter_compatible_readers([tmp_path, tmp_path])))
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
     with pytest.raises(ValueError):
@@ -108,7 +108,7 @@ def test_widgets(uses_sample_plugin, plugin_manager: PluginManager):
 
 
 def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
-    plugin, contribs = list(plugin_manager.iter_sample_data())[0]
+    plugin, contribs = next(iter(plugin_manager.iter_sample_data()))
     assert plugin == SAMPLE_PLUGIN_NAME
     assert len(contribs) == 2
     ctrbA, ctrbB = contribs
@@ -125,12 +125,12 @@ def test_sample(uses_sample_plugin, plugin_manager: PluginManager):
 
 
 def test_directory_reader(uses_sample_plugin, plugin_manager: PluginManager, tmp_path):
-    reader = list(plugin_manager.iter_compatible_readers(str(tmp_path)))[0]
+    reader = next(iter(plugin_manager.iter_compatible_readers(str(tmp_path))))
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
 def test_themes(uses_sample_plugin, plugin_manager: PluginManager):
-    theme = list(plugin_manager.iter_themes())[0]
+    theme = next(iter(plugin_manager.iter_themes()))
     assert theme.label == "SampleTheme"
 
 
