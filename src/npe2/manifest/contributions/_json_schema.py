@@ -21,8 +21,8 @@ __all__ = [
 ]
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
-JsonTypeArray = conlist(JsonType, min_items=True, unique_items=True)
-StringArrayMin1 = conlist(str, unique_items=True, min_items=1)
+JsonTypeArray = conlist(JsonType, min_items=1, unique_items=True)
+StringArrayMin1 = conlist(str, min_items=1, unique_items=True)
 StringArray = conlist(str, unique_items=True)
 
 PY_NAME_TO_JSON_NAME = {
