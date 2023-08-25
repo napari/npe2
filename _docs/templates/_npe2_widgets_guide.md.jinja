@@ -17,14 +17,17 @@ specifically requested by the user.
 ```
 
 The widget specification requires that the plugin provide napari with a
-*callable* object that, when called, returns an *instance* of a widget
-(where a "widget" is an instance of `QtWidgets.QWidget` or `magicgui.widgets.Widget`).
+*callable* object that, when called, returns an *instance* of a widget.
+Here "widget" means a subclass of `QtWidgets.QWidget` or `magicgui.widgets.Widget`,
+or a `FunctionGui`. Additionally, the plugin can provide an arbitrary function if using
+'autogenerate', which requests that napari autogenerate a widget using
+`magicgui.magicgui` (see item 3 below).
 
 There are a few commonly used patterns that fulfill this `Callable[..., Widget]`
 specification:
 
-1. Provide a `class` object directly, such as a `QtWidgets.QWidget` or
-   `magicgui.widgets.Widget` subclass:
+1. Provide a `class` object that is a subclass of `QtWidgets.QWidget` or
+   `magicgui.widgets.Widget`:
 
    ```python
    from qtpy.QtWidgets import QWidget
@@ -35,7 +38,7 @@ specification:
            self._viewer = viewer
    ```
 
-2. Provide a wrapper function, or `magicgui.magic_factory` object:
+2. Provide a `magicgui.magic_factory` object:
 
     ```python
     from magicgui import magic_factory
