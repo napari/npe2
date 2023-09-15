@@ -408,7 +408,7 @@ def get_pypi_plugins() -> Dict[str, str]:
 @lru_cache
 def get_hub_plugins() -> Dict[str, str]:
     """Return {name: latest_version} for all plugins on the hub."""
-    with request.urlopen("https://api.napari-hub.org/plugins") as r:
+    with request.urlopen("https://api.napari-hub.org/plugins/index/all") as r:
         return json.load(r)
 
 
