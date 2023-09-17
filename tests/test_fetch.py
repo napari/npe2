@@ -93,11 +93,6 @@ def test_get_manifest_from_wheel(tmp_path):
     assert mf.name == "affinder"
 
 
-def test_get_hub_plugins():
-    plugins = get_hub_plugins()
-    assert len(plugins) > 0
-
-
 def test_get_hub_plugin():
     info = get_hub_plugin("napari-svg")
     assert info["name"] == "napari-svg"
