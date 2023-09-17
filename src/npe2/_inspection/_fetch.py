@@ -41,7 +41,6 @@ __all__ = [
     "fetch_manifest",
     "get_pypi_url",
     "get_hub_plugin",
-    "get_hub_plugins",
     "get_pypi_plugins",
 ]
 
