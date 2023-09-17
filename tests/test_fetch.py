@@ -9,7 +9,6 @@ from npe2 import PluginManifest, fetch_manifest
 from npe2._inspection._fetch import (
     _manifest_from_pypi_sdist,
     get_hub_plugin,
-    get_hub_plugins,
     get_manifest_from_wheel,
     get_pypi_plugins,
     get_pypi_url,
