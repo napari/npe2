@@ -58,9 +58,9 @@ def isolated_plugin_env(
     """
     # it's important that this import be lazy, otherwise we'll get a circular
     # import when serving as a setuptools plugin with `python -m build`
-    from build.env import IsolatedEnvBuilder
+    from build.env import DefaultIsolatedEnv
 
-    with IsolatedEnvBuilder() as env:
+    with DefaultIsolatedEnv() as env:
         # install the package
         pkg = f"{package}=={version}" if version else package
         logger.debug(f"installing {pkg} into virtual env")
