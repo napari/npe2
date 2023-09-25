@@ -41,7 +41,6 @@ __all__ = [
     "fetch_manifest",
     "get_pypi_url",
     "get_hub_plugin",
-    "get_hub_plugins",
     "get_pypi_plugins",
 ]
 
@@ -403,13 +402,6 @@ def get_pypi_plugins() -> Dict[str, str]:
     """Return {name: latest_version} for all plugins found on pypi."""
     NAPARI_CLASSIFIER = "Framework :: napari"
     return _get_packages_by_classifier(NAPARI_CLASSIFIER)
-
-
-@lru_cache
-def get_hub_plugins() -> Dict[str, str]:
-    """Return {name: latest_version} for all plugins on the hub."""
-    with request.urlopen("https://api.napari-hub.org/plugins") as r:
-        return json.load(r)
 
 
 @lru_cache
