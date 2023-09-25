@@ -33,7 +33,7 @@ classifiers = [
 dependencies = [
     "PyYAML",
     "appdirs",
-    "build",
+    "build>=1",
     "psygnal>=0.3.0",
     "pydantic<2",
     "tomli-w",
