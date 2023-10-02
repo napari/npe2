@@ -85,7 +85,7 @@ def test_manifest_from_sdist():
 
 
 def test_get_manifest_from_wheel(tmp_path):
-    url = "https://files.pythonhosted.org/packages/f0/cc/7f6fbce81be3eb73266f398e49df92859ba247134eb086704dd70b43819a/affinder-0.2.3-py3-none-any.whl"  # noqa
+    url = "https://files.pythonhosted.org/packages/f0/cc/7f6fbce81be3eb73266f398e49df92859ba247134eb086704dd70b43819a/affinder-0.2.3-py3-none-any.whl"
     dest = tmp_path / "affinder-0.2.3-py3-none-any.whl"
     urllib.request.urlretrieve(url, dest)
     mf = get_manifest_from_wheel(dest)
@@ -106,8 +106,8 @@ def test_get_pypi_plugins():
 @pytest.mark.parametrize(
     "url",
     [
-        "https://files.pythonhosted.org/packages/fb/01/e59bc1d6ac96f84ce9d7a46cc5422250e047958ead6c5693ed386cf94003/napari_dv-0.3.0.tar.gz",  # noqa
-        "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",  # noqa
+        "https://files.pythonhosted.org/packages/fb/01/e59bc1d6ac96f84ce9d7a46cc5422250e047958ead6c5693ed386cf94003/napari_dv-0.3.0.tar.gz",
+        "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",
         "git+https://github.com/DragaDoncila/example-plugin.git",
         # this one doesn't use setuptools_scm, can check direct zip without clone
         "https://github.com/jo-mueller/napari-stl-exporter/archive/refs/heads/main.zip",

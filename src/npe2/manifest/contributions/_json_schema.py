@@ -103,7 +103,7 @@ class _JsonSchemaBase(BaseModel):
     unique_items: bool = Field(False)
     max_properties: Optional[int] = Field(None, ge=0)
     min_properties: Optional[int] = Field(0, ge=0)
-    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(None)  # type: ignore  # noqa
+    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(None)  # type: ignore
     type: Union[JsonType, JsonTypeArray] = Field(None)  # type: ignore
     format: Optional[str] = Field(None)
 
