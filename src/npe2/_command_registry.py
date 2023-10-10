@@ -39,6 +39,12 @@ class CommandHandler:
 
 
 class CommandRegistry:
+    """Registry of commands, updated when `PluginManager.activate` run.
+
+    `PluginManager.activate` is only run on `CommandRegistry.get` (when we get the
+    callable object for a command). This means that commmands from enabled plugins are
+    not added to `CommandRegistry` until a command from that plugin is executed.
+    """
     command_registered = Signal(str)
     command_unregistered = Signal(str)
 
