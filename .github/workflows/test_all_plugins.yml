@@ -5,6 +5,10 @@ on:
     types: [ labeled ]
   workflow_dispatch:
 
+concurrency:
+  group: test-plugins-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   get-plugins:
     if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'

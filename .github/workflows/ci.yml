@@ -9,6 +9,10 @@ on:
   pull_request: {}
   workflow_dispatch:
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-manifest:
     name: Check Manifest
