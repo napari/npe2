@@ -39,7 +39,7 @@ class CommandHandler:
 
 
 class CommandRegistry:
-    """Registry of commands, updated when `PluginManager.activate` run.
+    """Registry of commands, updated on `PluginManager.activate`.
 
     `PluginManager.activate` is only run on `CommandRegistry.get` (when we get the
     callable object for a command). This means that commands from enabled plugins are
