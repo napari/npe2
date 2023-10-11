@@ -24,6 +24,7 @@ def test_fetch_npe2_manifest():
     assert mf.npe1_shim is False
 
 
+@pytest.mark.skip("package looks deleted from pypi")
 def test_fetch_npe1_manifest_with_writer():
     mf = fetch_manifest("example-plugin")
     assert mf.name == "example-plugin"
