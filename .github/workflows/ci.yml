@@ -77,7 +77,7 @@ jobs:
           python -m pip install -e ./napari-from-github -c "./napari-from-github/resources/constraints/constraints_py3.10.txt"
           python -m pip install -e .[json]
           # bare minimum required to test napari/plugins
-          python -m pip install pytest scikit-image[data] zarr xarray hypothesis matplotlib
+          python -m pip install pytest pytest-pretty scikit-image[data] zarr xarray hypothesis matplotlib
 
       - name: Run napari plugin headless tests
         run: pytest -W 'ignore::DeprecationWarning' napari/plugins napari/settings napari/layers napari/components
