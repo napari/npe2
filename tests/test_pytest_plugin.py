@@ -59,9 +59,9 @@ def test_something_6(npe2pm):
 
 
 @pytest.mark.parametrize("case", [CASE1, CASE2, CASE3, CASE4, CASE5, CASE6])
-def test_npe2pm_fixture(pytester: pytest.Pytester, case):
+def test_npe2pm_fixture(pytester_pretty: pytest.Pytester, case):
     """Make sure that the npe2pm fixture works."""
 
     # create a temporary pytest test file
-    pytester.makepyfile(case)
-    pytester.runpytest().assert_outcomes(passed=1)
+    pytester_pretty.makepyfile(case)
+    pytester_pretty.runpytest().assert_outcomes(passed=1)

@@ -56,6 +56,7 @@ testing = [
     "pytest",
     "pytest-cov",
     "jsonschema",
+    "pytest-pretty",
 ]
 dev = ["black", "ipython", "isort", "mypy", "pre-commit"]
 docs = ["Jinja2", "magicgui>=0.3.3"]
