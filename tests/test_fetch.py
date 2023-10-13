@@ -24,6 +24,7 @@ def test_fetch_npe2_manifest():
     assert mf.npe1_shim is False
 
 
+@pytest.mark.skip("package looks deleted from pypi")
 def test_fetch_npe1_manifest_with_writer():
     mf = fetch_manifest("example-plugin")
     assert mf.name == "example-plugin"
@@ -106,9 +107,9 @@ def test_get_pypi_plugins():
 @pytest.mark.parametrize(
     "url",
     [
-        "https://files.pythonhosted.org/packages/fb/01/e59bc1d6ac96f84ce9d7a46cc5422250e047958ead6c5693ed386cf94003/napari_dv-0.3.0.tar.gz",
-        "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",
-        "git+https://github.com/DragaDoncila/example-plugin.git",
+        "https://files.pythonhosted.org/packages/fb/01/e59bc1d6ac96f84ce9d7a46cc5422250e047958ead6c5693ed386cf94003/napari_dv-0.3.0.tar.gz",  # noqa
+        "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",  # noqa
+        # "git+https://github.com/DragaDoncila/example-plugin.git", Draga hide package
         # this one doesn't use setuptools_scm, can check direct zip without clone
         "https://github.com/jo-mueller/napari-stl-exporter/archive/refs/heads/main.zip",
     ],
