@@ -14,7 +14,7 @@ jobs:
     name: Check Manifest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Check
         run: pipx run check-manifest
 
@@ -28,7 +28,7 @@ jobs:
         platform: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -57,8 +57,8 @@ jobs:
     name: napari tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: napari/napari
           path: napari-from-github
@@ -73,7 +73,7 @@ jobs:
           python -m pip install -e ./napari-from-github -c "./napari-from-github/resources/constraints/constraints_py3.10.txt"
           python -m pip install -e .[json]
           # bare minimum required to test napari/plugins
-          python -m pip install pytest scikit-image[data] zarr xarray hypothesis matplotlib
+          python -m pip install pytest pytest-pretty scikit-image[data] zarr xarray hypothesis matplotlib
 
       - name: Run napari plugin headless tests
         run: pytest -W 'ignore::DeprecationWarning' napari/plugins napari/settings napari/layers napari/components
@@ -83,7 +83,7 @@ jobs:
     name: docs render
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: "3.x"
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
