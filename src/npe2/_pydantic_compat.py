@@ -8,6 +8,7 @@ try:
         ValidationError,
         color,
         conlist,
+        constr,
         root_validator,
         validator,
     )
@@ -31,7 +32,6 @@ except ImportError:
     from pydantic.error_wrappers import ErrorWrapper
     from pydantic.fields import SHAPE_LIST
     from pydantic.generics import GenericModel
-    from pydantic.main import ModelMetaclass
 
 
 __all__ = (
@@ -44,6 +44,7 @@ __all__ = (
     "PrivateAttr",
     "color",
     "conlist",
+    "constr",
     "ModelMetaclass",
     "ErrorWrapper",
     "GenericModel",
