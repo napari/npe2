@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from npe2._pydantic_compat import BaseModel
 
 
 class Icon(BaseModel):

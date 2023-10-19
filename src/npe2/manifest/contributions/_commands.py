@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Optional, Union
 
-from pydantic import BaseModel, Extra, Field, validator
+from npe2._pydantic_compat import BaseModel, Extra, Field, validator
 
 from npe2.manifest import _validators
 from npe2.types import PythonName

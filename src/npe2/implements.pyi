@@ -1,6 +1,6 @@
 from typing import Any, Callable, TypeVar
 
-from pydantic import BaseModel as BaseModel
+from npe2._pydantic_compat import BaseModel as BaseModel
 
 from .manifest import PluginManifest as PluginManifest
 from .manifest import contributions as contributions

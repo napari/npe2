@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Type, Union
 
-from pydantic import BaseModel, Field, PrivateAttr, conlist, root_validator, validator
+from npe2._pydantic_compat import BaseModel, Field, PrivateAttr, conlist, root_validator, validator
 
 if TYPE_CHECKING:
     from jsonschema.exceptions import ValidationError

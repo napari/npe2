@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from pydantic.fields import Field
-from pydantic.generics import GenericModel
+from npe2._pydantic_compat import Field, GenericModel
 
 from npe2.manifest.utils import Executable
 from npe2.types import LayerData

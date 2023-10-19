@@ -14,7 +14,7 @@ from typing import (
     overload,
 )
 
-from pydantic import BaseModel, ValidationError
+from npe2._pydantic_compat import BaseModel, ValidationError
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (
