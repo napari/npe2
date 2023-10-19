@@ -5,14 +5,15 @@ on:
     types: [ labeled ]
   workflow_dispatch:
 
+concurrency:
+  group: test-plugins-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   get-plugins:
     if: github.event.label.name == 'test-all-plugins' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: styfle/cancel-workflow-action@0.11.0
-        with:
-          access_token: ${{ github.token }}
       - id: plugin_names
         run: echo "::set-output name=plugins::$(curl -s https://api.napari-hub.org/plugins | jq -c 'keys')"
     outputs:
