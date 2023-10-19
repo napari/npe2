@@ -26,12 +26,14 @@ except ImportError:
         ValidationError,
         color,
         conlist,
+        constr,
         root_validator,
         validator,
     )
     from pydantic.error_wrappers import ErrorWrapper
     from pydantic.fields import SHAPE_LIST
     from pydantic.generics import GenericModel
+    from pydantic.main import ModelMetaclass
 
 
 __all__ = (
