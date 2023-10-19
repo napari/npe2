@@ -2,7 +2,7 @@ import contextlib
 from inspect import Parameter, Signature
 from typing import Any, Callable, List, Sequence, Type, TypeVar
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from .manifest import contributions
 

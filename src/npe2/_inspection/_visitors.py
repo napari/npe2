@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Tuple, Type, Uni
 from npe2.manifest import contributions
 
 if TYPE_CHECKING:
-    from pydantic import BaseModel
+    from pydantic.v1 import BaseModel
 
 
 CONTRIB_MAP: Dict[str, Tuple[Type["BaseModel"], str]] = {

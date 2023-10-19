@@ -1,8 +1,8 @@
 from importlib import metadata
 from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Extra, Field, constr, root_validator
-from pydantic.fields import SHAPE_LIST
+from pydantic.v1 import BaseModel, Extra, Field, constr, root_validator
+from pydantic.v1.fields import SHAPE_LIST
 
 # https://packaging.python.org/specifications/core-metadata/
 

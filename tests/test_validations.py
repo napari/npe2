@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from pydantic import ValidationError
+from pydantic.v1 import ValidationError
 
 from npe2 import PluginManifest
 from npe2.manifest import _validators

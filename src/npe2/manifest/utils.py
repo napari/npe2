@@ -18,8 +18,8 @@ from typing import (
     Union,
 )
 
-from pydantic import PrivateAttr
-from pydantic.generics import GenericModel
+from pydantic.v1 import PrivateAttr
+from pydantic.v1.generics import GenericModel
 
 from npe2.types import PythonName
 

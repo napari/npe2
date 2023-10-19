@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from npe2 import PluginContext
 from npe2.types import PathOrPaths

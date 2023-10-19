@@ -1,8 +1,8 @@
 import sys
 from typing import Literal, Optional, Union
 
-from pydantic import BaseModel, color
-from pydantic.fields import Field
+from pydantic.v1 import BaseModel, color
+from pydantic.v1.fields import Field
 
 
 # pydantic doesn't implement color equality?

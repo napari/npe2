@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Tuple
 
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic.v1 import BaseModel, Extra, Field, validator
 
 from npe2.manifest.utils import Executable
 

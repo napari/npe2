@@ -511,7 +511,7 @@ class PluginManager:
         """Return a dictionary with the state of the plugin manager.
 
         `include` and `exclude` will be passed to each `PluginManifest.dict()`
-        See pydantic documentation for details:
+        See pydantic.v1 documentation for details:
         https://pydantic-docs.helpmanual.io/usage/exporting_models/#modeldict
 
         `include` and `exclude` may be a set of dotted strings, indicating
