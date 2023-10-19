@@ -2,7 +2,6 @@ from enum import Enum
 from typing import List, Tuple
 
 from npe2._pydantic_compat import BaseModel, Extra, Field, validator
-
 from npe2.manifest.utils import Executable
 
 

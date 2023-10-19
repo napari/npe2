@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, Optional
 
 from npe2._pydantic_compat import Extra, Field
-
 from npe2.manifest.utils import Executable
 from npe2.types import Widget
 

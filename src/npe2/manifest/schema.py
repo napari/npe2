@@ -8,8 +8,16 @@ from logging import getLogger
 from pathlib import Path
 from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union
 
-from npe2._pydantic_compat import Extra, Field, ValidationError, root_validator, validator, ErrorWrapper, BaseModel, ModelMetaclass
-
+from npe2._pydantic_compat import (
+    BaseModel,
+    ErrorWrapper,
+    Extra,
+    Field,
+    ModelMetaclass,
+    ValidationError,
+    root_validator,
+    validator,
+)
 from npe2.types import PythonName
 
 from . import _validators

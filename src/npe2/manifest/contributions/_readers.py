@@ -2,7 +2,6 @@ from functools import wraps
 from typing import List, Optional
 
 from npe2._pydantic_compat import Extra, Field
-
 from npe2.manifest.utils import Executable, v2_to_v1
 from npe2.types import ReaderFunction
 

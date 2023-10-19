@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional, Union
 
 import yaml
+
 from npe2._pydantic_compat import BaseModel, PrivateAttr
 
 

@@ -1,7 +1,6 @@
 from typing import Optional
 
 from npe2._pydantic_compat import Field
-
 from npe2.manifest.utils import Executable
 
 

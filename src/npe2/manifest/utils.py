@@ -18,8 +18,7 @@ from typing import (
     Union,
 )
 
-from npe2._pydantic_compat import PrivateAttr, GenericModel
-
+from npe2._pydantic_compat import GenericModel, PrivateAttr
 from npe2.types import PythonName
 
 if TYPE_CHECKING:
