@@ -444,9 +444,8 @@ class PluginManifest(ImportExportModel):
             If the name does not resolve to either a distribution name or a filename.
 
         """
-        from pydantic import ValidationError
-
         from npe2 import PluginManifest
+        from npe2._pydantic_compat import ValidationError
 
         try:
             return PluginManifest.from_file(package_or_filename)
