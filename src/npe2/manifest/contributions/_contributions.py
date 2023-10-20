@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from npe2._pydantic_compat import BaseModel, Field, validator
 
 from ._commands import CommandContribution
 from ._configuration import ConfigurationContribution

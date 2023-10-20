@@ -2,7 +2,7 @@ import contextlib
 from inspect import Parameter, Signature
 from typing import Any, Callable, List, Sequence, Type, TypeVar
 
-from pydantic import BaseModel
+from npe2._pydantic_compat import BaseModel
 
 from .manifest import contributions
 

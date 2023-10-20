@@ -1,7 +1,6 @@
 from typing import Optional, Union
 
-from pydantic import BaseModel
-from pydantic.fields import Field
+from npe2._pydantic_compat import BaseModel, Field
 
 from ._icon import Icon
 

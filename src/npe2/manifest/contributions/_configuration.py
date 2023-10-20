@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, conlist, root_validator, validator
+from npe2._pydantic_compat import BaseModel, Field, conlist, root_validator, validator
 
 from ._json_schema import (
     Draft07JsonSchema,

@@ -8,10 +8,16 @@ from logging import getLogger
 from pathlib import Path
 from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union
 
-from pydantic import Extra, Field, ValidationError, root_validator, validator
-from pydantic.error_wrappers import ErrorWrapper
-from pydantic.main import BaseModel, ModelMetaclass
-
+from npe2._pydantic_compat import (
+    BaseModel,
+    ErrorWrapper,
+    Extra,
+    Field,
+    ModelMetaclass,
+    ValidationError,
+    root_validator,
+    validator,
+)
 from npe2.types import PythonName
 
 from . import _validators
@@ -438,9 +444,8 @@ class PluginManifest(ImportExportModel):
             If the name does not resolve to either a distribution name or a filename.
 
         """
-        from pydantic import ValidationError
-
         from npe2 import PluginManifest
+        from npe2._pydantic_compat import ValidationError
 
         try:
             return PluginManifest.from_file(package_or_filename)
