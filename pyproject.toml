@@ -151,7 +151,7 @@ source = [
     "src",
     "/Users/runner/work/npe2/npe2/src",
     "/home/runner/work/npe2/npe2/src",
-    "D:\a\npe2\npe2\src",
+    "D:\\a\\npe2\\npe2\\src",
 ]
 
 # https://coverage.readthedocs.io/en/6.4/config.html
