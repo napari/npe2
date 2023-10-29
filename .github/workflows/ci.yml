@@ -107,6 +107,7 @@ jobs:
   upload_coverage:
     needs: test
     name: Upload coverage
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
