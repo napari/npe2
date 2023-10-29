@@ -146,6 +146,9 @@ omit = [
     "src/npe2/_setuptools_plugin.py",
 ]
 
+[tool.coverage.paths]
+source = ["src"]
+
 # https://coverage.readthedocs.io/en/6.4/config.html
 [tool.coverage.report]
 exclude_lines = [
