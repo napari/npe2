@@ -134,6 +134,7 @@ pretty = true
 
 
 [tool.coverage.run]
+parallel = true
 source = ["src"]
 omit = [
     "src/npe2/manifest/contributions/_keybindings.py",
