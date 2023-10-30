@@ -70,7 +70,8 @@ def isolated_plugin_env(
         prefixes = [getattr(env, "path")]  # noqa
         if not (site_pkgs := site.getsitepackages(prefixes=prefixes)):
             raise ValueError("No site-packages found")  # pragma: no cover
-        sys.path.insert(0, site_pkgs[0])
+        for el in reversed(site_pkgs):
+            sys.path.insert(0, el)
         try:
             if validate_npe1_imports:
                 # try to import the plugin's entry points
@@ -91,8 +92,9 @@ def isolated_plugin_env(
                             raise
             yield env
         finally:
-            # cleanup sys.path
-            sys.path.pop(0)
+            for _el in site_pkgs:
+                # cleanup sys.path
+                sys.path.pop(0)
 
 
 def _get_loaded_mf_or_die(package: str) -> PluginManifest:
