@@ -70,7 +70,7 @@ def test_from_pypi_wheel_bdist_missing():
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
-def testfetch_manifest_with_full_install():
+def test_fetch_manifest_with_full_install():
     # TODO: slowest of the tests ... would be nice to provide a local mock
     mf = fetch_manifest_with_full_install("napari-ndtiffs", version="0.1.2")
     # use version 0.1.2 which is npe1
