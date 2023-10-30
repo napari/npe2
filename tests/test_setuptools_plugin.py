@@ -32,8 +32,6 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path, dist_type: str) -> N
     pyproject = compiled_plugin_dir / "pyproject.toml"
     pyproject.write_text(PYPROJECT)
 
-    print(f"pyproject.toml {PYPROJECT!r}")
-
     template = compiled_plugin_dir / TEMPLATE
     template.write_text("name: my_compiled_plugin\ndisplay_name: My Compiled Plugin\n")
     os.chdir(compiled_plugin_dir)
