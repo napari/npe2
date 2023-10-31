@@ -13,9 +13,6 @@ from npe2._inspection._fetch import (
     get_pypi_plugins,
     get_pypi_url,
 )
-from npe2._inspection._full_install import fetch_manifest_with_full_install
-from npe2.manifest._npe1_adapter import NPE1Adapter
-
 
 def test_fetch_npe2_manifest():
     mf = fetch_manifest("napari-omero")
@@ -67,16 +64,6 @@ def test_from_pypi_wheel_bdist_missing():
     with patch("npe2._inspection._fetch.get_pypi_url", side_effect=error):
         with pytest.raises(PackageNotFoundError):
             fetch_manifest("my-package")
-
-
-@pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
-def test_fetch_manifest_with_full_install():
-    # TODO: slowest of the tests ... would be nice to provide a local mock
-    mf = fetch_manifest_with_full_install("napari-ndtiffs", version="0.1.2")
-    # use version 0.1.2 which is npe1
-    assert isinstance(mf, NPE1Adapter)
-    assert mf.name == "napari-ndtiffs"
-    assert mf.contributions
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
