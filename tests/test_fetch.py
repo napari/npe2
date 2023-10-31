@@ -14,6 +14,7 @@ from npe2._inspection._fetch import (
     get_pypi_url,
 )
 
+
 def test_fetch_npe2_manifest():
     mf = fetch_manifest("napari-omero")
     assert mf.name == "napari-omero"

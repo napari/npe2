@@ -13,7 +13,6 @@ if not PLUGIN:
     pytest.skip("skipping plugin specific tests", allow_module_level=True)
 
 
-
 def test_fetch(tmp_path: "Path"):
     from typer.testing import CliRunner
 
