@@ -204,8 +204,16 @@ def _get_manifest_from_git_url(url: str) -> PluginManifest:
     if url.startswith("git+"):
         url = url[4:]
 
+    branch = ""
+    if "@" in url:
+        url, branch = url.split("@")
+
     with tempfile.TemporaryDirectory() as td:
         subprocess.run(["git", "clone", url, td], stdout=subprocess.DEVNULL)
+        if branch:
+            subprocess.run(
+                ["git", "checkout", branch], cwd=td, stdout=subprocess.DEVNULL
+            )
         return _build_src_and_extract_manifest(td)
 
 
