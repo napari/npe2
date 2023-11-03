@@ -24,7 +24,7 @@ def test_fetch_npe2_manifest():
 
 @pytest.mark.skip("package looks deleted from pypi")
 def test_fetch_npe1_manifest_with_writer():
-    mf = fetch_manifest("dummy-test-plugin", version="0.1.2")
+    mf = fetch_manifest("dummy-test-plugin", version="0.1.3")
     assert mf.name == "example-plugin"
     assert mf.contributions.writers
     # Test will eventually fail when example-plugin is updated to npe2
