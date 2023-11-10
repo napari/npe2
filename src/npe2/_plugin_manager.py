@@ -7,6 +7,7 @@ import warnings
 from collections import Counter
 from fnmatch import fnmatch
 from importlib import metadata
+from logging import getLogger
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -51,6 +52,8 @@ if TYPE_CHECKING:
     MappingIntStrAny = Mapping[IntStr, Any]
     InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
     DisposeFunction = Callable[[], None]
+
+logger = getLogger(__name__)
 
 __all__ = ["PluginContext", "PluginManager"]
 PluginName = str  # this is `PluginManifest.name`
@@ -710,7 +713,10 @@ class PluginContext:
 
     def _dispose(self):
         while self._disposables:
-            self._disposables.pop()()
+            try:
+                self._disposables.pop()()
+            except Exception as e:
+                logger.warn(f'Error while disposing {self.plugin_key}; {e}')
 
     def register_command(self, id: str, command: Optional[Callable] = None):
         """Associate a callable with a command id."""
