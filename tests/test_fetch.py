@@ -13,8 +13,6 @@ from npe2._inspection._fetch import (
     get_pypi_plugins,
     get_pypi_url,
 )
-from npe2._inspection._full_install import fetch_manifest_with_full_install
-from npe2.manifest._npe1_adapter import NPE1Adapter
 
 
 def test_fetch_npe2_manifest():
@@ -26,7 +24,7 @@ def test_fetch_npe2_manifest():
 
 @pytest.mark.skip("package looks deleted from pypi")
 def test_fetch_npe1_manifest_with_writer():
-    mf = fetch_manifest("example-plugin")
+    mf = fetch_manifest("dummy-test-plugin", version="0.1.3")
     assert mf.name == "example-plugin"
     assert mf.contributions.writers
     # Test will eventually fail when example-plugin is updated to npe2
@@ -70,16 +68,6 @@ def test_from_pypi_wheel_bdist_missing():
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
-def testfetch_manifest_with_full_install():
-    # TODO: slowest of the tests ... would be nice to provide a local mock
-    mf = fetch_manifest_with_full_install("napari-ndtiffs", version="0.1.2")
-    # use version 0.1.2 which is npe1
-    assert isinstance(mf, NPE1Adapter)
-    assert mf.name == "napari-ndtiffs"
-    assert mf.contributions
-
-
-@pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
 def test_manifest_from_sdist():
     mf = _manifest_from_pypi_sdist("zarpaint")
     assert mf.name == "zarpaint"
@@ -109,7 +97,7 @@ def test_get_pypi_plugins():
     [
         "https://files.pythonhosted.org/packages/fb/01/e59bc1d6ac96f84ce9d7a46cc5422250e047958ead6c5693ed386cf94003/napari_dv-0.3.0.tar.gz",  # noqa
         "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",  # noqa
-        # "git+https://github.com/DragaDoncila/example-plugin.git", Draga hide package
+        "git+https://github.com/napari/dummy-test-plugin.git@npe1",
         # this one doesn't use setuptools_scm, can check direct zip without clone
         "https://github.com/jo-mueller/napari-stl-exporter/archive/refs/heads/main.zip",
     ],
