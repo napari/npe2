@@ -49,7 +49,6 @@ def test_fetch_npe1_manifest_dock_widget_as_attribute():
     mf = fetch_manifest("brainreg-segment", version="0.2.18")
     assert mf.name == "brainreg-segment"
     assert mf.contributions.widgets
-    # Test will eventually fail when brainreg-segment is updated to npe2
     # This is here as a sentinel
     assert mf.npe1_shim is True
 
