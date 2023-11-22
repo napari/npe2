@@ -51,13 +51,13 @@ jobs:
       - name: Test
         run: |
           coverage run --source=npe2 -m pytest --color yes
-          coverage xml
-          coverage report --show-missing
 
-      - name: Coverage
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage as artifact
+        uses: actions/upload-artifact@v3
         with:
-          fail_ci_if_error: true
+          name: coverage reports
+          path: |
+            ./.coverage.*
 
   test_napari:
     name: napari tests
@@ -103,6 +103,45 @@ jobs:
         run: python _docs/render.py
         env:
           NPE2_SCHEMA: "_schema.json"
+
+  upload_coverage:
+    needs: test
+    name: Upload coverage
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+          cache-dependency-path: setup.cfg
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install codecov
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage reports
+          path: coverage
+
+      - name: combine coverage data
+        run: |
+          python -Im coverage combine coverage
+          python -Im coverage xml -o coverage.xml
+
+          # Report and write to summary.
+          python -Im coverage report --format=markdown --skip-empty --skip-covered >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   deploy:
     name: Deploy
