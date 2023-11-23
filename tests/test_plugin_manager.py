@@ -225,13 +225,13 @@ def test_plugin_context_dispose():
 
 
 def test_plugin_context_dispose_error():
-    """Test """
+    """Test"""
     pm = PluginManager()
     mf = PluginManifest(name="test")
     pm.register(mf)
 
     def dummy_error():
-        raise ValueError('This is an error')
+        raise ValueError("This is an error")
 
     pm.get_context("test").register_disposable(dummy_error)
     msg = "Error while disposing test; This is an error"
