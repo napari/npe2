@@ -716,7 +716,7 @@ class PluginContext:
             try:
                 self._disposables.pop()()
             except Exception as e:
-                logger.warn(f"Error while disposing {self.plugin_key}; {e}")
+                logger.warning(f"Error while disposing {self.plugin_key}; {e}")
 
     def register_command(self, id: str, command: Optional[Callable] = None):
         """Associate a callable with a command id."""
