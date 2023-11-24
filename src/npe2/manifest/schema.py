@@ -128,20 +128,19 @@ class PluginManifest(ImportExportModel):
     icon: str = Field(
         "",
         description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
-        "for Retina screens). May be one of:\n"
-        "  - a secure (https) URL\n"
-        "  - a path relative to the manifest file, (must be shipped in the sdist)\n"
-        "  - a string in the format `{package}:{resource}`, where `package` and "
+        "for Retina screens). May be one of: "
+        "<ul><li>a secure (https) URL </li>"
+        "<li>a path relative to the manifest file, (must be shipped in the sdist)</li>"
+        "<li>a string in the format `{package}:{resource}`, where `package` and "
         "`resource` are arguments to `importlib.resources.path(package, resource)`, "
-        "(e.g. `top_module.some_folder:my_logo.png`).",
+        "(e.g. `top_module.some_folder:my_logo.png`).</li></ul>",
     )
     _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
     categories: List[Category] = Field(
         default_factory=list,
         description="A list of categories that this plugin belongs to. This is used to "
-        "help users discover your plugin. Allowed values:\n"
-        f"`[{', '.join(Category)}]`",
+        f"help users discover your plugin. Allowed values: `[{', '.join(Category)}]`",
     )
     # Plugins rely on certain guarantees to interoperate propertly with the
     # plugin engine. These include the manifest specification, conventions
