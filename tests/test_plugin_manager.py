@@ -222,3 +222,17 @@ def test_plugin_context_dispose():
     pm.get_context("test").register_disposable(mock)
     pm.deactivate("test")
     mock.assert_called_once()
+
+
+def test_plugin_context_dispose_error(caplog):
+    """Test errors when executing dispose functions caught correctly."""
+    pm = PluginManager()
+    mf = PluginManifest(name="test")
+    pm.register(mf)
+
+    def dummy_error():
+        raise ValueError("This is an error")
+
+    pm.get_context("test").register_disposable(dummy_error)
+    pm.deactivate("test")
+    assert caplog.records[0].msg == "Error while disposing test; This is an error"
