@@ -36,7 +36,7 @@ jobs:
 
       - uses: tlambert03/setup-qt-libs@v1
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: 3.9
           miniforge-variant: Mambaforge
