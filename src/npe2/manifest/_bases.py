@@ -79,7 +79,7 @@ class ImportExportModel(BaseModel):
             try:
                 import tomllib
             except ImportError:
-                import tomli as tomllib
+                import tomli as tomllib # type: ignore [no-redef]
 
             loader = tomllib.load
         elif path.suffix.lower() in (".yaml", ".yml"):
