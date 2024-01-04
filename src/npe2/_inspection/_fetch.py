@@ -59,7 +59,7 @@ def _manifest_from_npe2_dist(
     module: str = match.groupdict()["module"]
     attr: str = match.groupdict()["attr"]
 
-    mf_file = Path(dist.locate_file(Path(module) / attr))
+    mf_file = Path(dist.locate_file(Path(module.replace(".", os.sep)) / attr))
     if not mf_file.exists():
         raise ValueError(  # pragma: no cover
             f"manifest {mf_file.name!r} does not exist in distribution "
