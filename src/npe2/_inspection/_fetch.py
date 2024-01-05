@@ -12,6 +12,7 @@ from functools import lru_cache
 from importlib import metadata
 from logging import getLogger
 from pathlib import Path
+from time import sleep
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -391,6 +392,7 @@ def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
 
     packages = {}
     page = 1
+    sleep_count = 0
     url = f"https://pypi.org/search/?c={parse.quote_plus(classifier)}&page="
     while True:
         try:
@@ -400,8 +402,11 @@ def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
             versions = PACKAGE_VERSION_PATTERN.findall(html)
             packages.update(dict(zip(names, versions)))
             page += 1
-        except error.HTTPError:
-            break
+        except error.HTTPError as e:
+            if e.code == 404 or sleep_count > 5:
+                break
+            sleep(1)
+            print(e, f"{url}{page}")
 
     return dict(sorted(packages.items()))
 
