@@ -157,8 +157,7 @@ def test_adapter_error_on_import():
             if filename == "METADATA":
                 return "Name: fake-plugin\nVersion: 0.1.0\n"
 
-        def locate_file(self, *_):
-            ...
+        def locate_file(self, *_): ...
 
     adapter = _npe1_adapter.NPE1Adapter(FakeDist())
 

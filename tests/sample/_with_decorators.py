@@ -19,13 +19,11 @@ else:
 
 
 @implements.on_activate
-def activate(ctx):
-    ...
+def activate(ctx): ...
 
 
 @implements.on_deactivate
-def deactivate(ctx):
-    ...
+def deactivate(ctx): ...
 
 
 @implements.reader(
@@ -34,8 +32,7 @@ def deactivate(ctx):
     filename_patterns=["*.fzy", "*.fzzy"],
     accepts_directories=True,
 )
-def get_reader(path: str):
-    ...
+def get_reader(path: str): ...
 
 
 @reader(
@@ -45,8 +42,7 @@ def get_reader(path: str):
     accepts_directories=False,
     ensure_args_valid=True,
 )
-def url_reader(path: str):
-    ...
+def url_reader(path: str): ...
 
 
 @noimport.writer(
@@ -61,8 +57,9 @@ def url_reader(path: str):
     filename_extensions=["*.pcd", "*.e57"],
     layer_types=["points{1}", "surface+"],
 )
-def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
-    ...
+def writer_function(
+    path: str, layer_data: List[Tuple[Any, Dict, str]]
+) -> List[str]: ...
 
 
 @implements.writer(
@@ -71,15 +68,13 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     filename_extensions=["*.xyz"],
     layer_types=["labels"],
 )
-def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
-    ...
+def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]: ...
 
 
 @npe2.implements.widget(
     id="some_widget", title="Create my widget", display_name="My Widget"
 )
-class SomeWidget:
-    ...
+class SomeWidget: ...
 
 
 @npe2.implements.sample_data_generator(
@@ -88,8 +83,7 @@ class SomeWidget:
     key="random_data",
     display_name="Some Random Data (512 x 512)",
 )
-def random_data():
-    ...
+def random_data(): ...
 
 
 @impls.widget(
@@ -98,5 +92,4 @@ def random_data():
     display_name="A Widget From a Function",
     autogenerate=True,
 )
-def make_widget_from_function(x: int, threshold: int):
-    ...
+def make_widget_from_function(x: int, threshold: int): ...

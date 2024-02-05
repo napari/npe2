@@ -11,8 +11,7 @@ if TYPE_CHECKING:
 
 def activate(context: PluginContext):
     @context.register_command("my_plugin.hello_world")
-    def _hello():
-        ...
+    def _hello(): ...
 
     context.register_command("my_plugin.another_command", lambda: print("yo!"))
 
@@ -72,8 +71,7 @@ def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
     return [path]
 
 
-class SomeWidget:
-    ...
+class SomeWidget: ...
 
 
 def random_data():
@@ -82,5 +80,4 @@ def random_data():
     return [(np.random.rand(10, 10))]
 
 
-def make_widget_from_function(image: "napari.types.ImageData", threshold: int):
-    ...
+def make_widget_from_function(image: "napari.types.ImageData", threshold: int): ...
