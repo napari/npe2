@@ -60,7 +60,7 @@ Widget = Union["magicgui.widgets.Widget", "qtpy.QtWidgets.QWidget"]
 WidgetCreator = Callable[..., Widget]
 
 # ReaderContribution.command must point to a ReaderGetter
-ReaderFunction = Callable[[PathOrPaths], List["LayerData"]]
+ReaderFunction = Callable[[PathOrPaths], List[LayerData]]
 ReaderGetter = Callable[[PathOrPaths], Optional[ReaderFunction]]
 
 
