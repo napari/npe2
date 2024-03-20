@@ -140,12 +140,18 @@ setup(
 
 
 def test_conversion_missing():
-    with pytest.raises(ModuleNotFoundError), pytest.warns(UserWarning):
+    with pytest.raises(
+        PackageNotFoundError,
+        match="No package or entry point found with name",
+    ):
         manifest_from_npe1("does-not-exist-asdf6as987")
 
 
 def test_conversion_package_is_not_a_plugin():
-    with pytest.raises(PackageNotFoundError):
+    with pytest.raises(
+        PackageNotFoundError,
+        match="No package or entry point found with name",
+    ):
         manifest_from_npe1("pytest")
 
 
