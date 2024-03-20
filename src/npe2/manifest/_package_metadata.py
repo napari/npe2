@@ -32,7 +32,7 @@ class PackageMetadata(BaseModel):
 
     # allow str as a fallback in case the metata-version specification has been
     # updated and we haven't updated the code yet
-    metadata_version: MetadataVersion | str = Field(
+    metadata_version: Union[MetadataVersion, str] = Field(
         "1.0", description="Version of the file format"
     )
     name: PackageName = Field(  # type: ignore
