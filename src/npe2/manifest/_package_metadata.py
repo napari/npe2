@@ -12,7 +12,7 @@ from npe2._pydantic_compat import (
 
 # https://packaging.python.org/specifications/core-metadata/
 
-MetadataVersion = Literal["1.0", "1.1", "1.2", "2.0", "2.1", "2.2"]
+MetadataVersion = Literal["1.0", "1.1", "1.2", "2.0", "2.1", "2.2", "2.3"]
 _alphanum = "[a-zA-Z0-9]"
 PackageName = constr(regex=f"^{_alphanum}[a-zA-Z0-9._-]*{_alphanum}$")
 
@@ -30,7 +30,9 @@ class PackageMetadata(BaseModel):
     class Config:
         extra = Extra.ignore
 
-    metadata_version: MetadataVersion = Field(
+    # allow str as a fallback in case the metata-version specification has been
+    # updated and we haven't updated the code yet
+    metadata_version: MetadataVersion | str = Field(
         "1.0", description="Version of the file format"
     )
     name: PackageName = Field(  # type: ignore
