@@ -5,11 +5,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from magicgui import magic_factory
 from qtpy.QtWidgets import QWidget
 
-from npe2.types import LayerData, PathOrPaths, ReaderFunction
-
 if TYPE_CHECKING:
     import napari.types
     import napari.viewer
+    from npe2.types import LayerData, PathOrPaths, ReaderFunction
 
 
 def write_points(path: str, layer_data: Any, attributes: Dict[str, Any]) -> List[str]:
@@ -20,7 +19,7 @@ def write_points(path: str, layer_data: Any, attributes: Dict[str, Any]) -> List
     return [path]
 
 
-def get_reader(path: PathOrPaths) -> Optional["ReaderFunction"]:
+def get_reader(path: "PathOrPaths") -> Optional["ReaderFunction"]:
     # If we recognize the format, we return the actual reader function
     if isinstance(path, str) and path.endswith(".xyz"):
         return xyz_file_reader
@@ -28,7 +27,7 @@ def get_reader(path: PathOrPaths) -> Optional["ReaderFunction"]:
     return None
 
 
-def xyz_file_reader(path: PathOrPaths) -> List["LayerData"]:
+def xyz_file_reader(path: "PathOrPaths") -> List["LayerData"]:
     data = ...  # somehow read data from path
     layer_attributes = {"name": "etc..."}
     return [(data, layer_attributes)]
@@ -64,7 +63,7 @@ def threshold(
     return (image > threshold).astype(int)
 
 
-def create_fractal() -> List[LayerData]:
+def create_fractal() -> List["LayerData"]:
     """An example of a  Sample Data Function.
 
     Note: Sample Data with URIs don't need python code.
