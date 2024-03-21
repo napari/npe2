@@ -48,12 +48,10 @@ def test_writer_priority():
     with DynamicPlugin(name="my_plugin", plugin_manager=pm) as plg:
 
         @plg.contribute.writer(filename_extensions=["*.tif"], layer_types=["image"])
-        def my_writer1(path, data):
-            ...
+        def my_writer1(path, data): ...
 
         @plg.contribute.writer(filename_extensions=["*.abc"], layer_types=["image"])
-        def my_writer2(path, data):
-            ...
+        def my_writer2(path, data): ...
 
         writers = list(pm.iter_compatible_writers(["image"]))
         assert writers[0].command == "my_plugin.my_writer1"
