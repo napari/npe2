@@ -1,8 +1,11 @@
 (widgets-contribution-guide)=
 ## Widgets
 
-Widget plugins allow developers to contribute novel graphical
-elements (aka "widgets") to the user interface.  These widgets can request
+Widget plugin contributions allow developers to add novel graphical
+elements (aka "widgets") to the user interface. For a full introduction to
+creating `napari` widgets see [](creating-widgets).
+
+Widgets can request
 access to the viewer instance in which they are docked, enabling a broad
 range of functionality: essentially, anything that can be done with the
 napari `Viewer` and `Layer` APIs can be accomplished with widgets.
@@ -57,6 +60,12 @@ specification:
    `napari_plugin_engine`, this was the `napari_experimental_provide_function`
    hook specification.  In the new `npe2` pattern, one uses the `autogenerate`
    field in the [WidgetContribution](contributions-widgets).
+
+For more examples see [](creating-widgets) and
+[GUI gallery examples](https://napari.org/stable/_tags/gui.html) (only a subset
+involve widgets). Additionally,
+[cookiecutter-napari-plugin](https://github.com/napari/cookiecutter-napari-plugin)
+has more robust widget examples that you can adapt to your needs.
 
 ```{note}
 Notice that `napari` type annotations are strings and not imported. This is to
