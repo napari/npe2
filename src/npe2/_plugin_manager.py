@@ -4,7 +4,7 @@ import contextlib
 import os
 import urllib
 import warnings
-from collections import Counter
+from collections import Counter, defaultdict
 from fnmatch import fnmatch
 from importlib import metadata
 from logging import getLogger
@@ -52,6 +52,15 @@ if TYPE_CHECKING:
     MappingIntStrAny = Mapping[IntStr, Any]
     InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
     DisposeFunction = Callable[[], None]
+    AllContributions = Union[
+        CommandContribution,
+        ReaderContribution,
+        MenuItem,
+        SubmenuContribution,
+        WidgetContribution,
+        WriterContribution,
+        SampleDataContribution,
+    ]
 
 logger = getLogger(__name__)
 
@@ -235,6 +244,12 @@ class PluginManager:
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
         self._npe1_adapters: List[NPE1Adapter] = []
+        self._plugin_command_map: Dict[
+            str,
+            Dict[
+                str, Dict[str, Union[List[AllContributions], Dict[str, List[MenuItem]]]]
+            ],
+        ] = defaultdict(dict)
 
         # up to napari 0.4.15, discovery happened in the init here
         # so if we're running on an older version of napari, we need to discover
@@ -358,7 +373,36 @@ class PluginManager:
             self._npe1_adapters.append(manifest)
         else:
             self._contrib.index_contributions(manifest)
+            self._populate_plugin_command_map(manifest)
         self.events.plugins_registered.emit({manifest})
+
+    def _populate_plugin_command_map(self, manifest: PluginManifest):
+        for command in manifest.contributions.commands or ():
+            # command IDs are keys in map
+            # each value is a dict keyed by contribution type (as string)
+            # with values as a list of contributions of that type associated
+            # with the given command
+            associated = self._get_associated_contributions(manifest, command.id)
+            self._plugin_command_map[manifest.name][command.id] = associated
+
+    def _get_associated_contributions(
+        self, manifest: PluginManifest, command_id: str
+    ) -> Dict[str, Union[List[AllContributions], Dict[str, List[MenuItem]]]]:
+        associated_contribs = defaultdict(list)
+        for ctrb_type in ["readers", "writers", "widgets", "sample_data"]:
+            contribs = getattr(manifest.contributions, ctrb_type) or []
+            for contrib in contribs:
+                if getattr(contrib, "command", "") == command_id:
+                    associated_contribs[ctrb_type].append(contrib)
+        # menus are keyed by menu_id so we read them a bit differently
+        menus = manifest.contributions.menus or dict()
+        associated_menus = defaultdict(list)
+        for menu_id, items in menus.items():
+            for item in items:
+                if getattr(item, "command", "") == command_id:
+                    associated_menus[menu_id].append(item)
+        associated_contribs["menus"] = associated_menus
+        return associated_contribs
 
     def unregister(self, key: PluginName):
         """Unregister plugin named `key`."""
@@ -366,6 +410,7 @@ class PluginManager:
             raise ValueError(f"No registered plugin named {key!r}")  # pragma: no cover
         self.deactivate(key)
         self._contrib.remove_contributions(key)
+        self._plugin_command_map.pop(key)
         self._manifests.pop(key)
 
     def activate(self, key: PluginName) -> PluginContext:
