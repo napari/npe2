@@ -623,7 +623,7 @@ class PluginManager:
         for mf in self.iter_manifests(disabled=disabled):
             yield from mf.contributions.menus.get(menu_key, ())
 
-    def menus(self, disabled=False) -> Dict[str, List[MenuCommand]]:
+    def menus(self, disabled=False) -> Dict[str, List[MenuItem]]:
         """Return all registered menu_key -> List[MenuItems]."""
         _menus: DefaultDict[str, List[MenuItem]] = DefaultDict(list)
         for mf in self.iter_manifests(disabled=disabled):
