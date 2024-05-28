@@ -236,3 +236,33 @@ def test_plugin_context_dispose_error(caplog):
     pm.get_context("test").register_disposable(dummy_error)
     pm.deactivate("test")
     assert caplog.records[0].msg == "Error while disposing test; This is an error"
+
+
+def test_command_menu_map(uses_sample_plugin, plugin_manager: PluginManager):
+    """Test that the command menu map is correctly populated."""
+    pm = PluginManager.instance()
+    assert SAMPLE_PLUGIN_NAME in pm._manifests
+    assert SAMPLE_PLUGIN_NAME in pm._command_menu_map
+
+    # contains correct commands
+    command_menu_map = pm._command_menu_map[SAMPLE_PLUGIN_NAME]
+    assert "my-plugin.hello_world" in command_menu_map
+    assert "my-plugin.another_command" in command_menu_map
+
+    # commands point to correct menus
+    assert len(cmd_menu := command_menu_map["my-plugin.hello_world"]) == 1
+    assert "/napari/layer_context" in cmd_menu
+    assert len(cmd_menu := command_menu_map["my-plugin.another_command"]) == 1
+    assert "mysubmenu" in cmd_menu
+
+    # enable/disable
+    pm.disable(SAMPLE_PLUGIN_NAME)
+    assert SAMPLE_PLUGIN_NAME not in pm._command_menu_map
+    pm.enable(SAMPLE_PLUGIN_NAME)
+    assert SAMPLE_PLUGIN_NAME in pm._command_menu_map
+
+    # register/unregister
+    pm.unregister(SAMPLE_PLUGIN_NAME)
+    assert SAMPLE_PLUGIN_NAME not in pm._command_menu_map
+    pm.register(SAMPLE_PLUGIN_NAME)
+    assert SAMPLE_PLUGIN_NAME in pm._command_menu_map

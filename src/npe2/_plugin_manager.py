@@ -366,6 +366,7 @@ class PluginManager:
         self.events.plugins_registered.emit({manifest})
 
     def _populate_command_menu_map(self, manifest: PluginManifest):
+        self._command_menu_map[manifest.name] = defaultdict(dict)
         for command in manifest.contributions.commands or ():
             # command IDs are keys in map
             # each value is a dict menu_id: list of MenuCommands
@@ -473,6 +474,7 @@ class PluginManager:
         mf = self._manifests.get(plugin_name)
         if mf is not None:
             self._contrib.index_contributions(mf)
+            self._populate_command_menu_map(mf)
         self.events.enablement_changed({plugin_name}, {})
 
     def disable(self, plugin_name: PluginName) -> None:
@@ -492,6 +494,7 @@ class PluginManager:
 
         self._disabled_plugins.add(plugin_name)
         self._contrib.remove_contributions(plugin_name)
+        self._command_menu_map.pop(plugin_name)
         self.events.enablement_changed({}, {plugin_name})
 
     def is_disabled(self, plugin_name: str) -> bool:
