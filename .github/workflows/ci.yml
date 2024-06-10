@@ -53,7 +53,7 @@ jobs:
           coverage run --source=npe2 -m pytest --color yes
 
       - name: Upload coverage as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage reports
           path: |
