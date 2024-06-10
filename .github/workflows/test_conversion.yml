@@ -61,7 +61,7 @@ jobs:
 
       - name: Test Conversion
         id: test-without-napari
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         continue-on-error: true
         with:
           run: npe2 convert ./plugin_repo
@@ -73,13 +73,13 @@ jobs:
       - name: Test Conversion again with napari
         id: test-with-napari
         if: ${{ steps.test-without-napari.outcome == 'failure' }}
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         with:
           run: npe2 convert ./plugin_repo
 
       - name: Test Conversion again with napari
         if: ${{ steps.test-without-napari.outcome == 'failure' && steps.test-with-napari.outcome == 'failure' }}
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         with:
           # try without modifying directory
           run: npe2 convert -n ${{ matrix.plugin }}
