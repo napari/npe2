@@ -8,3 +8,8 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "ci(dependabot):"
+
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
