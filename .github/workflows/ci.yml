@@ -126,7 +126,7 @@ jobs:
       - name: Download coverage data
         uses: actions/download-artifact@v4
         with:
-          name: coverage reports
+          pattern: coverage reports*
           path: coverage
 
       - name: combine coverage data
