@@ -29,7 +29,7 @@ from .utils import Executable, Version
 logger = getLogger(__name__)
 
 
-SCHEMA_VERSION = "0.2.0"
+SCHEMA_VERSION = "0.2.1"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
 
@@ -55,6 +55,8 @@ class Category(str, Enum):
     # Tools that extract measurements (i.e. into tabular, graph, or other data formats),
     # such as region properties, etc...
     Measurement = "Measurement"
+    # tools that allow registration/alignment between different layers/datasets
+    Registration = "Registration"
     # tools that identify objects and/or boundaries in datasets
     # (including, but not limited to, images)
     Segmentation = "Segmentation"
