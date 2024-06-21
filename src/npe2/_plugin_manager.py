@@ -4,7 +4,7 @@ import contextlib
 import os
 import urllib
 import warnings
-from collections import Counter
+from collections import Counter, defaultdict
 from fnmatch import fnmatch
 from importlib import metadata
 from logging import getLogger
@@ -38,6 +38,7 @@ from .types import PathLike, PythonName
 if TYPE_CHECKING:
     from .manifest.contributions import (
         CommandContribution,
+        MenuCommand,
         MenuItem,
         ReaderContribution,
         SampleDataContribution,
@@ -235,6 +236,9 @@ class PluginManager:
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
         self._npe1_adapters: List[NPE1Adapter] = []
+        self._command_menu_map: Dict[
+            str, Dict[str, Dict[str, List[MenuCommand]]]
+        ] = defaultdict(dict)
 
         # up to napari 0.4.15, discovery happened in the init here
         # so if we're running on an older version of napari, we need to discover
@@ -358,7 +362,20 @@ class PluginManager:
             self._npe1_adapters.append(manifest)
         else:
             self._contrib.index_contributions(manifest)
+            self._populate_command_menu_map(manifest)
         self.events.plugins_registered.emit({manifest})
+
+    def _populate_command_menu_map(self, manifest: PluginManifest):
+        # map of manifest -> command -> menu_id -> list[items]
+        self._command_menu_map[manifest.name] = defaultdict(lambda: defaultdict(list))
+        menu_map = self._command_menu_map[manifest.name]  # just for conciseness below
+        for menu_id, menu_items in manifest.contributions.menus.items() or ():
+            # command IDs are keys in map
+            # each value is a dict menu_id: list of MenuCommands
+            # for the command and menu
+            for item in menu_items:
+                if (command_id := getattr(item, "command", None)) is not None:
+                    menu_map[command_id][menu_id].append(item)
 
     def unregister(self, key: PluginName):
         """Unregister plugin named `key`."""
@@ -366,6 +383,7 @@ class PluginManager:
             raise ValueError(f"No registered plugin named {key!r}")  # pragma: no cover
         self.deactivate(key)
         self._contrib.remove_contributions(key)
+        self._command_menu_map.pop(key)
         self._manifests.pop(key)
 
     def activate(self, key: PluginName) -> PluginContext:
@@ -448,6 +466,7 @@ class PluginManager:
         mf = self._manifests.get(plugin_name)
         if mf is not None:
             self._contrib.index_contributions(mf)
+            self._populate_command_menu_map(mf)
         self.events.enablement_changed({plugin_name}, {})
 
     def disable(self, plugin_name: PluginName) -> None:
@@ -467,6 +486,7 @@ class PluginManager:
 
         self._disabled_plugins.add(plugin_name)
         self._contrib.remove_contributions(plugin_name)
+        self._command_menu_map.pop(plugin_name)
         self.events.enablement_changed({}, {plugin_name})
 
     def is_disabled(self, plugin_name: str) -> bool:
