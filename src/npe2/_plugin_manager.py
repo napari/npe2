@@ -367,9 +367,7 @@ class PluginManager:
 
     def _populate_command_menu_map(self, manifest: PluginManifest):
         # map of manifest -> command -> menu_id -> list[items]
-        self._command_menu_map[manifest.name] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        self._command_menu_map[manifest.name] = defaultdict(lambda: defaultdict(list))
         menu_map = self._command_menu_map[manifest.name]  # just for conciseness below
         for menu_id, menu_items in manifest.contributions.menus.items() or ():
             # command IDs are keys in map
