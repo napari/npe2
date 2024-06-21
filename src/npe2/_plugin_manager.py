@@ -366,24 +366,18 @@ class PluginManager:
         self.events.plugins_registered.emit({manifest})
 
     def _populate_command_menu_map(self, manifest: PluginManifest):
-        self._command_menu_map[manifest.name] = defaultdict(dict)
-        for command in manifest.contributions.commands or ():
+        # map of manifest -> command -> menu_id -> list[items]
+        self._command_menu_map[manifest.name] = defaultdict(
+            lambda: defaultdict(list)
+        )
+        menu_map = self._command_menu_map[manifest.name]  # just for conciseness below
+        for menu_id, menu_items in manifest.contributions.menus.items() or ():
             # command IDs are keys in map
             # each value is a dict menu_id: list of MenuCommands
             # for the command and menu
-            associated = self._get_associated_menus(manifest, command.id)
-            self._command_menu_map[manifest.name][command.id] = associated
-
-    def _get_associated_menus(
-        self, manifest: PluginManifest, command_id: str
-    ) -> Dict[str, List[MenuCommand]]:
-        menus = manifest.contributions.menus or dict()
-        associated_menus = defaultdict(list)
-        for menu_id, items in menus.items():
-            for item in items:
-                if getattr(item, "command", "") == command_id:
-                    associated_menus[menu_id].append(item)
-        return associated_menus
+            for item in menu_items:
+                if (command_id := getattr(item, "command", None)) is not None:
+                    menu_map[command_id][menu_id].append(item)
 
     def unregister(self, key: PluginName):
         """Unregister plugin named `key`."""
