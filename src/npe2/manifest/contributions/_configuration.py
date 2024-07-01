@@ -45,7 +45,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(  # type: ignore # noqa: E501
+    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(  # type: ignore
         None,
         description="A list of valid options for this field. If you provide this field,"
         "the settings UI will render a dropdown menu.",
