@@ -203,14 +203,12 @@ class ContributionDecorator(Generic[C]):
         self._contrib_name = CONTRIB_NAMES[self.contrib_type]
 
     @overload
-    def __call__(self, func: T, **kwargs) -> T:
-        ...
+    def __call__(self, func: T, **kwargs) -> T: ...
 
     @overload
     def __call__(
         self, func: Optional[Literal[None]] = None, **kwargs
-    ) -> Callable[[T], T]:
-        ...
+    ) -> Callable[[T], T]: ...
 
     def __call__(
         self, func: Optional[T] = None, **kwargs

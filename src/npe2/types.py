@@ -30,19 +30,15 @@ PythonName = NewType("PythonName", str)
 
 class ArrayLike(Protocol):
     @property
-    def shape(self) -> Tuple[int, ...]:
-        ...
+    def shape(self) -> Tuple[int, ...]: ...
 
     @property
-    def ndim(self) -> int:
-        ...
+    def ndim(self) -> int: ...
 
     @property
-    def dtype(self) -> "np.dtype":
-        ...
+    def dtype(self) -> "np.dtype": ...
 
-    def __array__(self) -> "np.ndarray":
-        ...  # pragma: no cover
+    def __array__(self) -> "np.ndarray": ...  # pragma: no cover
 
 
 LayerName = Literal[

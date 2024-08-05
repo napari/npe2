@@ -33,8 +33,7 @@ def test_temporary_plugin(tmp_plugin: DynamicPlugin):
         return x
 
     @tmp_plugin.contribute.reader
-    def read_path(path):
-        ...
+    def read_path(path): ...
 
     # can override args
     ID = f"{TMP}.random_id"
@@ -48,16 +47,14 @@ def test_temporary_plugin(tmp_plugin: DynamicPlugin):
     with pytest.raises(AssertionError) as e:
 
         @tmp_plugin.contribute.writer
-        def write_path_bad(path, layer_data):
-            ...
+        def write_path_bad(path, layer_data): ...
 
     assert "layer_types must not be empty" in str(e.value)
     # it didn't get added
     assert "tmp.write_path_bad" not in pm.commands
 
     @tmp_plugin.contribute.writer(layer_types=["image"])
-    def write_path(path, layer_data):
-        ...
+    def write_path(path, layer_data): ...
 
     # now it did
     assert "tmp.write_path" in pm.commands
