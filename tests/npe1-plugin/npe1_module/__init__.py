@@ -5,31 +5,25 @@ from magicgui import magic_factory
 from napari_plugin_engine import napari_hook_implementation
 
 
-class MyWidget:
-    ...
+class MyWidget: ...
 
 
-def some_function(x: int):
-    ...
+def some_function(x: int): ...
 
 
-def gen_data():
-    ...
+def gen_data(): ...
 
 
 @napari_hook_implementation
-def napari_get_reader(path):
-    ...
+def napari_get_reader(path): ...
 
 
 @napari_hook_implementation
-def napari_write_image(path, data, meta):
-    ...
+def napari_write_image(path, data, meta): ...
 
 
 @napari_hook_implementation
-def napari_write_labels(path, data, meta):
-    ...
+def napari_write_labels(path, data, meta): ...
 
 
 @napari_hook_implementation
@@ -79,8 +73,7 @@ factory = magic_factory(some_function)
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
     @magic_factory
-    def local_widget(y: str):
-        ...
+    def local_widget(y: str): ...
 
     return [
         MyWidget,
@@ -91,7 +84,6 @@ def napari_experimental_provide_dock_widget():
 
 @napari_hook_implementation
 def napari_experimental_provide_function():
-    def local_function(x: int):
-        ...
+    def local_function(x: int): ...
 
     return [some_function, local_function]

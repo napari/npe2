@@ -25,8 +25,7 @@ class _SampleDataContribution(GenericModel, ABC):
     @abstractmethod
     def open(
         self, *args, _registry: Optional["CommandRegistry"] = None, **kwargs
-    ) -> List[LayerData]:
-        ...
+    ) -> List[LayerData]: ...
 
 
 class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
