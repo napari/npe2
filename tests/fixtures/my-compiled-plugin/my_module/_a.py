@@ -11,13 +11,11 @@ else:
 
 
 @implements.on_activate
-def activate(ctx):
-    ...
+def activate(ctx): ...
 
 
 @implements.on_deactivate
-def deactivate(ctx):
-    ...
+def deactivate(ctx): ...
 
 
 @implements.reader(
@@ -26,8 +24,7 @@ def deactivate(ctx):
     filename_patterns=["*.fzy", "*.fzzy"],
     accepts_directories=True,
 )
-def get_reader(path: str):
-    ...
+def get_reader(path: str): ...
 
 
 @implements.writer(
@@ -42,5 +39,6 @@ def get_reader(path: str):
     filename_extensions=["*.pcd", "*.e57"],
     layer_types=["points{1}", "surface+"],
 )
-def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
-    ...
+def writer_function(
+    path: str, layer_data: List[Tuple[Any, Dict, str]]
+) -> List[str]: ...

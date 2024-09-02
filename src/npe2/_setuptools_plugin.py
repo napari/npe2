@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.npe2]
 """
+
 from __future__ import annotations
 
 import os

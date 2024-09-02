@@ -236,9 +236,9 @@ class PluginManager:
         self._manifests: Dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
         self._npe1_adapters: List[NPE1Adapter] = []
-        self._command_menu_map: Dict[
-            str, Dict[str, Dict[str, List[MenuCommand]]]
-        ] = defaultdict(dict)
+        self._command_menu_map: Dict[str, Dict[str, Dict[str, List[MenuCommand]]]] = (
+            defaultdict(dict)
+        )
 
         # up to napari 0.4.15, discovery happened in the init here
         # so if we're running on an older version of napari, we need to discover
