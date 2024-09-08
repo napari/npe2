@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -48,7 +49,7 @@ class ArrayLike(Protocol):
 LayerName = Literal[
     "graph", "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
 ]
-Metadata = Dict
+Metadata = Mapping
 DataType = Union[ArrayLike, Sequence[ArrayLike]]
 FullLayerData = Tuple[DataType, Metadata, LayerName]
 LayerData = Union[Tuple[DataType], Tuple[DataType, Metadata], FullLayerData]
