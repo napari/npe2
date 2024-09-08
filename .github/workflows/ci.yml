@@ -131,12 +131,6 @@ jobs:
           path: coverage
           merge-multiple: true
 
-      - name: show files
-        run: ls -la coverage
-
-      - name: show files
-        run: ls -la .
-
       - name: combine coverage data
         run: |
           python -Im coverage combine coverage
