@@ -129,6 +129,7 @@ jobs:
         with:
           pattern: coverage reports*
           path: coverage
+          merge-multiple: true
 
       - name: show files
         run: ls -la coverage
