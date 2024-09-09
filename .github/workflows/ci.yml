@@ -53,11 +53,12 @@ jobs:
           coverage run --source=npe2 -m pytest --color yes
 
       - name: Upload coverage as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage reports
+          name: coverage reports ${{ matrix.platform }} py ${{ matrix.python-version }} ${{ (matrix.pydantic == 'pydantic<2' && 'pydantic_lt_2') || 'pydantic_gt_2' }}
           path: |
             ./.coverage.*
+          include-hidden-files: true
 
   test_napari:
     name: napari tests
@@ -124,10 +125,11 @@ jobs:
           pip install codecov
 
       - name: Download coverage data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: coverage reports
+          pattern: coverage reports*
           path: coverage
+          merge-multiple: true
 
       - name: combine coverage data
         run: |
