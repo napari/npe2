@@ -486,7 +486,7 @@ class PluginManager:
 
         self._disabled_plugins.add(plugin_name)
         self._contrib.remove_contributions(plugin_name)
-        self._command_menu_map.pop(plugin_name)
+        self._command_menu_map.pop(plugin_name, None)
         self.events.enablement_changed({}, {plugin_name})
 
     def is_disabled(self, plugin_name: str) -> bool:
