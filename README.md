@@ -9,9 +9,9 @@ see also https://github.com/napari/napari/issues/3115
 
 ## Documentation
 
-For documentation on authoring npe2 plugins, see the [napari plugin docs](https://napari.org/plugins/index.html).  These include:
-- the [manifest reference](https://napari.org/plugins/manifest.html)
-- the [contribution guide](https://napari.org/plugins/contributions.html)
+For documentation on authoring npe2 plugins, see the [napari plugin docs](https://napari.org/stable/plugins/index.html).  These include:
+- the [manifest reference](https://napari.org/stable/plugins/technical_references/manifest.html)
+- the [contribution guide](https://napari.org/stable/plugins/building_a_plugin/guides.html)
 
 ## Command line tool
 

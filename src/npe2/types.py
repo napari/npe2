@@ -1,7 +1,7 @@
+from collections.abc import Mapping
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Dict,
     List,
     Literal,
     NewType,
@@ -30,25 +30,21 @@ PythonName = NewType("PythonName", str)
 
 class ArrayLike(Protocol):
     @property
-    def shape(self) -> Tuple[int, ...]:
-        ...
+    def shape(self) -> Tuple[int, ...]: ...
 
     @property
-    def ndim(self) -> int:
-        ...
+    def ndim(self) -> int: ...
 
     @property
-    def dtype(self) -> "np.dtype":
-        ...
+    def dtype(self) -> "np.dtype": ...
 
-    def __array__(self) -> "np.ndarray":
-        ...  # pragma: no cover
+    def __array__(self) -> "np.ndarray": ...  # pragma: no cover
 
 
 LayerName = Literal[
     "graph", "image", "labels", "points", "shapes", "surface", "tracks", "vectors"
 ]
-Metadata = Dict
+Metadata = Mapping
 DataType = Union[ArrayLike, Sequence[ArrayLike]]
 FullLayerData = Tuple[DataType, Metadata, LayerName]
 LayerData = Union[Tuple[DataType], Tuple[DataType, Metadata], FullLayerData]

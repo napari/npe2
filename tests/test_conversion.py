@@ -32,8 +32,7 @@ def test_conversion_from_obj_with_locals(mock_npe1_pm):
         @staticmethod
         @napari_hook_implementation
         def napari_experimental_provide_function():
-            def f(x: int):
-                ...
+            def f(x: int): ...
 
             return [f]
 
