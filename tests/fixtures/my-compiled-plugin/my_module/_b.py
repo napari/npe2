@@ -8,8 +8,7 @@ else:
 
 
 @implements.widget(id="some_widget", title="Create my widget", display_name="My Widget")
-class SomeWidget:
-    ...
+class SomeWidget: ...
 
 
 @implements.sample_data_generator(
@@ -18,8 +17,7 @@ class SomeWidget:
     key="random_data",
     display_name="Some Random Data (512 x 512)",
 )
-def random_data():
-    ...
+def random_data(): ...
 
 
 @implements.widget(
@@ -28,5 +26,4 @@ def random_data():
     display_name="A Widget From a Function",
     autogenerate=True,
 )
-def make_widget_from_function(x: int, threshold: int):
-    ...
+def make_widget_from_function(x: int, threshold: int): ...

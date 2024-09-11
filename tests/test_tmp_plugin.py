@@ -33,8 +33,7 @@ def test_temporary_plugin(tmp_plugin: DynamicPlugin):
         return x
 
     @tmp_plugin.contribute.reader
-    def read_path(path):
-        ...
+    def read_path(path): ...
 
     # can override args
     ID = f"{TMP}.random_id"
@@ -48,16 +47,14 @@ def test_temporary_plugin(tmp_plugin: DynamicPlugin):
     with pytest.raises(AssertionError) as e:
 
         @tmp_plugin.contribute.writer
-        def write_path_bad(path, layer_data):
-            ...
+        def write_path_bad(path, layer_data): ...
 
     assert "layer_types must not be empty" in str(e.value)
     # it didn't get added
     assert "tmp.write_path_bad" not in pm.commands
 
     @tmp_plugin.contribute.writer(layer_types=["image"])
-    def write_path(path, layer_data):
-        ...
+    def write_path(path, layer_data): ...
 
     # now it did
     assert "tmp.write_path" in pm.commands
@@ -108,8 +105,10 @@ def test_temporary_plugin_spawn(tmp_plugin: DynamicPlugin):
     assert new.display_name == "another-name"
     assert new.plugin_manager == tmp_plugin.plugin_manager
 
-    assert (t1 := tmp_plugin.spawn(register=True)).name == f"{tmp_plugin.name}-1"
-    assert (t2 := tmp_plugin.spawn()).name == f"{tmp_plugin.name}-2"
+    t1 = tmp_plugin.spawn(register=True)
+    assert t1.name == f"{tmp_plugin.name}-1"
+    t2 = tmp_plugin.spawn()
+    assert t2.name == f"{tmp_plugin.name}-2"
 
     assert t1.name in tmp_plugin.plugin_manager._manifests
     assert t2.name not in tmp_plugin.plugin_manager._manifests

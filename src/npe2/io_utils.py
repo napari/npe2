@@ -126,8 +126,7 @@ def _read(
     plugin_name: Optional[str] = None,
     return_reader: Literal[False] = False,
     _pm=None,
-) -> List[LayerData]:
-    ...
+) -> List[LayerData]: ...
 
 
 @overload
@@ -138,8 +137,7 @@ def _read(
     plugin_name: Optional[str] = None,
     return_reader: Literal[True],
     _pm=None,
-) -> Tuple[List[LayerData], ReaderContribution]:
-    ...
+) -> Tuple[List[LayerData], ReaderContribution]: ...
 
 
 def _read(
@@ -270,8 +268,7 @@ def _write(
     plugin_name: Optional[str] = None,
     return_writer: Literal[False] = False,
     _pm: Optional[PluginManager] = None,
-) -> List[str]:
-    ...
+) -> List[str]: ...
 
 
 @overload
@@ -282,8 +279,7 @@ def _write(
     plugin_name: Optional[str] = None,
     return_writer: Literal[True],
     _pm: Optional[PluginManager] = None,
-) -> Tuple[List[str], WriterContribution]:
-    ...
+) -> Tuple[List[str], WriterContribution]: ...
 
 
 def _write(
@@ -300,9 +296,11 @@ def _write(
         _pm = PluginManager.instance()
 
     _layer_tuples: List[FullLayerData] = [
-        cast("napari.layers.Layer", x).as_layer_data_tuple()
-        if hasattr(x, "as_layer_data_tuple")
-        else x
+        (
+            cast("napari.layers.Layer", x).as_layer_data_tuple()
+            if hasattr(x, "as_layer_data_tuple")
+            else x
+        )
         for x in layer_data
     ]
     layer_types = [x[2] for x in _layer_tuples]

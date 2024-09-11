@@ -387,7 +387,8 @@ class PluginManifest(ImportExportModel):
         entry_point: metadata.EntryPoint,
         distribution: Optional[metadata.Distribution] = None,
     ) -> PluginManifest:
-        assert (match := entry_point.pattern.match(entry_point.value))
+        match = entry_point.pattern.match(entry_point.value)
+        assert match is not None
         module = match.group("module")
 
         spec = util.find_spec(module or "")
@@ -397,7 +398,8 @@ class PluginManifest(ImportExportModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        assert (match := entry_point.pattern.match(entry_point.value))
+        match = entry_point.pattern.match(entry_point.value)
+        assert match is not None
         fname = match.group("attr")
 
         for loc in spec.submodule_search_locations or []:

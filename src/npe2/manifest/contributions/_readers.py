@@ -1,9 +1,12 @@
 from functools import wraps
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from npe2._pydantic_compat import Extra, Field
 from npe2.manifest.utils import Executable, v2_to_v1
 from npe2.types import ReaderFunction
+
+if TYPE_CHECKING:
+    from npe2._command_registry import CommandRegistry
 
 
 class ReaderContribution(Executable[Optional[ReaderFunction]]):
@@ -36,7 +39,12 @@ class ReaderContribution(Executable[Optional[ReaderFunction]]):
             (self.command, tuple(self.filename_patterns), self.accepts_directories)
         )
 
-    def exec(self, *, kwargs):
+    def exec(
+        self,
+        args: tuple = (),
+        kwargs: Optional[dict] = None,
+        _registry: Optional["CommandRegistry"] = None,
+    ):
         """
         We are trying to simplify internal npe2 logic to always deal with a
         (list[str], bool) pair instead of Union[PathLike, Seq[Pathlike]]. We
@@ -44,11 +52,13 @@ class ReaderContribution(Executable[Optional[ReaderFunction]]):
         on we could add a "if manifest.version == 2" or similar to not have this
         backward-compatibility logic for new plugins.
         """
+        if kwargs is None:  # pragma: no cover
+            kwargs = {}
         kwargs = kwargs.copy()
         stack = kwargs.pop("stack", None)
         assert stack is not None
         kwargs["path"] = v2_to_v1(kwargs["path"], stack)
-        callable_ = super().exec(kwargs=kwargs)
+        callable_ = super().exec(args=args, kwargs=kwargs, _registry=_registry)
 
         if callable_ is None:  # pragma: no cover
             return None
