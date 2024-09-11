@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: "✏️ Generate release changelog"
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        uses: heinrichreimer/github-changelog-generator-action@v2.4
         with:
           futureRelease: ${{ github.event.inputs.next_tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
