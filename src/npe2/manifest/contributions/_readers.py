@@ -52,7 +52,7 @@ class ReaderContribution(Executable[Optional[ReaderFunction]]):
         on we could add a "if manifest.version == 2" or similar to not have this
         backward-compatibility logic for new plugins.
         """
-        if kwargs is None:
+        if kwargs is None:  # pragma: no cover
             kwargs = {}
         kwargs = kwargs.copy()
         stack = kwargs.pop("stack", None)
