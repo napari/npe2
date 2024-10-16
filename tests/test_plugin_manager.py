@@ -268,3 +268,11 @@ def test_command_menu_map(uses_sample_plugin, plugin_manager: PluginManager):
     assert SAMPLE_PLUGIN_NAME not in pm._command_menu_map
     pm.register(SAMPLE_PLUGIN_NAME)
     assert SAMPLE_PLUGIN_NAME in pm._command_menu_map
+
+
+def test_get_shimmed_plugins(pm: PluginManager, uses_npe1_plugin):
+    assert len(pm.get_shimmed_plugins()) == 0
+    pm.discover(include_npe1=True)
+    shimmed = pm.get_shimmed_plugins()
+    assert len(shimmed) == 1
+    assert shimmed[0] == "npe1-plugin"
