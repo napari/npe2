@@ -36,7 +36,7 @@ def test_fetch_npe1_manifest_with_sample_data():
     mf = fetch_manifest("napari-kics")
     assert mf.name == "napari-kics"
     assert mf.contributions.sample_data
-    # Test will eventually fail when napari-pyclesperanto-assistant is updated to npe2
+    # Test will eventually fail when napari-kics is updated to npe2
     # This is here as a sentinel
     assert mf.npe1_shim is True
 
