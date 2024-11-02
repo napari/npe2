@@ -82,12 +82,12 @@ The command line tool `npe2` offers the following commands:
 
 ```bash
 cache      Cache utils
-compile    Compile @npe2.implements contributions to generate a manifest.                        
-convert    Convert first generation napari plugin to new (manifest) format.                                                  
+compile    Compile @npe2.implements contributions to generate a manifest.
+convert    Convert first generation napari plugin to new (manifest) format.
 fetch      Fetch manifest from remote package.
-list       List currently installed plugins.                       
+list       List currently installed plugins.
 parse      Show parsed manifest as yaml.
-validate   Validate manifest for a distribution name or manifest filepath.   
+validate   Validate manifest for a distribution name or manifest filepath.
 ```
 
 ### Examples
