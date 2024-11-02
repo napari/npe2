@@ -30,6 +30,9 @@ For plugin developers, the docs cover topics like:
 - [Contributing a plugin](https://napari.org/stable/plugins/building_a_plugin/guides.html)
 - [Technical references such as the plugin manifest](https://napari.org/stable/plugins/technical_references/manifest.html)
 
+Try the [**napari plugin template**](https://github.com/napari/napari-plugin-template)
+to streamline development of a new plugin.
+
 ## Installation
 
 The `npe2` command line tool can be installed with `pip` or `conda`.
