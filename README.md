@@ -32,7 +32,9 @@ For plugin developers, the docs cover topics like:
 
 ## Installation
 
-To install the `npe2` command line tool.
+To install the `npe2` command line tool can be installed with `pip` or `conda`.
+
+### Using pip
 
 1. Create and activate a virtual environment.
 
@@ -45,6 +47,27 @@ To install the `npe2` command line tool.
 
     ```bash
     pip install npe2
+    ```
+
+3. Test your installation.
+
+    ```bash
+    npe2 --help
+    ```
+
+### Using conda
+
+1. Create and activate a virtual environment.
+
+    ```bash
+    conda create -n npe-test -c conda-forge python=3.12
+    condaa activate npe-test
+    ```
+
+2. Install npe2.
+
+    ```bash
+    conda install npe2
     ```
 
 3. Test your installation.
