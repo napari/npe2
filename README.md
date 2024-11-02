@@ -12,7 +12,7 @@ as specific support for different scientific domains.
 
 This repo contains source code and documentation about the napari plugin engine.
 
-## Getting started
+## Getting started documentation
 
 The [napari plugin docs landing page](https://napari.org/stable/plugins/index.html)
 offers comprehensive information for **plugin users** and for **plugin developers**.
@@ -30,30 +30,65 @@ For plugin developers, the docs cover topics like:
 - [Contributing a plugin](https://napari.org/stable/plugins/building_a_plugin/guides.html)
 - [Technical references such as the plugin manifest](https://napari.org/stable/plugins/technical_references/manifest.html)
 
-## Usage information
+## Installation
 
-## Command line tool
+To install the `npe2` command line tool.
 
-Includes a command line tool `npe2` with the following commands:
+1. Create and activate a virtual environment.
+
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
+
+2. Install npe2.
+
+    ```bash
+    pip install npe2
+    ```
+
+3. Test your installation.
+
+    ```bash
+    npe2 --help
+    ```
+
+## Usage
+
+The command line tool `npe2` offers the following commands:
+
 ```bash
-Commands:
-  cache     Cache utils
-  convert   Convert first generation napari plugin to new (manifest) format.
-  parse     Show parsed manifest as yaml
-  validate  Validate manifest for a distribution name or manifest filepath.
+cache      Cache utils
+compile    Compile @npe2.implements contributions to generate a manifest.                        
+convert    Convert first generation napari plugin to new (manifest) format.                                                  
+fetch      Fetch manifest from remote package.
+list       List currently installed plugins.                       
+parse      Show parsed manifest as yaml.
+validate   Validate manifest for a distribution name or manifest filepath.   
 ```
 
-examples:
+### Examples
+
+List currently installed plugins:
 
 ```bash
-# convert current directory to an npe2-ready plugin
-# (note: the repo must also be installed and importable in the current environment)
+npe2 list
+```
+
+Convert current directory to an npe2-ready plugin. 
+(Note: the repo must also be installed and importable in the current environment.)
+
+```bash
 npe2 convert .
 ```
+
+Validate a plugin package. For example, a plugin named `your-plugin-package`:
 
 ```bash
 npe2 validate your-plugin-package
 ```
+
+Show a parsed manifest of your plugin:
 
 ```bash
 npe2 parse your-plugin-package
