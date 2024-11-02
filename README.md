@@ -35,7 +35,7 @@ to streamline development of a new plugin.
 
 ## Installation
 
-The `npe2` command line tool can be installed with `pip` or `conda`.
+The `npe2` command line tool can be installed with `pip` or `conda`, but will already be installed as a dependency if you have napari installed.
 
 ### Using pip
 
