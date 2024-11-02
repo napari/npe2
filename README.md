@@ -12,7 +12,7 @@ as specific support for different scientific domains.
 
 This repo contains source code and documentation about the napari plugin engine.
 
-## Getting started documentation
+## Getting started
 
 The [napari plugin docs landing page](https://napari.org/stable/plugins/index.html)
 offers comprehensive information for **plugin users** and for **plugin developers**.
@@ -75,8 +75,14 @@ List currently installed plugins:
 npe2 list
 ```
 
-Convert current directory to an npe2-ready plugin. 
-(Note: the repo must also be installed and importable in the current environment.)
+Compile a source directory to create a plugin manifest:
+
+```bash
+npe2 compile PATH_TO_SOURCE_DIRECTORY
+```
+
+Convert current directory to an npe2-ready plugin
+(note: the repo must also be installed and importable in the current environment.):
 
 ```bash
 npe2 convert .
