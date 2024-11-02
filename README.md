@@ -32,7 +32,7 @@ For plugin developers, the docs cover topics like:
 
 ## Installation
 
-To install the `npe2` command line tool can be installed with `pip` or `conda`.
+The `npe2` command line tool can be installed with `pip` or `conda`.
 
 ### Using pip
 
