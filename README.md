@@ -3,15 +3,20 @@
 [![CI](https://github.com/napari/npe2/actions/workflows/ci.yml/badge.svg)](https://github.com/napari/npe2/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/napari/npe2/branch/main/graph/badge.svg?token=FTH635x542)](https://codecov.io/gh/napari/npe2)
 
-napari plugin refactor
+## napari plugin engine version 2
 
-see also https://github.com/napari/napari/issues/3115
+The **napari plugin engine version 2**, **npe2** extends the functionality of napari's core.
+The plugin ecosystem offers user additional functionality for napari as well as specific support
+for different scientific domains.
+
+This repo contains source code and documentation about the napari plugin engine.
 
 ## Documentation
 
-For documentation on authoring npe2 plugins, see the [napari plugin docs](https://napari.org/stable/plugins/index.html).  These include:
-- the [manifest reference](https://napari.org/stable/plugins/technical_references/manifest.html)
-- the [contribution guide](https://napari.org/stable/plugins/building_a_plugin/guides.html)
+See the: [napari plugin docs](https://napari.org/stable/plugins/index.html) for information about
+creating plugins for the napari plugin engine (npe2).  These docs include:
+- the [plugin manifest reference](https://napari.org/stable/plugins/technical_references/manifest.html)
+- the [plugin contribution guide](https://napari.org/stable/plugins/building_a_plugin/guides.html)
 
 ## Command line tool
 
@@ -39,3 +44,9 @@ npe2 validate your-plugin-package
 ```bash
 npe2 parse your-plugin-package
 ```
+
+## History
+
+This repo replaces the initial napari plugin engine v1.
+See also https://github.com/napari/napari/issues/3115 for
+motivation and technical discussion about the creation of v2.
