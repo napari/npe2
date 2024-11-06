@@ -66,7 +66,7 @@ The `npe2` command line tool can be installed with `pip` or `conda`, but will al
 
     ```bash
     conda create -n npe-test -c conda-forge python=3.12
-    condaa activate npe-test
+    conda activate npe-test
     ```
 
 2. Install npe2.
