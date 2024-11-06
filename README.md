@@ -10,7 +10,7 @@ The **napari plugin engine version 2**, **npe2** extends the functionality of
 The plugin ecosystem offers user additional functionality for napari as well
 as specific support for different scientific domains.
 
-This repo contains and contains all source code and documentation required for defining, validating and managing plugins for napari.
+This repo contains all source code and documentation required for defining, validating and managing plugins for napari.
 
 ## Getting started
 
