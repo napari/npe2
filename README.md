@@ -10,7 +10,7 @@ The **napari plugin engine version 2**, **npe2** extends the functionality of
 The plugin ecosystem offers user additional functionality for napari as well
 as specific support for different scientific domains.
 
-This repo contains source code and documentation about the napari plugin engine.
+This repo contains and contains all source code and documentation required for defining, validating and managing plugins for napari.
 
 ## Getting started
 
@@ -27,7 +27,7 @@ For plugin users, the docs include information about:
 
 For plugin developers, the docs cover topics like:
 - [Building a plugin](https://napari.org/stable/plugins/building_a_plugin/index.html)
-- [Contributing a plugin](https://napari.org/stable/plugins/building_a_plugin/guides.html)
+- [Guides to different plugin contributions](https://napari.org/stable/plugins/building_a_plugin/guides.html)
 - [Technical references such as the plugin manifest](https://napari.org/stable/plugins/technical_references/manifest.html)
 
 Try the [**napari plugin template**](https://github.com/napari/napari-plugin-template)
@@ -40,6 +40,8 @@ The `npe2` command line tool can be installed with `pip` or `conda`, but will al
 ### Using pip
 
 1. Create and activate a virtual environment.
+
+*If you are new to using virtual environments, visit our [virtual environments guide](https://napari.org/stable/plugins/virtual_environment_docs/1-virtual-environments.html)*.
 
     ```bash
     python3 -m venv .venv
