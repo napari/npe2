@@ -7,7 +7,7 @@ from ._visitors import (
 
 __all__ = [
     "NPE2PluginModuleVisitor",
-    "find_npe2_module_contributions",
-    "find_npe1_module_contributions",
     "compile",
+    "find_npe1_module_contributions",
+    "find_npe2_module_contributions",
 ]
