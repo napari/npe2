@@ -21,10 +21,10 @@ else:
         ValidationError = Exception
 
 __all__ = [
-    "ValidationError",
     "Draft04JsonSchema",
     "Draft06JsonSchema",
     "Draft07JsonSchema",
+    "ValidationError",
 ]
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
@@ -171,11 +171,11 @@ class _JsonSchemaBase(BaseModel):
         """Return True if this schema is an object schema."""
         return (
             self.properties is not None
-            or self.type == "object"
+            or (self.type == "object"
             and not self.all_of
             and not self.one_of
             and not self.any_of
-            and not getattr(self, "ref", False)  # draft 6+
+            and not getattr(self, "ref", False))  # draft 6+
         )
 
     @property

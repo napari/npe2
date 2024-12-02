@@ -24,7 +24,7 @@ def writer(
     id: str,
     title: str,
     layer_types: list[str],
-    filename_extensions: list[str] = [],  # noqa: B006
+    filename_extensions: list[str] = [],
     display_name: str = "",
     ensure_args_valid: bool = False,
 ) -> Callable[[T], T]:
