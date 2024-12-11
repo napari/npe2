@@ -12,7 +12,8 @@ that accepts a path (`str`) or a list of paths and:
 * returns a *new function* (a `ReaderFunction`) that is capable of doing the reading.
 
 The `ReaderFunction` will be passed the same path (or list of paths) and
-is expected to return a list of {ref}`LayerData tuples <layer-data-tuples>`.
+is expected to return a list containing {ref}`LayerData tuples <layer-data-tuples>` or
+a fully instantiated napari `Layer` objects like `Image` or `Labels`.
 
 In the rare case that a reader plugin would like to "claim" a file, but *not*
 actually add any data to the viewer, the `ReaderFunction` may return
