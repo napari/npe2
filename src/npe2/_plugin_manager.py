@@ -249,10 +249,10 @@ class PluginManager:
         else:  # pragma: no cover
             vsplit = nv.split(".")[:4]
             if (
-                "dev" in nv
-                and vsplit < ["0", "4", "16", "dev4"]
-                or "dev" not in nv
-                and vsplit < ["0", "4", "16"]
+                ("dev" in nv
+                and vsplit < ["0", "4", "16", "dev4"])
+                or ("dev" not in nv
+                and vsplit < ["0", "4", "16"])
             ):
                 self.discover()
 
@@ -699,11 +699,11 @@ class PluginManager:
         for writer in self.iter_compatible_writers(layer_types):
             if not plugin_name or writer.command.startswith(plugin_name):
                 if (
-                    ext
-                    and ext in writer.filename_extensions
-                    or not ext
+                    (ext
+                    and ext in writer.filename_extensions)
+                    or (not ext
                     and len(layer_types) != 1
-                    and not writer.filename_extensions
+                    and not writer.filename_extensions)
                 ):
                     return writer, path
                 elif not ext and len(layer_types) == 1:  # No extension, single layer.
