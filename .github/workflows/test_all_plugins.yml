@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: plugin_names
-        run: echo "::set-output name=plugins::$(curl -s https://npe2api.vercel.app/api/plugins | jq -c 'keys')"
+        run: echo "::set-output name=plugins::$(curl -s https://npe2api.vercel.app/api/plugins | jq -c 'keys' | jq -r '.[]' | shuf -n 200)"
     outputs:
       plugins: ${{ steps.plugin_names.outputs.plugins }}
 
