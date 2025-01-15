@@ -1,6 +1,4 @@
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
