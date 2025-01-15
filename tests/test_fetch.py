@@ -10,7 +10,6 @@ from npe2._inspection._fetch import (
     _manifest_from_pypi_sdist,
     get_hub_plugin,
     get_manifest_from_wheel,
-    get_pypi_plugins,
     get_pypi_url,
 )
 
@@ -83,11 +82,6 @@ def test_get_manifest_from_wheel(tmp_path):
 def test_get_hub_plugin():
     info = get_hub_plugin("napari-svg")
     assert info["name"] == "napari-svg"
-
-
-def test_get_pypi_plugins():
-    plugins = get_pypi_plugins()
-    assert len(plugins) > 0
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")

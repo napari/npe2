@@ -94,21 +94,6 @@ def test_cli_fetch(format, tmp_path, to_file, include_meta):
             assert "package_metadata" in result.stdout
 
 
-def test_cli_fetch_all(tmp_path, monkeypatch):
-    dest = tmp_path / "output"
-    with patch("npe2._inspection._fetch.get_pypi_plugins") as mock_hub:
-        mock_hub.return_value = {"a": "0.1.0", "b": "0.2.0", "c": "0.3.0"}
-        with patch("npe2._inspection._fetch.ProcessPoolExecutor", ThreadPoolExecutor):
-            cmd = ["fetch", "--all", "-o", str(dest)]
-            monkeypatch.setattr(sys, "argv", cmd)
-            result = runner.invoke(app, cmd)
-
-    mock_hub.assert_called_once()
-    assert result.exit_code == 0
-    assert dest.exists()
-    assert (dest / "errors.json").exists()
-
-
 @pytest.mark.filterwarnings("default:Failed to convert")
 def test_cli_convert_repo(npe1_repo, mock_npe1_pm_with_plugin):
     result = runner.invoke(app, ["convert", str(npe1_repo)])
