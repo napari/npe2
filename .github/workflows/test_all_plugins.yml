@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: plugin_names
+        # Query npe2api for index of all plugins, select the keys, turn them into an array, select 10 random
+        # names from that array, convert the "one per line" output back into a string array
+        # save the string array of 10 plugins into the output from this step
         run: |
           set -eux
           DATA=$(echo $(curl -s https://npe2api.vercel.app/api/plugins | jq -c 'keys' | jq -r '.[]' | shuf -n 10 | jq -R -s 'split("\n") | map(select(. != ""))'))
