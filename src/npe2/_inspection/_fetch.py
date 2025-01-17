@@ -3,10 +3,8 @@ from __future__ import annotations
 import io
 import json
 import os
-import re
 import subprocess
 import tempfile
-from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import lru_cache
 from importlib import metadata
@@ -20,11 +18,10 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Tuple,
     Union,
 )
 from unittest.mock import patch
-from urllib import error, parse, request
+from urllib import error, request
 from zipfile import ZipFile
 
 from npe2.manifest import PackageMetadata
@@ -41,7 +38,6 @@ __all__ = [
     "fetch_manifest",
     "get_pypi_url",
     "get_hub_plugin",
-    "get_pypi_plugins",
 ]
 
 
@@ -264,7 +260,7 @@ def fetch_manifest(
                 return _manifest_from_extracted_wheel(td)
         except metadata.PackageNotFoundError:
             return _manifest_from_pypi_sdist(package_or_url, version)
-        except error.HTTPError:
+        except error.HTTPError:  # pragma: no cover
             pass  # pragma: no cover
     raise ValueError(  # pragma: no cover
         f"Could not interpret {package_or_url!r} as a PYPI package name or URL to a "
@@ -378,74 +374,7 @@ def _tmp_pypi_sdist_download(
 
 
 @lru_cache
-def _get_packages_by_classifier(classifier: str) -> Dict[str, str]:
-    """Search for packages declaring ``classifier`` on PyPI.
-
-    Returns
-    -------
-    packages : List[str]
-        name of all packages at pypi that declare ``classifier``
-    """
-    PACKAGE_NAME_PATTERN = re.compile('class="package-snippet__name">(.+)</span>')
-    PACKAGE_VERSION_PATTERN = re.compile('class="package-snippet__version">(.+)</span>')
-
-    packages = {}
-    page = 1
-    url = f"https://pypi.org/search/?c={parse.quote_plus(classifier)}&page="
-    while True:
-        try:
-            with request.urlopen(f"{url}{page}") as response:
-                html = response.read().decode()
-            names = PACKAGE_NAME_PATTERN.findall(html)
-            versions = PACKAGE_VERSION_PATTERN.findall(html)
-            packages.update(dict(zip(names, versions)))
-            page += 1
-        except error.HTTPError:
-            break
-
-    return dict(sorted(packages.items()))
-
-
-def get_pypi_plugins() -> Dict[str, str]:
-    """Return {name: latest_version} for all plugins found on pypi."""
-    NAPARI_CLASSIFIER = "Framework :: napari"
-    return _get_packages_by_classifier(NAPARI_CLASSIFIER)
-
-
-@lru_cache
 def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
     """Return hub information for a specific plugin."""
     with request.urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
         return json.load(r)
-
-
-def _try_fetch_and_write_manifest(args: Tuple[str, str, Path, int]):
-    name, version, dest, indent = args
-    FORMAT = "json"
-
-    try:  # pragma: no cover
-        mf = fetch_manifest(name, version=version)
-        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=indent)
-
-        (dest / f"{name}.{FORMAT}").write_text(manifest_string)
-        print(f"✅ {name}")
-    except Exception as e:
-        print(f"❌ {name}")
-        return name, {"version": version, "error": str(e)}
-
-
-def fetch_all_manifests(dest: str = "manifests", indent: int = 2) -> None:
-    """Fetch all manifests for plugins on PyPI and write to ``dest`` directory."""
-    _dest = Path(dest)
-    _dest.mkdir(exist_ok=True, parents=True)
-
-    args = [
-        (name, ver, _dest, indent) for name, ver in sorted(get_pypi_plugins().items())
-    ]
-
-    # use processes instead of threads, because many of the subroutines in build
-    # and setuptools use `os.chdir()`, which is not thread-safe
-    with ProcessPoolExecutor() as executor:
-        errors = list(executor.map(_try_fetch_and_write_manifest, args))
-    _errors = {tup[0]: tup[1] for tup in errors if tup}
-    (_dest / "errors.json").write_text(json.dumps(_errors, indent=indent))
