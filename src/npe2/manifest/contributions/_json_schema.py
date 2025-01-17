@@ -169,14 +169,13 @@ class _JsonSchemaBase(BaseModel):
     @property
     def is_object(self) -> bool:
         """Return True if this schema is an object schema."""
-        return (
-            self.properties is not None
-            or (self.type == "object"
+        return self.properties is not None or (
+            self.type == "object"
             and not self.all_of
             and not self.one_of
             and not self.any_of
-            and not getattr(self, "ref", False))  # draft 6+
-        )
+            and not getattr(self, "ref", False)
+        )  # draft 6+
 
     @property
     def json_validator(self) -> Type[Validator]:
