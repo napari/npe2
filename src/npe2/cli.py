@@ -1,5 +1,4 @@
 import builtins
-import sys
 import warnings
 from enum import Enum
 from pathlib import Path
@@ -316,23 +315,6 @@ def list(
             typer.echo(template.format(**r, ncontrib=ncontrib))
 
 
-def _fetch_all_manifests(doit: bool):
-    """Fetch all manifests and dump to "manifests" folder."""
-    if not doit:
-        return
-
-    from npe2._inspection import _fetch
-
-    dest = "manifests"
-    if "-o" in sys.argv:
-        dest = sys.argv[sys.argv.index("-o") + 1]
-    elif "--output" in sys.argv:  # pragma: no cover
-        dest = sys.argv[sys.argv.index("--output") + 1]
-
-    _fetch.fetch_all_manifests(dest)
-    raise typer.Exit(0)
-
-
 @app.command()
 def fetch(
     name: List[str],
@@ -360,13 +342,6 @@ def fetch(
         exists=False,
         help="If provided, will write manifest to filepath (must end with .yaml, "
         ".json, or .toml). Otherwise, will print to stdout.",
-    ),
-    all: Optional[bool] = typer.Option(
-        None,
-        "--all",
-        help="Fetch manifests for ALL known plugins (will be SLOW)",
-        callback=_fetch_all_manifests,
-        is_eager=True,
     ),
 ):
     """Fetch manifest from remote package.
