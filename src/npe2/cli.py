@@ -1,5 +1,4 @@
 import builtins
-import sys
 import warnings
 from enum import Enum
 from pathlib import Path

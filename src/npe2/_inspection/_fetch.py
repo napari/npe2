@@ -3,10 +3,8 @@ from __future__ import annotations
 import io
 import json
 import os
-import re
 import subprocess
 import tempfile
-from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import lru_cache
 from importlib import metadata
@@ -24,7 +22,7 @@ from typing import (
     Union,
 )
 from unittest.mock import patch
-from urllib import error, parse, request
+from urllib import error, request
 from zipfile import ZipFile
 
 from npe2.manifest import PackageMetadata
@@ -396,4 +394,3 @@ def _try_fetch_and_write_manifest(args: Tuple[str, str, Path, int]):
     except Exception as e:
         print(f"❌ {name}")
         return name, {"version": version, "error": str(e)}
-
