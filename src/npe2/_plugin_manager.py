@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
-import urllib
+import urllib.parse
 import warnings
 from collections import Counter, defaultdict
 from fnmatch import fnmatch
