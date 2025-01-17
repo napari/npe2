@@ -37,18 +37,18 @@ except ImportError:
 
 
 __all__ = (
+    "SHAPE_LIST",
     "BaseModel",
+    "ErrorWrapper",
     "Extra",
     "Field",
-    "ValidationError",
-    "root_validator",
-    "validator",
+    "GenericModel",
+    "ModelMetaclass",
     "PrivateAttr",
+    "ValidationError",
     "color",
     "conlist",
     "constr",
-    "ModelMetaclass",
-    "ErrorWrapper",
-    "GenericModel",
-    "SHAPE_LIST",
+    "root_validator",
+    "validator",
 )
