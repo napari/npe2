@@ -18,7 +18,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Tuple,
     Union,
 )
 from unittest.mock import patch
@@ -261,7 +260,7 @@ def fetch_manifest(
                 return _manifest_from_extracted_wheel(td)
         except metadata.PackageNotFoundError:
             return _manifest_from_pypi_sdist(package_or_url, version)
-        except error.HTTPError:
+        except error.HTTPError:  # pragma: no cover
             pass  # pragma: no cover
     raise ValueError(  # pragma: no cover
         f"Could not interpret {package_or_url!r} as a PYPI package name or URL to a "
@@ -379,18 +378,3 @@ def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
     """Return hub information for a specific plugin."""
     with request.urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
         return json.load(r)
-
-
-def _try_fetch_and_write_manifest(args: Tuple[str, str, Path, int]):
-    name, version, dest, indent = args
-    FORMAT = "json"
-
-    try:  # pragma: no cover
-        mf = fetch_manifest(name, version=version)
-        manifest_string = getattr(mf, FORMAT)(exclude=set(), indent=indent)
-
-        (dest / f"{name}.{FORMAT}").write_text(manifest_string)
-        print(f"✅ {name}")
-    except Exception as e:
-        print(f"❌ {name}")
-        return name, {"version": version, "error": str(e)}
