@@ -37,7 +37,6 @@ NPE2_ENTRY_POINT = "napari.manifest"
 __all__ = [
     "fetch_manifest",
     "get_hub_plugin",
-    "get_pypi_plugins",
     "get_pypi_url",
 ]
 
