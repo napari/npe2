@@ -14,18 +14,18 @@ from ._widgets import WidgetContribution
 from ._writers import WriterContribution
 
 __all__ = [
-    "ContributionPoints",
     "CommandContribution",
+    "ContributionPoints",
     "KeyBindingContribution",
     "MenuItem",
     "ReaderContribution",
     "SampleDataContribution",
+    "SampleDataGenerator",
+    "SampleDataURI",
     "SubmenuContribution",
     "ThemeContribution",
     "WidgetContribution",
     "WriterContribution",
-    "SampleDataGenerator",
-    "SampleDataURI",
 ]
 
 
