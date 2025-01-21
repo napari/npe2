@@ -47,6 +47,7 @@ jobs:
         with:
           python-version: '3.10'
           miniforge-variant: Miniforge3
+          conda-remove-defaults: "true"
           miniforge-version: latest
           use-mamba: true
 
