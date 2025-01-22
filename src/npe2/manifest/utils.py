@@ -81,7 +81,13 @@ class Executable(GenericModel, Generic[R]):
 
             # look for a package name in the command id
             dists = sorted(
-                (d.metadata["Name"] for d in distributions()), key=len, reverse=True
+                (
+                    d.metadata["Name"]
+                    for d in distributions()
+                    if d.metadata["Name"] is not None
+                ),
+                key=len,
+                reverse=True,
             )
             for name in dists:
                 if self.command.startswith(name):  # pragma: no cover
