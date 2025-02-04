@@ -715,6 +715,10 @@ class PluginManager:
         # Nothing got found
         return None, path
 
+    def get_shimmed_plugins(self) -> List[str]:
+        """Return a list of all shimmed plugin names."""
+        return [mf.name for mf in self.iter_manifests() if mf.npe1_shim]
+
 
 class PluginContext:
     """An object that can contain information for a plugin over its lifetime."""

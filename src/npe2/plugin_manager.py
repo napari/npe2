@@ -129,6 +129,10 @@ def get_writer(
     """Get Writer contribution appropriate for `path`, and `layer_types`."""
 
 
+def get_shimmed_plugins() -> List[str]:
+    """Return a list of all shimmed plugin names."""
+
+
 def _populate_module():
     """Convert all functions in this module into global plugin manager methods."""
     import functools
