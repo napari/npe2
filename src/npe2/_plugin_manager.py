@@ -238,7 +238,13 @@ class PluginManager:
         self._npe1_adapters: List[NPE1Adapter] = []
         self._command_menu_map: Dict[str, Dict[str, Dict[str, List[MenuCommand]]]] = (
             # for each manifest, maps command IDs to menu IDs to list of MenuCommands
-            # belonging to each menu
+            # belonging to that menu
+            # i.e. manifest -> command -> menu_id -> list[MenuCommand]
+            # we keep a list of MenuCommands even though we've already indexed by
+            # command ID **and** menu ID because it's possible to declare the
+            # same command in the same menu with different `when` and `group`
+            # fields. This seems an unlikely use case, but it is possible in
+            # the current schema.
             defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         )
 
