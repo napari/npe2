@@ -15,16 +15,16 @@ from .io_utils import read, read_get_reader, write, write_get_writer
 from .manifest import PackageMetadata, PluginManifest
 
 __all__ = [
-    "__version__",
     "DynamicPlugin",
-    "fetch_manifest",
-    "get_manifest_from_wheel",
     "PackageMetadata",
     "PluginContext",
     "PluginManager",
     "PluginManifest",
-    "read_get_reader",
+    "__version__",
+    "fetch_manifest",
+    "get_manifest_from_wheel",
     "read",
-    "write_get_writer",
+    "read_get_reader",
     "write",
+    "write_get_writer",
 ]

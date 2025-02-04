@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import os
-import urllib
 import warnings
 from collections import Counter, defaultdict
 from fnmatch import fnmatch
@@ -26,6 +25,7 @@ from typing import (
     Tuple,
     Union,
 )
+from urllib import parse
 
 from psygnal import Signal, SignalGroup
 
@@ -144,7 +144,7 @@ class _ContributionsIndex:
             yield from (r for pattern, r in self._readers if pattern == "")
         else:
             # ensure not a URI
-            if not urllib.parse.urlparse(path).scheme:
+            if not parse.urlparse(path).scheme:
                 # lower case the extension for checking manifest pattern
                 base = os.path.splitext(Path(path).stem)[0]
                 ext = "".join(Path(path).suffixes)
@@ -256,11 +256,8 @@ class PluginManager:
             pass
         else:  # pragma: no cover
             vsplit = nv.split(".")[:4]
-            if (
-                "dev" in nv
-                and vsplit < ["0", "4", "16", "dev4"]
-                or "dev" not in nv
-                and vsplit < ["0", "4", "16"]
+            if ("dev" in nv and vsplit < ["0", "4", "16", "dev4"]) or (
+                "dev" not in nv and vsplit < ["0", "4", "16"]
             ):
                 self.discover()
 
@@ -705,12 +702,8 @@ class PluginManager:
 
         for writer in self.iter_compatible_writers(layer_types):
             if not plugin_name or writer.command.startswith(plugin_name):
-                if (
-                    ext
-                    and ext in writer.filename_extensions
-                    or not ext
-                    and len(layer_types) != 1
-                    and not writer.filename_extensions
+                if (ext and ext in writer.filename_extensions) or (
+                    not ext and len(layer_types) != 1 and not writer.filename_extensions
                 ):
                     return writer, path
                 elif not ext and len(layer_types) == 1:  # No extension, single layer.

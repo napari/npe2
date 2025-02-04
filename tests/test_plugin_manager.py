@@ -269,6 +269,7 @@ def test_command_menu_map(uses_sample_plugin, plugin_manager: PluginManager):
     pm.register(SAMPLE_PLUGIN_NAME)
     assert SAMPLE_PLUGIN_NAME in pm._command_menu_map
 
+
 def test_command_menu_map_npe1(uses_npe1_plugin, plugin_manager: PluginManager):
     pm = PluginManager.instance()
     pm.discover(include_npe1=True)
@@ -278,4 +279,3 @@ def test_command_menu_map_npe1(uses_npe1_plugin, plugin_manager: PluginManager):
     assert isinstance(pm._command_menu_map["npe1-plugin"], dict)
     command_menu_map = pm._command_menu_map["npe1-plugin"]
     assert command_menu_map["npe1-plugin.any_command"]["napari/layer_context"] == []
-
