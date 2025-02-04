@@ -280,7 +280,7 @@ def test_command_menu_map_npe1(uses_npe1_plugin, plugin_manager: PluginManager):
     command_menu_map = pm._command_menu_map["npe1-plugin"]
     assert command_menu_map["npe1-plugin.any_command"]["napari/layer_context"] == []
 
-    
+
 def test_get_shimmed_plugins(pm: PluginManager, uses_npe1_plugin):
     assert len(pm.get_shimmed_plugins()) == 0
     pm.discover(include_npe1=True)
