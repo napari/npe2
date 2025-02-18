@@ -237,7 +237,15 @@ class PluginManager:
         self.events = PluginManagerEvents(self)
         self._npe1_adapters: List[NPE1Adapter] = []
         self._command_menu_map: Dict[str, Dict[str, Dict[str, List[MenuCommand]]]] = (
-            defaultdict(dict)
+            # for each manifest, maps command IDs to menu IDs to list of MenuCommands
+            # belonging to that menu
+            # i.e. manifest -> command -> menu_id -> list[MenuCommand]
+            # we keep a list of MenuCommands even though we've already indexed by
+            # command ID **and** menu ID because it's possible to declare the
+            # same command in the same menu with different `when` and `group`
+            # fields. This seems an unlikely use case, but it is possible in
+            # the current schema.
+            defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         )
 
         # up to napari 0.4.15, discovery happened in the init here
@@ -364,7 +372,6 @@ class PluginManager:
 
     def _populate_command_menu_map(self, manifest: PluginManifest):
         # map of manifest -> command -> menu_id -> list[items]
-        self._command_menu_map[manifest.name] = defaultdict(lambda: defaultdict(list))
         menu_map = self._command_menu_map[manifest.name]  # just for conciseness below
         for menu_id, menu_items in manifest.contributions.menus.items() or ():
             # command IDs are keys in map
