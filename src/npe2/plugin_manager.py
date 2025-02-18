@@ -102,7 +102,7 @@ def iter_themes() -> Iterator[contributions.ThemeContribution]:
 
 
 def iter_compatible_readers(
-    path: Union[PathLike, Sequence[str]]
+    path: Union[PathLike, Sequence[str]],
 ) -> Iterator[contributions.ReaderContribution]:
     """Iterate over ReaderContributions compatible with `path`."""
 

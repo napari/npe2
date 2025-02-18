@@ -77,7 +77,7 @@ class SomeWidget: ...
 def random_data():
     import numpy as np
 
-    return [(np.random.rand(10, 10))]
+    return [np.random.rand(10, 10)]
 
 
 def make_widget_from_function(image: "napari.types.ImageData", threshold: int): ...
