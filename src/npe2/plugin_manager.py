@@ -102,7 +102,7 @@ def iter_themes() -> Iterator[contributions.ThemeContribution]:
 
 
 def iter_compatible_readers(
-    path: Union[PathLike, Sequence[str]]
+    path: Union[PathLike, Sequence[str]],
 ) -> Iterator[contributions.ReaderContribution]:
     """Iterate over ReaderContributions compatible with `path`."""
 
@@ -127,6 +127,10 @@ def get_writer(
     path: str, layer_types: Sequence[str], plugin_name: Optional[str] = None
 ) -> Tuple[Optional[contributions.WriterContribution], str]:
     """Get Writer contribution appropriate for `path`, and `layer_types`."""
+
+
+def get_shimmed_plugins() -> List[str]:
+    """Return a list of all shimmed plugin names."""
 
 
 def _populate_module():
