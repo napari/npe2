@@ -1,6 +1,7 @@
 name: Test all plugins
 
 on:
+  # To run this workflow, trigger it manually, or add the label 'test-all-plugins' to a pull request
   pull_request:
     types: [ labeled ]
   workflow_dispatch:
@@ -15,7 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: plugin_names
-        run: echo "::set-output name=plugins::$(curl -s https://api.napari-hub.org/plugins | jq -c 'keys')"
+        # Query npe2api for index of all plugins, select the keys, turn them into an array, select 10 random
+        # names from that array, convert the "one per line" output back into a string array
+        # save the string array of 10 plugins into the output from this step
+        run: |
+          set -eux
+          DATA=$(echo $(curl -s https://npe2api.vercel.app/api/plugins | jq -c 'keys' | jq -r '.[]' | shuf -n 10 | jq -R -s 'split("\n") | map(select(. != ""))'))
+          echo "plugins=$DATA" >> "$GITHUB_OUTPUT"
     outputs:
       plugins: ${{ steps.plugin_names.outputs.plugins }}
 
@@ -38,8 +45,9 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: 3.9
-          miniforge-variant: Mambaforge
+          python-version: '3.10'
+          miniforge-variant: Miniforge3
+          conda-remove-defaults: "true"
           miniforge-version: latest
           use-mamba: true
 
