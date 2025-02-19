@@ -18,12 +18,20 @@ def gen_data(): ...
 def napari_get_reader(path): ...
 
 
+@napari_hook_implementation(specname="napari_get_reader")
+def napari_other_reader(path): ...
+
+
 @napari_hook_implementation
 def napari_write_image(path, data, meta): ...
 
 
 @napari_hook_implementation
 def napari_write_labels(path, data, meta): ...
+
+
+@napari_hook_implementation(specname="napari_write_labels")
+def napari_other_write_labels(path, data, meta): ...
 
 
 @napari_hook_implementation

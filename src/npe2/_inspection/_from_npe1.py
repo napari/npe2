@@ -404,11 +404,11 @@ class HookImplParser:
         )
 
     def add_command(self, impl: HookImplementation, py_name: str = "") -> str:
-        name = impl.specname.replace("napari_", "")
-        id = f"{self.package}.{name}"
-        title = " ".join(name.split("_")).title()
         if not py_name:
             py_name = _python_name(impl.function)
+        name = impl.function.__name__
+        id = f"{self.package}.{name}"
+        title = " ".join(name.split("_")).title()
         c = CommandContribution(id=id, python_name=py_name, title=title)
         self.contributions["commands"].append(c)
         return id
