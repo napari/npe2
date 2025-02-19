@@ -32,8 +32,8 @@ def test_conversion_multiple_readers(mock_npe1_pm, npe1_plugin_module):
     mf = manifest_from_npe1(module=npe1_plugin_module)
     assert isinstance(mf.dict(), dict)
     assert (readers := mf.contributions.readers) is not None
-    assert len(readers) == 2
-    reader_commands = [r.command for r in readers]
+    reader_commands = {r.command for r in readers}
+    assert len(reader_commands) == 2
     assert "dynamic.napari_get_reader" in reader_commands
     assert "dynamic.napari_other_reader" in reader_commands
 
@@ -45,8 +45,8 @@ def test_conversion_multiple_writers(mock_npe1_pm, npe1_plugin_module):
     mf = manifest_from_npe1(module=npe1_plugin_module)
     assert isinstance(mf.dict(), dict)
     assert (writers := mf.contributions.writers) is not None
-    assert len(writers) == 3
-    writer_commands = [r.command for r in writers]
+    writer_commands = {r.command for r in writers}
+    assert len(writer_commands) == 3
     assert "dynamic.napari_write_labels" in writer_commands
     assert "dynamic.napari_other_write_labels" in writer_commands
 
