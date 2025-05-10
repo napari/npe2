@@ -170,8 +170,12 @@ def _read(
         if read_func is not None:
             tried_reader = True
             # if the reader function raises an exception here, we don't try to catch it
-            if not _is_null_layer_sentinel(layer_data := read_func(paths, stack=stack)):
-                return (layer_data, rdr) if return_reader else layer_data
+            layer_data = read_func(paths, stack=stack)
+            if plugin_name and _is_null_layer_sentinel(layer_data):
+                # we don't return null layers if the user selected a plugin,
+                # so that we can raise a meaningful error
+                continue
+            return (layer_data, rdr) if return_reader else layer_data
 
     if plugin_name:
         if tried_reader:

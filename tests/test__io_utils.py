@@ -78,8 +78,11 @@ def test_read_uses_correct_passed_plugin(tmp_path):
         return read
 
     # "gooby-again" isn't used even though given plugin starts with the same name
-    # if an error is thrown here, it means we selected the wrong plugin
-    io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
+    # we check that the thrown error is from "gooby" NOT "gooby-again"
+    with pytest.raises(
+        ValueError, match=f"Reader {short_name!r} was selected .* but returned no data"
+    ):
+        io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
 
 
 def test_read_fails_with_refused_reader():
@@ -138,7 +141,10 @@ def test_read_with_no_compatible_reader():
 def test_read_with_reader_contribution_plugin(uses_sample_plugin):
     paths = ["some.fzzy"]
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.some_reader"
-    assert read(paths, stack=False, plugin_name=chosen_reader) == [(None,)]
+    with pytest.raises(
+        ValueError, match=f"Reader {chosen_reader!r} was selected .* returned no data"
+    ):
+        read(paths, stack=False, plugin_name=chosen_reader)
 
     # if the wrong contribution is passed we get useful error message
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.not_a_reader"
