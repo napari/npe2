@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    Any,
     List,
     Literal,
     Optional,
@@ -161,20 +162,28 @@ def _read(
         chosen_compatible_readers
     ), "No readers to try. Expected an exception before this point."
 
+    tried_reader = False
     for rdr in chosen_compatible_readers:
         read_func = rdr.exec(
             kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
         )
         if read_func is not None:
+            tried_reader = True
             # if the reader function raises an exception here, we don't try to catch it
-            if layer_data := read_func(paths, stack=stack):
+            if not _is_null_layer_sentinel(layer_data := read_func(paths, stack=stack)):
                 return (layer_data, rdr) if return_reader else layer_data
 
     if plugin_name:
-        raise ValueError(
-            f"Reader {plugin_name!r} was selected to open "
-            + f"{paths!r}, but returned no data."
-        )
+        if tried_reader:
+            raise ValueError(
+                f"Reader {plugin_name!r} was selected to open "
+                + f"{paths!r}, but returned no data."
+            )
+        else:
+            raise ValueError(
+                f"Reader {plugin_name!r} was selected to open "
+                + f"{paths!r}, but refused the file."
+            )
     raise ValueError(f"No readers returned data for {paths!r}")
 
 
@@ -258,6 +267,29 @@ def _get_compatible_readers_by_choice(
             + helper_error_message
         )
     return chosen_compatible_readers
+
+
+def _is_null_layer_sentinel(layer_data: Any) -> bool:
+    """Checks if the layer data returned from a reader function indicates an
+    empty file. The sentinel value used for this is ``[(None,)]``.
+
+    Parameters
+    ----------
+    layer_data : LayerData
+        The layer data returned from a reader function to check
+
+    Returns
+    -------
+    bool
+        True, if the layer_data indicates an empty file, False otherwise
+    """
+    return (
+        isinstance(layer_data, list)
+        and len(layer_data) == 1
+        and isinstance(layer_data[0], tuple)
+        and len(layer_data[0]) == 1
+        and layer_data[0][0] is None
+    )
 
 
 @overload

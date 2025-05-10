@@ -82,7 +82,7 @@ def test_read_uses_correct_passed_plugin(tmp_path):
     io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
 
 
-def test_read_fails():
+def test_read_fails_with_refused_reader():
     pm = PluginManager()
     plugin_name = "always-fails"
     plugin = DynamicPlugin(plugin_name, plugin_manager=pm)
@@ -92,11 +92,32 @@ def test_read_fails():
     def get_read(path):
         return None
 
-    with pytest.raises(ValueError, match=f"Reader {plugin_name!r} was selected"):
+    with pytest.raises(
+        ValueError, match=f"Reader {plugin_name!r} was selected .* refused the file"
+    ):
         io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
 
     with pytest.raises(ValueError, match="No readers returned data"):
         io_utils._read(["some.fzzy"], stack=False, _pm=pm)
+
+
+def test_read_fails_with_null_layer():
+    pm = PluginManager()
+    plugin_name = "always-fails"
+    plugin = DynamicPlugin(plugin_name, plugin_manager=pm)
+    plugin.register()
+
+    def reader_func(path):
+        return [(None,)]
+
+    @plugin.contribute.reader(filename_patterns=["*.fzzy"])
+    def get_read(path):
+        return reader_func
+
+    with pytest.raises(
+        ValueError, match=f"Reader {plugin_name!r} was selected .* returned no data"
+    ):
+        io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
 
 
 def test_read_with_incompatible_reader(uses_sample_plugin):
