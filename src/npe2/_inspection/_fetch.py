@@ -19,6 +19,7 @@ from typing import (
     List,
     Optional,
     Union,
+    Tuple,
 )
 from unittest.mock import patch
 from urllib import error, request
@@ -213,59 +214,72 @@ def _get_manifest_from_git_url(url: str) -> PluginManifest:
         return _build_src_and_extract_manifest(td)
 
 
-def fetch_manifest(
-    package_or_url: str, version: Optional[str] = None
-) -> PluginManifest:
-    """Fetch a manifest for a pypi package name or URL to a wheel or source.
+def fetch_manifest(package_name: str, version: Optional[str] = None) -> PluginManifest:
+    """Fetch manifest from remote package.
 
     Parameters
     ----------
-    package_or_url : str
-        package name or URL to a git repository or zip file.
+    package_name : str
+        Name of package to fetch manifest from.
     version : Optional[str]
-        package version, by default, latest version.
+        Version of the package to fetch, by default None (latest version)
 
     Returns
     -------
     PluginManifest
-        Plugin manifest for package `specifier`.
+        The plugin manifest object.
 
-    Examples
-    --------
-    >>> fetch_manifest("napari-dv")
-    >>> fetch_manifest("napari-dv", "0.3.0")
-    >>> fetch_manifest("https://github.com/tlambert03/napari-dv")
-    >>> fetch_manifest("git+https://github.com/tlambert03/napari-dv.git")
-    >>> fetch_manifest("https://github.com/org/project/archive/refs/heads/master.zip")
-    >>> fetch_manifest("https://files.pythonhosted.org/.../package-0.3.0-py3-none-any.whl")
-    >>> fetch_manifest("https://files.pythonhosted.org/.../package-0.3.0.tar.gz")
+    Raises
+    ------
+    PackageNotFoundError
+        If the package cannot be found
+    ValueError
+        If the package URL cannot be interpreted
     """
-    # not on PyPI check various URL forms
-    if package_or_url.startswith(("http", "git+http")):
-        if package_or_url.endswith(".zip"):
-            return _get_manifest_from_zip_url(package_or_url)
-        if package_or_url.endswith(".whl"):
-            return _get_manifest_from_wheel_url(package_or_url)
-        if package_or_url.endswith(".tar.gz"):
-            return _get_manifest_from_targz_url(package_or_url)
-        if (
-            package_or_url.startswith("git+")
-            or package_or_url.endswith(".git")
-            or "github.com" in package_or_url
-        ):
-            return _get_manifest_from_git_url(package_or_url)
-    else:
+    try:
+        # Handle URL-based package names first
+        if package_name.startswith(("http", "git+http")):
+            if package_name.endswith(".zip"):
+                return _get_manifest_from_zip_url(package_name)
+            if package_name.endswith(".whl"):
+                return _get_manifest_from_wheel_url(package_name)
+            if package_name.endswith(".tar.gz"):
+                return _get_manifest_from_targz_url(package_name)
+            if (
+                package_name.startswith("git+")
+                or package_name.endswith(".git")
+                or "github.com" in package_name
+            ):
+                return _get_manifest_from_git_url(package_name)
+
+        # Try to get from installed distribution first
         try:
-            with _tmp_pypi_wheel_download(package_or_url, version) as td:
-                return _manifest_from_extracted_wheel(td)
+            dist = metadata.distribution(package_name)
+            name = dist.metadata.get("Name", package_name)
+            try:
+                with _tmp_pypi_wheel_download(name, version=version) as td:
+                    return _manifest_from_extracted_wheel(td)
+            except metadata.PackageNotFoundError:
+                return _manifest_from_pypi_sdist(name, version=version)
+            except error.HTTPError:  # pragma: no cover
+                pass  # pragma: no cover
         except metadata.PackageNotFoundError:
-            return _manifest_from_pypi_sdist(package_or_url, version)
-        except error.HTTPError:  # pragma: no cover
-            pass  # pragma: no cover
-    raise ValueError(  # pragma: no cover
-        f"Could not interpret {package_or_url!r} as a PYPI package name or URL to a "
-        "wheel or source distribution/zip file."
-    )
+            # If not installed, try downloading directly
+            try:
+                with _tmp_pypi_wheel_download(package_name, version=version) as td:
+                    return _manifest_from_extracted_wheel(td)
+            except metadata.PackageNotFoundError:
+                return _manifest_from_pypi_sdist(package_name, version=version)
+
+        raise ValueError(  # pragma: no cover
+            f"Could not interpret {package_name!r} as a PYPI package name or URL to a "
+            "wheel or source distribution/zip file."
+        )
+    except metadata.PackageNotFoundError as e:
+        # Re-raise PackageNotFoundError to maintain the expected error type
+        raise metadata.PackageNotFoundError(
+            f"No package metadata was found for {package_name}"
+        ) from e
 
 
 def _manifest_from_pypi_sdist(

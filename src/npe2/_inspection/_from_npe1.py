@@ -90,7 +90,7 @@ def plugin_packages() -> List[PackageInfo]:
     packages: List[PackageInfo] = []
     for dist in metadata.distributions():
         packages.extend(
-            PackageInfo(package_name=dist.metadata["Name"], entry_points=[ep])
+            PackageInfo(package_name=dist.metadata.get("Name", "unknown"), entry_points=[ep])
             for ep in dist.entry_points
             if ep.group == NPE1_EP
         )
@@ -144,7 +144,7 @@ def manifest_from_npe1(
         # don't use isinstance(Distribution), setuptools monkeypatches sys.meta_path:
         # https://github.com/pypa/setuptools/issues/3169
         NPE1_ENTRY_POINT = "napari.plugin"
-        plugin_name = package_name = plugin.metadata["Name"]
+        plugin_name = package_name = plugin.metadata.get("Name", "unknown")
         modules = [
             ep.value for ep in plugin.entry_points if ep.group == NPE1_ENTRY_POINT
         ]
