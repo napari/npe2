@@ -68,7 +68,7 @@ def test_cli_parse(sample_path, format, tmp_path, to_file):
 @pytest.mark.parametrize("to_file", [True, False])
 @pytest.mark.parametrize("include_meta", [True, False])
 def test_cli_fetch(format, tmp_path, to_file, include_meta):
-    cmd = ["fetch", "napari-omero"]
+    cmd = ["fetch", "napari-ndev"]
     if to_file:
         dest = tmp_path / f"output.{format}"
         cmd.extend(["-o", str(dest)])
@@ -87,7 +87,7 @@ def test_cli_fetch(format, tmp_path, to_file, include_meta):
         assert dest.exists()
         assert PluginManifest.from_file(dest)
     else:
-        assert "napari-omero" in result.stdout  # just prints the yaml
+        assert "napari-ndev" in result.stdout  # just prints the yaml
         if include_meta:
             assert "package_metadata" in result.stdout
 

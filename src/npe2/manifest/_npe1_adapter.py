@@ -78,7 +78,9 @@ class NPE1Adapter(PluginManifest):
         """_summary_"""
         meta = PackageMetadata.from_dist_metadata(dist.metadata)
         super().__init__(
-            name=dist.metadata["Name"], package_metadata=meta, npe1_shim=True
+            name=dist.metadata.get("Name", "unknown"),
+            package_metadata=meta,
+            npe1_shim=True,
         )
         self._dist = dist
 

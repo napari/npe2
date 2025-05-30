@@ -421,7 +421,7 @@ def find_npe1_module_contributions(
     ContributionPoints
         ContributionPoints discovered in the module.
     """
-    plugin_name = dist.metadata["Name"]
+    plugin_name = dist.metadata.get("Name", "unknown")
     file = _locate_module_in_dist(dist, module_name)
     visitor = NPE1PluginModuleVisitor(plugin_name, module_name=module_name)
     visitor.visit(ast.parse(Path(file).read_text()))

@@ -82,9 +82,9 @@ class Executable(GenericModel, Generic[R]):
             # look for a package name in the command id
             dists = sorted(
                 (
-                    d.metadata["Name"]
+                    d.metadata.get("Name")
                     for d in distributions()
-                    if d.metadata["Name"] is not None
+                    if d.metadata.get("Name") is not None
                 ),
                 key=len,
                 reverse=True,
