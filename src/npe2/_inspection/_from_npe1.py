@@ -90,7 +90,9 @@ def plugin_packages() -> List[PackageInfo]:
     packages: List[PackageInfo] = []
     for dist in metadata.distributions():
         packages.extend(
-            PackageInfo(package_name=dist.metadata.get("Name", "unknown"), entry_points=[ep])
+            PackageInfo(
+                package_name=dist.metadata.get("Name", "unknown"), entry_points=[ep]
+            )
             for ep in dist.entry_points
             if ep.group == NPE1_EP
         )

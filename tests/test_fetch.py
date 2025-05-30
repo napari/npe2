@@ -1,4 +1,3 @@
-import os
 import urllib.request
 from importlib.metadata import PackageNotFoundError
 from unittest.mock import patch
@@ -65,7 +64,9 @@ def test_from_pypi_wheel_bdist_missing():
             fetch_manifest("my-package")
 
 
-@pytest.mark.filterwarnings("ignore:Python 3.14 will, by default, filter extracted tar archives")
+@pytest.mark.filterwarnings(
+    "ignore:Python 3.14 will, by default, filter extracted tar archives"
+)
 def test_manifest_from_sdist():
     mf = _manifest_from_pypi_sdist("zarpaint")
     assert mf.name == "zarpaint"
@@ -84,7 +85,9 @@ def test_get_hub_plugin():
     assert info["name"] == "napari-svg"
 
 
-@pytest.mark.filterwarnings("ignore:Python 3.14 will, by default, filter extracted tar archives")
+@pytest.mark.filterwarnings(
+    "ignore:Python 3.14 will, by default, filter extracted tar archives"
+)
 @pytest.mark.parametrize(
     "url",
     [
