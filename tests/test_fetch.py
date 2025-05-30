@@ -64,9 +64,15 @@ def test_from_pypi_wheel_bdist_missing():
             fetch_manifest("my-package")
 
 
+<<<<<<< HEAD
 @pytest.mark.filterwarnings(
     "ignore:Python 3.14 will, by default, filter extracted tar archives"
 )
+||||||| parent of 92d6334 (Add filter warnings for deprecations and comment out npe1 plugin on test_fetch_urls)
+@pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
+=======
+@pytest.mark.filterwarnings("ignore:Python 3.14 will, by default, filter extracted tar archives")
+>>>>>>> 92d6334 (Add filter warnings for deprecations and comment out npe1 plugin on test_fetch_urls)
 def test_manifest_from_sdist():
     mf = _manifest_from_pypi_sdist("zarpaint")
     assert mf.name == "zarpaint"
@@ -85,9 +91,15 @@ def test_get_hub_plugin():
     assert info["name"] == "napari-svg"
 
 
+<<<<<<< HEAD
 @pytest.mark.filterwarnings(
     "ignore:Python 3.14 will, by default, filter extracted tar archives"
 )
+||||||| parent of 92d6334 (Add filter warnings for deprecations and comment out npe1 plugin on test_fetch_urls)
+@pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
+=======
+@pytest.mark.filterwarnings("ignore:Python 3.14 will, by default, filter extracted tar archives")
+>>>>>>> 92d6334 (Add filter warnings for deprecations and comment out npe1 plugin on test_fetch_urls)
 @pytest.mark.parametrize(
     "url",
     [
