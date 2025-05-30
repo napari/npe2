@@ -368,15 +368,15 @@ class PluginManifest(ImportExportModel):
                     logger.warning(
                         "Invalid schema for package %r, please run"
                         " 'npe2 validate %s' to check for manifest errors.",
-                        dist.metadata["Name"],
-                        dist.metadata["Name"],
+                        dist.metadata.get("Name", "unknown"),
+                        dist.metadata.get("Name", "unknown"),
                     )
                     yield DiscoverResults(None, dist, e)
 
                 except Exception as e:
                     logger.error(
                         "{} -> {!r} could not be imported: {}".format(
-                            ENTRY_POINT, dist.metadata["Name"], e
+                            ENTRY_POINT, dist.metadata.get("Name", "unknown"), e
                         )
                     )
                     yield DiscoverResults(None, dist, e)
