@@ -14,12 +14,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ContextManager,
-    Dict,
     Iterator,
-    List,
     Optional,
     Union,
-    Tuple,
 )
 from unittest.mock import patch
 from urllib import error, request
