@@ -43,6 +43,7 @@ def test_discover(uses_sample_plugin):
     assert entrypoint.value == f"{SAMPLE_MODULE_NAME}:napari.yaml"
     assert error is None
 
+
 @pytest.mark.filterwarnings("ignore:Implicit None on return values is deprecated")
 def test_discover_errors(tmp_path: Path):
     """testing various discovery errors"""
