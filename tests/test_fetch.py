@@ -92,7 +92,10 @@ def test_get_hub_plugin():
         "https://files.pythonhosted.org/packages/5d/ae/17779e12ce60d8329306963e1a8dec608465caee582440011ff0c1310715/example_plugin-0.0.7-py3-none-any.whl",
         "git+https://github.com/napari/dummy-test-plugin.git@npe1",
         # this one doesn't use setuptools_scm, can check direct zip without clone
-        "https://github.com/jo-mueller/napari-stl-exporter/archive/refs/heads/main.zip",
+        # FIXME: skipping this test as it is failing due to a setuptools update
+        # see https://github.com/napari/npe2/issues/378
+        # we should update this test to use a different plugin
+        # "https://github.com/jo-mueller/napari-stl-exporter/archive/refs/heads/main.zip",
     ],
 )
 def test_fetch_urls(url):
