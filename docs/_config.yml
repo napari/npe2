@@ -45,7 +45,8 @@ sphinx:
     html_theme_options: {}
     pygments_style: solarized-dark
     suppress_warnings: ["myst.header"]
-    exclude_patterns: ['**/_*.md']  # includes
+    # build the generated files in this repo to preview them
+    # exclude_patterns: ['**/_*.md']  # includes
     templates_path:
         - '_templates'
     intersphinx_mapping:
