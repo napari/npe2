@@ -2,9 +2,4 @@ format: jb-book
 root: index
 chapters:
 # this is not meant to match the plugins toc at napari
-- file: plugins/_npe2_contributions.md
-- file: plugins/_npe2_manifest.md
-- file: plugins/_npe2_sample_data_guide.md
-- file: plugins/_npe2_widgets_guide.md
-- file: plugins/_npe2_writers_guide.md
-- file: plugins/_npe2_readers_guide.md
+- glob: plugins/*.md
