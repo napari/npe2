@@ -1,5 +1,5 @@
 format: jb-book
-root: ../README
+root: index
 chapters:
 # this is not meant to match the plugins toc at napari
 - file: plugins/_npe2_contributions.md
