@@ -2,7 +2,6 @@ format: jb-article
 root: index
 sections:
 # this is not meant to match the plugins toc at napari
-- file: plugins/index
   sections:
   - file: plugins/_npe2_contributions.md
   - file: plugins/_npe2_manifest.md
