@@ -10,6 +10,10 @@ It can take the form of a **Sample Data URI** that points to a static resource
 (such as a file included in the plugin distribution, or a remote resource),
 or **Sample Data Function** that generates layer data on demand.
 
+Note that unlike reader contributions, sample data contributions are
+**always** expected to return data, so returning `[(None,)]`
+will cause an error.
+
 ### Sample Data example
 
 ::::{tab-set}
