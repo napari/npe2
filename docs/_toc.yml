@@ -2,7 +2,6 @@ format: jb-book
 root: README
 chapters:
 # this is not meant to match the plugins toc at napari
-  sections:
 - file: plugins/_npe2_contributions.md
 - file: plugins/_npe2_manifest.md
 - file: plugins/_npe2_sample_data_guide.md
