@@ -104,6 +104,15 @@ jobs:
         run: python _docs/render.py
         env:
           NPE2_SCHEMA: "_schema.json"
+      - name: Build jupyter book
+        run: |
+          pip install jupyter-book
+          jupyter-book build
+      # Upload the book's HTML as an artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "_build/html"
 
   upload_coverage:
     needs: test
