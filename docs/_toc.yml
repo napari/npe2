@@ -1,14 +1,12 @@
 format: jb-article
 root: index
 sections:
-# this is meant to match the plugins toc at napari
+# this is not meant to match the plugins toc at napari
 - file: plugins/index
   sections:
-  - file: plugins/first_plugin
-  - file: plugins/manifest
-  - file: plugins/contributions
-  - file: plugins/guides
-  - file: plugins/test_deploy
-  - file: plugins/best_practices
-  - file: plugins/npe2_migration_guide
-  - file: plugins/npe1
+  - file: plugins/_npe2_contributions.md
+  - file: plugins/_npe2_manifest.md
+  - file: plugins/_npe2_sample_data_guide.md
+  - file: plugins/_npe2_widgets_guide.md
+  - file: plugins/_npe2_writers_guide.md
+  - file: plugins/_npe2_readers_guide.md
