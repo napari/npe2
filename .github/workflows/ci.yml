@@ -105,8 +105,10 @@ jobs:
         env:
           NPE2_SCHEMA: "_schema.json"
       - name: Build jupyter book
+        # install dependencies, generate toc, then build
         run: |
           pip install jupyter-book sphinx-tabs furo
+          jupyter-book toc from-project docs -f jb-book
           jupyter-book build docs
       # Upload the book's HTML as an artifact
       - name: Upload artifact

@@ -1,5 +1,0 @@
-format: jb-book
-root: index
-chapters:
-# this is not meant to match the plugins toc at napari
-- glob: plugins/*.md
