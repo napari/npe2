@@ -107,7 +107,7 @@ jobs:
       - name: Build jupyter book
         run: |
           pip install jupyter-book
-          jupyter-book build
+          jupyter-book build docs
       # Upload the book's HTML as an artifact
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
