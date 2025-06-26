@@ -109,7 +109,7 @@ jobs:
         run: |
           pip install jupyter-book sphinx-tabs furo
           cd docs
-          jupyter-book toc from-project docs -f jb-book
+          jupyter-book toc from-project . -f jb-book
           jupyter-book build .
       # Upload the book's HTML as an artifact
       - name: Upload artifact
