@@ -106,7 +106,7 @@ jobs:
           NPE2_SCHEMA: "_schema.json"
       - name: Build jupyter book
         run: |
-          pip install jupyter-book sphinx-tabs
+          pip install jupyter-book sphinx-tabs furo
           jupyter-book build docs
       # Upload the book's HTML as an artifact
       - name: Upload artifact
