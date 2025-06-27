@@ -38,6 +38,9 @@ contributions:
     - command: example-plugin.do_threshold
       display_name: Threshold
       autogenerate: true
+  menus:
+    napari/layers/segment:
+      - command: example-plugin.threshold_widget
   themes:
     - label: "Monokai"
       id: "monokai"
