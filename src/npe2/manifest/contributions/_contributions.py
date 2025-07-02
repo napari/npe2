@@ -36,8 +36,8 @@ class ContributionPoints(BaseModel):
     widgets: Optional[List[WidgetContribution]]
     sample_data: Optional[List[SampleDataContribution]]
     themes: Optional[List[ThemeContribution]]
-    menus: Dict[str, List[MenuItem]] = Field(default_factory=dict, hide_docs=False)
-    submenus: Optional[List[SubmenuContribution]] = Field(None, hide_docs=False)
+    menus: Dict[str, List[MenuItem]]
+    submenus: Optional[List[SubmenuContribution]]
     keybindings: Optional[List[KeyBindingContribution]] = Field(None, hide_docs=True)
 
     configuration: List[ConfigurationContribution] = Field(
