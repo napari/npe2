@@ -153,10 +153,11 @@ def example_contribution(
     output = {"contributions": json.loads(ex.json(exclude_unset=True))}
     if format == "yaml":
         return yaml.safe_dump(output, sort_keys=False)
-    # if format == "toml":
-    #     import tomli_w
+    if format == "toml":
+        import tomli_w
 
-    #     return tomli_w.dumps(output)
+        #return tomli_w.dumps(output)
+        return
     if format == "json":
         return json.dumps(output)
     raise ValueError("Invalid format: {format}.  Must be 'yaml', 'toml' or 'json'.")
