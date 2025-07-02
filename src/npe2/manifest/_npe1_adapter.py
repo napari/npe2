@@ -8,7 +8,7 @@ from pathlib import Path
 from shutil import rmtree
 from typing import List, Sequence
 
-from appdirs import user_cache_dir
+from platformdirs import user_cache_dir
 
 from npe2._inspection._from_npe1 import manifest_from_npe1
 from npe2.manifest import PackageMetadata
