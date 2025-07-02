@@ -44,6 +44,7 @@ def test_discover(uses_sample_plugin):
     assert error is None
 
 
+@pytest.mark.filterwarnings("ignore:Implicit None on return values is deprecated")
 def test_discover_errors(tmp_path: Path):
     """testing various discovery errors"""
     # package with proper `napari.manifest` entry_point, but invalid pointer to
