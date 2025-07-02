@@ -154,9 +154,8 @@ def example_contribution(
     if format == "yaml":
         return yaml.safe_dump(output, sort_keys=False)
     if format == "toml":
-        import tomli_w
 
-        #return tomli_w.dumps(output)
+        # return tomli_w.dumps(output)
         return
     if format == "json":
         return json.dumps(output)
