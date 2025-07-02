@@ -21,11 +21,19 @@ is being discussed.
 (contributions-{{ contrib_name|replace('_', '-') }})=
 ## `contributions.{{contrib_name}}`
 {# check if this is a single type, or a union #}
+{%- if contrib['items'] is defined %}
 {%- if contrib['items']['anyOf'] is defined %}
 {%- set type_names = contrib['items']['anyOf']|map(attribute='$ref')|map("replace", "#/definitions/", "")|list  %}
 {%- set union = True %}
 {%- else %}
 {%- set type_names = [contrib['items']['$ref']|replace("#/definitions/", "")] %}
+{%- set union = False %}
+{%- endif -%}
+{%- elif contrib['additionalProperties'] is defined %}
+{%- set type_names = [contrib['additionalProperties']['items']['$ref']|replace("#/definitions/", "")] %}
+{%- set union = False %}
+{%- else %}
+{%- set type_names = [] %}
 {%- set union = False %}
 {%- endif -%}
 {%- if union %}
