@@ -45,7 +45,11 @@ This contribution accepts {{ type_names|length }} schema types
 {%- for tname in type_names -%}
 {% set type = schema['definitions'][tname] %}
 {% if union %}##### {{loop.index}}. {{type.title}}{% endif %}
+{%- if type.description is defined %}
 {{ type.description }}
+{%- else %}
+_No description available._
+{%- endif %}
 
 {% if contrib_name|has_guide %}
 See the [{{ contrib_name.title()|replace('_', ' ') }} Guide]({{ contrib_name|replace('_', '-') }}-contribution-guide)
