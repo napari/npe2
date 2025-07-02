@@ -40,6 +40,8 @@ contributions:
       autogenerate: true
   menus:
     napari/layers/segment:
+      - submenu: threshold_submenu
+    threshold_submenu:
       - command: example-plugin.threshold_widget
   themes:
     - label: "Monokai"
