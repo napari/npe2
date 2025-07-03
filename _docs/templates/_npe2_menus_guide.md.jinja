@@ -63,23 +63,6 @@ def threshold_li(image: 'napari.types.ImageData') -> 'napari.types.LabelsData':
 :::
 ::::
 
-### Enablement and Visibility Conditions
-
-Each menu item can be conditionally enabled or shown using optional clauses:
-
-- **enablement**: A context expression that determines when the item is clickable.
-- **when**: A context expression that controls visibility.
-
-These allow plugin authors to define behavior that is sensitive to the state of the viewer, selected layers, or other UI context.
-
-```yaml
-- command: napari-demo.edit_layer
-  enablement: active_layer_type == 'image'
-  when: active_layer is not None
-```
-
-For more information on available context expressions, refer to the [npe2 docs](https://napari.org/dev/plugins/manifest.html#conditional-fields).
-
 ### Guidelines
 
 - **Use menus for discoverability**: Menu contributions surface useful plugin functionality in an intuitive way.
