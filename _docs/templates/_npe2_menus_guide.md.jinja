@@ -1,0 +1,96 @@
+(menus-contribution-guide)=
+## Menus
+
+Menu contributions enable plugin developers to add new items or submenus to *existing* napari menus, allowing commands to be executed directly through the menu interface. This is a great mechanism for exposing simple commands or widgets that are generally applicable to a wide range of data.
+
+### `MenuItem` and `Submenu` Contributions
+
+Menu entries are defined using two primary mechanisms in the plugin manifest:
+
+- **MenuItem**: Adds a command to an existing menu location.
+- **Submenu**: Creates a new submenu (referenced by ID) that can itself contain menu items or other submenus.
+
+The structure of menu contributions requires first defining a command, then mapping it to a menu location.
+
+### Example: Thresholding submenu
+
+::::{tab-set}
+:::{tab-item} manifest
+
+```yaml
+name: napari-demo
+display_name: Demo plugin
+
+contributions:
+  commands:
+    - id: napari-demo.all_thresholds
+      title: Try All Thresholds
+      python_name: napari_demo:all_thresholds
+    - id: napari-demo.threshold_otsu
+      title: Otsu Threshold
+      python_name: napari_demo:threshold_otsu
+    - id: napari-demo.threshold_li
+      title: Li Threshold
+      python_name: napari_demo:threshold_li
+
+  menus:
+    napari/layers/segment:
+      - submenu: threshold
+      - command: napari-demo.all_thresholds
+    threshold:
+      - command: napari-demo.threshold_otsu
+      - command: napari-demo.threshold_li
+
+  submenus:
+    - id: threshold
+      label: Thresholding
+```
+:::
+
+:::{tab-item} python implementation
+
+```python
+# napari_demo module
+def all_thresholds(viewer: 'napari.viewer.Viewer'):
+    ...
+
+def threshold_otsu(image: 'napari.types.ImageData') -> 'napari.types.LabelsData':
+    ...
+
+def threshold_li(image: 'napari.types.ImageData') -> 'napari.types.LabelsData':
+    ...
+```
+:::
+::::
+
+### Guidelines
+
+- **Use menus for discoverability**: Menu contributions surface useful plugin functionality in an intuitive way.
+- **Separate UI concerns**: Commands exposed via menus should avoid opening dialogs unnecessarily unless the user has selected them.
+
+
+### Menu ID Reference
+
+Here's the full list of contributable menus. [source](https://github.com/napari/napari/blob/main/src/napari/_app_model/constants/_menus.py).
+
+```
+napari/file/new_layer
+napari/file/io_utilities
+napari/file/acquire
+
+napari/layers/visualize
+napari/layers/annotate
+
+napari/layers/data
+napari/layers/layer_type
+
+napari/layers/transform
+napari/layers/measure
+
+napari/layers/filter
+napari/layers/register
+napari/layers/project
+napari/layers/segment
+napari/layers/track
+napari/layers/classify
+```
