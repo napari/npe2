@@ -67,8 +67,30 @@ def threshold_li(image: 'napari.types.ImageData') -> 'napari.types.LabelsData':
 
 - **Use menus for discoverability**: Menu contributions surface useful plugin functionality in an intuitive way.
 - **Separate UI concerns**: Commands exposed via menus should avoid opening dialogs unnecessarily unless the user has selected them.
-- **Test context conditions**: Ensure `enablement` and `when` clauses correctly reflect the intended state.
 
----
 
-For additional details, see the [menus contribution reference](contributions-menus).
+### Menu ID Reference
+
+Here's the full list of contributable menus. [source](https://github.com/napari/napari/blob/main/src/napari/_app_model/constants/_menus.py).
+
+```
+napari/file/new_layer
+napari/file/io_utilities
+napari/file/acquire
+
+napari/layers/visualize
+napari/layers/annotate
+
+napari/layers/data
+napari/layers/layer_type
+
+napari/layers/transform
+napari/layers/measure
+
+napari/layers/filter
+napari/layers/register
+napari/layers/project
+napari/layers/segment
+napari/layers/track
+napari/layers/classify
+```
