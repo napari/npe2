@@ -16,6 +16,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
 )
 
 from npe2._pydantic_compat import GenericModel, PrivateAttr
@@ -81,11 +82,12 @@ class Executable(GenericModel, Generic[R]):
 
             # look for a package name in the command id
             dists = sorted(
-                (
-                    d.metadata.get("Name")
+                [
+                    # Use explicit type casting to ensure we get a str
+                    cast(str, d.metadata.get("Name"))
                     for d in distributions()
                     if d.metadata.get("Name") is not None
-                ),
+                ],
                 key=len,
                 reverse=True,
             )
