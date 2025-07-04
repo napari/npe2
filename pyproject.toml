@@ -62,7 +62,7 @@ dev = ["black", "ipython", "isort", "mypy", "pre-commit"]
 docs = [
     "Jinja2",
     "magicgui>=0.3.3",
-    "jupyter-book==v1.0.4",
+    "jupyter-book",
     "sphinx-tabs",
     "furo",
     "napari[all]",
