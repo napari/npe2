@@ -38,10 +38,10 @@ class ContributionPoints(BaseModel):
     themes: Optional[List[ThemeContribution]]
     menus: Dict[str, List[MenuItem]] = Field(
         default_factory=dict,
-        description="Contributes menu items to existing napari menus."
-        "Menu items can be commands, e.g. opening a widget, or additional submenus."
-        "This allows you to create nested hierarchies within napari menus, enabling"
-        "you to organize your plugin's contributions within the menu structure.",
+        description="Add menu items to existing napari menus."
+        "A menu item can be a command, such as open a widget, or a submenu."
+        "Using menu items, nested hierarchies can be created within napari menus."
+        "This allows you to organize your plugin's contributions within napari's menu structure.",
     )
     submenus: Optional[List[SubmenuContribution]]
     keybindings: Optional[List[KeyBindingContribution]] = Field(None, hide_docs=True)
