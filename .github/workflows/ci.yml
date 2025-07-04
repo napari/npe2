@@ -47,10 +47,10 @@ jobs:
           pip install -e .[json,docs,testing]
 
       - name: Test Main docs build
-        run: pytest --color yes -m github_main_only
+        run: pytest --color=yes -m github_main_only
       - name: Test
         run: |
-          coverage run --source=npe2 -m pytest --color yes
+          coverage run --source=npe2 -m pytest --color=yes
 
       - name: Upload coverage as artifact
         uses: actions/upload-artifact@v4
