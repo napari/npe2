@@ -40,9 +40,7 @@ class ContributionPoints(BaseModel):
         default_factory=dict,
         description="Contributes menu items to existing napari menus.",
     )
-    submenus: Optional[List[SubmenuContribution]] = Field(
-        None, description="Contributes submenus that can be referenced by menu items."
-    )
+    submenus: Optional[List[SubmenuContribution]]
     keybindings: Optional[List[KeyBindingContribution]] = Field(None, hide_docs=True)
 
     configuration: List[ConfigurationContribution] = Field(
