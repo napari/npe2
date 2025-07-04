@@ -32,7 +32,9 @@ class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
     """Contribute a callable command that creates data on demand."""
 
     command: str = Field(
-        ..., description="Identifier of a command that returns layer data tuple."
+        ...,
+        description="Identifier of a command that returns layer data tuple. "
+        "Note that this command cannot return `[(None,)]`.",
     )
 
     def open(
