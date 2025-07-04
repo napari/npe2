@@ -160,9 +160,47 @@ def _get_manifest_from_zip_url(url: str) -> PluginManifest:
     --------
     $ npe2 fetch https://github.com/org/project/archive/refs/heads/master.zip
     """
+    from npe2.manifest import PluginManifest
+
+    def find_manifest_file(root: Path) -> Optional[Path]:
+        """Recursively find a napari manifest file."""
+        # Check current directory for manifest files
+        for filename in ["napari.yaml", "napari.yml"]:
+            manifest_path = root / filename
+            if manifest_path.exists():
+                return manifest_path
+
+        # Check for pyproject.toml with napari config
+        pyproject_path = root / "pyproject.toml"
+        if pyproject_path.exists():
+            try:
+                import tomllib
+            except ImportError:
+                import tomli as tomllib  # type: ignore
+
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+                if "tool" in data and "napari" in data["tool"]:
+                    return pyproject_path
+
+        # Recursively search subdirectories for the manifest file
+        for item in root.iterdir():
+            if item.is_dir() and not item.name.startswith("."):
+                result = find_manifest_file(item)
+                if result:
+                    return result
+        return None
+
     with _tmp_zip_download(url) as zip_path:
-        src_dir = next(Path(zip_path).iterdir())  # find first directory
-        return _build_src_and_extract_manifest(src_dir)
+        # In a zip file, we do not need to build a wheel. We can extract
+        # the manifest directly from the extracted files.
+        manifest_file = find_manifest_file(Path(zip_path))
+        if manifest_file:
+            return PluginManifest.from_file(manifest_file)
+        else:
+            # Keep original behavior to try to build a wheel as a fallback
+            src_dir = next(Path(zip_path).iterdir())
+            return _build_src_and_extract_manifest(src_dir)
 
 
 def _get_manifest_from_wheel_url(url: str) -> PluginManifest:
