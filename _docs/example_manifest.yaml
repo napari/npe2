@@ -16,6 +16,15 @@ contributions:
     - id: example-plugin.do_threshold
       title: Perform threshold on image, return new image
       python_name: example_plugin.some_module:threshold
+    - id: example-plugin.threshold_otsu
+      title: Threshold using Otsu's method
+      python_name: example_plugin.some_module:threshold_otsu
+    - id: example-plugin.threshold_li
+      title: Threshold using Li's method
+      python_name: example_plugin.some_module:threshold_li
+    - id: example-plugin.all_thresholds
+      title: All thresholds
+      python_name: example_plugin.some_module:all_thresholds
     - id: example-plugin.threshold_widget
       title: Make threshold widget with magic_factory
       python_name: example_plugin.some_module:widget_factory
@@ -38,6 +47,16 @@ contributions:
     - command: example-plugin.do_threshold
       display_name: Threshold
       autogenerate: true
+  menus:
+    napari/layers/segment:
+      - submenu: threshold
+      - command: example-plugin.all_thresholds
+    threshold:
+      - command: example-plugin.threshold_otsu
+      - command: example-plugin.threshold_li
+  submenus:
+    - id: threshold
+      label: Thresholding
   themes:
     - label: "Monokai"
       id: "monokai"

@@ -83,7 +83,7 @@ jobs:
           python -m pip install pytest pytest-pretty scikit-image[data] zarr xarray hypothesis matplotlib
 
       - name: Run napari plugin headless tests
-        run: pytest -W 'ignore::DeprecationWarning' napari/plugins napari/settings napari/layers napari/components
+        run: pytest -W 'ignore::DeprecationWarning' src/napari/plugins src/napari/settings src/napari/layers src/napari/components
         working-directory: napari-from-github
 
   test_docs_render:
@@ -104,6 +104,18 @@ jobs:
         run: python _docs/render.py
         env:
           NPE2_SCHEMA: "_schema.json"
+      - name: Build jupyter book
+        # install dependencies, generate toc, then build
+        run: |
+          pip install jupyter-book sphinx-tabs furo
+          cd docs
+          jupyter-book toc from-project . -f jb-book > _toc.yml
+          jupyter-book build .
+      # Upload the book's HTML as an artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "docs/_build/html"
 
   upload_coverage:
     needs: test
