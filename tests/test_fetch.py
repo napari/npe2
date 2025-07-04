@@ -7,6 +7,7 @@ import pytest
 
 from npe2 import PluginManifest, fetch_manifest
 from npe2._inspection._fetch import (
+    _get_manifest_from_zip_url,
     _manifest_from_pypi_sdist,
     get_hub_plugin,
     get_manifest_from_wheel,
@@ -100,3 +101,40 @@ def test_get_hub_plugin():
 )
 def test_fetch_urls(url):
     assert isinstance(fetch_manifest(url), PluginManifest)
+
+
+def test_get_manifest_from_zip_url(tmp_path, monkeypatch):
+    # Mock the _tmp_zip_download context manager
+    mock_zip_path = tmp_path / "extracted"
+    mock_zip_path.mkdir()
+
+    # Create a mock source directory inside the extracted zip
+    src_dir = mock_zip_path / "plugin-source-1.0"
+    src_dir.mkdir()
+
+    # Mock the _build_src_and_extract_manifest to return a test manifest
+    test_manifest = PluginManifest(name="test-plugin")
+
+    def mock_build_src_and_extract_manifest(src_dir):
+        return test_manifest
+
+    from contextlib import contextmanager
+
+    @contextmanager
+    def mock_tmp_zip_download(url):
+        yield mock_zip_path
+
+    monkeypatch.setattr(
+        "npe2._inspection._fetch._tmp_zip_download", mock_tmp_zip_download
+    )
+    monkeypatch.setattr(
+        "npe2._inspection._fetch._build_src_and_extract_manifest",
+        mock_build_src_and_extract_manifest,
+    )
+
+    # Test the function
+    result = _get_manifest_from_zip_url("https://example.com/plugin.zip")
+
+    # Verify the result
+    assert result == test_manifest
+    assert result.name == "test-plugin"
