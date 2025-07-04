@@ -319,5 +319,5 @@ def _write(
 
     # napari_get_writer-style writers don't always return a list
     # though strictly speaking they should?
-    result = [res] if isinstance(res, str) else res or []  # type: ignore
+    result = [res] if isinstance(res, str) else res or []
     return (result, writer) if return_writer else result
