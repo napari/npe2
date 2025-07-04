@@ -46,11 +46,11 @@ jobs:
           pip install "${{ matrix.pydantic }}"
           pip install -e .[json,docs,testing]
 
-      - name: Test Main docs build
-        run: pytest --color=yes -m github_main_only
+      - name: Test Main docs build (use pytest isolation)
+        run: pytest --coloryes -m github_main_only --import-mode=importlib
       - name: Test
         run: |
-          coverage run --source=npe2 -m pytest --color=yes
+          coverage run --source=npe2 -m pytest --color yes
 
       - name: Upload coverage as artifact
         uses: actions/upload-artifact@v4
