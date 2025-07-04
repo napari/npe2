@@ -1,0 +1,21 @@
+root: index
+entries:
+- file: plugins/index
+  entries:
+  - file: plugins/_layer_data_guide
+  - file: plugins/_npe2_contributions
+  - file: plugins/_npe2_manifest
+  - file: plugins/_npe2_menus_guide
+  - file: plugins/_npe2_readers_guide
+  - file: plugins/_npe2_sample_data_guide
+  - file: plugins/_npe2_widgets_guide
+  - file: plugins/_npe2_writers_guide
+  - file: plugins/best_practices
+  - file: plugins/contributions
+  - file: plugins/find_and_install_plugin
+  - file: plugins/first_plugin
+  - file: plugins/guides
+  - file: plugins/manifest
+  - file: plugins/npe1
+  - file: plugins/npe2_migration_guide
+  - file: plugins/test_deploy

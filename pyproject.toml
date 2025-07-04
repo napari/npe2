@@ -59,7 +59,15 @@ testing = [
     "pytest-pretty",
 ]
 dev = ["black", "ipython", "isort", "mypy", "pre-commit"]
-docs = ["Jinja2", "magicgui>=0.3.3", "jupyter-book"]
+docs = [
+    "Jinja2",
+    "magicgui>=0.3.3",
+    "jupyter-book==1.0.4",
+    "sphinx-tabs",
+    "furo",
+    "napari[all]",
+    "myst-parser",
+]
 json = ["jsonschema"]
 
 # Entry points
