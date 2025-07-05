@@ -182,13 +182,15 @@ def main(dest: Path = _BUILD):
     env.filters["has_guide"] = has_guide
 
     dest.mkdir(exist_ok=True, parents=True)
-    schema = PluginManifest.schema()
     if local_schema := os.getenv("NPE2_SCHEMA"):
         with open(local_schema) as f:
             schema = json.load(f)
     else:
-        with urlopen(SCHEMA_URL) as response:
-            schema = json.load(response)
+        try:
+            schema = PluginManifest.schema()
+        except Exception:
+            with urlopen(SCHEMA_URL) as response:
+                schema = json.load(response)
 
     contributions = schema["definitions"]["ContributionPoints"]["properties"]
     context = {
