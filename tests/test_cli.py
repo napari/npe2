@@ -212,3 +212,12 @@ def test_cli_version():
 def test_compile(compiled_plugin_dir):
     result = runner.invoke(app, ["compile", str(compiled_plugin_dir)])
     assert "id: my_compiled_plugin.my-plugin.generate_random_data" in result.output
+
+
+def test_main_no_args_shows_help(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["npe2"])
+    with pytest.raises(SystemExit) as e:
+        main()
+    assert e.value.code == 0
+    captured = capsys.readouterr()
+    assert "Usage:" in captured.out or "Usage:" in captured.err
