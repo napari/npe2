@@ -41,7 +41,7 @@ class ContributionPoints(BaseModel):
         description="Add menu items to existing napari menus."
         "A menu item can be a command, such as open a widget, or a submenu."
         "Using menu items, nested hierarchies can be created within napari menus."
-        "This allows you to organize your plugin's contributions within",
+        "This allows you to organize your plugin's contributions within"
         "napari's menu structure.",
     )
     submenus: Optional[List[SubmenuContribution]]
