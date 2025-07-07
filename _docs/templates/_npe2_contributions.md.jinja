@@ -21,10 +21,21 @@ is being discussed.
 (contributions-{{ contrib_name|replace('_', '-') }})=
 ## `contributions.{{contrib_name}}`
 {# check if this is a single type, or a union #}
-{%- if contrib['items']['anyOf'] is defined %}
+{%- if contrib.type == 'object' and contrib.additionalProperties is defined %}
+{# Handle object types like menus #}
+{%- if contrib['additionalProperties']['items']['anyOf'] is defined %}
+{%- set type_names = contrib['additionalProperties']['items']['anyOf']|map(attribute='$ref')|map("replace", "#/definitions/", "")|list  %}
+{%- set union = True %}
+{%- else %}
+{%- set type_names = [contrib['additionalProperties']['items']['$ref']|replace("#/definitions/", "")] %}
+{%- set union = False %}
+{%- endif -%}
+{%- elif contrib['items']['anyOf'] is defined %}
+{# Handle array types with union #}
 {%- set type_names = contrib['items']['anyOf']|map(attribute='$ref')|map("replace", "#/definitions/", "")|list  %}
 {%- set union = True %}
 {%- else %}
+{# Handle array types with single type #}
 {%- set type_names = [contrib['items']['$ref']|replace("#/definitions/", "")] %}
 {%- set union = False %}
 {%- endif -%}
@@ -34,10 +45,17 @@ This contribution accepts {{ type_names|length }} schema types
 ```
 {%- endif -%}
 
+{%- if contrib.type == 'object' and contrib.additionalProperties is defined %}
+{# For object types like menus, use the contribution description directly #}
+{{ contrib.description }}
+{%- endif %}
+
 {%- for tname in type_names -%}
 {% set type = schema['definitions'][tname] %}
 {% if union %}##### {{loop.index}}. {{type.title}}{% endif %}
+{%- if contrib.type != 'object' or contrib.additionalProperties is not defined %}
 {{ type.description }}
+{%- endif %}
 
 {% if contrib_name|has_guide %}
 See the [{{ contrib_name.title()|replace('_', ' ') }} Guide]({{ contrib_name|replace('_', '-') }}-contribution-guide)
