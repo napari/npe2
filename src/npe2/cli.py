@@ -11,7 +11,11 @@ from npe2 import PluginManager, PluginManifest, __version__
 if TYPE_CHECKING:
     from rich.console import RenderableType
 
-app = typer.Typer(no_args_is_help=True)
+app = typer.Typer(
+    no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
+    rich_markup_mode="rich",
+)
 
 
 def _show_version_and_exit(value: bool) -> None:
@@ -498,4 +502,10 @@ def compile(
 
 
 def main():
+    import sys
+
+    # If no arguments provided, show help without error box
+    if len(sys.argv) == 1:
+        sys.argv.append("--help")
+
     app()
