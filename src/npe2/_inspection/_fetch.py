@@ -12,9 +12,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     ContextManager,
-    Dict,
     Iterator,
     List,
     Optional,
@@ -36,7 +34,6 @@ NPE1_ENTRY_POINT = "napari.plugin"
 NPE2_ENTRY_POINT = "napari.manifest"
 __all__ = [
     "fetch_manifest",
-    "get_hub_plugin",
     "get_pypi_url",
 ]
 
@@ -409,10 +406,3 @@ def _tmp_pypi_sdist_download(
     url = get_pypi_url(package, version=version, packagetype="sdist")
     logger.debug(f"downloading sdist for {package} {version or ''}")
     return _tmp_targz_download(url)
-
-
-@lru_cache
-def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
-    """Return hub information for a specific plugin."""
-    with request.urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
-        return json.load(r)
