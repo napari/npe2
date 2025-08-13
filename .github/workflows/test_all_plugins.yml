@@ -43,7 +43,7 @@ jobs:
 
       - uses: tlambert03/setup-qt-libs@19e4ef2d781d81f5f067182e228b54ec90d23b76 # v1.8
 
-      - uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
+      - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
         with:
           python-version: '3.10'
           miniforge-variant: Miniforge3
