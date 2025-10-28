@@ -179,7 +179,9 @@ def test_cli_cache_clear_named(mock_cache):
 
 
 @pytest.mark.parametrize("format", ["table", "compact", "yaml", "json"])
-@pytest.mark.parametrize("fields", [None, "name,version,author"])
+@pytest.mark.parametrize(
+    "fields", ["name,version,npe2,contributions", "name,version,author"]
+)
 def test_cli_list(format, fields, uses_npe1_plugin):
     result = runner.invoke(app, ["list", "-f", format, "--fields", fields])
     assert result.exit_code == 0
