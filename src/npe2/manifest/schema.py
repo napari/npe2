@@ -252,7 +252,7 @@ class PluginManifest(ImportExportModel):
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
-    @model_validator(mode='before')
+    @model_validator(mode='after')
     def _validate_root(cls, values: dict) -> dict:
         mf_name = values.get("name")
 
@@ -482,7 +482,6 @@ class PluginManifest(ImportExportModel):
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
                 field = m.__fields__[name]
-                breakpoint()
                 if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
                 if field.outer_type_ is PythonName:
