@@ -12,6 +12,8 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    get_args,
+    get_origin,
 )
 
 from npe2._pydantic_compat import BaseModel, ValidationError
@@ -33,12 +35,26 @@ T = TypeVar("T", bound=Callable[..., Any])
 
 # a mapping of contribution type to string name in the ContributionPoints
 # e.g. {ReaderContribution: 'readers'}
-CONTRIB_NAMES = {v.type_: k for k, v in ContributionPoints.__fields__.items()}
-for key in list(CONTRIB_NAMES):
-    if getattr(key, "__origin__", "") == Union:
-        v = CONTRIB_NAMES.pop(key)
-        for t in key.__args__:
-            CONTRIB_NAMES[t] = v
+CONTRIB_ANNOTATIONS = {v.annotation: k for k, v in ContributionPoints.__fields__.items()}
+CONTRIB_NAMES = {}
+
+def _get_root_types(type_):
+    origin = get_origin(type_)
+    args = get_args(type_)
+    if origin in (list, list):
+        yield from _get_root_types(args[0])
+    elif origin in (dict, dict):
+        yield from _get_root_types(args[1])
+    elif origin == Union:
+        for arg in args:
+            yield from _get_root_types(arg)
+    else:
+        yield type_
+
+for key, value in CONTRIB_ANNOTATIONS.items():
+    for type_ in _get_root_types(key):
+        if type_ is not type(None):
+            CONTRIB_NAMES[type_] = value
 
 
 class DynamicPlugin:
