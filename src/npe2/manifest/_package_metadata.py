@@ -178,7 +178,7 @@ class PackageMetadata(BaseModel):
     provides_dist: Optional[List[str]] = Field(None, min_ver="1.2")
     obsoletes_dist: Optional[List[str]] = Field(None, min_ver="1.2")
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def _validate_root(cls, values):
         if "metadata_version" not in values:
             fields = cls.__fields__

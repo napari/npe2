@@ -6,7 +6,16 @@ from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union, ClassVar
+from typing import (
+    ClassVar,
+    Iterator,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Union,
+)
 
 from npe2._pydantic_compat import (
     BaseModel,
@@ -252,7 +261,7 @@ class PluginManifest(ImportExportModel):
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def _validate_root(cls, values: dict) -> dict:
         mf_name = values.get("name")
 

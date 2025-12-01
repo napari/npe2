@@ -127,7 +127,7 @@ class _JsonSchemaBase(BaseModel):
 
     _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def _validate_root(cls, values: Dict[str, Any]) -> Any:
         if "type" not in values:
             if "properties" in values:

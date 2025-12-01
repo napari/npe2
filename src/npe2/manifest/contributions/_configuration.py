@@ -95,7 +95,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "the pattern does not match.",
     )
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def _validate_root(cls, values):
         values = super()._validate_root(values)
 
