@@ -6,8 +6,8 @@ from npe2._pydantic_compat import (
     BaseModel,
     Field,
     PrivateAttr,
-    conlist,
-    root_validator,
+    conset,
+    model_validator,
     validator,
 )
 
@@ -28,9 +28,9 @@ __all__ = [
 ]
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
-JsonTypeArray = conlist(JsonType, min_items=1, unique_items=True)
-StringArrayMin1 = conlist(str, min_items=1, unique_items=True)
-StringArray = conlist(str, unique_items=True)
+JsonTypeSet = conset(JsonType, min_length=1)
+StringSetMin1 = conset(str, min_length=1)
+StringSet = conset(str)
 
 PY_NAME_TO_JSON_NAME = {
     "list": "array",
@@ -110,8 +110,8 @@ class _JsonSchemaBase(BaseModel):
     unique_items: bool = Field(False)
     max_properties: Optional[int] = Field(None, ge=0)
     min_properties: Optional[int] = Field(0, ge=0)
-    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(None)  # type: ignore
-    type: Union[JsonType, JsonTypeArray] = Field(None)  # type: ignore
+    enum: Optional[conset(Any, min_length=1)] = Field(None)  # type: ignore
+    type: Union[JsonType, JsonTypeSet] = Field(None)  # type: ignore
     format: Optional[str] = Field(None)
 
     _json_validator: Type[Validator] = PrivateAttr()
@@ -127,7 +127,7 @@ class _JsonSchemaBase(BaseModel):
 
     _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
     def _validate_root(cls, values: Dict[str, Any]) -> Any:
         if "type" not in values:
             if "properties" in values:
@@ -135,11 +135,12 @@ class _JsonSchemaBase(BaseModel):
             elif "items" in values:
                 values["type"] = "array"
 
+        # TODO: is this still true?
         # Get around pydantic bug wherein `Optional[conlists]`` throw a
         # 'NoneType' object is not iterable error if `None` is provided in init.
-        for conlists in ("enum", "required"):
-            if conlists in values and not values[conlists]:
-                values.pop(conlists)
+        for consets in ("enum", "required"):
+            if consets in values and not values[consets]:
+                values.pop(consets)
 
         return values
 
@@ -210,9 +211,9 @@ class Draft04JsonSchema(_JsonSchemaBase):
     id: Optional[str] = Field(None)
     exclusive_maximum: Optional[bool] = Field(None)
     exclusive_minimum: Optional[bool] = Field(None)
-    required: Optional[StringArrayMin1] = Field(None)  # type: ignore
+    required: Optional[StringSetMin1] = Field(None)  # type: ignore
     dependencies: Optional[  # type: ignore
-        Dict[str, Union[Draft04JsonSchema, StringArrayMin1]]
+        Dict[str, Union[Draft04JsonSchema, StringSetMin1]]
     ] = Field(None)
 
     # common to all schemas (could go in _JsonSchemaBase)
@@ -236,9 +237,9 @@ class _Draft06JsonSchema(_JsonSchemaBase):
     exclusive_maximum: Optional[float] = Field(None)
     exclusive_minimum: Optional[float] = Field(None)
     contains: Optional[Draft06JsonSchema] = Field(None)
-    required: Optional[StringArray] = Field(None)  # type: ignore
+    required: Optional[StringSet] = Field(None)  # type: ignore
     dependencies: Optional[  # type: ignore
-        Dict[str, Union[Draft06JsonSchema, StringArray]]
+        Dict[str, Union[Draft06JsonSchema, StringSet]]
     ] = Field(None)
     property_names: Optional[Draft06JsonSchema] = Field(None)
     const: Any = Field(None)

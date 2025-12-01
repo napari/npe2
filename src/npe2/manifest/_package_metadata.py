@@ -7,21 +7,21 @@ from npe2._pydantic_compat import (
     Extra,
     Field,
     constr,
-    root_validator,
+    model_validator,
 )
 
 # https://packaging.python.org/specifications/core-metadata/
 
 MetadataVersion = Literal["1.0", "1.1", "1.2", "2.0", "2.1", "2.2", "2.3"]
 _alphanum = "[a-zA-Z0-9]"
-PackageName = constr(regex=f"^{_alphanum}[a-zA-Z0-9._-]*{_alphanum}$")
+PackageName = constr(pattern=f"^{_alphanum}[a-zA-Z0-9._-]*{_alphanum}$")
 
 
 class PackageMetadata(BaseModel):
     """Pydantic model for standard python package metadata.
 
     https://www.python.org/dev/peps/pep-0566/
-    https://packaging.python.org/specifications/core-metadata/
+    https://packaging.python.org/pattern/core-metadata/
 
     The `importlib.metadata` provides the `metadata()` function,
     but it returns a somewhat awkward `email.message.Message` object.
@@ -178,7 +178,7 @@ class PackageMetadata(BaseModel):
     provides_dist: Optional[List[str]] = Field(None, min_ver="1.2")
     obsoletes_dist: Optional[List[str]] = Field(None, min_ver="1.2")
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
     def _validate_root(cls, values):
         if "metadata_version" not in values:
             fields = cls.__fields__

@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from npe2._pydantic_compat import BaseModel, Field, conlist, root_validator, validator
+from npe2._pydantic_compat import BaseModel, Field, conset, model_validator, validator
 
 from ._json_schema import (
     Draft07JsonSchema,
     JsonType,
-    JsonTypeArray,
+    JsonTypeSet,
     ValidationError,
     _coerce_type_name,
 )
@@ -18,7 +18,7 @@ class ConfigurationProperty(Draft07JsonSchema):
     https://json-schema.org/understanding-json-schema/reference/index.html
     """
 
-    type: Union[JsonType, JsonTypeArray] = Field(
+    type: Union[JsonType, JsonTypeSet] = Field(
         None,
         description="The type of this variable. Either JSON Schema type names ('array',"
         " 'boolean', 'object', ...) or python type names ('list', 'bool', 'dict', ...) "
@@ -45,7 +45,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(  # type: ignore
+    enum: Optional[conset(Any, min_length=1)] = Field(  # type: ignore
         None,
         description="A list of valid options for this field. If you provide this field,"
         "the settings UI will render a dropdown menu.",
@@ -95,7 +95,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "the pattern does not match.",
     )
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
     def _validate_root(cls, values):
         values = super()._validate_root(values)
 

@@ -6,7 +6,7 @@ from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union
+from typing import Iterator, List, Literal, NamedTuple, Optional, Sequence, Union, ClassVar
 
 from npe2._pydantic_compat import (
     BaseModel,
@@ -15,7 +15,7 @@ from npe2._pydantic_compat import (
     Field,
     ModelMetaclass,
     ValidationError,
-    root_validator,
+    model_validator,
     validator,
 )
 from npe2.types import PythonName
@@ -252,7 +252,7 @@ class PluginManifest(ImportExportModel):
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
-    @root_validator
+    @model_validator(mode='before')
     def _validate_root(cls, values: dict) -> dict:
         mf_name = values.get("name")
 
@@ -482,6 +482,7 @@ class PluginManifest(ImportExportModel):
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
                 field = m.__fields__[name]
+                breakpoint()
                 if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
                 if field.outer_type_ is PythonName:
@@ -494,7 +495,7 @@ class PluginManifest(ImportExportModel):
         if errors:
             raise ValidationError(errors, type(self))
 
-    ValidationError = ValidationError  # for convenience of access
+    ValidationError: ClassVar = ValidationError  # for convenience of access
 
 
 def _noop(*_, **__):
