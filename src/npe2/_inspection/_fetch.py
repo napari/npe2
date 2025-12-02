@@ -389,7 +389,7 @@ def _tmp_targz_download(url: str) -> Iterator[Path]:
 
     with tempfile.TemporaryDirectory() as td, request.urlopen(url) as f:
         with tarfile.open(fileobj=f, mode="r:gz") as tar:
-            if sys.version_info > (3, 10):
+            if sys.version_info >= (3, 11):
                 tar.extractall(td, filter="data")
             else:
                 tar.extractall(td)
