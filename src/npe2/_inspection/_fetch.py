@@ -388,7 +388,7 @@ def _tmp_targz_download(url: str) -> Iterator[Path]:
 
     with tempfile.TemporaryDirectory() as td, request.urlopen(url) as f:
         with tarfile.open(fileobj=f, mode="r:gz") as tar:
-            tar.extractall(td)
+            tar.extractall(td, filter="data")
             yield Path(td)
 
 
