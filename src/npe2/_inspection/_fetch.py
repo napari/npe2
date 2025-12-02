@@ -4,6 +4,7 @@ import io
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from contextlib import contextmanager
 from functools import lru_cache
@@ -388,7 +389,10 @@ def _tmp_targz_download(url: str) -> Iterator[Path]:
 
     with tempfile.TemporaryDirectory() as td, request.urlopen(url) as f:
         with tarfile.open(fileobj=f, mode="r:gz") as tar:
-            tar.extractall(td, filter="data")
+            if sys.version_info > (3, 10):
+                tar.extractall(td, filter="data")
+            else:
+                tar.extractall(td)
             yield Path(td)
 
 
