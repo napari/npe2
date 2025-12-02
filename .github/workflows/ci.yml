@@ -105,9 +105,8 @@ jobs:
         env:
           NPE2_SCHEMA: "_schema.json"
       - name: Build jupyter book
-        # install dependencies, generate toc, then build
+        # generate toc, then build
         run: |
-          pip install jupyter-book sphinx-tabs furo
           cd docs
           jupyter-book toc from-project . -f jb-book > _toc.yml
           jupyter-book build .

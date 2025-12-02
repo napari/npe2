@@ -1,5 +1,0 @@
-jupyter-book<2
-furo
-Jinja2
-sphinx-tabs
-magicgui
