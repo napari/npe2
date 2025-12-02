@@ -8,6 +8,7 @@ from qtpy.QtWidgets import QWidget
 if TYPE_CHECKING:
     import napari.types
     import napari.viewer
+
     from npe2.types import LayerData, PathOrPaths, ReaderFunction
 
 
