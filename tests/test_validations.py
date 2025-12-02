@@ -122,7 +122,7 @@ def test_invalid_python_name(uses_sample_plugin):
     assert mf.contributions.commands[-1].python_name
 
     mf.validate_imports()
-    mf.contributions.commands[-1].python_name += "_whoops"
+    mf.contributions.commands[-1].python_name += "_whoops"  # type: ignore
     with pytest.raises(ValidationError) as e:
         mf.validate_imports()
     assert "has no attribute 'make_widget_from_function_whoops'" in str(e.value)
