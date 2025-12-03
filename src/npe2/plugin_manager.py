@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict
+import builtins
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
     from os import PathLike
-    from typing import Any, Iterator, List, NewType, Optional, Sequence, Tuple, Union
+    from typing import Any, NewType
 
     from npe2 import PluginManifest
     from npe2._plugin_manager import InclusionSet, PluginContext
@@ -32,9 +34,9 @@ def discover(paths: Sequence[str] = (), clear=False, include_npe1=False) -> None
 def dict(
     self,
     *,
-    include: Optional[InclusionSet] = None,
-    exclude: Optional[InclusionSet] = None,
-) -> Dict[str, Any]:
+    include: InclusionSet | None = None,
+    exclude: InclusionSet | None = None,
+) -> builtins.dict[str, Any]:
     """Return a dictionary with the state of the plugin manager."""
 
 
@@ -78,7 +80,7 @@ def get_manifest(plugin_name: str) -> PluginManifest:
     """Get manifest for `plugin_name`"""
 
 
-def iter_manifests(disabled: Optional[bool] = None) -> Iterator[PluginManifest]:
+def iter_manifests(disabled: bool | None = None) -> Iterator[PluginManifest]:
     """Iterate through registered manifests."""
 
 
@@ -94,7 +96,7 @@ def iter_menu(menu_key: str, disabled=False) -> Iterator[contributions.MenuItem]
     """Iterate over `MenuItems` in menu with id `menu_key`."""
 
 
-def menus(disabled=False) -> Dict[str, List[contributions.MenuItem]]:
+def menus(disabled=False) -> builtins.dict[str, list[contributions.MenuItem]]:
     """Return all registered menu_key -> List[MenuItems]."""
 
 
@@ -103,7 +105,7 @@ def iter_themes() -> Iterator[contributions.ThemeContribution]:
 
 
 def iter_compatible_readers(
-    path: Union[PathLike, Sequence[str]],
+    path: PathLike | Sequence[str],
 ) -> Iterator[contributions.ReaderContribution]:
     """Iterate over ReaderContributions compatible with `path`."""
 
@@ -119,18 +121,18 @@ def iter_widgets() -> Iterator[contributions.WidgetContribution]:
 
 
 def iter_sample_data() -> Iterator[
-    Tuple[PluginName, List[contributions.SampleDataContribution]]
+    tuple[PluginName, list[contributions.SampleDataContribution]]
 ]:
     """Iterates over (plugin_name, [sample_contribs])."""
 
 
 def get_writer(
-    path: str, layer_types: Sequence[str], plugin_name: Optional[str] = None
-) -> Tuple[Optional[contributions.WriterContribution], str]:
+    path: str, layer_types: Sequence[str], plugin_name: str | None = None
+) -> tuple[contributions.WriterContribution | None, str]:
     """Get Writer contribution appropriate for `path`, and `layer_types`."""
 
 
-def get_shimmed_plugins() -> List[str]:
+def get_shimmed_plugins() -> list[str]:
     """Return a list of all shimmed plugin names."""
 
 

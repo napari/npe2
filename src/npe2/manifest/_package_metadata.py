@@ -1,5 +1,5 @@
 from importlib import metadata
-from typing import Dict, List, Literal, Optional, Union
+from typing import Literal
 
 from npe2._pydantic_compat import (
     SHAPE_LIST,
@@ -32,7 +32,7 @@ class PackageMetadata(BaseModel):
 
     # allow str as a fallback in case the metata-version specification has been
     # updated and we haven't updated the code yet
-    metadata_version: Union[MetadataVersion, str] = Field(
+    metadata_version: MetadataVersion | str = Field(
         "1.0", description="Version of the file format"
     )
     name: PackageName = Field(  # type: ignore
@@ -48,34 +48,34 @@ class PackageMetadata(BaseModel):
         description="A string containing the distribution's version number. "
         "This field must be in the format specified in PEP 440.",
     )
-    dynamic: Optional[List[str]] = Field(
+    dynamic: list[str] | None = Field(
         None,
         description="A string containing the name of another core metadata "
         "field. The field names Name and Version may not be specified in this field.",
         min_ver="2.2",
     )
-    platform: Optional[List[str]] = Field(
+    platform: list[str] | None = Field(
         None,
         description="A Platform specification describing an operating system "
         "supported by the distribution which is not listed in the “Operating System” "
         "Trove classifiers. See “Classifier” below.",
     )
-    supported_platform: Optional[List[str]] = Field(
+    supported_platform: list[str] | None = Field(
         None,
         description="Binary distributions containing a PKG-INFO file will use the "
         "Supported-Platform field in their metadata to specify the OS and CPU for "
         "which the binary distribution was compiled",
         min_ver="1.1",
     )
-    summary: Optional[str] = Field(
+    summary: str | None = Field(
         None, description="A one-line summary of what the distribution does."
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         description="A longer description of the distribution that can "
         "run to several paragraphs.",
     )
-    description_content_type: Optional[str] = Field(
+    description_content_type: str | None = Field(
         None,
         description="A string stating the markup syntax (if any) used in the "
         "distribution's description, so that tools can intelligently render the "
@@ -83,45 +83,45 @@ class PackageMetadata(BaseModel):
         "text/plain, text/x-rst, text/markdown",
         min_ver="2.1",
     )
-    keywords: Optional[str] = Field(
+    keywords: str | None = Field(
         None,
         description="A list of additional keywords, separated by commas, to be used "
         "to assist searching for the distribution in a larger catalog.",
     )
-    home_page: Optional[str] = Field(
+    home_page: str | None = Field(
         None,
         description="A string containing the URL for the distribution's home page.",
     )
-    download_url: Optional[str] = Field(
+    download_url: str | None = Field(
         None,
         description="A string containing the URL from which THIS version of the "
         "distribution can be downloaded.",
         min_ver="1.1",
     )
-    author: Optional[str] = Field(
+    author: str | None = Field(
         None,
         description="A string containing the author's name at a minimum; "
         "additional contact information may be provided.",
     )
-    author_email: Optional[str] = Field(
+    author_email: str | None = Field(
         None,
         description="A string containing the author's e-mail address. It can contain "
         "a name and e-mail address in the legal forms for a RFC-822 From: header.",
     )
-    maintainer: Optional[str] = Field(
+    maintainer: str | None = Field(
         None,
         description="A string containing the maintainer's name at a minimum; "
         "additional contact information may be provided.",
         min_ver="1.2",
     )
-    maintainer_email: Optional[str] = Field(
+    maintainer_email: str | None = Field(
         None,
         description="A string containing the maintainer's e-mail address. It can "
         "contain a name and e-mail address in the legal forms for a "
         "RFC-822 From: header.",
         min_ver="1.2",
     )
-    license: Optional[str] = Field(
+    license: str | None = Field(
         None,
         description="Text indicating the license covering the distribution where the "
         "license is not a selection from the “License” Trove classifiers. See "
@@ -129,21 +129,21 @@ class PackageMetadata(BaseModel):
         "version of a license which is named via the Classifier field, or to "
         "indicate a variation or exception to such a license.",
     )
-    classifier: Optional[List[str]] = Field(
+    classifier: list[str] | None = Field(
         None,
         description="Each entry is a string giving a single classification value for "
         "the distribution. Classifiers are described in PEP 301, and the Python "
         "Package Index publishes a dynamic list of currently defined classifiers.",
         min_ver="1.1",
     )
-    requires_dist: Optional[List[str]] = Field(
+    requires_dist: list[str] | None = Field(
         None,
         description="The field format specification was relaxed to accept the syntax "
         "used by popular publishing tools. Each entry contains a string naming some "
         "other distutils project required by this distribution.",
         min_ver="1.2",
     )
-    requires_python: Optional[str] = Field(
+    requires_python: str | None = Field(
         None,
         description="This field specifies the Python version(s) that the distribution "
         "is guaranteed to be compatible with. Installation tools may look at this "
@@ -151,7 +151,7 @@ class PackageMetadata(BaseModel):
         "The value must be in the format specified in Version specifiers (PEP 440).",
         min_ver="1.2",
     )
-    requires_external: Optional[List[str]] = Field(
+    requires_external: list[str] | None = Field(
         None,
         description="The field format specification was relaxed to accept the syntax "
         "used by popular publishing tools. Each entry contains a string describing "
@@ -160,13 +160,13 @@ class PackageMetadata(BaseModel):
         "has no semantics which are meaningful to the distutils distribution.",
         min_ver="1.2",
     )
-    project_url: Optional[List[str]] = Field(
+    project_url: list[str] | None = Field(
         None,
         description="A string containing a browsable URL for the project and a label "
         "for it, separated by a comma.",
         min_ver="1.2",
     )
-    provides_extra: Optional[List[str]] = Field(
+    provides_extra: list[str] | None = Field(
         None,
         description="A string containing the name of an optional feature. Must be a "
         "valid Python identifier. May be used to make a dependency conditional on "
@@ -175,8 +175,8 @@ class PackageMetadata(BaseModel):
     )
 
     # rarely_used
-    provides_dist: Optional[List[str]] = Field(None, min_ver="1.2")
-    obsoletes_dist: Optional[List[str]] = Field(None, min_ver="1.2")
+    provides_dist: list[str] | None = Field(None, min_ver="1.2")
+    obsoletes_dist: list[str] | None = Field(None, min_ver="1.2")
 
     @root_validator(pre=True)
     def _validate_root(cls, values):
@@ -201,7 +201,7 @@ class PackageMetadata(BaseModel):
     def from_dist_metadata(cls, meta: "metadata.PackageMetadata") -> "PackageMetadata":
         """Generate PackageMetadata from importlib.metadata.PackageMetdata."""
         manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
-        d: Dict[str, Union[str, List[str]]] = {}
+        d: dict[str, str | list[str]] = {}
         # looks like py3.10 changed the public protocol of metadata.PackageMetadata
         # and they don't want you to rely on the Mapping interface... however, the
         # __iter__ method doesn't iterate key value pairs, just keys, and I can't figure

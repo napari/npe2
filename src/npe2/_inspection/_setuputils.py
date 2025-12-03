@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from importlib.metadata import EntryPoint
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 NPE1_EP = "napari.plugin"
 NPE2_EP = "napari.manifest"
@@ -12,23 +12,23 @@ NPE2_EP = "napari.manifest"
 
 @dataclass
 class PackageInfo:
-    src_root: Optional[Path] = None
+    src_root: Path | None = None
     package_name: str = ""
-    entry_points: List[EntryPoint] = field(default_factory=list)
-    setup_cfg: Optional[Path] = None
-    setup_py: Optional[Path] = None
-    pyproject_toml: Optional[Path] = None
+    entry_points: list[EntryPoint] = field(default_factory=list)
+    setup_cfg: Path | None = None
+    setup_py: Path | None = None
+    pyproject_toml: Path | None = None
 
     # @property
     # def packages(self) -> Optional[List[Path]]:
     #     return Path(self.top_module)
 
     @cached_property
-    def _ep1(self) -> Optional[EntryPoint]:
+    def _ep1(self) -> EntryPoint | None:
         return next((ep for ep in self.entry_points if ep.group == NPE1_EP), None)
 
     @cached_property
-    def _ep2(self) -> Optional[EntryPoint]:
+    def _ep2(self) -> EntryPoint | None:
         return next((ep for ep in self.entry_points if ep.group == NPE2_EP), None)
 
     @property
@@ -48,7 +48,7 @@ class PackageInfo:
         return ""  # pragma: no cover
 
 
-def get_package_dir_info(path: Union[Path, str]) -> PackageInfo:
+def get_package_dir_info(path: Path | str) -> PackageInfo:
     """Attempt to *statically* get plugin info from a package directory."""
     path = Path(path).resolve()
     if not path.is_dir():  # pragma: no cover
@@ -94,8 +94,8 @@ class _SetupVisitor(ast.NodeVisitor):
 
     def __init__(self) -> None:
         super().__init__()
-        self._names: Dict[str, Any] = {}
-        self._setup_kwargs: Dict[str, Any] = {}
+        self._names: dict[str, Any] = {}
+        self._setup_kwargs: dict[str, Any] = {}
 
     def visit_Assign(self, node: ast.Assign) -> Any:
         if len(node.targets) == 1:
@@ -110,7 +110,7 @@ class _SetupVisitor(ast.NodeVisitor):
                 value = self._get_val(k.value)
                 self._setup_kwargs[str(key)] = value
 
-    def _get_val(self, node: Optional[ast.expr]) -> Any:
+    def _get_val(self, node: ast.expr | None) -> Any:
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.Name):
@@ -120,12 +120,12 @@ class _SetupVisitor(ast.NodeVisitor):
         if isinstance(node, ast.Dict):
             keys = [self._get_val(k) for k in node.keys]
             values = [self._get_val(k) for k in node.values]
-            return dict(zip(keys, values))
+            return dict(zip(keys, values, strict=False))
         if isinstance(node, ast.List):
             return [self._get_val(k) for k in node.elts]
         if isinstance(node, ast.Tuple):  # pragma: no cover
             return tuple(self._get_val(k) for k in node.elts)
         return str(node)  # pragma: no cover
 
-    def get(self, key: str, default: Optional[Any] = None) -> Any:
+    def get(self, key: str, default: Any | None = None) -> Any:
         return self._setup_kwargs.get(key, default)

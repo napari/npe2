@@ -1,29 +1,18 @@
 from __future__ import annotations
 
+import builtins
 import contextlib
 import os
 import warnings
 from collections import Counter, defaultdict
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence, Set
 from fnmatch import fnmatch
 from importlib import metadata
 from logging import getLogger
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    AbstractSet,
     Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
 )
 from urllib import parse
 
@@ -47,11 +36,11 @@ if TYPE_CHECKING:
         WidgetContribution,
     )
 
-    IntStr = Union[int, str]
-    AbstractSetIntStr = AbstractSet[IntStr]
-    DictIntStrAny = Dict[IntStr, Any]
+    IntStr = int | str
+    SetIntStr = Set[IntStr]
+    DictIntStrAny = dict[IntStr, Any]
     MappingIntStrAny = Mapping[IntStr, Any]
-    InclusionSet = Union[AbstractSetIntStr, MappingIntStrAny, None]
+    InclusionSet = SetIntStr | MappingIntStrAny | None
     DisposeFunction = Callable[[], None]
 
 logger = getLogger(__name__)
@@ -62,13 +51,13 @@ PluginName = str  # this is `PluginManifest.name`
 
 class _ContributionsIndex:
     def __init__(self) -> None:
-        self._indexed: Set[str] = set()
-        self._commands: Dict[str, Tuple[CommandContribution, PluginName]] = {}
-        self._readers: List[Tuple[str, ReaderContribution]] = []
-        self._writers: List[Tuple[LayerType, int, int, WriterContribution]] = []
+        self._indexed: set[str] = set()
+        self._commands: dict[str, tuple[CommandContribution, PluginName]] = {}
+        self._readers: list[tuple[str, ReaderContribution]] = []
+        self._writers: list[tuple[LayerType, int, int, WriterContribution]] = []
 
         # DEPRECATED: only here for napari <= 0.4.15 compat.
-        self._samples: DefaultDict[str, List[SampleDataContribution]] = DefaultDict(
+        self._samples: defaultdict[str, list[SampleDataContribution]] = defaultdict(
             list
         )
 
@@ -126,7 +115,7 @@ class _ContributionsIndex:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
 
-    def iter_compatible_readers(self, paths: List[str]) -> Iterator[ReaderContribution]:
+    def iter_compatible_readers(self, paths: list[str]) -> Iterator[ReaderContribution]:
         assert isinstance(paths, list)
         if not paths:
             return  # pragma: no cover
@@ -170,7 +159,7 @@ class _ContributionsIndex:
         # this to get candidate writers compatible with the requested count.
         counts = Counter(layer_types)
 
-        def _get_candidates(lt: LayerType) -> Set[WriterContribution]:
+        def _get_candidates(lt: LayerType) -> set[WriterContribution]:
             return {
                 w
                 for layer, min_, max_, w in self._writers
@@ -185,7 +174,7 @@ class _ContributionsIndex:
             else:
                 break
 
-        def _writer_key(writer: WriterContribution) -> Tuple[bool, int]:
+        def _writer_key(writer: WriterContribution) -> tuple[bool, int]:
             # 1. writers with no file extensions (like directory writers) go last
             no_ext = len(writer.filename_extensions) == 0
 
@@ -222,21 +211,21 @@ class PluginManagerEvents(SignalGroup):
 
 
 class PluginManager:
-    __instance: Optional[PluginManager] = None  # a global instance
+    __instance: PluginManager | None = None  # a global instance
     _contrib: _ContributionsIndex
     events: PluginManagerEvents
 
     def __init__(
-        self, *, disable: Iterable[str] = (), reg: Optional[CommandRegistry] = None
+        self, *, disable: Iterable[str] = (), reg: CommandRegistry | None = None
     ) -> None:
-        self._disabled_plugins: Set[PluginName] = set(disable)
+        self._disabled_plugins: set[PluginName] = set(disable)
         self._command_registry = reg or CommandRegistry()
-        self._contexts: Dict[PluginName, PluginContext] = {}
+        self._contexts: dict[PluginName, PluginContext] = {}
         self._contrib = _ContributionsIndex()
-        self._manifests: Dict[PluginName, PluginManifest] = {}
+        self._manifests: dict[PluginName, PluginManifest] = {}
         self.events = PluginManagerEvents(self)
-        self._npe1_adapters: List[NPE1Adapter] = []
-        self._command_menu_map: Dict[str, Dict[str, Dict[str, List[MenuCommand]]]] = (
+        self._npe1_adapters: list[NPE1Adapter] = []
+        self._command_menu_map: dict[str, dict[str, dict[str, list[MenuCommand]]]] = (
             # for each manifest, maps command IDs to menu IDs to list of MenuCommands
             # belonging to that menu
             # i.e. manifest -> command -> menu_id -> list[MenuCommand]
@@ -323,13 +312,13 @@ class PluginManager:
                 self._contrib.index_contributions(self._npe1_adapters.pop())
 
     def register(
-        self, manifest_or_package: Union[PluginManifest, str], warn_disabled=True
+        self, manifest_or_package: PluginManifest | str, warn_disabled=True
     ) -> None:
         """Register a plugin manifest, path to manifest file, or a package name.
 
         Parameters
         ----------
-        manifest_or_package : Union[PluginManifest, str]
+        manifest_or_package : PluginManifest | str
             Either a PluginManifest instance or a string. If a string, should be either
             the name of a plugin package, or a path to a plugin manifest file.
         warn_disabled : bool, optional
@@ -507,9 +496,7 @@ class PluginManager:
             raise KeyError(msg)
         return self._manifests[key]
 
-    def iter_manifests(
-        self, disabled: Optional[bool] = None
-    ) -> Iterator[PluginManifest]:
+    def iter_manifests(self, disabled: bool | None = None) -> Iterator[PluginManifest]:
         """Iterate through registered manifests.
 
         Parameters
@@ -532,9 +519,9 @@ class PluginManager:
     def dict(
         self,
         *,
-        include: Optional[InclusionSet] = None,
-        exclude: Optional[InclusionSet] = None,
-    ) -> Dict[str, Any]:
+        include: InclusionSet | None = None,
+        exclude: InclusionSet | None = None,
+    ) -> builtins.dict[str, Any]:
         """Return a dictionary with the state of the plugin manager.
 
         `include` and `exclude` will be passed to each `PluginManifest.dict()`
@@ -574,7 +561,7 @@ class PluginManager:
 
         """
         # _include =
-        out: Dict[str, Any] = {
+        out: dict[str, Any] = {
             "plugins": {
                 mf.name: mf.dict(
                     include=_expand_dotted_set(include),
@@ -619,9 +606,9 @@ class PluginManager:
         for mf in self.iter_manifests(disabled=disabled):
             yield from mf.contributions.menus.get(menu_key, ())
 
-    def menus(self, disabled=False) -> Dict[str, List[MenuItem]]:
+    def menus(self, disabled=False) -> builtins.dict[str, list[MenuItem]]:
         """Return all registered menu_key -> List[MenuItems]."""
-        _menus: DefaultDict[str, List[MenuItem]] = DefaultDict(list)
+        _menus: defaultdict[str, list[MenuItem]] = defaultdict(list)
         for mf in self.iter_manifests(disabled=disabled):
             for key, menus in mf.contributions.menus.items():
                 _menus[key].extend(menus)
@@ -633,13 +620,13 @@ class PluginManager:
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
-        self, path: Union[PathLike, Sequence[str]]
+        self, path: PathLike | Sequence[str]
     ) -> Iterator[ReaderContribution]:
         """Iterate over ReaderContributions compatible with `path`.
 
         Parameters
         ----------
-        path : Union[PathLike, Sequence[str]]
+        path : PathLike | Sequence[str]
             Pathlike or list of pathlikes, with file(s) to read.
         """
         if isinstance(path, (str, Path)):
@@ -666,15 +653,15 @@ class PluginManager:
 
     def iter_sample_data(
         self,
-    ) -> Iterator[Tuple[PluginName, List[SampleDataContribution]]]:
+    ) -> Iterator[tuple[PluginName, list[SampleDataContribution]]]:
         """Iterates over (plugin_name, [sample_contribs])."""
         for mf in self.iter_manifests(disabled=False):
             if mf.contributions.sample_data:
                 yield mf.name, mf.contributions.sample_data
 
     def get_writer(
-        self, path: str, layer_types: Sequence[str], plugin_name: Optional[str] = None
-    ) -> Tuple[Optional[WriterContribution], str]:
+        self, path: str, layer_types: Sequence[str], plugin_name: str | None = None
+    ) -> tuple[WriterContribution | None, str]:
         """Get Writer contribution appropriate for `path`, and `layer_types`.
 
         When `path` has a file extension, find a compatible writer that has
@@ -715,7 +702,7 @@ class PluginManager:
         # Nothing got found
         return None, path
 
-    def get_shimmed_plugins(self) -> List[str]:
+    def get_shimmed_plugins(self) -> list[str]:
         """Return a list of all shimmed plugin names."""
         return [mf.name for mf in self.iter_manifests() if mf.npe1_shim]
 
@@ -726,14 +713,14 @@ class PluginContext:
     # stores all created contexts (currently cleared by `PluginManager.deactivate`)
 
     def __init__(
-        self, plugin_key: PluginName, reg: Optional[CommandRegistry] = None
+        self, plugin_key: PluginName, reg: CommandRegistry | None = None
     ) -> None:
         self._activated = False
         self.plugin_key = plugin_key
         self._command_registry = reg or PluginManager.instance().commands
-        self._imports: Set[str] = set()  # modules that were imported by this plugin
+        self._imports: set[str] = set()  # modules that were imported by this plugin
         # functions to call when deactivating
-        self._disposables: Set[DisposeFunction] = set()
+        self._disposables: set[DisposeFunction] = set()
 
     def _dispose(self):
         while self._disposables:
@@ -742,7 +729,7 @@ class PluginContext:
             except Exception as e:
                 logger.warning(f"Error while disposing {self.plugin_key}; {e}")
 
-    def register_command(self, id: str, command: Optional[Callable] = None):
+    def register_command(self, id: str, command: Callable | None = None):
         """Associate a callable with a command id."""
 
         def _inner(command):
@@ -787,7 +774,7 @@ def _expand_dotted_set(inclusion_set: InclusionSet) -> InclusionSet:
     ):
         return inclusion_set
 
-    result: Dict[IntStr, Any] = {}
+    result: dict[IntStr, Any] = {}
     # sort the strings based on the number of dots,
     # so that higher level keys take precedence
     # e.g. {'a.b', 'a.d.e', 'a'} -> {'a'}

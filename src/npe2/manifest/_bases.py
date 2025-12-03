@@ -1,7 +1,7 @@
 import json
+from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Dict, Optional, Union
 
 import yaml
 
@@ -17,7 +17,7 @@ class ImportExportModel(BaseModel):
             some_field: str = Field(..., always_export=True)
     """
 
-    _source_file: Optional[Path] = PrivateAttr(None)
+    _source_file: Path | None = PrivateAttr(None)
 
     def toml(self, pyproject=False, **kwargs) -> str:
         """Generate serialized `toml` string for this model.
@@ -48,7 +48,7 @@ class ImportExportModel(BaseModel):
         return yaml.safe_dump(self._serialized_data(**kwargs), sort_keys=False)
 
     @classmethod
-    def from_file(cls, path: Union[Path, str]):
+    def from_file(cls, path: Path | str):
         """Parse model from a metadata file.
 
         Parameters
@@ -108,7 +108,7 @@ class ImportExportModel(BaseModel):
         fields = self.__fields__.items()
         required = {k for k, v in fields if v.field_info.extra.get("always_export")}
 
-        was_there: Dict[str, bool] = {}
+        was_there: dict[str, bool] = {}
         for f in required:
             was_there[f] = f in self.__fields_set__
             self.__fields_set__.add(f)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING
 
 from npe2._pydantic_compat import Field, GenericModel
 from npe2.manifest.utils import Executable
@@ -24,11 +24,11 @@ class _SampleDataContribution(GenericModel, ABC):
 
     @abstractmethod
     def open(
-        self, *args, _registry: Optional["CommandRegistry"] = None, **kwargs
-    ) -> List[LayerData]: ...
+        self, *args, _registry: "CommandRegistry" | None = None, **kwargs
+    ) -> list[LayerData]: ...
 
 
-class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
+class SampleDataGenerator(_SampleDataContribution, Executable[list[LayerData]]):
     """Contribute a callable command that creates data on demand."""
 
     command: str = Field(
@@ -38,8 +38,8 @@ class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
     )
 
     def open(
-        self, *args, _registry: Optional["CommandRegistry"] = None, **kwargs
-    ) -> List[LayerData]:
+        self, *args, _registry: "CommandRegistry" | None = None, **kwargs
+    ) -> list[LayerData]:
         return self.exec(args, kwargs, _registry=_registry)
 
     class Config:
@@ -56,12 +56,12 @@ class SampleDataURI(_SampleDataContribution):
         description="Path or URL to a data resource. "
         "This URI should be a valid input to `io_utils.read`",
     )
-    reader_plugin: Optional[str] = Field(
+    reader_plugin: str | None = Field(
         None,
         description="Name of plugin to use to open URI",
     )
 
-    def open(self, *args, **kwargs) -> List[LayerData]:
+    def open(self, *args, **kwargs) -> list[LayerData]:
         from npe2.io_utils import read
 
         return read([self.uri], plugin_name=self.reader_plugin, stack=False)
@@ -70,4 +70,4 @@ class SampleDataURI(_SampleDataContribution):
         title = "Sample Data URI"
 
 
-SampleDataContribution = Union[SampleDataGenerator, SampleDataURI]
+SampleDataContribution = SampleDataGenerator | SampleDataURI
