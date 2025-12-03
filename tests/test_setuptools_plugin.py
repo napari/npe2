@@ -18,9 +18,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.npe2]
 template="{TEMPLATE}"
-""".replace(
-    "\\", "\\\\"
-)
+""".replace("\\", "\\\\")
 
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
