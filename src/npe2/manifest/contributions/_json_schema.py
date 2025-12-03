@@ -91,7 +91,7 @@ _python_equivalent: Dict[Optional[str], Type] = {
 class _JsonSchemaBase(BaseModel):
     class Config:
         alias_generator = _to_camel
-        allow_population_by_field_name = True
+        validate_by_name = True
 
     # underscore here to avoid name collision with pydantic's `schema` method
     schema_: Optional[str] = Field(None, alias="$schema")

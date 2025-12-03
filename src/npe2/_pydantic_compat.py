@@ -1,4 +1,5 @@
 from importlib.metadata import version
+from typing import Dict, List, Union, get_args, get_origin
 
 from packaging.version import parse
 from pydantic import (
@@ -24,10 +25,10 @@ if parse(version("pydantic")) > parse("2"):
     ModelMetaclass = object
 else:
     from pydantic import color, root_validator
-    from pydantic.error_wrappers import ErrorWrapper
-    from pydantic.fields import SHAPE_LIST
-    from pydantic.generics import GenericModel
-    from pydantic.main import ModelMetaclass
+    from pydantic.error_wrappers import ErrorWrapper  # type: ignore
+    from pydantic.fields import SHAPE_LIST  # type: ignore
+    from pydantic.generics import GenericModel  # type: ignore
+    from pydantic.main import ModelMetaclass  # type: ignore
 
     # doing just minimal changes to support our uses
     old_constr = constr
@@ -45,6 +46,20 @@ else:
         return root_validator(pre=pre)
 
 
+def get_root_types(type_):
+    origin = get_origin(type_)
+    args = get_args(type_)
+    if origin in (list, List):
+        yield from get_root_types(args[0])
+    elif origin in (dict, Dict):
+        yield from get_root_types(args[1])
+    elif origin == Union:
+        for arg in args:
+            yield from get_root_types(arg)
+    else:
+        yield type_
+
+
 __all__ = (
     "SHAPE_LIST",
     "BaseModel",
@@ -58,6 +73,6 @@ __all__ = (
     "color",
     "conset",
     "constr",
-    "root_validator",
+    "model_validator",
     "validator",
 )

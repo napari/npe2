@@ -11,12 +11,10 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    get_args,
-    get_origin,
     overload,
 )
 
-from npe2._pydantic_compat import BaseModel, ValidationError
+from npe2._pydantic_compat import BaseModel, ValidationError, get_root_types
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (
@@ -40,23 +38,8 @@ CONTRIB_ANNOTATIONS = {
 }
 CONTRIB_NAMES = {}
 
-
-def _get_root_types(type_):
-    origin = get_origin(type_)
-    args = get_args(type_)
-    if origin in (list, list):
-        yield from _get_root_types(args[0])
-    elif origin in (dict, dict):
-        yield from _get_root_types(args[1])
-    elif origin == Union:
-        for arg in args:
-            yield from _get_root_types(arg)
-    else:
-        yield type_
-
-
 for key, value in CONTRIB_ANNOTATIONS.items():
-    for type_ in _get_root_types(key):
+    for type_ in get_root_types(key):
         if type_ is not type(None):
             CONTRIB_NAMES[type_] = value
 
