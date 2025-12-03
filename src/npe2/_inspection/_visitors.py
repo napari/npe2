@@ -176,7 +176,7 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
         contrib = ContribClass(**self._store_command(name, kwargs))
         existing: List[dict] = self.contribution_points.setdefault(contrib_name, [])
-        existing.append(contrib.dict(exclude_unset=True))
+        existing.append(contrib.model_dump(exclude_unset=True))
 
     def _store_command(self, name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         cmd_params = inspect.signature(contributions.CommandContribution).parameters
@@ -189,7 +189,7 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
             cmd.id = cmd.id[n:]
         cmd.id = f"{self.plugin_name}.{cmd.id.lstrip('.')}"
         cmd_contribs: List[dict] = self.contribution_points.setdefault("commands", [])
-        cmd_contribs.append(cmd.dict(exclude_unset=True))
+        cmd_contribs.append(cmd.model_dump(exclude_unset=True))
         kwargs["command"] = cmd.id
         return kwargs
 
