@@ -232,7 +232,7 @@ def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[list]:
         yield row
 
 
-@app.command()
+@app.command(name="list")
 def list_(
     fields: str = typer.Option(
         "name,version,npe2,contributions",
