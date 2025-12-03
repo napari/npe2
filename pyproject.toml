@@ -58,7 +58,7 @@ testing = [
     "jsonschema",
     "pytest-pretty",
 ]
-dev = ["black", "ipython", "isort", "mypy", "pre-commit"]
+dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
 docs = ["Jinja2", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]
 json = ["jsonschema"]
 
@@ -88,26 +88,44 @@ markers = [
     "github_main_only: Test to run only on github main (verify it does not break latest napari docs build)",
 ]
 
-[tool.black]
-target-version = ['py38', 'py39', 'py310']
-line-length = 88
-
 # https://github.com/charliermarsh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py310"
 fix = true
 src = ["src/npe2", "tests"]
 lint.select = [
-    "E",
-    "F",
-    "W",   #flake8
-    "UP",  # pyupgrade
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "TID", # flake8-tidy-imports
-    "RUF", # ruff-specific rules
+    "E", "F", "W", #flake8
+    "UP", # pyupgrade
+    "I", # isort
+    "YTT", #flake8-2020
+    "TC", # flake8-type-checing
+    "BLE", # flake8-blind-exception
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "C4", # flake8-comprehensions
+    "ISC", # flake8-implicit-str-concat
+    "G", # flake8-logging-format
+    "PIE", # flake8-pie
+    "COM", # flake8-commas
+    "SIM", # flake8-simplify
+    "INP", # flake8-no-pep420
+    "PYI", # flake8-pyi
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "TID",  # flake8-tidy-imports # replace absolutify import
+    "TRY", # tryceratops
+    "ICN", # flake8-import-conventions
+    "RUF", # ruff specyfic rules
+    "NPY201", # checks compatibility with numpy version 2.0
+    "ASYNC", # flake8-async
+    "EXE", # flake8-executable
+    "FA", # flake8-future-annotations
+    "LOG", # flake8-logging
+    "SLOT", # flake8-slots
+    "PT", # flake8-pytest-style
+    "T20", # flake8-print
 ]
 
 [tool.ruff.lint.per-file-ignores]
