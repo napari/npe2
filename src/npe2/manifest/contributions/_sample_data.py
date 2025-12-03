@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -24,7 +26,7 @@ class _SampleDataContribution(GenericModel, ABC):
 
     @abstractmethod
     def open(
-        self, *args, _registry: "CommandRegistry" | None = None, **kwargs
+        self, *args, _registry: CommandRegistry | None = None, **kwargs
     ) -> list[LayerData]: ...
 
 
@@ -38,7 +40,7 @@ class SampleDataGenerator(_SampleDataContribution, Executable[list[LayerData]]):
     )
 
     def open(
-        self, *args, _registry: "CommandRegistry" | None = None, **kwargs
+        self, *args, _registry: CommandRegistry | None = None, **kwargs
     ) -> list[LayerData]:
         return self.exec(args, kwargs, _registry=_registry)
 

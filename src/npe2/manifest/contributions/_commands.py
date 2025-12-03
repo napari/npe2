@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from npe2._pydantic_compat import BaseModel, Extra, Field, validator
 from npe2.manifest import _validators
@@ -92,7 +94,7 @@ class CommandContribution(BaseModel):
         self,
         args: tuple = (),
         kwargs: dict | None = None,
-        _registry: Optional["CommandRegistry"] = None,
+        _registry: CommandRegistry | None = None,
     ) -> Any:
         if kwargs is None:
             kwargs = {}
