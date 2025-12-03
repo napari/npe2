@@ -132,7 +132,7 @@ def test_read_with_reader_contribution_plugin(uses_sample_plugin):
 def test_read_assertion_with_no_compatible_readers(uses_sample_plugin):
     paths = ["some.noreader"]
     with patch("npe2.io_utils._get_compatible_readers_by_choice", return_value=[]):
-        with pytest.raises(AssertionError, match="No readers to try."):
+        with pytest.raises(AssertionError, match=r"No readers to try."):
             read(paths, stack=False)
 
 
@@ -242,7 +242,7 @@ def test_read_uppercase_extension(tmp_path: Path):
 
         return read
 
-    with pytest.raises(ValueError, match="Given path contains capitals."):
+    with pytest.raises(ValueError, match=r"Given path contains capitals."):
         io_utils._read([str(mock_file)], stack=False, _pm=pm)
 
 
@@ -267,7 +267,7 @@ def test_read_zarr_variants(path: str, tmp_path: Path):
 
         return read
 
-    with pytest.raises(ValueError, match="Given path contains capitals."):
+    with pytest.raises(ValueError, match=r"Given path contains capitals."):
         io_utils._read([str(new_dir)], stack=False, _pm=pm)
 
 
@@ -293,7 +293,7 @@ def test_read_tar_gz_variants(path: str, tmp_path: Path):
 
         return read
 
-    with pytest.raises(ValueError, match="Given path contains capitals."):
+    with pytest.raises(ValueError, match=r"Given path contains capitals."):
         io_utils._read([str(mock_file)], stack=False, _pm=pm)
 
 
@@ -316,5 +316,5 @@ def test_read_directory_variants(path: str, tmp_path: Path):
 
         return read
 
-    with pytest.raises(ValueError, match="Given path contains capitals."):
+    with pytest.raises(ValueError, match=r"Given path contains capitals."):
         io_utils._read([str(new_dir)], stack=False, _pm=pm)

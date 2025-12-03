@@ -183,7 +183,7 @@ def test_valid_mutations(mutator, uses_sample_plugin):
 )
 def test_invalid_display_names(display_name, uses_sample_plugin):
     field = PluginManifest.__fields__["display_name"]
-    value, err = field.validate(display_name, {}, loc="display_name")
+    _value, err = field.validate(display_name, {}, loc="display_name")
     assert err is not None
 
 
@@ -199,7 +199,7 @@ def test_invalid_display_names(display_name, uses_sample_plugin):
 )
 def test_valid_display_names(display_name, uses_sample_plugin):
     field = PluginManifest.__fields__["display_name"]
-    value, err = field.validate(display_name, {}, loc="display_name")
+    _value, err = field.validate(display_name, {}, loc="display_name")
     assert err is None
 
 

@@ -6,28 +6,27 @@ ci:
 exclude: _docs/example_plugin/some_module.py
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      - id: check-docstring-first
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
 
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-      - id: black
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.14.7
+  hooks:
+  - id: ruff-check
+  - id: ruff-format
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.11
-    hooks:
-      - id: ruff
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+    - id: check-docstring-first
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-yaml
+    - id: check-toml
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - types-toml
-          - types-PyYAML
-        exclude: npe2/implements.pyi|_docs/render.py
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.19.0
+  hooks:
+    - id: mypy
+      additional_dependencies:
+        - types-toml
+        - types-PyYAML
+      exclude: npe2/implements.pyi|_docs/render.py
