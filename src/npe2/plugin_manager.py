@@ -1,5 +1,6 @@
 # mypy: disable-error-code=empty-body
 """Convenience module to access methods on the global PluginManager singleton."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict
@@ -117,9 +118,9 @@ def iter_widgets() -> Iterator[contributions.WidgetContribution]:
     """Iterate over discovered WidgetContributions."""
 
 
-def iter_sample_data() -> (
-    Iterator[Tuple[PluginName, List[contributions.SampleDataContribution]]]
-):
+def iter_sample_data() -> Iterator[
+    Tuple[PluginName, List[contributions.SampleDataContribution]]
+]:
     """Iterates over (plugin_name, [sample_contribs])."""
 
 
