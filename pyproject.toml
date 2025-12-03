@@ -95,34 +95,15 @@ target-version = "py310"
 fix = true
 src = ["src/npe2", "tests"]
 lint.select = [
-    "E", "F", "W", #flake8
-    "UP", # pyupgrade
-    "I", # isort
-    "YTT", #flake8-2020
-    "TC", # flake8-type-checing
-    "BLE", # flake8-blind-exception
-    "B", # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "ISC", # flake8-implicit-str-concat
-    "G", # flake8-logging-format
-    "PIE", # flake8-pie
-    "COM", # flake8-commas
-    "SIM", # flake8-simplify
-    "INP", # flake8-no-pep420
-    "PYI", # flake8-pyi
-    "Q", # flake8-quotes
-    "RSE", # flake8-raise
-    "RET", # flake8-return
-    "TID",  # flake8-tidy-imports # replace absolutify import
-    "ICN", # flake8-import-conventions
-    "RUF", # ruff specyfic rules
-    "NPY201", # checks compatibility with numpy version 2.0
-    "ASYNC", # flake8-async
-    "EXE", # flake8-executable
-    "FA", # flake8-future-annotations
-    "LOG", # flake8-logging
-    "SLOT", # flake8-slots
-    "T20", # flake8-print
+    "E",
+    "F",
+    "W",   #flake8
+    "UP",  # pyupgrade
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "TID", # flake8-tidy-imports
+    "RUF", # ruff-specific rules
 ]
 
 [tool.ruff.lint.per-file-ignores]
