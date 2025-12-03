@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -43,7 +45,7 @@ class ReaderContribution(Executable[ReaderFunction | None]):
         self,
         args: tuple = (),
         kwargs: dict | None = None,
-        _registry: "CommandRegistry" | None = None,
+        _registry: CommandRegistry | None = None,
     ):
         """
         We are trying to simplify internal npe2 logic to always deal with a
