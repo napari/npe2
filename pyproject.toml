@@ -12,7 +12,7 @@ name = "npe2"
 dynamic = ["version"]
 description = "napari plugin engine v2"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Talley Lambert", email = "talley.lambert@gmail.com" },
@@ -24,10 +24,10 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -59,7 +59,7 @@ testing = [
     "jsonschema",
     "pytest-pretty",
 ]
-dev = ["black", "ipython", "isort", "mypy", "pre-commit"]
+dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
 docs = ["Jinja2", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]
 json = ["jsonschema"]
 
@@ -89,14 +89,10 @@ markers = [
     "github_main_only: Test to run only on github main (verify it does not break latest napari docs build)",
 ]
 
-[tool.black]
-target-version = ['py38', 'py39', 'py310']
-line-length = 88
-
 # https://github.com/charliermarsh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py310"
 fix = true
 src = ["src/npe2", "tests"]
 lint.select = [

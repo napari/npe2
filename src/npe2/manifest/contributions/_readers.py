@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from functools import wraps
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from npe2._pydantic_compat import Extra, Field
 from npe2.manifest.utils import Executable, v2_to_v1
@@ -9,7 +11,7 @@ if TYPE_CHECKING:
     from npe2._command_registry import CommandRegistry
 
 
-class ReaderContribution(Executable[Optional[ReaderFunction]]):
+class ReaderContribution(Executable[ReaderFunction | None]):
     """Contribute a file reader.
 
     Readers may be associated with specific **filename_patterns** (e.g. "*.tif",
@@ -21,7 +23,7 @@ class ReaderContribution(Executable[Optional[ReaderFunction]]):
     command: str = Field(
         ..., description="Identifier of the command providing `napari_get_reader`."
     )
-    filename_patterns: List[str] = Field(
+    filename_patterns: list[str] = Field(
         ...,
         description="List of filename patterns (for fnmatch) that this reader can "
         "accept. Reader will be tried only if `fnmatch(filename, pattern) == True`. "
@@ -42,8 +44,8 @@ class ReaderContribution(Executable[Optional[ReaderFunction]]):
     def exec(
         self,
         args: tuple = (),
-        kwargs: Optional[dict] = None,
-        _registry: Optional["CommandRegistry"] = None,
+        kwargs: dict | None = None,
+        _registry: CommandRegistry | None = None,
     ):
         """
         We are trying to simplify internal npe2 logic to always deal with a

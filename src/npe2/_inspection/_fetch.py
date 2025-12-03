@@ -6,18 +6,14 @@ import os
 import subprocess
 import sys
 import tempfile
-from contextlib import contextmanager
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, contextmanager
 from functools import lru_cache
 from importlib import metadata
 from logging import getLogger
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    ContextManager,
-    Iterator,
-    List,
-    Optional,
-    Union,
 )
 from unittest.mock import patch
 from urllib import error, request
@@ -116,7 +112,7 @@ def _guard_cwd() -> Iterator[None]:
         os.chdir(current)
 
 
-def _build_wheel(src: Union[str, Path]) -> Path:
+def _build_wheel(src: str | Path) -> Path:
     """Build a wheel from a source directory and extract it into dest."""
     from build.__main__ import build_package
 
@@ -146,7 +142,7 @@ def get_manifest_from_wheel(src: str) -> PluginManifest:
             return _manifest_from_extracted_wheel(Path(td))
 
 
-def _build_src_and_extract_manifest(src_dir: Union[str, Path]) -> PluginManifest:
+def _build_src_and_extract_manifest(src_dir: str | Path) -> PluginManifest:
     """Build a wheel from a source directory and extract the manifest."""
     return _manifest_from_extracted_wheel(_build_wheel(src_dir))
 
@@ -160,7 +156,7 @@ def _get_manifest_from_zip_url(url: str) -> PluginManifest:
     """
     from npe2.manifest import PluginManifest
 
-    def find_manifest_file(root: Path) -> Optional[Path]:
+    def find_manifest_file(root: Path) -> Path | None:
         """Recursively find a napari manifest file."""
         # Check current directory for manifest files
         for filename in ["napari.yaml", "napari.yml"]:
@@ -249,9 +245,7 @@ def _get_manifest_from_git_url(url: str) -> PluginManifest:
         return _build_src_and_extract_manifest(td)
 
 
-def fetch_manifest(
-    package_or_url: str, version: Optional[str] = None
-) -> PluginManifest:
+def fetch_manifest(package_or_url: str, version: str | None = None) -> PluginManifest:
     """Fetch a manifest for a pypi package name or URL to a wheel or source.
 
     Parameters
@@ -305,7 +299,7 @@ def fetch_manifest(
 
 
 def _manifest_from_pypi_sdist(
-    package: str, version: Optional[str] = None
+    package: str, version: str | None = None
 ) -> PluginManifest:
     """Extract a manifest from a source distribution on pypi."""
     with _tmp_pypi_sdist_download(package, version) as td:
@@ -320,7 +314,7 @@ def _pypi_info(package: str) -> dict:
 
 
 def get_pypi_url(
-    package: str, version: Optional[str] = None, packagetype: Optional[str] = None
+    package: str, version: str | None = None, packagetype: str | None = None
 ) -> str:
     """Get URL for a package on PyPI.
 
@@ -356,7 +350,7 @@ def get_pypi_url(
     if version:
         version = version.lstrip("v")
         try:
-            _releases: List[dict] = data["releases"][version]
+            _releases: list[dict] = data["releases"][version]
         except KeyError as e:  # pragma: no cover
             raise ValueError(f"{package} does not have version {version}") from e
     else:
@@ -397,16 +391,16 @@ def _tmp_targz_download(url: str) -> Iterator[Path]:
 
 
 def _tmp_pypi_wheel_download(
-    package: str, version: Optional[str] = None
-) -> ContextManager[Path]:
+    package: str, version: str | None = None
+) -> AbstractContextManager[Path]:
     url = get_pypi_url(package, version=version, packagetype="bdist_wheel")
     logger.debug(f"downloading wheel for {package} {version or ''}")
     return _tmp_zip_download(url)
 
 
 def _tmp_pypi_sdist_download(
-    package: str, version: Optional[str] = None
-) -> ContextManager[Path]:
+    package: str, version: str | None = None
+) -> AbstractContextManager[Path]:
     url = get_pypi_url(package, version=version, packagetype="sdist")
     logger.debug(f"downloading sdist for {package} {version or ''}")
     return _tmp_targz_download(url)

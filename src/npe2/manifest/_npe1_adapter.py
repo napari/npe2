@@ -3,10 +3,10 @@ import logging
 import os
 import site
 import warnings
+from collections.abc import Sequence
 from importlib import metadata
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Sequence
 
 from platformdirs import user_cache_dir
 
@@ -20,7 +20,7 @@ ADAPTER_CACHE = Path(user_cache_dir("napari", "napari")) / "npe2" / "adapter_man
 NPE2_NOCACHE = "NPE2_NOCACHE"
 
 
-def clear_cache(names: Sequence[str] = ()) -> List[Path]:
+def clear_cache(names: Sequence[str] = ()) -> list[Path]:
     """Clear cached NPE1Adapter manifests.
 
     Parameters
@@ -33,7 +33,7 @@ def clear_cache(names: Sequence[str] = ()) -> List[Path]:
     List[Path]
         List of filepaths cleared
     """
-    _cleared: List[Path] = []
+    _cleared: list[Path] = []
     if ADAPTER_CACHE.exists():
         if names:
             for f in ADAPTER_CACHE.glob("*.yaml"):

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from psygnal import Signal
 
@@ -19,8 +20,8 @@ if TYPE_CHECKING:
 @dataclass
 class CommandHandler:
     id: str
-    function: Optional[Callable] = None
-    python_name: Optional[PythonName] = None
+    function: Callable | None = None
+    python_name: PythonName | None = None
 
     def resolve(self) -> Callable:
         if self.function is not None:
@@ -50,9 +51,9 @@ class CommandRegistry:
     command_unregistered = Signal(str)
 
     def __init__(self) -> None:
-        self._commands: Dict[str, CommandHandler] = {}
+        self._commands: dict[str, CommandHandler] = {}
 
-    def register(self, id: str, command: Union[Callable, str]) -> PDisposable:
+    def register(self, id: str, command: Callable | str) -> PDisposable:
         """Register a command under `id`.
 
         Parameters

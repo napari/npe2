@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from npe2._pydantic_compat import BaseModel, Field, conset, model_validator, validator
 
@@ -18,7 +18,7 @@ class ConfigurationProperty(Draft07JsonSchema):
     https://json-schema.org/understanding-json-schema/reference/index.html
     """
 
-    type: Union[JsonType, JsonTypeSet] = Field(
+    type: JsonType | JsonTypeSet = Field(
         None,
         description="The type of this variable. Either JSON Schema type names ('array',"
         " 'boolean', 'object', ...) or python type names ('list', 'bool', 'dict', ...) "
@@ -32,7 +32,7 @@ class ConfigurationProperty(Draft07JsonSchema):
 
     default: Any = Field(None, description="The default value for this property.")
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         description="Your `description` appears after the title and before the input "
         "field, except for booleans, where the description is used as the label for "
@@ -45,12 +45,12 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    enum: Optional[conset(Any, min_length=1)] = Field(  # type: ignore
+    enum: conset(Any, min_length=1) | None = Field(  # type: ignore
         None,
         description="A list of valid options for this field. If you provide this field,"
         "the settings UI will render a dropdown menu.",
     )
-    enum_descriptions: List[str] = Field(
+    enum_descriptions: list[str] = Field(
         default_factory=list,
         description="If you provide a list of items under the `enum` field, you may "
         "provide `enum_descriptions` to add descriptive text for each enum.",
@@ -62,7 +62,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    deprecation_message: Optional[str] = Field(
+    deprecation_message: str | None = Field(
         None,
         description="If you set deprecationMessage, the setting will get a warning "
         "underline with your specified message. It won't show up in the settings "
@@ -80,7 +80,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         description="By default, string settings will be rendered with a single-line "
         "editor. To render with a multi-line editor, set this value to `multiline`.",
     )
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         description="When specified, gives the order of this setting relative to other "
         "settings within the same category. Settings with an order property will be "
@@ -88,7 +88,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         " will be placed in alphabetical order.",
     )
 
-    pattern_error_message: Optional[str] = Field(
+    pattern_error_message: str | None = Field(
         None,
         description="When restricting string types to a given regular expression with "
         "the `pattern` field, this field may be used to provide a custom error when "
@@ -135,7 +135,7 @@ class ConfigurationContribution(BaseModel):
         '"Plugin", "Configuration", and "Settings" are redundant and should not be'
         "used in your title.",
     )
-    properties: Dict[str, ConfigurationProperty] = Field(
+    properties: dict[str, ConfigurationProperty] = Field(
         ...,
         description="Configuration properties. In the settings UI, your configuration "
         "key will be used to namespace and construct a title. Though a plugin can "

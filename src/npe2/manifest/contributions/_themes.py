@@ -1,5 +1,5 @@
 import sys
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from npe2._pydantic_compat import BaseModel, Field, color
 
@@ -13,17 +13,17 @@ class Color(color.Color):
 
 
 class ThemeColors(BaseModel):
-    canvas: Optional[Color]
-    console: Optional[Color]
-    background: Optional[Color]
-    foreground: Optional[Color]
-    primary: Optional[Color]
-    secondary: Optional[Color]
-    highlight: Optional[Color]
-    text: Optional[Color]
-    icon: Optional[Color]
-    warning: Optional[Color]
-    current: Optional[Color]
+    canvas: Color | None
+    console: Color | None
+    background: Color | None
+    foreground: Color | None
+    primary: Color | None
+    secondary: Color | None
+    highlight: Color | None
+    text: Color | None
+    icon: Color | None
+    warning: Color | None
+    current: Color | None
 
 
 _color_keys = ", ".join([f"`{k}`" for k in ThemeColors.__fields__])
@@ -50,11 +50,11 @@ class ThemeContribution(BaseModel):
         description="Identifier of the color theme as used in the user settings."
     )
     label: str = Field(description="Label of the color theme as shown in the UI.")
-    type: Union[Literal["dark"], Literal["light"]] = Field(
+    type: Literal["dark"] | Literal["light"] = Field(
         description="Base theme type, used for icons and filling in unprovided colors. "
         "Must be either `'dark'` or  `'light'`."
     )
-    syntax_style: Optional[str]
+    syntax_style: str | None
     colors: ThemeColors = Field(
         description=f"Theme colors. Valid keys include: {_color_keys}. All keys "
         "are optional. Color values can be defined via:\n"

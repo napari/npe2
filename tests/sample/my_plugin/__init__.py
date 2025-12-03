@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -49,10 +49,10 @@ def url_reader(path: str):
         return read
 
 
-def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[str]:
+def writer_function(path: str, layer_data: list[tuple[Any, dict, str]]) -> list[str]:
     class Arg(BaseModel):
         data: Any
-        meta: Dict
+        meta: dict
         layer_type: str
 
     for e in layer_data:
@@ -61,10 +61,10 @@ def writer_function(path: str, layer_data: List[Tuple[Any, Dict, str]]) -> List[
     return [path]
 
 
-def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]:
+def writer_function_single(path: str, layer_data: Any, meta: dict) -> list[str]:
     class Arg(BaseModel):
         data: Any
-        meta: Dict
+        meta: dict
 
     Arg(data=layer_data, meta=meta)
 

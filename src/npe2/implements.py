@@ -1,6 +1,7 @@
 import contextlib
+from collections.abc import Callable, Sequence
 from inspect import Parameter, Signature
-from typing import Any, Callable, List, Sequence, Type, TypeVar
+from typing import Any, TypeVar
 
 from npe2._pydantic_compat import BaseModel
 
@@ -22,7 +23,7 @@ T = TypeVar("T", bound=Callable[..., Any])
 CHECK_ARGS_PARAM = "ensure_args_valid"
 
 
-def _build_decorator(contrib: Type[BaseModel]) -> Callable:
+def _build_decorator(contrib: type[BaseModel]) -> Callable:
     """Create a decorator (e.g. `@implements.reader`) to mark an object as a contrib.
 
     Parameters
@@ -32,8 +33,8 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     """
     # build a signature based on the fields in this contribution type, mixed with
     # the fields in the CommandContribution
-    contribs: Sequence[Type[BaseModel]] = (contributions.CommandContribution, contrib)
-    params: List[Parameter] = []
+    contribs: Sequence[type[BaseModel]] = (contributions.CommandContribution, contrib)
+    params: list[Parameter] = []
     for contrib in contribs:
         # iterate over the fields in the contribution types
         for name, field in contrib.model_fields.items():

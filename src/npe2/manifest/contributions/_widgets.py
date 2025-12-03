@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from npe2._pydantic_compat import Extra, Field
 from npe2.manifest.utils import Executable
@@ -44,7 +45,7 @@ class WidgetContribution(Executable[Widget]):
         extra = Extra.forbid
 
     def get_callable(
-        self, _registry: Optional[CommandRegistry] = None
+        self, _registry: CommandRegistry | None = None
     ) -> Callable[..., Widget]:
         func = super().get_callable()
         if self.autogenerate:

@@ -1,21 +1,13 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager, suppress
 from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import (
-    ClassVar,
-    Iterator,
-    List,
-    Literal,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import ClassVar, Literal, NamedTuple
 
 from npe2._pydantic_compat import (
     BaseModel,
@@ -88,9 +80,9 @@ class Category(str, Enum):
 
 
 class DiscoverResults(NamedTuple):
-    manifest: Optional[PluginManifest]
-    distribution: Optional[metadata.Distribution]
-    error: Optional[Exception]
+    manifest: PluginManifest | None
+    distribution: metadata.Distribution | None
+    error: Exception | None
 
 
 class PluginManifest(ImportExportModel):
@@ -147,7 +139,7 @@ class PluginManifest(ImportExportModel):
     )
     _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
-    categories: List[Category] = Field(
+    categories: list[Category] = Field(
         default_factory=list,
         description="A list of categories that this plugin belongs to. This is used to "
         f"help users discover your plugin. Allowed values: `[{', '.join(Category)}]`",
@@ -176,7 +168,7 @@ class PluginManifest(ImportExportModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    on_activate: Optional[PythonName] = Field(
+    on_activate: PythonName | None = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "upon plugin activation (e.g. `'my_plugin.some_module:activate'`). The "
@@ -187,7 +179,7 @@ class PluginManifest(ImportExportModel):
     _validate_activate_func = validator("on_activate", allow_reuse=True)(
         _validators.python_name
     )
-    on_deactivate: Optional[PythonName] = Field(
+    on_deactivate: PythonName | None = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "when a user deactivates a plugin (e.g. `'my_plugin.some_module:deactivate'`)"
@@ -203,7 +195,7 @@ class PluginManifest(ImportExportModel):
         "[contributions](./contributions)",
     )
 
-    package_metadata: Optional[PackageMetadata] = Field(
+    package_metadata: PackageMetadata | None = Field(
         None,
         description="Package metadata following "
         "https://packaging.python.org/specifications/core-metadata/. "
@@ -237,19 +229,19 @@ class PluginManifest(ImportExportModel):
         return hash((self.name, self.package_version))
 
     @property
-    def license(self) -> Optional[str]:
+    def license(self) -> str | None:
         return self.package_metadata.license if self.package_metadata else None
 
     @property
-    def package_version(self) -> Optional[str]:
+    def package_version(self) -> str | None:
         return self.package_metadata.version if self.package_metadata else None
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         return self.package_metadata.summary if self.package_metadata else None
 
     @property
-    def author(self) -> Optional[str]:
+    def author(self) -> str | None:
         return self.package_metadata.author if self.package_metadata else None
 
     @property
@@ -277,7 +269,7 @@ class PluginManifest(ImportExportModel):
                 stacklevel=2,
             )
 
-        invalid_commands: List[str] = []
+        invalid_commands: list[str] = []
         if values.get("contributions") is not None:
             invalid_commands.extend(
                 command.id
@@ -331,9 +323,7 @@ class PluginManifest(ImportExportModel):
         return pm
 
     @classmethod
-    def discover(
-        cls, paths: Sequence[Union[str, Path]] = ()
-    ) -> Iterator[DiscoverResults]:
+    def discover(cls, paths: Sequence[str | Path] = ()) -> Iterator[DiscoverResults]:
         """Discover manifests in the environment.
 
         This function searches for installed python packages with a matching
@@ -393,7 +383,7 @@ class PluginManifest(ImportExportModel):
     def _from_entrypoint(
         cls,
         entry_point: metadata.EntryPoint,
-        distribution: Optional[metadata.Distribution] = None,
+        distribution: metadata.Distribution | None = None,
     ) -> PluginManifest:
         match = entry_point.pattern.match(entry_point.value)
         assert match is not None
@@ -430,9 +420,7 @@ class PluginManifest(ImportExportModel):
         )
 
     @classmethod
-    def _from_package_or_name(
-        cls, package_or_filename: Union[Path, str]
-    ) -> PluginManifest:
+    def _from_package_or_name(cls, package_or_filename: Path | str) -> PluginManifest:
         """Internal convenience function, calls both `from_file` and `from_distribution`
 
         Parameters
@@ -520,7 +508,7 @@ def discovery_blocked():
 
 
 @contextmanager
-def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
+def _temporary_path_additions(paths: Sequence[str | Path] = ()):
     if paths and (not isinstance(paths, Sequence) or isinstance(paths, str)):
         raise TypeError("paths must be a sequence of strings")  # pragma: no cover
     for p in reversed(paths):
@@ -532,7 +520,7 @@ def _temporary_path_additions(paths: Sequence[Union[str, Path]] = ()):
             sys.path.remove(str(p))
 
 
-def _from_dist(dist: metadata.Distribution) -> Optional[PluginManifest]:
+def _from_dist(dist: metadata.Distribution) -> PluginManifest | None:
     """Return PluginManifest or NPE1Adapter for a metadata.Distribution object.
 
     ...depending on which entry points are available.
