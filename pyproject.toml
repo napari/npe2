@@ -102,7 +102,6 @@ lint.select = [
     "TC", # flake8-type-checing
     "BLE", # flake8-blind-exception
     "B", # flake8-bugbear
-    "A", # flake8-builtins
     "C4", # flake8-comprehensions
     "ISC", # flake8-implicit-str-concat
     "G", # flake8-logging-format
@@ -115,7 +114,6 @@ lint.select = [
     "RSE", # flake8-raise
     "RET", # flake8-return
     "TID",  # flake8-tidy-imports # replace absolutify import
-    "TRY", # tryceratops
     "ICN", # flake8-import-conventions
     "RUF", # ruff specyfic rules
     "NPY201", # checks compatibility with numpy version 2.0
@@ -124,7 +122,6 @@ lint.select = [
     "FA", # flake8-future-annotations
     "LOG", # flake8-logging
     "SLOT", # flake8-slots
-    "PT", # flake8-pytest-style
     "T20", # flake8-print
 ]
 
