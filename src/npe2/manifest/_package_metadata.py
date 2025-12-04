@@ -200,7 +200,7 @@ class PackageMetadata(BaseModel):
     @classmethod
     def from_dist_metadata(cls, meta: "metadata.PackageMetadata") -> "PackageMetadata":
         """Generate PackageMetadata from importlib.metadata.PackageMetdata."""
-        manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
+        manys = [f.name for f in cls.model_fields.values() if f.shape == SHAPE_LIST]
         d: dict[str, str | list[str]] = {}
         # looks like py3.10 changed the public protocol of metadata.PackageMetadata
         # and they don't want you to rely on the Mapping interface... however, the

@@ -28,12 +28,12 @@ __all__ = [
 
 
 class ContributionPoints(BaseModel):
-    commands: list[CommandContribution] | None
-    readers: list[ReaderContribution] | None
-    writers: list[WriterContribution] | None
-    widgets: list[WidgetContribution] | None
-    sample_data: list[SampleDataContribution] | None
-    themes: list[ThemeContribution] | None
+    commands: list[CommandContribution] | None = None
+    readers: list[ReaderContribution] | None = None
+    writers: list[WriterContribution] | None = None
+    widgets: list[WidgetContribution] | None = None
+    sample_data: list[SampleDataContribution] | None = None
+    themes: list[ThemeContribution] | None = None
     menus: dict[str, list[MenuItem]] = Field(
         default_factory=dict,
         description="Add menu items to existing napari menus."
@@ -42,7 +42,7 @@ class ContributionPoints(BaseModel):
         "This allows you to organize your plugin's contributions within"
         "napari's menu structure.",
     )
-    submenus: list[SubmenuContribution] | None
+    submenus: list[SubmenuContribution] | None = None
     keybindings: list[KeyBindingContribution] | None = Field(None, hide_docs=True)
 
     configuration: list[ConfigurationContribution] = Field(

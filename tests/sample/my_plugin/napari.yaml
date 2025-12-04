@@ -63,7 +63,7 @@ contributions:
       display_name: A Widget From a Function
       autogenerate: true
   menus:
-    /napari/layer_context:
+    napari/layers/visualize:
       - submenu: mysubmenu
       - command: my-plugin.hello_world
     mysubmenu:

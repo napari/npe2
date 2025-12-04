@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from types import UnionType
 from typing import (
     Any,
     Generic,
     Literal,
     TypeVar,
-    get_args,
-    get_origin,
     overload,
 )
 
-from npe2._pydantic_compat import BaseModel, ValidationError
+from npe2._pydantic_compat import BaseModel, ValidationError, _get_root_types
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (
@@ -35,20 +32,6 @@ CONTRIB_ANNOTATIONS = {
     v.annotation: k for k, v in ContributionPoints.__fields__.items()
 }
 CONTRIB_NAMES = {}
-
-
-def _get_root_types(type_):
-    origin = get_origin(type_)
-    args = get_args(type_)
-    if origin is list:
-        yield from _get_root_types(args[0])
-    elif origin is dict:
-        yield from _get_root_types(args[1])
-    elif origin is UnionType:
-        for arg in args:
-            yield from _get_root_types(arg)
-    else:
-        yield type_
 
 
 for key, value in CONTRIB_ANNOTATIONS.items():

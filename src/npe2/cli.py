@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import typer
 
 from npe2 import PluginManager, PluginManifest, __version__
+from npe2._pydantic_compat import ValidationError
 
 if TYPE_CHECKING:
     from rich.console import RenderableType
@@ -139,7 +140,7 @@ def validate(
         msg = f"✔ Manifest for {(pm.display_name or pm.name)!r} valid!"
         if imports:
             pm.validate_imports()
-    except PluginManifest.ValidationError as e:
+    except ValidationError as e:
         msg = f"🅇 Invalid! {e}"
         err = e
     except Exception as e:

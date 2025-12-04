@@ -1,5 +1,6 @@
 from importlib.metadata import version
-from typing import Union, get_args, get_origin
+from types import UnionType
+from typing import get_args, get_origin
 
 from packaging.version import parse
 from pydantic import (
@@ -46,16 +47,16 @@ else:
         return root_validator(pre=pre)
 
 
-def get_root_types(type_):
+def _get_root_types(type_):
     origin = get_origin(type_)
     args = get_args(type_)
-    if origin in (list, list):
-        yield from get_root_types(args[0])
-    elif origin in (dict, dict):
-        yield from get_root_types(args[1])
-    elif origin == Union:
+    if origin is list:
+        yield from _get_root_types(args[0])
+    elif origin is dict:
+        yield from _get_root_types(args[1])
+    elif origin is UnionType:
         for arg in args:
-            yield from get_root_types(arg)
+            yield from _get_root_types(arg)
     else:
         yield type_
 

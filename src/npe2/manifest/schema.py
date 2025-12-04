@@ -7,7 +7,7 @@ from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import ClassVar, Literal, NamedTuple
+from typing import Literal, NamedTuple
 
 from npe2._pydantic_compat import (
     BaseModel,
@@ -253,11 +253,11 @@ class PluginManifest(ImportExportModel):
         return [] if value is None else value
 
     @model_validator(mode="after")
-    def _validate_root(cls, values: dict) -> dict:
-        mf_name = values.get("name")
+    def _validate_root(self):
+        mf_name = self.name
 
         # validate schema version
-        declared_version = Version.parse(values.get("schema_version", ""))
+        declared_version = Version.parse(self.schema_version)
         current_version = Version.parse(SCHEMA_VERSION)
         if current_version < declared_version:
             import warnings
@@ -270,10 +270,10 @@ class PluginManifest(ImportExportModel):
             )
 
         invalid_commands: list[str] = []
-        if values.get("contributions") is not None:
+        if self.contributions is not None:
             invalid_commands.extend(
                 command.id
-                for command in values["contributions"].commands or []
+                for command in self.contributions.commands or []
                 if not command.id.startswith(f"{mf_name}.")
             )
 
@@ -284,10 +284,10 @@ class PluginManifest(ImportExportModel):
                 f"{invalid_commands}"
             )
 
-        if not values.get("display_name"):
-            values["display_name"] = mf_name
+        if not self.display_name:
+            self.display_name = mf_name
 
-        return values
+        return self
 
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:
@@ -489,8 +489,6 @@ class PluginManifest(ImportExportModel):
         check_pynames(self)
         if errors:
             raise ValidationError(errors, type(self))
-
-    ValidationError: ClassVar = ValidationError  # for convenience of access
 
 
 def _noop(*_, **__):
