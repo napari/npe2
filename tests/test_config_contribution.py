@@ -8,7 +8,7 @@ PROPS = [
         "plugin.heatmap.location": {
             "type": "string",
             "default": "right",
-            "enum": ["left", "right"],
+            "enum": {"left", "right"},
             "enumDescriptions": [
                 "Adds a heatmap indicator on the left edge",
                 "Adds a heatmap indicator on the right edge",
@@ -26,7 +26,7 @@ def test_config_contribution(props):
     )
     assert cc.title == "My Plugin"
     for key, val in cc.properties.items():
-        assert val.dict(exclude_unset=True, by_alias=True) == props[key]
+        assert val.model_dump(exclude_unset=True, by_alias=True) == props[key]
 
 
 def test_warn_on_refs_defs():

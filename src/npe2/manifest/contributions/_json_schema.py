@@ -188,7 +188,7 @@ class _JsonSchemaBase(BaseModel):
         if not hasattr(self, "_json_validator"):
             from jsonschema.validators import validator_for
 
-            schema = self.dict(by_alias=True, exclude_unset=True)
+            schema = self.model_dump(by_alias=True, exclude_unset=True)
             schema["$schema"] = self.schema_
             cls = validator_for(schema)
             cls.check_schema(schema)

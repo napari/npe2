@@ -294,7 +294,7 @@ def merge_manifests(
         )
 
     mf0 = manifests[0]
-    info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
+    info = mf0.model_dump(exclude={"contributions"}, exclude_unset=True)
     info["contributions"] = merge_contributions(
         [m.contributions for m in manifests], overwrite=overwrite
     )
@@ -321,11 +321,11 @@ def merge_contributions(
     dict
         Kwargs that can be passed to `ContributionPoints(**kwargs)`
     """
-    _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
+    _contribs = [c for c in contribs if c and c.model_dump(exclude_unset=True)]
     if not _contribs:
         return {}  # pragma: no cover
 
-    out_dict = _contribs[0].dict(exclude_unset=True)
+    out_dict = _contribs[0].model_dump(exclude_unset=True)
     if len(_contribs) <= 1:
         # no need to merge a single contribution
         return out_dict  # pragma: no cover
@@ -333,7 +333,7 @@ def merge_contributions(
     for ctrb in _contribs[1:]:
         _renames = {}
         existing_cmds = {c["id"] for c in out_dict.get("commands", {})}
-        new_ctrb_dict = ctrb.dict(exclude_unset=True)
+        new_ctrb_dict = ctrb.model_dump(exclude_unset=True)
         for cmd in list(new_ctrb_dict.get("commands", ())):
             cmd_id = cmd["id"]
             if cmd_id in existing_cmds:
