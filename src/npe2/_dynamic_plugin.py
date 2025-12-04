@@ -29,7 +29,7 @@ T = TypeVar("T", bound=Callable[..., Any])
 # a mapping of contribution type to string name in the ContributionPoints
 # e.g. {ReaderContribution: 'readers'}
 CONTRIB_ANNOTATIONS = {
-    v.annotation: k for k, v in ContributionPoints.__fields__.items()
+    v.annotation: k for k, v in ContributionPoints.model_fields.items()
 }
 CONTRIB_NAMES = {}
 
@@ -260,7 +260,7 @@ class ContributionDecorator(Generic[C]):
         cmd_kwargs = {
             k: kwargs.pop(k)
             for k in list(kwargs)
-            if k in CommandContribution.__fields__
+            if k in CommandContribution.model_fields
         }
         cmd = CommandContribution(**cmd_kwargs)
         self.commands.append(cmd)

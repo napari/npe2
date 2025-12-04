@@ -112,11 +112,11 @@ class ImportExportModel(BaseModel):
 
         was_there: dict[str, bool] = {}
         for f in required:
-            was_there[f] = f in self.__fields_set__
-            self.__fields_set__.add(f)
+            was_there[f] = f in self.model_fields_set
+            self.model_fields_set.add(f)
         try:
             yield
         finally:
             for f in required:
                 if not was_there.get(f):
-                    self.__fields_set__.discard(f)
+                    self.model_fields_set.discard(f)

@@ -477,7 +477,7 @@ class PluginManifest(ImportExportModel):
                     continue
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
-                field = m.__fields__[name]
+                field = m.model_fields[name]
                 if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
                 if field.outer_type_ is PythonName:

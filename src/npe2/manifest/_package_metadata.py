@@ -181,7 +181,7 @@ class PackageMetadata(BaseModel):
     @model_validator(mode="before")
     def _validate_root(cls, values):
         if "metadata_version" not in values:
-            fields = cls.__fields__
+            fields = cls.model_fields
             mins = {
                 fields[n].field_info.extra.get("min_ver", "1.0")
                 for n in values

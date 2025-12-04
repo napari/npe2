@@ -148,12 +148,12 @@ class _JsonSchemaBase(BaseModel):
     @property
     def has_constraint(self) -> bool:
         """Return True if this schema has any constraints."""
-        return bool(_CONSTRAINT_FIELDS & self.__fields_set__)
+        return bool(_CONSTRAINT_FIELDS & self.model_fields_set)
 
     @property
     def has_default(self) -> bool:
         """Return True if the schema has a default value."""
-        return "default" in self.__fields_set__
+        return "default" in self.model_fields_set
 
     @property
     def python_type(self) -> builtins.type | list[builtins.type]:
