@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from types import UnionType
 from typing import (
     Any,
-    Callable,
-    Dict,
     Generic,
-    List,
     Literal,
-    Optional,
-    Type,
     TypeVar,
-    Union,
+    get_args,
+    get_origin,
     overload,
 )
 
@@ -33,12 +31,30 @@ T = TypeVar("T", bound=Callable[..., Any])
 
 # a mapping of contribution type to string name in the ContributionPoints
 # e.g. {ReaderContribution: 'readers'}
-CONTRIB_NAMES = {v.type_: k for k, v in ContributionPoints.__fields__.items()}
-for key in list(CONTRIB_NAMES):
-    if getattr(key, "__origin__", "") == Union:
-        v = CONTRIB_NAMES.pop(key)
-        for t in key.__args__:
-            CONTRIB_NAMES[t] = v
+CONTRIB_ANNOTATIONS = {
+    v.annotation: k for k, v in ContributionPoints.__fields__.items()
+}
+CONTRIB_NAMES = {}
+
+
+def _get_root_types(type_):
+    origin = get_origin(type_)
+    args = get_args(type_)
+    if origin is list:
+        yield from _get_root_types(args[0])
+    elif origin is dict:
+        yield from _get_root_types(args[1])
+    elif origin is UnionType:
+        for arg in args:
+            yield from _get_root_types(arg)
+    else:
+        yield type_
+
+
+for key, value in CONTRIB_ANNOTATIONS.items():
+    for type_ in _get_root_types(key):
+        if type_ is not type(None):
+            CONTRIB_NAMES[type_] = value
 
 
 class DynamicPlugin:
@@ -65,8 +81,8 @@ class DynamicPlugin:
     def __init__(
         self,
         name: str = "temp-plugin",
-        plugin_manager: Optional[PluginManager] = None,
-        manifest: Optional[PluginManifest] = None,
+        plugin_manager: PluginManager | None = None,
+        manifest: PluginManifest | None = None,
     ) -> None:
         if isinstance(manifest, PluginManifest):
             self.manifest = manifest
@@ -108,12 +124,12 @@ class DynamicPlugin:
         return self._pm if self._pm is not None else PluginManager.instance()
 
     @plugin_manager.setter
-    def plugin_manager(self, pm: Optional[PluginManager]) -> None:
+    def plugin_manager(self, pm: PluginManager | None) -> None:
         """Set the plugin manager this plugin is registered in."""
         if pm is self._pm:  # pragma: no cover
             return
 
-        my_cmds: Dict[str, Callable] = {
+        my_cmds: dict[str, Callable] = {
             k: v.function
             for k, v in self.plugin_manager.commands._commands.items()
             if k.startswith(self.manifest.name) and v.function
@@ -133,8 +149,8 @@ class DynamicPlugin:
 
     def spawn(
         self,
-        name: Optional[str] = None,
-        plugin_manager: Optional[PluginManager] = None,
+        name: str | None = None,
+        plugin_manager: PluginManager | None = None,
         register: bool = False,
     ) -> DynamicPlugin:
         """Create a new DynamicPlugin instance with the same plugin manager.
@@ -197,7 +213,7 @@ class ContributionDecorator(Generic[C]):
     of a specific `contrib_type` to a temporary plugin.
     """
 
-    def __init__(self, plugin: DynamicPlugin, contrib_type: Type[C]) -> None:
+    def __init__(self, plugin: DynamicPlugin, contrib_type: type[C]) -> None:
         self.plugin = plugin
         self.contrib_type = contrib_type
         self._contrib_name = CONTRIB_NAMES[self.contrib_type]
@@ -207,12 +223,10 @@ class ContributionDecorator(Generic[C]):
 
     @overload
     def __call__(
-        self, func: Optional[Literal[None]] = None, **kwargs
+        self, func: Literal[None] | None = None, **kwargs
     ) -> Callable[[T], T]: ...
 
-    def __call__(
-        self, func: Optional[T] = None, **kwargs
-    ) -> Union[T, Callable[[T], T]]:
+    def __call__(self, func: T | None = None, **kwargs) -> T | Callable[[T], T]:
         """Decorate function as providing this contrubtion type.
 
         This is the actual decorator used when one calls, eg.
@@ -277,14 +291,14 @@ class ContributionDecorator(Generic[C]):
         return self.plugin.manifest
 
     @property
-    def contribution_list(self) -> List[C]:
+    def contribution_list(self) -> list[C]:
         """Return contributions of this type in the associated manifest."""
         if not getattr(self._mf.contributions, self._contrib_name):
             setattr(self._mf.contributions, self._contrib_name, [])
         return getattr(self._mf.contributions, self._contrib_name)
 
     @property
-    def commands(self) -> List[CommandContribution]:
+    def commands(self) -> list[CommandContribution]:
         """Return the CommandContributions in the associated manifest."""
         if not self._mf.contributions.commands:
             self._mf.contributions.commands = []

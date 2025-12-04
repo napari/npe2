@@ -1,6 +1,5 @@
 import logging
 import warnings
-from typing import Optional, Union
 from unittest.mock import patch
 
 import pytest
@@ -23,9 +22,9 @@ class TestPluginManager(PluginManager):
 
     def tmp_plugin(
         self,
-        manifest: Optional[Union[PluginManifest, str]] = None,
-        package: Optional[str] = None,
-        name: Optional[str] = None,
+        manifest: PluginManifest | str | None = None,
+        package: str | None = None,
+        name: str | None = None,
     ) -> DynamicPlugin:
         """Create a DynamicPlugin instance using this plugin manager.
 

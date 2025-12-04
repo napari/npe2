@@ -2,7 +2,7 @@
 """This module mimics all of the contributions my-plugin...
 but is used to reverse-engineer the manifest."""
 
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 # to test various ways that this can be imported, since we're using static parsing.
 import npe2.implements
@@ -59,8 +59,8 @@ def url_reader(path: str): ...
     layer_types=["points{1}", "surface+"],
 )
 def writer_function(
-    path: str, layer_data: List[Tuple[Any, Dict, str]]
-) -> List[str]: ...
+    path: str, layer_data: list[tuple[Any, dict, str]]
+) -> list[str]: ...
 
 
 @implements.writer(
@@ -69,7 +69,7 @@ def writer_function(
     filename_extensions=["*.xyz"],
     layer_types=["labels"],
 )
-def writer_function_single(path: str, layer_data: Any, meta: Dict) -> List[str]: ...
+def writer_function_single(path: str, layer_data: Any, meta: dict) -> list[str]: ...
 
 
 @npe2.implements.widget(

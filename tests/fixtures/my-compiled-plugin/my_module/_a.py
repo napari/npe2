@@ -1,5 +1,5 @@
 # mypy: disable-error-code=empty-body
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 # alternative pattern that does not require npe2 at runtime
 if TYPE_CHECKING:
@@ -40,5 +40,5 @@ def get_reader(path: str): ...
     layer_types=["points{1}", "surface+"],
 )
 def writer_function(
-    path: str, layer_data: List[Tuple[Any, Dict, str]]
-) -> List[str]: ...
+    path: str, layer_data: list[tuple[Any, dict, str]]
+) -> list[str]: ...

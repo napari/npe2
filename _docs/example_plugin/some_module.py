@@ -1,6 +1,6 @@
 # python_name: example_plugin._data:fractal
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from magicgui import magic_factory
 from qtpy.QtWidgets import QWidget
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from npe2.types import LayerData, PathOrPaths, ReaderFunction
 
 
-def write_points(path: str, layer_data: Any, attributes: Dict[str, Any]) -> List[str]:
+def write_points(path: str, layer_data: Any, attributes: dict[str, Any]) -> list[str]:
     with open(path, "w"):
         ...  # save layer_data and attributes to file
 
@@ -28,7 +28,7 @@ def get_reader(path: "PathOrPaths") -> Optional["ReaderFunction"]:
     return None
 
 
-def xyz_file_reader(path: "PathOrPaths") -> List["LayerData"]:
+def xyz_file_reader(path: "PathOrPaths") -> list["LayerData"]:
     data = ...  # somehow read data from path
     layer_attributes = {"name": "etc..."}
     return [(data, layer_attributes)]
@@ -64,7 +64,7 @@ def threshold(
     return (image > threshold).astype(int)
 
 
-def create_fractal() -> List["LayerData"]:
+def create_fractal() -> list["LayerData"]:
     """An example of a  Sample Data Function.
 
     Note: Sample Data with URIs don't need python code.

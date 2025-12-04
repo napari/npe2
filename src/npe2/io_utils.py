@@ -1,13 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
-    List,
     Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
     cast,
     overload,
 )
@@ -23,8 +19,8 @@ if TYPE_CHECKING:
 
 
 def read(
-    paths: List[str], *, stack: bool, plugin_name: Optional[str] = None
-) -> List[LayerData]:
+    paths: list[str], *, stack: bool, plugin_name: str | None = None
+) -> list[LayerData]:
     """Try to read file at `path`, with plugins offering a ReaderContribution.
 
     Parameters
@@ -53,11 +49,11 @@ def read(
 
 
 def read_get_reader(
-    path: Union[str, Sequence[str]],
+    path: str | Sequence[str],
     *,
-    plugin_name: Optional[str] = None,
-    stack: Optional[bool] = None,
-) -> Tuple[List[LayerData], ReaderContribution]:
+    plugin_name: str | None = None,
+    stack: bool | None = None,
+) -> tuple[list[LayerData], ReaderContribution]:
     """Variant of `read` that also returns the `ReaderContribution` used."""
     if stack is None:
         # "npe1" old path
@@ -75,10 +71,10 @@ def read_get_reader(
 
 def write(
     path: str,
-    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
+    layer_data: list[FullLayerData | napari.layers.Layer],
     *,
-    plugin_name: Optional[str] = None,
-) -> List[str]:
+    plugin_name: str | None = None,
+) -> list[str]:
     """Write layer_data tuples to `path`.
 
     Parameters
@@ -107,10 +103,10 @@ def write(
 
 def write_get_writer(
     path: str,
-    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
+    layer_data: list[FullLayerData | napari.layers.Layer],
     *,
-    plugin_name: Optional[str] = None,
-) -> Tuple[List[str], WriterContribution]:
+    plugin_name: str | None = None,
+) -> tuple[list[str], WriterContribution]:
     """Variant of write that also returns the `WriterContribution` used."""
     return _write(path, layer_data, plugin_name=plugin_name, return_writer=True)
 
@@ -120,34 +116,34 @@ def write_get_writer(
 
 @overload
 def _read(
-    paths: Union[str, Sequence[str]],
+    paths: str | Sequence[str],
     *,
     stack: bool,
-    plugin_name: Optional[str] = None,
+    plugin_name: str | None = None,
     return_reader: Literal[False] = False,
     _pm=None,
-) -> List[LayerData]: ...
+) -> list[LayerData]: ...
 
 
 @overload
 def _read(
-    paths: Union[str, Sequence[str]],
+    paths: str | Sequence[str],
     *,
     stack: bool,
-    plugin_name: Optional[str] = None,
+    plugin_name: str | None = None,
     return_reader: Literal[True],
     _pm=None,
-) -> Tuple[List[LayerData], ReaderContribution]: ...
+) -> tuple[list[LayerData], ReaderContribution]: ...
 
 
 def _read(
-    paths: Union[str, Sequence[str]],
+    paths: str | Sequence[str],
     *,
     stack: bool,
-    plugin_name: Optional[str] = None,
+    plugin_name: str | None = None,
     return_reader: bool = False,
-    _pm: Optional[PluginManager] = None,
-) -> Union[Tuple[List[LayerData], ReaderContribution], List[LayerData]]:
+    _pm: PluginManager | None = None,
+) -> tuple[list[LayerData], ReaderContribution] | list[LayerData]:
     """Execute the `read...` functions above."""
     if _pm is None:
         _pm = PluginManager.instance()
@@ -179,7 +175,7 @@ def _read(
 
 
 def _get_compatible_readers_by_choice(
-    plugin_name: Union[str, None], paths: Union[str, Sequence[str]], pm: PluginManager
+    plugin_name: str | None, paths: str | Sequence[str], pm: PluginManager
 ):
     """Returns compatible readers filtered by validated plugin choice.
 
@@ -263,39 +259,39 @@ def _get_compatible_readers_by_choice(
 @overload
 def _write(
     path: str,
-    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
+    layer_data: list[FullLayerData | napari.layers.Layer],
     *,
-    plugin_name: Optional[str] = None,
+    plugin_name: str | None = None,
     return_writer: Literal[False] = False,
-    _pm: Optional[PluginManager] = None,
-) -> List[str]: ...
+    _pm: PluginManager | None = None,
+) -> list[str]: ...
 
 
 @overload
 def _write(
     path: str,
-    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
+    layer_data: list[FullLayerData | napari.layers.Layer],
     *,
-    plugin_name: Optional[str] = None,
+    plugin_name: str | None = None,
     return_writer: Literal[True],
-    _pm: Optional[PluginManager] = None,
-) -> Tuple[List[str], WriterContribution]: ...
+    _pm: PluginManager | None = None,
+) -> tuple[list[str], WriterContribution]: ...
 
 
 def _write(
     path: str,
-    layer_data: List[Union[FullLayerData, napari.layers.Layer]],
+    layer_data: list[FullLayerData | napari.layers.Layer],
     *,
-    plugin_name: Optional[str] = None,
+    plugin_name: str | None = None,
     return_writer: bool = False,
-    _pm: Optional[PluginManager] = None,
-) -> Union[List[str], Tuple[List[str], WriterContribution]]:
+    _pm: PluginManager | None = None,
+) -> list[str] | tuple[list[str], WriterContribution]:
     if not layer_data:
         raise ValueError("Must provide layer data")
     if _pm is None:
         _pm = PluginManager.instance()
 
-    _layer_tuples: List[FullLayerData] = [
+    _layer_tuples: list[FullLayerData] = [
         (
             cast("napari.layers.Layer", x).as_layer_data_tuple()
             if hasattr(x, "as_layer_data_tuple")

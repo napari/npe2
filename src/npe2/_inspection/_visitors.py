@@ -1,10 +1,11 @@
 import ast
 import inspect
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from importlib.metadata import Distribution
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any
 
 from npe2.manifest import contributions
 
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
 
-CONTRIB_MAP: Dict[str, Tuple[Type["BaseModel"], str]] = {
+CONTRIB_MAP: dict[str, tuple[type["BaseModel"], str]] = {
     "writer": (contributions.WriterContribution, "writers"),
     "reader": (contributions.ReaderContribution, "readers"),
     "sample_data_generator": (contributions.SampleDataGenerator, "sample_data"),
@@ -43,7 +44,7 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
     def __init__(self, module_name: str, match: str) -> None:
         self.module_name = module_name
         self._match = match
-        self._names: Dict[str, str] = {}
+        self._names: dict[str, str] = {}
 
     def visit_Import(self, node: ast.Import) -> Any:
         # https://docs.python.org/3/library/ast.html#ast.Import
@@ -68,7 +69,7 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
     def visit_ClassDef(self, node: ast.ClassDef) -> Any:
         self._find_decorators(node)
 
-    def _find_decorators(self, node: Union[ast.ClassDef, ast.FunctionDef]):
+    def _find_decorators(self, node: ast.ClassDef | ast.FunctionDef):
         # for each in the decorator list ...
         for call in node.decorator_list:
             # https://docs.python.org/3/library/ast.html#ast.Call
@@ -116,14 +117,14 @@ class _DecoratorVisitor(ast.NodeVisitor, ABC):
                     self._process_decorated(call.func.id, node, kwargs)
         return super().generic_visit(node)
 
-    def _keywords_to_kwargs(self, keywords: List[ast.keyword]) -> Dict[str, Any]:
+    def _keywords_to_kwargs(self, keywords: list[ast.keyword]) -> dict[str, Any]:
         return {str(k.arg): ast.literal_eval(k.value) for k in keywords}
 
     @abstractmethod
     def _process_decorated(
         self,
         decorator_name: str,
-        node: Union[ast.ClassDef, ast.FunctionDef],
+        node: ast.ClassDef | ast.FunctionDef,
         decorator_kwargs: dict,
     ):
         """Process a decorated function.
@@ -159,26 +160,26 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
     ) -> None:
         super().__init__(module_name, match)
         self.plugin_name = plugin_name
-        self.contribution_points: Dict[str, List[dict]] = {}
+        self.contribution_points: dict[str, list[dict]] = {}
 
     def _process_decorated(
         self,
         decorator_name: str,
-        node: Union[ast.ClassDef, ast.FunctionDef],
+        node: ast.ClassDef | ast.FunctionDef,
         decorator_kwargs: dict,
     ):
         self._store_contrib(decorator_name, node.name, decorator_kwargs)
 
-    def _store_contrib(self, contrib_type: str, name: str, kwargs: Dict[str, Any]):
+    def _store_contrib(self, contrib_type: str, name: str, kwargs: dict[str, Any]):
         from npe2.implements import CHECK_ARGS_PARAM  # circ import
 
         kwargs.pop(CHECK_ARGS_PARAM, None)
         ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
         contrib = ContribClass(**self._store_command(name, kwargs))
-        existing: List[dict] = self.contribution_points.setdefault(contrib_name, [])
+        existing: list[dict] = self.contribution_points.setdefault(contrib_name, [])
         existing.append(contrib.dict(exclude_unset=True))
 
-    def _store_command(self, name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    def _store_command(self, name: str, kwargs: dict[str, Any]) -> dict[str, Any]:
         cmd_params = inspect.signature(contributions.CommandContribution).parameters
 
         cmd_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in cmd_params}
@@ -188,7 +189,7 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
             n = len(self.plugin_name)
             cmd.id = cmd.id[n:]
         cmd.id = f"{self.plugin_name}.{cmd.id.lstrip('.')}"
-        cmd_contribs: List[dict] = self.contribution_points.setdefault("commands", [])
+        cmd_contribs: list[dict] = self.contribution_points.setdefault("commands", [])
         cmd_contribs.append(cmd.dict(exclude_unset=True))
         kwargs["command"] = cmd.id
         return kwargs
@@ -203,13 +204,13 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
     def __init__(self, plugin_name: str, module_name: str) -> None:
         super().__init__(module_name, "napari_plugin_engine.napari_hook_implementation")
         self.plugin_name = plugin_name
-        self.contribution_points: DefaultDict[str, list] = DefaultDict(list)
+        self.contribution_points: defaultdict[str, list] = defaultdict(list)
 
     def _process_decorated(
         self,
         decorator_name: str,
-        node: Union[ast.ClassDef, ast.FunctionDef],
-        decorator_kwargs: Dict[str, Any],
+        node: ast.ClassDef | ast.FunctionDef,
+        decorator_kwargs: dict[str, Any],
     ):
         self.generic_visit(node)  # do this to process any imports in the function
         hookname = decorator_kwargs.get("specname", node.name)
@@ -270,7 +271,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
             )
 
         contrib: contributions.SampleDataContribution
-        for key, val in zip(return_.value.keys, return_.value.values):
+        for key, val in zip(return_.value.keys, return_.value.values, strict=True):
             if isinstance(val, ast.Dict):
                 raise NotImplementedError("npe1 sample dicts-of-dicts not supported")
 
@@ -372,7 +373,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
 
 
 def find_npe2_module_contributions(
-    path: Union[ModuleType, str, Path], plugin_name: str, module_name: str = ""
+    path: ModuleType | str | Path, plugin_name: str, module_name: str = ""
 ) -> contributions.ContributionPoints:
     """Visit an npe2 module and extract contribution points.
 
