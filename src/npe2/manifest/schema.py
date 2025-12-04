@@ -160,7 +160,7 @@ class PluginManifest(ImportExportModel):
         SCHEMA_VERSION,
         description="A SemVer compatible version string matching the napari plugin "
         "schema version that the plugin is compatible with.",
-        always_export=True,
+        json_schema_extra={"always_export": True},
     )
 
     # TODO:

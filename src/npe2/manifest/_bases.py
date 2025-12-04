@@ -101,12 +101,14 @@ class ImportExportModel(BaseModel):
         """using json encoders for all outputs"""
         kwargs.setdefault("exclude_unset", True)
         with self._required_export_fields_set():
-            return json.loads(self.json(**kwargs))
+            return json.loads(self.model_dump_json(**kwargs))
 
     @contextmanager
     def _required_export_fields_set(self):
-        fields = self.__fields__.items()
-        required = {k for k, v in fields if v.field_info.extra.get("always_export")}
+        field_schemas = self.model_json_schema()["properties"]
+        required = {
+            k for k, v in field_schemas.items() if v.get("always_export", False)
+        }
 
         was_there: dict[str, bool] = {}
         for f in required:
