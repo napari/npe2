@@ -1,5 +1,5 @@
 from importlib.metadata import version
-from types import UnionType
+from types import NoneType, UnionType
 from typing import get_args, get_origin
 
 from packaging.version import parse
@@ -22,12 +22,10 @@ if parse(version("pydantic")) > parse("2"):
 
     # TODO: check these
     ErrorWrapper = ValidationError
-    SHAPE_LIST = 2
     ModelMetaclass = object
 else:
     from pydantic import color, root_validator
     from pydantic.error_wrappers import ErrorWrapper  # type: ignore
-    from pydantic.fields import SHAPE_LIST  # type: ignore
     from pydantic.generics import GenericModel  # type: ignore
     from pydantic.main import ModelMetaclass  # type: ignore
 
@@ -61,8 +59,18 @@ def _get_root_types(type_):
         yield type_
 
 
+def _is_list_type(type_):
+    if type_ is list:
+        return True
+    origin = get_origin(type_)
+    if origin is UnionType:
+        args = list(filter(lambda t: t is not NoneType, get_args(type_)))
+        if len(args) == 1:
+            return _is_list_type(args[0])
+    return origin is list
+
+
 __all__ = (
-    "SHAPE_LIST",
     "BaseModel",
     "ErrorWrapper",
     "Extra",
