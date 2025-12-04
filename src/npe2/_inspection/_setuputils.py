@@ -120,7 +120,7 @@ class _SetupVisitor(ast.NodeVisitor):
         if isinstance(node, ast.Dict):
             keys = [self._get_val(k) for k in node.keys]
             values = [self._get_val(k) for k in node.values]
-            return dict(zip(keys, values, strict=False))
+            return dict(zip(keys, values, strict=True))
         if isinstance(node, ast.List):
             return [self._get_val(k) for k in node.elts]
         if isinstance(node, ast.Tuple):  # pragma: no cover

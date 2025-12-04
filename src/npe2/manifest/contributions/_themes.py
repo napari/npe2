@@ -50,7 +50,7 @@ class ThemeContribution(BaseModel):
         description="Identifier of the color theme as used in the user settings."
     )
     label: str = Field(description="Label of the color theme as shown in the UI.")
-    type: Literal["dark"] | Literal["light"] = Field(
+    type: Literal["dark", "light"] = Field(
         description="Base theme type, used for icons and filling in unprovided colors. "
         "Must be either `'dark'` or  `'light'`."
     )

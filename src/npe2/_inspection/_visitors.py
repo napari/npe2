@@ -271,7 +271,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
             )
 
         contrib: contributions.SampleDataContribution
-        for key, val in zip(return_.value.keys, return_.value.values, strict=False):
+        for key, val in zip(return_.value.keys, return_.value.values, strict=True):
             if isinstance(val, ast.Dict):
                 raise NotImplementedError("npe1 sample dicts-of-dicts not supported")
 
