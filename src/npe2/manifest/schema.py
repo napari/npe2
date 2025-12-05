@@ -15,7 +15,6 @@ from npe2._pydantic_compat import (
     ModelMetaclass,
     ValidationError,
     _get_inner_type,
-    _get_outer_type,
     model_validator,
     validator,
 )
@@ -482,15 +481,24 @@ class PluginManifest(ImportExportModel):
                     _get_inner_type(annotation), ModelMetaclass
                 ):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
-                if _get_outer_type(annotation) is PythonName:
+                if _get_inner_type(annotation) is PythonName:
                     try:
                         import_python_name(value)
                     except (ImportError, AttributeError) as e:
-                        errors.append(ValidationError(e, (*loc, name)))
+                        errors.append(
+                            {
+                                "type": "value_error",
+                                "loc": (*loc, name),
+                                "input": value,
+                                "ctx": {"error": e},
+                            }
+                        )
 
         check_pynames(self)
         if errors:
-            raise ValidationError(errors, type(self))
+            raise ValidationError.from_exception_data(
+                "Some python names are invalid", line_errors=errors
+            )
 
     def json(self, **kwargs):
         # for backward compatibility
