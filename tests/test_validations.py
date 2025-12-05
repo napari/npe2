@@ -182,9 +182,8 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     ],
 )
 def test_invalid_display_names(display_name, uses_sample_plugin):
-    field = PluginManifest.model_fields["display_name"]
-    _value, err = field.validate(display_name, {}, loc="display_name")
-    assert err is not None
+    with pytest.raises(ValidationError):
+        PluginManifest(name="aaaaaaaaa", display_name=display_name)
 
 
 @pytest.mark.parametrize(
@@ -198,9 +197,7 @@ def test_invalid_display_names(display_name, uses_sample_plugin):
     ],
 )
 def test_valid_display_names(display_name, uses_sample_plugin):
-    field = PluginManifest.model_fields["display_name"]
-    _value, err = field.validate(display_name, {}, loc="display_name")
-    assert err is None
+    PluginManifest(name="aaaaaaaaa", display_name=display_name)
 
 
 def test_display_name_default_is_valid():

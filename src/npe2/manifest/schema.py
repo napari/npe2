@@ -477,12 +477,12 @@ class PluginManifest(ImportExportModel):
                     continue
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
-                field = type(m).model_fields[name]
+                annotation = type(m).model_fields[name].annotation
                 if isinstance(value, list) and isinstance(
-                    _get_inner_type(field), ModelMetaclass
+                    _get_inner_type(annotation), ModelMetaclass
                 ):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
-                if _get_outer_type(field) is PythonName:
+                if _get_outer_type(annotation) is PythonName:
                     try:
                         import_python_name(value)
                     except (ImportError, AttributeError) as e:
@@ -491,6 +491,10 @@ class PluginManifest(ImportExportModel):
         check_pynames(self)
         if errors:
             raise ValidationError(errors, type(self))
+
+    def json(self, **kwargs):
+        # for backward compatibility
+        return self.model_dump_json(**kwargs)
 
 
 def _noop(*_, **__):
