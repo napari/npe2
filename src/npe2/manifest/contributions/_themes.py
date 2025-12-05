@@ -13,17 +13,17 @@ class Color(color.Color):
 
 
 class ThemeColors(BaseModel):
-    canvas: Color | None
-    console: Color | None
-    background: Color | None
-    foreground: Color | None
-    primary: Color | None
-    secondary: Color | None
-    highlight: Color | None
-    text: Color | None
-    icon: Color | None
-    warning: Color | None
-    current: Color | None
+    canvas: Color | None = None
+    console: Color | None = None
+    background: Color | None = None
+    foreground: Color | None = None
+    primary: Color | None = None
+    secondary: Color | None = None
+    highlight: Color | None = None
+    text: Color | None = None
+    icon: Color | None = None
+    warning: Color | None = None
+    current: Color | None = None
 
 
 _color_keys = ", ".join([f"`{k}`" for k in ThemeColors.model_fields])
@@ -54,15 +54,10 @@ class ThemeContribution(BaseModel):
         description="Base theme type, used for icons and filling in unprovided colors. "
         "Must be either `'dark'` or  `'light'`."
     )
-    syntax_style: str | None
+    syntax_style: str | None = None
     colors: ThemeColors = Field(
         description=f"Theme colors. Valid keys include: {_color_keys}. All keys "
-        "are optional. Color values can be defined via:\n"
-        '   - name: `"Black"`, `"azure"`\n'
-        '   - hexadecimal value: `"0x000"`, `"#FFFFFF"`, `"7fffd4"`\n'
-        "   - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`\n"
-        '   - RGB/RGBA strings: `"rgb(255, 255, 255)"`, `"rgba(255, 255, 255, 0.5)`"\n'
-        '   - HSL strings: "`hsl(270, 60%, 70%)"`, `"hsl(270, 60%, 70%, .5)`"\n'
+        "are optional. Color values can be defined via:\n{_color_args}"
     )
     font_size: str = Field(
         default="12pt" if sys.platform == "darwin" else "9pt",

@@ -213,7 +213,7 @@ class PackageMetadata(BaseModel):
                 d.setdefault(key, []).append(value)  # type: ignore
             else:
                 d[key] = value
-        return cls.parse_obj(d)
+        return cls.model_validate(d)
 
     def __hash__(self) -> int:
         return id(self)
