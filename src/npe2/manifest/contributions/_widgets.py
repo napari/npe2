@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from npe2._pydantic_compat import Extra, Field
+from npe2._pydantic_compat import Field
 from npe2.manifest.utils import Executable
 from npe2.types import Widget
 
@@ -42,7 +42,7 @@ class WidgetContribution(Executable[Widget]):
     )
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
     def get_callable(
         self, _registry: CommandRegistry | None = None

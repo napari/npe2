@@ -1,6 +1,6 @@
 from enum import Enum
 
-from npe2._pydantic_compat import BaseModel, Extra, Field, validator
+from npe2._pydantic_compat import BaseModel, Field, validator
 from npe2.manifest.utils import Executable
 
 
@@ -165,7 +165,7 @@ class WriterContribution(Executable[list[str]]):
         )
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
     @validator("layer_types")
     def _parsable_layer_type_expr(cls, layer_types: list[str]) -> list[str]:

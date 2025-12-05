@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from npe2._pydantic_compat import BaseModel, Extra, Field, validator
+from npe2._pydantic_compat import BaseModel, Field, validator
 from npe2.manifest import _validators
 from npe2.types import PythonName
 
@@ -88,7 +88,7 @@ class CommandContribution(BaseModel):
     )
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
     def exec(
         self,

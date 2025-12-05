@@ -5,7 +5,6 @@ from typing import Union, get_args, get_origin
 from packaging.version import parse
 from pydantic import (
     BaseModel,
-    Extra,
     Field,
     PrivateAttr,
     ValidationError,
@@ -20,12 +19,9 @@ if parse(version("pydantic")) > parse("2"):
 
     GenericModel = BaseModel
 
-    # TODO: check these
-    ErrorWrapper = ValidationError
     ModelMetaclass = object
 else:
     from pydantic import color, root_validator
-    from pydantic.error_wrappers import ErrorWrapper  # type: ignore
     from pydantic.generics import GenericModel  # type: ignore
     from pydantic.main import ModelMetaclass  # type: ignore
 
@@ -93,8 +89,6 @@ def _is_list_type(type_):
 
 __all__ = (
     "BaseModel",
-    "ErrorWrapper",
-    "Extra",
     "Field",
     "GenericModel",
     "ModelMetaclass",

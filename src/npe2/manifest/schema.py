@@ -11,8 +11,6 @@ from typing import Literal, NamedTuple
 
 from npe2._pydantic_compat import (
     BaseModel,
-    ErrorWrapper,
-    Extra,
     Field,
     ModelMetaclass,
     ValidationError,
@@ -89,7 +87,7 @@ class DiscoverResults(NamedTuple):
 
 class PluginManifest(ImportExportModel):
     class Config:
-        extra = Extra.ignore
+        extra = "ignore"
         validate_assignment = True
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
@@ -488,7 +486,7 @@ class PluginManifest(ImportExportModel):
                     try:
                         import_python_name(value)
                     except (ImportError, AttributeError) as e:
-                        errors.append(ErrorWrapper(e, (*loc, name)))
+                        errors.append(ValidationError(e, (*loc, name)))
 
         check_pynames(self)
         if errors:

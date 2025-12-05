@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from npe2._pydantic_compat import Extra, Field
+from npe2._pydantic_compat import Field
 from npe2.manifest.utils import Executable, v2_to_v1
 from npe2.types import ReaderFunction
 
@@ -34,7 +34,7 @@ class ReaderContribution(Executable[ReaderFunction | None]):
     )
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
     def __hash__(self):
         return hash(
