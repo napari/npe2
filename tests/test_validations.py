@@ -98,7 +98,7 @@ def test_invalid(mutator, uses_sample_plugin):
     assert result.error is None
     assert result.manifest is not None
     pm = result.manifest
-    data = json.loads(pm.json(exclude_unset=True))
+    data = json.loads(pm.model_dump_json(exclude_unset=True))
     mutator(data)
     with pytest.raises(ValidationError) as excinfo:
         PluginManifest(**data)
@@ -165,7 +165,7 @@ def test_valid_mutations(mutator, uses_sample_plugin):
     pm = next(iter(PluginManifest.discover()))
     assert pm.manifest
     # make sure the data is a copy as we'll mutate it
-    data = json.loads(pm.manifest.json(exclude_unset=True))
+    data = json.loads(pm.manifest.model_dump_json(exclude_unset=True))
     mutator(data)
     PluginManifest(**data)
 
@@ -227,7 +227,7 @@ def test_writer_invalid_layer_type_expressions(expr, uses_sample_plugin):
     assert result.error is None
     assert result.manifest is not None
     pm = result.manifest
-    data = json.loads(pm.json(exclude_unset=True))
+    data = json.loads(pm.model_dump_json(exclude_unset=True))
 
     assert "contributions" in data
     assert "writers" in data["contributions"]

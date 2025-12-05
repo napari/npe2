@@ -149,7 +149,7 @@ def example_contribution(
             if not ex.commands:
                 ex.commands = []
             ex.commands.append(associated_command)
-    output = {"contributions": json.loads(ex.json(exclude_unset=True))}
+    output = {"contributions": json.loads(ex.model_dump_json(exclude_unset=True))}
     if format == "yaml":
         return yaml.safe_dump(output, sort_keys=False)
     if format == "toml":

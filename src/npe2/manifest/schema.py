@@ -479,7 +479,7 @@ class PluginManifest(ImportExportModel):
                     continue
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
-                field = m.model_fields[name]
+                field = type(m).model_fields[name]
                 if isinstance(value, list) and isinstance(
                     _get_inner_type(field), ModelMetaclass
                 ):
@@ -543,4 +543,4 @@ def _from_dist(dist: metadata.Distribution) -> PluginManifest | None:
 
 
 if __name__ == "__main__":
-    print(PluginManifest.schema_json(indent=2))
+    print(PluginManifest.model_json_schema(indent=2))

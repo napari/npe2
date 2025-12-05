@@ -28,7 +28,7 @@ class ImportExportModel(BaseModel):
             If `True`, output will be in pyproject format, with all data under
             `tool.napari`, by default `False`.
         **kwargs
-            passed to `BaseModel.json()`
+            passed to `BaseModel.model_dump_json()`
         """
         import tomli_w
 
@@ -43,7 +43,7 @@ class ImportExportModel(BaseModel):
         Parameters
         ----------
         **kwargs
-            passed to `BaseModel.json()`
+            passed to `BaseModel.model_dump_json()`
         """
         return yaml.safe_dump(self._serialized_data(**kwargs), sort_keys=False)
 

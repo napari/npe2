@@ -3,7 +3,6 @@ from typing import Literal
 
 from npe2._pydantic_compat import (
     BaseModel,
-    Extra,
     Field,
     _is_list_type,
     constr,
@@ -28,7 +27,7 @@ class PackageMetadata(BaseModel):
     """
 
     class Config:
-        extra = Extra.ignore
+        extra = "ignore"
 
     # allow str as a fallback in case the metata-version specification has been
     # updated and we haven't updated the code yet
@@ -179,15 +178,14 @@ class PackageMetadata(BaseModel):
     obsoletes_dist: list[str] | None = Field(None, min_ver="1.2")
 
     @model_validator(mode="before")
+    @classmethod
     def _validate_root(cls, values):
         if "metadata_version" not in values:
-            fields = cls.model_fields
-            mins = {
-                fields[n].field_info.extra.get("min_ver", "1.0")
-                for n in values
-                if n in fields
-            }
-            values["metadata_version"] = str(max(float(x) for x in mins))
+            min_vers = {"1.0"}
+            for n, info in cls.model_fields.items():
+                if n in values and info.json_schema_extra is not None:
+                    min_vers.add(info.json_schema_extra.get("min_ver", "1.0"))
+            values["metadata_version"] = str(max(float(x) for x in min_vers))
         return values
 
     @classmethod

@@ -25,9 +25,7 @@ def test_discover_empty():
 
 
 def test_schema():
-    assert isinstance(PluginManifest.schema_json(), str)
-
-    dschema = PluginManifest.schema()
+    dschema = PluginManifest.model_json_schema()
     assert isinstance(dschema, dict)
     assert "name" in dschema["properties"]
 
@@ -125,7 +123,9 @@ def test_export_round_trip(sample_manifest, tmp_path, format):
     else:
         out_file = tmp_path / f"napari.{format}"
         out_file.write_text(getattr(sample_manifest, format)())
-    assert sample_manifest == PluginManifest.from_file(out_file)
+    assert (
+        sample_manifest.model_dump() == PluginManifest.from_file(out_file).model_dump()
+    )
 
 
 def test_from_distribution(uses_sample_plugin):
