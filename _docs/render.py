@@ -191,7 +191,7 @@ def main(dest: Path = _BUILD):
             with urlopen(SCHEMA_URL) as response:
                 schema = json.load(response)
 
-    contributions = schema["definitions"]["ContributionPoints"]["properties"]
+    contributions = schema["$defs"]["ContributionPoints"]["properties"]
     context = {
         "schema": schema,
         "contributions": contributions,

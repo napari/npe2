@@ -51,7 +51,7 @@ This contribution accepts {{ type_names|length }} schema types
 {%- endif %}
 
 {%- for tname in type_names -%}
-{% set type = schema['definitions'][tname] %}
+{% set type = schema['$defs'][tname] %}
 {% if union %}##### {{loop.index}}. {{type.title}}{% endif %}
 {%- if contrib.type != 'object' or contrib.additionalProperties is not defined %}
 {{ type.description }}
