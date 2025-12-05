@@ -251,6 +251,15 @@ class PluginManifest(ImportExportModel):
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
+    @model_validator(mode="before")
+    @classmethod
+    def _pre_validate_root(cls, values):
+        if not values.get("display_name"):
+            values["display_name"] = values["name"]
+        if not values.get("contributions"):
+            values["contributions"] = {}
+        return values
+
     @model_validator(mode="after")
     def _validate_root(self):
         mf_name = self.name
@@ -282,9 +291,6 @@ class PluginManifest(ImportExportModel):
                 f"followed by a dot: '{mf_name}'. The following commands do not: "
                 f"{invalid_commands}"
             )
-
-        if not self.display_name:
-            self.display_name = mf_name
 
         return self
 
