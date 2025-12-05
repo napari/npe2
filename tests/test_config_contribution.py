@@ -8,7 +8,7 @@ PROPS = [
         "plugin.heatmap.location": {
             "type": "string",
             "default": "right",
-            "enum": {"left", "right"},
+            "enum": ["left", "right"],
             "enumDescriptions": [
                 "Adds a heatmap indicator on the left edge",
                 "Adds a heatmap indicator on the right edge",

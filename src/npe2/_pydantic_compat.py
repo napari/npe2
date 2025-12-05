@@ -9,7 +9,7 @@ from pydantic import (
     Field,
     PrivateAttr,
     ValidationError,
-    conset,
+    conlist,
     constr,
     validator,
 )
@@ -35,14 +35,19 @@ else:
     def constr(*args, pattern=None, **kwargs):
         return old_constr(*args, regex=pattern, **kwargs)
 
-    old_conset = conset
+    old_conlist = conlist
 
-    def conset(*args, min_length=None, **kwargs):
-        return old_conset(*args, min_items=min_length, **kwargs)
+    def conlist(*args, min_length=None, **kwargs):
+        return old_conlist(*args, min_items=min_length, **kwargs)
 
     def model_validator(*, mode):
         pre = mode in ("before", "wrap")
         return root_validator(pre=pre)
+
+
+# TODO: do we enforce uniqueness for conlist? This was the case in all our uses,
+#       but pydantic now encourages using sets for that... however everthyng breaks
+#       in weird ways when I switch to sets. So maybe for a later time...
 
 
 def _get_root_types(type_):
@@ -80,7 +85,7 @@ __all__ = (
     "PrivateAttr",
     "ValidationError",
     "color",
-    "conset",
+    "conlist",
     "constr",
     "model_validator",
     "validator",

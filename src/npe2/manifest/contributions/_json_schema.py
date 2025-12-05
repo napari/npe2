@@ -7,7 +7,7 @@ from npe2._pydantic_compat import (
     BaseModel,
     Field,
     PrivateAttr,
-    conset,
+    conlist,
     model_validator,
     validator,
 )
@@ -29,9 +29,9 @@ __all__ = [
 ]
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
-JsonTypeSet = conset(JsonType, min_length=1)
-StringSetMin1 = conset(str, min_length=1)
-StringSet = conset(str)
+JsonTypeArray = conlist(JsonType, min_length=1)
+StringArrayMin1 = conlist(str, min_length=1)
+StringArray = conlist(str)
 
 PY_NAME_TO_JSON_NAME = {
     "list": "array",
@@ -111,8 +111,8 @@ class _JsonSchemaBase(BaseModel):
     unique_items: bool = Field(False)
     max_properties: int | None = Field(None, ge=0)
     min_properties: int | None = Field(0, ge=0)
-    enum: conset(Any, min_length=1) | None = Field(None)  # type: ignore
-    type: JsonType | JsonTypeSet = Field(None)  # type: ignore
+    enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
+    type: JsonType | JsonTypeArray = Field(None)  # type: ignore
     format: str | None = Field(None)
 
     _json_validator: builtins.type[Validator] = PrivateAttr()
@@ -139,9 +139,9 @@ class _JsonSchemaBase(BaseModel):
         # TODO: is this still true?
         # Get around pydantic bug wherein `Optional[conlists]`` throw a
         # 'NoneType' object is not iterable error if `None` is provided in init.
-        for consets in ("enum", "required"):
-            if consets in values and not values[consets]:
-                values.pop(consets)
+        for conlists in ("enum", "required"):
+            if conlists in values and not values[conlists]:
+                values.pop(conlists)
 
         return values
 
@@ -212,8 +212,8 @@ class Draft04JsonSchema(_JsonSchemaBase):
     id: str | None = Field(None)
     exclusive_maximum: bool | None = Field(None)
     exclusive_minimum: bool | None = Field(None)
-    required: StringSetMin1 | None = Field(None)  # type: ignore
-    dependencies: dict[str, Draft04JsonSchema | StringSetMin1] | None = Field(None)  # type: ignore
+    required: StringArrayMin1 | None = Field(None)  # type: ignore
+    dependencies: dict[str, Draft04JsonSchema | StringArrayMin1] | None = Field(None)  # type: ignore
 
     # common to all schemas (could go in _JsonSchemaBase)
     # except we need the self-referrential type to be this class
@@ -236,8 +236,8 @@ class _Draft06JsonSchema(_JsonSchemaBase):
     exclusive_maximum: float | None = Field(None)
     exclusive_minimum: float | None = Field(None)
     contains: Draft06JsonSchema | None = Field(None)
-    required: StringSet | None = Field(None)  # type: ignore
-    dependencies: dict[str, Draft06JsonSchema | StringSet] | None = Field(None)  # type: ignore
+    required: StringArray | None = Field(None)  # type: ignore
+    dependencies: dict[str, Draft06JsonSchema | StringArray] | None = Field(None)  # type: ignore
     property_names: Draft06JsonSchema | None = Field(None)
     const: Any = Field(None)
 
