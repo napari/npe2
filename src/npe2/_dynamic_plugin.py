@@ -9,7 +9,7 @@ from typing import (
     overload,
 )
 
-from npe2._pydantic_compat import BaseModel, ValidationError, _get_root_types
+from npe2._pydantic_compat import BaseModel, ValidationError, _iter_inner_types
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (
@@ -35,9 +35,8 @@ CONTRIB_NAMES = {}
 
 
 for key, value in CONTRIB_ANNOTATIONS.items():
-    for type_ in _get_root_types(key):
-        if type_ is not type(None):
-            CONTRIB_NAMES[type_] = value
+    for type_ in _iter_inner_types(key):
+        CONTRIB_NAMES[type_] = value
 
 
 class DynamicPlugin:

@@ -1,6 +1,6 @@
 from importlib.metadata import version
 from types import NoneType, UnionType
-from typing import get_args, get_origin
+from typing import Union, get_args, get_origin
 
 from packaging.version import parse
 from pydantic import (
@@ -50,29 +50,45 @@ else:
 #       in weird ways when I switch to sets. So maybe for a later time...
 
 
-def _get_root_types(type_):
+def _iter_inner_types(type_):
     origin = get_origin(type_)
     args = get_args(type_)
     if origin is list:
-        yield from _get_root_types(args[0])
+        yield from _iter_inner_types(args[0])
     elif origin is dict:
-        yield from _get_root_types(args[1])
+        yield from _iter_inner_types(args[1])
     elif origin is UnionType:
         for arg in args:
-            yield from _get_root_types(arg)
-    else:
+            yield from _iter_inner_types(arg)
+    elif type_ is not NoneType:
         yield type_
 
 
-def _is_list_type(type_):
-    if type_ is list:
-        return True
+def _get_inner_type(type_):
+    """Roughly replacing pydantic.v1 Field.type_"""
+    return Union[tuple(_iter_inner_types(type_))]  # noqa
+
+
+def _get_outer_type(type_):
+    """Roughly replacing pydantic.v1 Field.outer_type_"""
     origin = get_origin(type_)
+    args = get_args(type_)
     if origin is UnionType:
-        args = list(filter(lambda t: t is not NoneType, get_args(type_)))
+        # filter args to remove optional None
+        args = tuple(filter(lambda t: t is not NoneType, get_args(type_)))
         if len(args) == 1:
-            return _is_list_type(args[0])
-    return origin is list
+            # it was just optional, pretend there was no None
+            return _get_outer_type(args[0])
+        # It's an actual union of types, so there's no "outer type"
+        return None
+    if origin is not None:
+        return origin
+    return type_
+
+
+def _is_list_type(type_):
+    """Roughly replacing pydantic.v1 comparison to SHAPE_LIST"""
+    return _get_outer_type(type_) is list
 
 
 __all__ = (

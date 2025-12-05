@@ -16,6 +16,8 @@ from npe2._pydantic_compat import (
     Field,
     ModelMetaclass,
     ValidationError,
+    _get_inner_type,
+    _get_outer_type,
     model_validator,
     validator,
 )
@@ -478,9 +480,11 @@ class PluginManifest(ImportExportModel):
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
                 field = m.model_fields[name]
-                if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
+                if isinstance(value, list) and isinstance(
+                    _get_inner_type(field), ModelMetaclass
+                ):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
-                if field.outer_type_ is PythonName:
+                if _get_outer_type(field) is PythonName:
                     try:
                         import_python_name(value)
                     except (ImportError, AttributeError) as e:
