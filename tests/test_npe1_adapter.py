@@ -9,6 +9,7 @@ import pytest
 from npe2 import PluginManager
 from npe2.manifest import _npe1_adapter, utils
 from npe2.manifest.contributions import SampleDataGenerator
+from npe2.manifest.schema import _from_dist
 from npe2.manifest.utils import SHIM_NAME_PREFIX
 
 
@@ -16,6 +17,12 @@ def test_adapter_no_npe1():
     pm = PluginManager()
     pm.discover()
     assert not pm._npe1_adapters
+
+
+def test_discover_plugin(uses_npe1_plugin):
+    """Test that we can discover an npe1 plugin."""
+    dist = metadata.distribution("npe1-plugin")
+    _from_dist(dist)
 
 
 def test_npe1_adapter(uses_npe1_plugin, mock_cache: Path):

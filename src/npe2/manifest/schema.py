@@ -253,19 +253,13 @@ class PluginManifest(ImportExportModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _pre_validate_root(cls, values):
-        if not values.get("display_name"):
-            values["display_name"] = values["name"]
-        if not values.get("contributions"):
-            values["contributions"] = {}
-        return values
-
-    @model_validator(mode="after")
-    def _validate_root(self):
-        mf_name = self.name
+    def _validate_root(cls, values: dict) -> dict:
+        mf_name = values.get("name")
 
         # validate schema version
-        declared_version = Version.parse(self.schema_version)
+        declared_version = Version.parse(
+            values.get("schema_version", cls.model_fields["schema_version"].default)
+        )
         current_version = Version.parse(SCHEMA_VERSION)
         if current_version < declared_version:
             import warnings
@@ -278,10 +272,13 @@ class PluginManifest(ImportExportModel):
             )
 
         invalid_commands: list[str] = []
-        if self.contributions is not None:
+        if values.get("contributions") is not None:
+            contributions = values["contributions"]
+            if isinstance(contributions, dict):
+                contributions = ContributionPoints(**contributions)
             invalid_commands.extend(
                 command.id
-                for command in self.contributions.commands or []
+                for command in contributions.commands or []
                 if not command.id.startswith(f"{mf_name}.")
             )
 
@@ -292,7 +289,10 @@ class PluginManifest(ImportExportModel):
                 f"{invalid_commands}"
             )
 
-        return self
+        if not values.get("display_name"):
+            values["display_name"] = mf_name
+
+        return values
 
     @classmethod
     def from_distribution(cls, name: str) -> PluginManifest:

@@ -402,7 +402,11 @@ def find_npe2_module_contributions(
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]
-    return contributions.ContributionPoints(**visitor.contribution_points)
+    res = contributions.ContributionPoints(**visitor.contribution_points)
+    for name in visitor.contribution_points:
+        for command in getattr(res, name):
+            command._plugin_name = plugin_name
+    return res
 
 
 def find_npe1_module_contributions(

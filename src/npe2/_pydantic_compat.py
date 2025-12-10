@@ -1,8 +1,6 @@
-from importlib.metadata import version
 from types import NoneType, UnionType
 from typing import Dict, List, Union, get_args, get_origin  # noqa
 
-from packaging.version import parse
 from pydantic import (
     BaseModel,
     Field,
@@ -10,35 +8,14 @@ from pydantic import (
     ValidationError,
     conlist,
     constr,
+    model_validator,
     validator,
 )
+from pydantic_extra_types import color
 
-if parse(version("pydantic")) > parse("2"):
-    from pydantic import model_validator
-    from pydantic_extra_types import color
+GenericModel = BaseModel
 
-    GenericModel = BaseModel
-
-    ModelMetaclass = object
-else:
-    from pydantic import color, root_validator
-    from pydantic.generics import GenericModel  # type: ignore
-    from pydantic.main import ModelMetaclass  # type: ignore
-
-    # doing just minimal changes to support our uses
-    old_constr = constr
-
-    def constr(*args, pattern=None, **kwargs):
-        return old_constr(*args, regex=pattern, **kwargs)
-
-    old_conlist = conlist
-
-    def conlist(*args, min_length=None, **kwargs):
-        return old_conlist(*args, min_items=min_length, **kwargs)
-
-    def model_validator(*, mode):
-        pre = mode in ("before", "wrap")
-        return root_validator(pre=pre)
+ModelMetaclass = object
 
 
 # TODO: do we enforce uniqueness for conlist? This was the case in all our uses,
