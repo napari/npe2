@@ -1,5 +1,5 @@
 from types import NoneType, UnionType
-from typing import Dict, List, Union, get_args, get_origin  # noqa
+from typing import Annotated, Dict, List, Union, get_args, get_origin  # noqa
 
 from pydantic import (
     BaseModel,
@@ -30,6 +30,8 @@ def _iter_inner_types(type_):
         yield from _iter_inner_types(args[0])
     elif origin in (dict, Dict):  # noqa
         yield from _iter_inner_types(args[1])
+    if origin is Annotated:
+        yield from _iter_inner_types(args[0])
     elif origin in (UnionType, Union):
         for arg in args:
             yield from _iter_inner_types(arg)

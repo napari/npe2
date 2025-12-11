@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-from npe2._pydantic_compat import BaseModel, Field, validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
 from npe2.manifest import _validators
 from npe2.types import PythonName
 
@@ -35,7 +36,7 @@ class CommandContribution(BaseModel):
     ```
     """
 
-    id: str = Field(
+    id: Annotated[str, AfterValidator(_validators.command_id)] = Field(
         ...,
         description="A unique identifier used to reference this command. While this may"
         " look like a python fully qualified name this does *not* refer to a python "
@@ -43,7 +44,6 @@ class CommandContribution(BaseModel):
         "the name of the package, and include only alphanumeric characters, plus "
         "dashes and underscores.",
     )
-    _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
     title: str = Field(
         ...,
@@ -51,14 +51,15 @@ class CommandContribution(BaseModel):
         "for example, when searching in a command palette. Examples: 'Generate lily "
         "sample', 'Read tiff image', 'Open gaussian blur widget'. ",
     )
-    python_name: PythonName | None = Field(
+    python_name: (
+        Annotated[PythonName, AfterValidator(_validators.python_name)] | None
+    ) = Field(
         None,
         description="Fully qualified name to a callable python object "
         "implementing this command. This usually takes the form of "
         "`{obj.__module__}:{obj.__qualname__}` "
         "(e.g. `my_package.a_module:some_function`)",
     )
-    _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
     short_title: str | None = Field(
         None,
@@ -87,8 +88,7 @@ class CommandContribution(BaseModel):
         ),
     )
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     def exec(
         self,

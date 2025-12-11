@@ -186,7 +186,7 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         cmd_kwargs["python_name"] = self._qualified_pyname(name)
         cmd = contributions.CommandContribution(**cmd_kwargs)
         if cmd.id.startswith(self.plugin_name):
-            n = len(self.plugin_name)
+            n = len(self.plugin_name) + 1
             cmd.id = cmd.id[n:]
         cmd.id = f"{self.plugin_name}.{cmd.id.lstrip('.')}"
         cmd_contribs: list[dict] = self.contribution_points.setdefault("commands", [])

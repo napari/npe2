@@ -1,4 +1,4 @@
-from npe2._pydantic_compat import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from ._commands import CommandContribution
 from ._configuration import ConfigurationContribution
@@ -56,6 +56,7 @@ class ContributionPoints(BaseModel):
         "keys will be used for the submenu entry names.",
     )
 
-    @validator("configuration", pre=True)
+    @field_validator("configuration", mode="before")
+    @classmethod
     def _to_list(cls, v):
         return v if isinstance(v, list) else [v]

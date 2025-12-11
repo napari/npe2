@@ -7,7 +7,9 @@ from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Annotated, Literal, NamedTuple
+
+from pydantic import AfterValidator, BeforeValidator, field_validator
 
 from npe2._pydantic_compat import (
     BaseModel,
@@ -16,7 +18,6 @@ from npe2._pydantic_compat import (
     ValidationError,
     _get_inner_type,
     model_validator,
-    validator,
 )
 from npe2.types import PythonName
 
@@ -94,17 +95,14 @@ class PluginManifest(ImportExportModel):
     # do we normalize this? (i.e. underscores / dashes ?) (no)
     # TODO: enforce that this matches the package name
 
-    name: str = Field(
+    name: Annotated[str, BeforeValidator(_validators.package_name)] = Field(
         ...,
         description="The name of the plugin. Though this field is mandatory, it *must*"
         " match the package `name` as defined in the python package metadata.",
         allow_mutation=False,
     )
-    _validate_name = validator("name", pre=True, allow_reuse=True)(
-        _validators.package_name
-    )
 
-    display_name: str = Field(
+    display_name: Annotated[str, AfterValidator(_validators.display_name)] = Field(
         "",
         description="User-facing text to display as the name of this plugin. "
         "Must be 3-90 characters long and must not begin or end with an underscore, "
@@ -112,10 +110,6 @@ class PluginManifest(ImportExportModel):
         "will be used as the display name.",
         min_length=3,
         max_length=90,
-    )
-
-    _validate_display_name = validator("display_name", allow_reuse=True)(
-        _validators.display_name
     )
 
     visibility: Literal["public", "hidden"] = Field(
@@ -126,7 +120,7 @@ class PluginManifest(ImportExportModel):
         "results, change this to `'hidden'`.",
     )
 
-    icon: str = Field(
+    icon: Annotated[str, AfterValidator(_validators.icon_path)] = Field(
         "",
         description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
         "for Retina screens). May be one of: "
@@ -136,7 +130,6 @@ class PluginManifest(ImportExportModel):
         "`resource` are arguments to `importlib.resources.path(package, resource)`, "
         "(e.g. `top_module.some_folder:my_logo.png`).</li></ul>",
     )
-    _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
     categories: list[Category] = Field(
         default_factory=list,
@@ -167,7 +160,9 @@ class PluginManifest(ImportExportModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    on_activate: PythonName | None = Field(
+    on_activate: (
+        Annotated[PythonName, AfterValidator(_validators.python_name)] | None
+    ) = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "upon plugin activation (e.g. `'my_plugin.some_module:activate'`). The "
@@ -175,17 +170,14 @@ class PluginManifest(ImportExportModel):
         " perform other side-effects. A plugin will be 'activated' when one of its "
         "contributions is requested by the user (such as a widget, or reader).",
     )
-    _validate_activate_func = validator("on_activate", allow_reuse=True)(
-        _validators.python_name
-    )
-    on_deactivate: PythonName | None = Field(
+
+    on_deactivate: (
+        Annotated[PythonName, AfterValidator(_validators.python_name)] | None
+    ) = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "when a user deactivates a plugin (e.g. `'my_plugin.some_module:deactivate'`)"
         ". This is optional, and may be used to perform any plugin cleanup.",
-    )
-    _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
-        _validators.python_name
     )
 
     contributions: ContributionPoints = Field(
@@ -247,7 +239,7 @@ class PluginManifest(ImportExportModel):
     def is_visible(self) -> bool:
         return self.visibility == "public"
 
-    @validator("contributions", pre=True)
+    @field_validator("contributions", mode="before")
     def _coerce_none_contributions(cls, value):
         return [] if value is None else value
 
@@ -390,9 +382,9 @@ class PluginManifest(ImportExportModel):
         entry_point: metadata.EntryPoint,
         distribution: metadata.Distribution | None = None,
     ) -> PluginManifest:
-        match = entry_point.pattern.match(entry_point.value)
-        assert match is not None
-        module = match.group("module")
+        module_match = entry_point.pattern.match(entry_point.value)
+        assert module_match is not None
+        module = module_match.group("module")
 
         spec = util.find_spec(module or "")
         if not spec:  # pragma: no cover
@@ -401,9 +393,9 @@ class PluginManifest(ImportExportModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        match = entry_point.pattern.match(entry_point.value)
-        assert match is not None
-        fname = match.group("attr")
+        file_match = entry_point.pattern.match(entry_point.value)
+        assert file_match is not None
+        fname = file_match.group("attr")
 
         for loc in spec.submodule_search_locations or []:
             mf_file = Path(loc) / fname

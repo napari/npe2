@@ -47,13 +47,15 @@ def plugin_manager():
 
 
 @pytest.fixture(autouse=True)
-def mock_discover():
+def mock_discover(tmp_path):
     _discover = PluginManifest.discover
 
     def wrapper(*args, **kwargs):
         before = sys.path.copy()
         # only allowing things from test directory in discover
-        sys.path = [x for x in sys.path if str(Path(__file__).parent) in x]
+        sys.path = [
+            x for x in sys.path if str(Path(__file__).parent) in x or str(tmp_path) in x
+        ]
         try:
             yield from _discover(*args, **kwargs)
         finally:
@@ -64,8 +66,10 @@ def mock_discover():
 
 
 @pytest.fixture
-def npe1_repo():
-    return Path(__file__).parent / "npe1-plugin"
+def npe1_repo(monkeypatch, tmp_path):
+    monkeypatch.chdir(Path(__file__).parent.parent)
+    shutil.copytree(Path(__file__).parent / "npe1-plugin", tmp_path / "npe1-plugin")
+    return tmp_path / "npe1-plugin"
 
 
 @pytest.fixture
@@ -82,7 +86,8 @@ def uses_npe1_plugin(npe1_repo):
                 yield metadata.PathDistribution(pth)
             return
 
-    sys.meta_path.append(Importer())
+    importer = Importer()
+    sys.meta_path.append(importer)
     sys.path.append(str(npe1_repo))
     try:
         pkgs = [*site.getsitepackages(), str(npe1_repo)]
@@ -90,6 +95,7 @@ def uses_npe1_plugin(npe1_repo):
             yield
     finally:
         sys.path.remove(str(npe1_repo))
+        sys.meta_path.remove(importer)
 
 
 @pytest.fixture
@@ -221,6 +227,7 @@ def mock_npe1_pm_with_plugin_editable(npe1_repo, npe1_plugin_module, tmp_path):
 
 @pytest.fixture(autouse=True)
 def mock_cache(tmp_path, monkeypatch):
-    with monkeypatch.context() as m:
-        m.setattr(_npe1_adapter, "ADAPTER_CACHE", tmp_path)
-        yield tmp_path
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    monkeypatch.setattr(_npe1_adapter, "ADAPTER_CACHE", cache_dir)
+    return cache_dir

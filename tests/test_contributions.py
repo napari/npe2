@@ -151,6 +151,6 @@ def test_command_exec():
 def test_menus(uses_sample_plugin, plugin_manager: PluginManager):
     menus = plugin_manager.menus()
     assert len(menus) == 2
-    assert set(menus) == {"napari/layers/visualize", "mysubmenu"}
-    items = list(plugin_manager.iter_menu("napari/layers/visualize"))
+    assert set(menus) == {"/napari/layer_context", "mysubmenu"}
+    items = list(plugin_manager.iter_menu("/napari/layer_context"))
     assert len(items) == 2

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import builtins
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal
+
+from pydantic import BeforeValidator
 
 from npe2._pydantic_compat import (
     BaseModel,
@@ -9,7 +11,6 @@ from npe2._pydantic_compat import (
     PrivateAttr,
     conlist,
     model_validator,
-    validator,
 )
 
 if TYPE_CHECKING:
@@ -112,7 +113,9 @@ class _JsonSchemaBase(BaseModel):
     max_properties: int | None = Field(None, ge=0)
     min_properties: int | None = Field(0, ge=0)
     enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
-    type: JsonType | JsonTypeArray = Field(None)  # type: ignore
+    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (  # type: ignore
+        Field(None)
+    )
     format: str | None = Field(None)
 
     _json_validator: builtins.type[Validator] = PrivateAttr()
@@ -125,8 +128,6 @@ class _JsonSchemaBase(BaseModel):
         all_of: Any
         any_of: Any
         one_of: Any
-
-    _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
 
     @model_validator(mode="before")
     def _validate_root(cls, values: dict[str, Any]) -> Any:
