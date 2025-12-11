@@ -551,4 +551,7 @@ def _from_dist(dist: metadata.Distribution) -> PluginManifest | None:
 
 
 if __name__ == "__main__":
-    print(PluginManifest.model_json_schema(indent=2))
+    import json
+
+    dkt = PluginManifest.model_json_schema()
+    print(json.dumps(dkt, indent=2))
