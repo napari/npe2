@@ -27,7 +27,7 @@ def test_version():
         Version.parse("alkfdjs")
 
     with pytest.raises(TypeError):
-        Version.parse(1.2)
+        Version.parse(1.2)  # type: ignore[arg-type]
 
 
 def test_merge_manifests():
