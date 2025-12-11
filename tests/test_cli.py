@@ -68,7 +68,7 @@ def test_cli_parse(sample_path, format, tmp_path, to_file):
 @pytest.mark.parametrize("to_file", [True, False])
 @pytest.mark.parametrize("include_meta", [True, False])
 def test_cli_fetch(format, tmp_path, to_file, include_meta):
-    cmd = ["fetch", "napari-omero"]
+    cmd = ["fetch", "napari-svg"]
     if to_file:
         dest = tmp_path / f"output.{format}"
         cmd.extend(["-o", str(dest)])
@@ -87,7 +87,7 @@ def test_cli_fetch(format, tmp_path, to_file, include_meta):
         assert dest.exists()
         assert PluginManifest.from_file(dest)
     else:
-        assert "napari-omero" in result.stdout  # just prints the yaml
+        assert "napari-svg" in result.stdout  # just prints the yaml
         if include_meta:
             assert "package_metadata" in result.stdout
 
@@ -179,7 +179,9 @@ def test_cli_cache_clear_named(mock_cache):
 
 
 @pytest.mark.parametrize("format", ["table", "compact", "yaml", "json"])
-@pytest.mark.parametrize("fields", [None, "name,version,author"])
+@pytest.mark.parametrize(
+    "fields", ["name,version,npe2,contributions", "name,version,author"]
+)
 def test_cli_list(format, fields, uses_npe1_plugin):
     result = runner.invoke(app, ["list", "-f", format, "--fields", fields])
     assert result.exit_code == 0

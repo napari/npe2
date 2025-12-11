@@ -6,14 +6,52 @@ They are invoked whenever `viewer.open('some/path')` is used on the
 command line, or when a user opens a file in the graphical user interface by
 dropping a file into the canvas, or using `File -> Open...`
 
-The `command` provided by a reader contribution is expected to be a function
+### Introduction to the `reader` contribution
+
+`napari`'s reading process is motivated by the idea that a plugin should
+**only** attempt to read a file once we are fairly confident that this process
+will not fail. The determination of whether a plugin **can** read a file is
+based on two checks:
+
+- The `filename_patterns` field of the manifest contribution. If the given
+path does not match any of the specified `filename_patterns`, the plugin
+will never be given the file
+- The `command` provided by the reader contribution. The plugin developer
+should use this function, sometimes called `napari_get_reader` or `get_reader`,
+to check various properties and attributes of
+the file at the given path to determine whether it can be read
+
+The `get_reader` `command` provided by a reader contribution is expected to be a function
 that accepts a path (`str`) or a list of paths and:
 * returns `None` (if it does not want to accept the given path)
-* returns a *new function* (a `ReaderFunction`) that is capable of doing the reading.
+* returns a *new function* that is capable of doing the reading.
+
+```{admonition} Why do we need two functions?
+The `get_reader` command should make as many checks as possible
+(without loading the full file) to determine if it can read the path. For example,
+you might check for the presence of specific pointer files (like a `zarr.json`), or
+call a file format validating function to ensure the file is well-formed
+before reading, or inspect a few bytes at the beginning of the file to
+make sure it's the right file format.
+
+Another benefit of the `get_reader` function is that it allows the plugin
+developer to define multiple different reading functions depending on
+the file format or its properties, and return the appropriate one for the given path.
+
+This function should not raise exceptions, as napari has its own handlers
+that check for available compatible readers, and surface this information
+to the user. The `ReaderFunction` (described below), **can** raise errors,
+and napari will surface any raised errors to the user.
+```
 
 The `ReaderFunction` will be passed the same path (or list of paths) and
 is expected to return a list containing {ref}`LayerData tuples <layer-data-tuples>` or
-a fully instantiated napari `Layer` objects like `Image` or `Labels`.
+a fully instantiated napari `Layer` objects like `Image` or `Labels`. Formally, the
+`ReaderFunction` type is specified as:
+
+```python
+ReaderFunction = Callable[[PathOrPaths], List[LayerData]]
+```
 
 In the rare case that a reader plugin would like to "claim" a file, but *not*
 actually add any data to the viewer, the `ReaderFunction` may return

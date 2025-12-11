@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from npe2._pydantic_compat import BaseModel, Extra, Field, validator
 from npe2.manifest import _validators
@@ -49,7 +51,7 @@ class CommandContribution(BaseModel):
         "for example, when searching in a command palette. Examples: 'Generate lily "
         "sample', 'Read tiff image', 'Open gaussian blur widget'. ",
     )
-    python_name: Optional[PythonName] = Field(
+    python_name: PythonName | None = Field(
         None,
         description="Fully qualified name to a callable python object "
         "implementing this command. This usually takes the form of "
@@ -58,17 +60,17 @@ class CommandContribution(BaseModel):
     )
     _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
-    short_title: Optional[str] = Field(
+    short_title: str | None = Field(
         None,
         description="Short title by which the command is represented in "
         "the UI. Menus pick either `title` or `short_title` depending on the context "
         "in which they show commands.",
     )
-    category: Optional[str] = Field(
+    category: str | None = Field(
         None,
         description="Category string by which the command may be grouped in the UI.",
     )
-    icon: Optional[Union[str, Icon]] = Field(
+    icon: str | Icon | None = Field(
         None,
         description="Icon used to represent this command in the UI, on "
         "buttons or in menus. These may be [superqt](https://github.com/napari/superqt)"
@@ -76,7 +78,7 @@ class CommandContribution(BaseModel):
         "expected to depend on any fonticon libraries they use, e.g "
         "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6).",
     )
-    enablement: Optional[str] = Field(
+    enablement: str | None = Field(
         None,
         description=(
             "Expression which must evaluate as true to enable the command in the UI "
@@ -91,8 +93,8 @@ class CommandContribution(BaseModel):
     def exec(
         self,
         args: tuple = (),
-        kwargs: Optional[dict] = None,
-        _registry: Optional["CommandRegistry"] = None,
+        kwargs: dict | None = None,
+        _registry: CommandRegistry | None = None,
     ) -> Any:
         if kwargs is None:
             kwargs = {}

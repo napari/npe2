@@ -15,8 +15,8 @@ from npe2._inspection._fetch import (
 
 
 def test_fetch_npe2_manifest():
-    mf = fetch_manifest("napari-omero")
-    assert mf.name == "napari-omero"
+    mf = fetch_manifest("napari-svg")
+    assert mf.name == "napari-svg"
     assert any(mf.contributions.dict().values())
     assert mf.npe1_shim is False
 

@@ -1,8 +1,9 @@
 import builtins
 import warnings
+from collections.abc import Iterator, Sequence
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence
+from typing import TYPE_CHECKING
 
 import typer
 
@@ -26,7 +27,7 @@ def _show_version_and_exit(value: bool) -> None:
 
 @app.callback()
 def _main(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "-v",
         "--version",
@@ -132,7 +133,7 @@ def validate(
     ),
 ):
     """Validate manifest for a distribution name or manifest filepath."""
-    err: Optional[Exception] = None
+    err: Exception | None = None
     try:
         pm = PluginManifest._from_package_or_name(name)
         msg = f"✔ Manifest for {(pm.display_name or pm.name)!r} valid!"
@@ -171,14 +172,14 @@ def parse(
     format: Format = typer.Option(
         "yaml", "-f", "--format", help="Markdown format to use."
     ),
-    indent: Optional[int] = typer.Option(
+    indent: int | None = typer.Option(
         None,
         "--indent",
         help="Number of spaces to indent (for json)",
         min=0,
         max=10,
     ),
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None,
         "-o",
         "--output",
@@ -197,7 +198,7 @@ def parse(
         _pprint_formatted(manifest_string, fmt)
 
 
-def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
+def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[list]:
     """Cleanup output from pm.dict() into rows for table.
 
     outside of just extracting the fields we care about, this also:
@@ -231,8 +232,8 @@ def _make_rows(pm_dict: dict, normed_fields: Sequence[str]) -> Iterator[List]:
         yield row
 
 
-@app.command()
-def list(
+@app.command(name="list")
+def list_(
     fields: str = typer.Option(
         "name,version,npe2,contributions",
         help="Comma seperated list of fields to include in the output."
@@ -302,7 +303,9 @@ def list(
 
     # standard records format used for the other formats
     # [{column -> value}, ... , {column -> value}]
-    data: List[dict] = [dict(zip(requested_fields, row)) for row in rows]
+    data: builtins.list[dict] = [
+        dict(zip(requested_fields, row, strict=False)) for row in rows
+    ]
 
     if format == ListFormat.json:
         import json
@@ -321,9 +324,9 @@ def list(
 
 @app.command()
 def fetch(
-    name: List[str],
-    version: Optional[str] = None,
-    include_package_meta: Optional[bool] = typer.Option(
+    name: builtins.list[str],
+    version: str | None = None,
+    include_package_meta: bool | None = typer.Option(
         False,
         "-m",
         "--include-package-meta",
@@ -332,14 +335,14 @@ def fetch(
     format: Format = typer.Option(
         "yaml", "-f", "--format", help="Markdown format to use."
     ),
-    indent: Optional[int] = typer.Option(
+    indent: int | None = typer.Option(
         None,
         "--indent",
         help="Number of spaces to indent (for json)",
         min=0,
         max=10,
     ),
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None,
         "-o",
         "--output",
@@ -379,7 +382,7 @@ def convert(
         "package is provided instead of a directory, the new manifest will simply be "
         "printed to stdout.",
     ),
-    dry_run: Optional[bool] = typer.Option(
+    dry_run: bool | None = typer.Option(
         False,
         "--dry-runs",
         "-n",
@@ -433,16 +436,16 @@ def convert(
 
 @app.command()
 def cache(
-    clear: Optional[bool] = typer.Option(
+    clear: bool | None = typer.Option(
         False, "--clear", "-d", help="Clear the npe1 adapter manifest cache"
     ),
-    names: List[str] = typer.Argument(
+    names: builtins.list[str] = typer.Argument(
         None, help="Name(s) of distributions to list/delete"
     ),
-    list_: Optional[bool] = typer.Option(
+    list_: bool | None = typer.Option(
         False, "--list", "-l", help="List cached manifests"
     ),
-    verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="verbose"),
+    verbose: bool | None = typer.Option(False, "--verbose", "-v", help="verbose"),
 ):
     """Cache utils"""
     from npe2.manifest._npe1_adapter import ADAPTER_CACHE, clear_cache
@@ -481,7 +484,7 @@ def cache(
 @app.command()
 def compile(
     src_dir: str,
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None,
         "-o",
         "--output",
