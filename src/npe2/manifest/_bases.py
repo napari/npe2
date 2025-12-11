@@ -2,7 +2,6 @@ import json
 from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Self
 
 import yaml
 
@@ -49,7 +48,7 @@ class ImportExportModel(BaseModel):
         return yaml.safe_dump(self._serialized_data(**kwargs), sort_keys=False)
 
     @classmethod
-    def from_file(cls, path: Path | str) -> Self:
+    def from_file(cls, path: Path | str):
         """Parse model from a metadata file.
 
         Parameters
