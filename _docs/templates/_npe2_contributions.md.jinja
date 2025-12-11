@@ -24,19 +24,19 @@ is being discussed.
 {%- if contrib.type == 'object' and contrib.additionalProperties is defined %}
 {# Handle object types like menus #}
 {%- if contrib['additionalProperties']['items']['anyOf'] is defined %}
-{%- set type_names = contrib['additionalProperties']['items']['anyOf']|map(attribute='$ref')|map("replace", "#/definitions/", "")|list  %}
+{%- set type_names = contrib['additionalProperties']['items']['anyOf']|map(attribute='$ref')|map("replace", "#/$defs/", "")|list  %}
 {%- set union = True %}
 {%- else %}
 {%- set type_names = [contrib['additionalProperties']['items']['$ref']|replace("#/definitions/", "")] %}
 {%- set union = False %}
 {%- endif -%}
-{%- elif contrib['items']['anyOf'] is defined %}
+{%- elif contrib['anyOf'] is defined %}
 {# Handle array types with union #}
-{%- set type_names = contrib['items']['anyOf']|map(attribute='$ref')|map("replace", "#/definitions/", "")|list  %}
+{%- set type_names = contrib['anyOf']|map(attribute='items')|selectattr('$ref')|map(attribute='$ref')|map("replace", "#/$defs/", "")|list  %}
 {%- set union = True %}
 {%- else %}
 {# Handle array types with single type #}
-{%- set type_names = [contrib['items']['$ref']|replace("#/definitions/", "")] %}
+{%- set type_names = [contrib['items']['$ref']|replace("#/$defs/", "")] %}
 {%- set union = False %}
 {%- endif -%}
 {%- if union %}
