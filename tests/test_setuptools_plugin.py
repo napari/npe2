@@ -23,7 +23,12 @@ template="{TEMPLATE}"
 
 @pytest.mark.skipif(not os.getenv("CI"), reason="slow, only run on CI")
 @pytest.mark.parametrize("dist_type", ["sdist", "wheel"])
-def test_compile(compiled_plugin_dir: Path, tmp_path: Path, dist_type: str) -> None:
+def test_compile(
+    compiled_plugin_dir: Path,
+    tmp_path: Path,
+    dist_type: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """
     Test that the plugin manager can be compiled.
     """
@@ -32,7 +37,7 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path, dist_type: str) -> N
 
     template = compiled_plugin_dir / TEMPLATE
     template.write_text("name: my_compiled_plugin\ndisplay_name: My Compiled Plugin\n")
-    os.chdir(compiled_plugin_dir)
+    monkeypatch.chdir(compiled_plugin_dir)
     subprocess.check_call([sys.executable, "-m", "build", f"--{dist_type}"])
     dist_dir = compiled_plugin_dir / "dist"
     assert dist_dir.is_dir()
@@ -48,12 +53,12 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path, dist_type: str) -> N
     else:
         # for wheel, make sure that the manifest is included in the wheel
         dist = next(dist_dir.glob("*.whl"))
-        with zipfile.ZipFile(dist) as zip:
-            zip.extractall(dist_dir)
+        with zipfile.ZipFile(dist) as zip_:
+            zip_.extractall(dist_dir)
         mf_file = dist_dir / "my_module" / "napari.yaml"
 
     assert mf_file.exists()
     mf = PluginManifest.from_file(mf_file)
     assert mf.display_name == "My Compiled Plugin"
     assert len(mf.contributions.readers or []) == 1
-    assert len(mf.contributions.writersor or []) == 2
+    assert len(mf.contributions.writers or []) == 2

@@ -24,8 +24,10 @@ def sample_manifest(sample_path):
 
 @pytest.fixture
 def compiled_plugin_dir(tmp_path):
-    shutil.copytree(FIXTURES / "my-compiled-plugin", tmp_path, dirs_exist_ok=True)
-    return tmp_path
+    shutil.copytree(
+        FIXTURES / "my-compiled-plugin", tmp_path / "plugin", dirs_exist_ok=True
+    )
+    return tmp_path / "plugin"
 
 
 @pytest.fixture
