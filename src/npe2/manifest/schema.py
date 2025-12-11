@@ -241,12 +241,12 @@ class PluginManifest(ImportExportModel):
 
     @field_validator("contributions", mode="before")
     def _coerce_none_contributions(cls, value):
-        return [] if value is None else value
+        return ContributionPoints() if value is None else value
 
     @model_validator(mode="before")
     @classmethod
     def _validate_root(cls, values: dict) -> dict:
-        mf_name = values.get("name")
+        mf_name = _validators.package_name(values["name"])
 
         # validate schema version
         declared_version = Version.parse(
