@@ -55,5 +55,5 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path, dist_type: str) -> N
     assert mf_file.exists()
     mf = PluginManifest.from_file(mf_file)
     assert mf.display_name == "My Compiled Plugin"
-    assert len(mf.contributions.readers) == 1
-    assert len(mf.contributions.writers) == 2
+    assert len(mf.contributions.readers or []) == 1
+    assert len(mf.contributions.writersor or []) == 2
