@@ -13,7 +13,7 @@ ROOT = Path(__file__).parent.parent
 TEMPLATE = Path("my_module") / "_napari.yaml"
 PYPROJECT = f"""
 [build-system]
-requires = ["setuptools", "wheel", "npe2 @ file://{ROOT}"]
+requires = ["setuptools", "npe2 @ file://{ROOT}"]
 build-backend = "setuptools.build_meta"
 
 [tool.npe2]
