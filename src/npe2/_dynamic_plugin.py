@@ -9,7 +9,9 @@ from typing import (
     overload,
 )
 
-from npe2._pydantic_compat import BaseModel, ValidationError, _iter_inner_types
+from pydantic import BaseModel, ValidationError
+
+from npe2._pydantic_util import iter_inner_types
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (
@@ -35,7 +37,7 @@ CONTRIB_NAMES = {}
 
 
 for key, value in CONTRIB_ANNOTATIONS.items():
-    for type_ in _iter_inner_types(key):
+    for type_ in iter_inner_types(key):
         CONTRIB_NAMES[type_] = value
 
 

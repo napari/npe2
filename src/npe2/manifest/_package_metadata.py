@@ -1,13 +1,9 @@
 from importlib import metadata
 from typing import Literal
 
-from npe2._pydantic_compat import (
-    BaseModel,
-    Field,
-    _is_list_type,
-    constr,
-    model_validator,
-)
+from pydantic import BaseModel, Field, constr, model_validator
+
+from npe2._pydantic_util import is_list_type
 
 # https://packaging.python.org/specifications/core-metadata/
 
@@ -198,7 +194,7 @@ class PackageMetadata(BaseModel):
     @classmethod
     def from_dist_metadata(cls, meta: "metadata.PackageMetadata") -> "PackageMetadata":
         """Generate PackageMetadata from importlib.metadata.PackageMetdata."""
-        manys = [n for n, f in cls.model_fields.items() if _is_list_type(f.annotation)]
+        manys = [n for n, f in cls.model_fields.items() if is_list_type(f.annotation)]
         d: dict[str, str | list[str]] = {}
         # looks like py3.10 changed the public protocol of metadata.PackageMetadata
         # and they don't want you to rely on the Mapping interface... however, the

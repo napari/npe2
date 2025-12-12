@@ -1,4 +1,5 @@
-from npe2._pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
+
 from npe2.manifest.utils import Executable
 
 

@@ -9,16 +9,17 @@ from logging import getLogger
 from pathlib import Path
 from typing import Annotated, Literal, NamedTuple
 
-from pydantic import AfterValidator, BeforeValidator, field_validator
-
-from npe2._pydantic_compat import (
+from pydantic import (
+    AfterValidator,
     BaseModel,
+    BeforeValidator,
     Field,
-    ModelMetaclass,
     ValidationError,
-    _get_inner_type,
+    field_validator,
     model_validator,
 )
+
+from npe2._pydantic_util import get_inner_type
 from npe2.types import PythonName
 
 from . import _validators
@@ -26,6 +27,8 @@ from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
 from .utils import Executable, Version
+
+__all__ = ("Category",)
 
 logger = getLogger(__name__)
 
@@ -440,8 +443,9 @@ class PluginManifest(ImportExportModel):
             If the name does not resolve to either a distribution name or a filename.
 
         """
+        from pydantic import ValidationError
+
         from npe2 import PluginManifest
-        from npe2._pydantic_compat import ValidationError
 
         try:
             return PluginManifest.from_file(package_or_filename)
@@ -476,10 +480,10 @@ class PluginManifest(ImportExportModel):
                     return check_pynames(value, (*loc, name))
                 annotation = type(m).model_fields[name].annotation
                 if isinstance(value, list) and isinstance(
-                    _get_inner_type(annotation), ModelMetaclass
+                    get_inner_type(annotation), object
                 ):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
-                if _get_inner_type(annotation) is PythonName:
+                if get_inner_type(annotation) is PythonName:
                     try:
                         import_python_name(value)
                     except (ImportError, AttributeError) as e:

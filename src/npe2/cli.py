@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import typer
+from pydantic import ValidationError
 
 from npe2 import PluginManager, PluginManifest, __version__
-from npe2._pydantic_compat import ValidationError
 
 if TYPE_CHECKING:
     from rich.console import RenderableType

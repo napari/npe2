@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from inspect import Parameter, Signature
 from typing import Any, TypeVar
 
-from npe2._pydantic_compat import BaseModel
+from pydantic import BaseModel
 
 from .manifest import contributions
 

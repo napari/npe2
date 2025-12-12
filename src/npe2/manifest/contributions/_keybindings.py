@@ -1,4 +1,5 @@
-from npe2._pydantic_compat import Field
+from pydantic import Field
+
 from npe2.manifest.utils import Executable
 
 

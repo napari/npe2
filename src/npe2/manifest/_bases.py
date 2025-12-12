@@ -4,8 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import yaml
-
-from npe2._pydantic_compat import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 
 
 class ImportExportModel(BaseModel):

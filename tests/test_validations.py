@@ -1,9 +1,9 @@
 import json
 
 import pytest
+from pydantic import ValidationError
 
 from npe2 import PluginManifest
-from npe2._pydantic_compat import ValidationError
 from npe2.manifest import _validators
 
 # the docstrings here are used to assert the validation error that is printed.

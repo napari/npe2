@@ -1,7 +1,8 @@
 import sys
 from typing import Literal
 
-from npe2._pydantic_compat import BaseModel, Field, color
+from pydantic import BaseModel, Field
+from pydantic_extra_types import color
 
 
 # pydantic doesn't implement color equality?
