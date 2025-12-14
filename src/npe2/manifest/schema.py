@@ -19,7 +19,7 @@ from pydantic import (
     model_validator,
 )
 
-from npe2._pydantic_util import get_inner_type
+from npe2._pydantic_util import get_inner_type, iter_inner_types
 from npe2.types import PythonName
 
 from . import _validators
@@ -479,8 +479,8 @@ class PluginManifest(ImportExportModel):
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
                 annotation = type(m).model_fields[name].annotation
-                if isinstance(value, list) and isinstance(
-                    get_inner_type(annotation), object
+                if isinstance(value, list) and all(
+                    isinstance(t, type(BaseModel)) for t in iter_inner_types(annotation)
                 ):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
                 if get_inner_type(annotation) is PythonName:

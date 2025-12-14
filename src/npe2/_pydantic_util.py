@@ -9,7 +9,7 @@ def iter_inner_types(type_):
         yield from iter_inner_types(args[0])
     elif origin in (dict, Dict):  # noqa
         yield from iter_inner_types(args[1])
-    if origin is Annotated:
+    elif origin is Annotated:
         yield from iter_inner_types(args[0])
     elif origin in (UnionType, Union):
         for arg in args:
