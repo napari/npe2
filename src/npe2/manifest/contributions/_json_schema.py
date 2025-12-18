@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Literal
 from pydantic import (
     BaseModel,
     BeforeValidator,
+    ConfigDict,
     Field,
     PrivateAttr,
     conlist,
@@ -90,9 +91,7 @@ _python_equivalent: dict[str | None, type] = {
 
 
 class _JsonSchemaBase(BaseModel):
-    class Config:
-        alias_generator = _to_camel
-        validate_by_name = True
+    model_config = ConfigDict(alias_generator=_to_camel, validate_by_name=True)
 
     # underscore here to avoid name collision with pydantic's `schema` method
     schema_: str | None = Field(None, alias="$schema")

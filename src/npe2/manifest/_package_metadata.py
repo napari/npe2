@@ -1,7 +1,7 @@
 from importlib import metadata
 from typing import Literal
 
-from pydantic import BaseModel, Field, constr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, constr, model_validator
 
 from npe2._pydantic_util import is_list_type
 
@@ -22,8 +22,7 @@ class PackageMetadata(BaseModel):
     but it returns a somewhat awkward `email.message.Message` object.
     """
 
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
     # allow str as a fallback in case the metata-version specification has been
     # updated and we haven't updated the code yet

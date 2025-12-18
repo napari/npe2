@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from npe2.manifest.utils import Executable
 from npe2.types import Widget
@@ -42,8 +42,7 @@ class WidgetContribution(Executable[Widget]):
         "the associated command using [magicgui](https://napari.org/magicgui/).",
     )
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     def get_callable(
         self, _registry: CommandRegistry | None = None

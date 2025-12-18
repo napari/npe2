@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from npe2.manifest.utils import Executable, v2_to_v1
 from npe2.types import ReaderFunction
@@ -34,8 +34,7 @@ class ReaderContribution(Executable[ReaderFunction | None]):
         False, description="Whether this reader accepts directories"
     )
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     def __hash__(self):
         return hash(

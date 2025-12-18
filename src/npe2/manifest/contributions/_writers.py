@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from npe2.manifest.utils import Executable
 
@@ -166,8 +166,7 @@ class WriterContribution(Executable[list[str]]):
             )
         )
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     @field_validator("layer_types")
     @classmethod

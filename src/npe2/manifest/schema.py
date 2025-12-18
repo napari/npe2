@@ -13,6 +13,7 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     BeforeValidator,
+    ConfigDict,
     Field,
     ValidationError,
     field_validator,
@@ -89,9 +90,7 @@ class DiscoverResults(NamedTuple):
 
 
 class PluginManifest(ImportExportModel):
-    class Config:
-        extra = "ignore"
-        validate_assignment = True
+    model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
