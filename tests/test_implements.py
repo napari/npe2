@@ -30,16 +30,18 @@ def test_extract_manifest():
     known_manifest = Path(__file__).parent / "sample" / "my_plugin" / "napari.yaml"
     expected = PluginManifest.from_file(known_manifest).contributions
     non_python = ("my-plugin.hello_world", "my-plugin.another_command")
-    expected.commands = [c for c in expected.commands if c.id not in non_python]
-    expected.sample_data = [c for c in expected.sample_data if not hasattr(c, "uri")]
+    expected.commands = [c for c in expected.commands or [] if c.id not in non_python]
+    expected.sample_data = [
+        c for c in expected.sample_data or [] if not hasattr(c, "uri")
+    ]
 
     # check that they're all the same
     _id = lambda x: x.id  # noqa
     assert sorted(extracted.commands, key=_id) == sorted(expected.commands, key=_id)
     k = lambda x: x.command  # noqa
-    assert sorted(extracted.readers, key=k) == sorted(expected.readers, key=k)
-    assert sorted(extracted.writers, key=k) == sorted(expected.writers, key=k)
-    assert sorted(extracted.widgets, key=k) == sorted(expected.widgets, key=k)
+    assert sorted(extracted.readers, key=k) == sorted(expected.readers or [], key=k)
+    assert sorted(extracted.writers, key=k) == sorted(expected.writers or [], key=k)
+    assert sorted(extracted.widgets, key=k) == sorted(expected.widgets or [], key=k)
     assert sorted(extracted.sample_data, key=k) == sorted(expected.sample_data, key=k)
 
 

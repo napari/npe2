@@ -22,7 +22,7 @@ def test_conversion(package):
 @pytest.mark.filterwarnings("ignore:Error converting dock widget")
 def test_conversion_from_module(mock_npe1_pm, npe1_plugin_module):
     mf = manifest_from_npe1(module=npe1_plugin_module)
-    assert isinstance(mf.dict(), dict)
+    assert isinstance(mf.model_dump(), dict)
 
 
 @pytest.mark.filterwarnings("ignore:Failed to convert napari_provide_sample_data")
@@ -30,7 +30,7 @@ def test_conversion_from_module(mock_npe1_pm, npe1_plugin_module):
 @pytest.mark.filterwarnings("ignore:Error converting dock widget")
 def test_conversion_multiple_readers(mock_npe1_pm, npe1_plugin_module):
     mf = manifest_from_npe1(module=npe1_plugin_module)
-    assert isinstance(mf.dict(), dict)
+    assert isinstance(mf.model_dump(), dict)
     assert (readers := mf.contributions.readers) is not None
     reader_commands = {r.command for r in readers}
     assert len(reader_commands) == 2
@@ -43,7 +43,7 @@ def test_conversion_multiple_readers(mock_npe1_pm, npe1_plugin_module):
 @pytest.mark.filterwarnings("ignore:Error converting dock widget")
 def test_conversion_multiple_writers(mock_npe1_pm, npe1_plugin_module):
     mf = manifest_from_npe1(module=npe1_plugin_module)
-    assert isinstance(mf.dict(), dict)
+    assert isinstance(mf.model_dump(), dict)
     assert (writers := mf.contributions.writers) is not None
     writer_commands = {r.command for r in writers}
     assert len(writer_commands) == 3
@@ -66,7 +66,7 @@ def test_conversion_from_obj_with_locals(mock_npe1_pm):
         mf = manifest_from_npe1(module=MyPlugin)
     msg = str(record[0].message)
     assert "functions defined in local scopes are not yet supported." in msg
-    assert isinstance(mf.dict(), dict)
+    assert isinstance(mf.model_dump(), dict)
 
 
 @pytest.mark.filterwarnings("ignore:Failed to convert napari_provide_sample_data")

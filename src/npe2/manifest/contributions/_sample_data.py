@@ -3,7 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from npe2._pydantic_compat import Field, GenericModel
+from pydantic import BaseModel, ConfigDict, Field
+
 from npe2.manifest.utils import Executable
 from npe2.types import LayerData
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from npe2._command_registry import CommandRegistry
 
 
-class _SampleDataContribution(GenericModel, ABC):
+class _SampleDataContribution(BaseModel, ABC):
     """Contribute sample data for use in napari.
 
     Sample data can take the form of a **command** that returns layer data, or a simple
@@ -44,8 +45,7 @@ class SampleDataGenerator(_SampleDataContribution, Executable[list[LayerData]]):
     ) -> list[LayerData]:
         return self.exec(args, kwargs, _registry=_registry)
 
-    class Config:
-        title = "Sample Data Function"
+    model_config = ConfigDict(title="Sample Data Function")
 
 
 class SampleDataURI(_SampleDataContribution):
@@ -68,8 +68,7 @@ class SampleDataURI(_SampleDataContribution):
 
         return read([self.uri], plugin_name=self.reader_plugin, stack=False)
 
-    class Config:
-        title = "Sample Data URI"
+    model_config = ConfigDict(title="Sample Data URI")
 
 
 SampleDataContribution = SampleDataGenerator | SampleDataURI

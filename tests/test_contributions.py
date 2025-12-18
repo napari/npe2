@@ -71,7 +71,7 @@ def test_writer_valid_layer_type_expressions(expr, uses_sample_plugin):
     assert result.error is None
     assert result.manifest is not None
     pm = result.manifest
-    data = json.loads(pm.json(exclude_unset=True))
+    data = json.loads(pm.model_dump_json(exclude_unset=True))
 
     assert "contributions" in data
     assert "writers" in data["contributions"]

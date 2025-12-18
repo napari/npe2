@@ -13,7 +13,8 @@ from typing import (
     TypeVar,
 )
 
-from npe2._pydantic_compat import GenericModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
+
 from npe2.types import PythonName
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ SHIM_NAME_PREFIX = "__npe1shim__."
 
 
 # TODO: add ParamSpec when it's supported better by mypy
-class Executable(GenericModel, Generic[R]):
+class Executable(BaseModel, Generic[R]):
     command: str
     # plugin_name gets populated in `PluginManifest.__init__`
     _plugin_name: str = PrivateAttr("")
@@ -294,7 +295,7 @@ def merge_manifests(
         )
 
     mf0 = manifests[0]
-    info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
+    info = mf0.model_dump(exclude={"contributions"}, exclude_unset=True)
     info["contributions"] = merge_contributions(
         [m.contributions for m in manifests], overwrite=overwrite
     )
@@ -321,11 +322,11 @@ def merge_contributions(
     dict
         Kwargs that can be passed to `ContributionPoints(**kwargs)`
     """
-    _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
+    _contribs = [c for c in contribs if c and c.model_dump(exclude_unset=True)]
     if not _contribs:
         return {}  # pragma: no cover
 
-    out_dict = _contribs[0].dict(exclude_unset=True)
+    out_dict = _contribs[0].model_dump(exclude_unset=True)
     if len(_contribs) <= 1:
         # no need to merge a single contribution
         return out_dict  # pragma: no cover
@@ -333,7 +334,7 @@ def merge_contributions(
     for ctrb in _contribs[1:]:
         _renames = {}
         existing_cmds = {c["id"] for c in out_dict.get("commands", {})}
-        new_ctrb_dict = ctrb.dict(exclude_unset=True)
+        new_ctrb_dict = ctrb.model_dump(exclude_unset=True)
         for cmd in list(new_ctrb_dict.get("commands", ())):
             cmd_id = cmd["id"]
             if cmd_id in existing_cmds:

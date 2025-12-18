@@ -1,4 +1,4 @@
-from npe2._pydantic_compat import BaseModel
+from pydantic import BaseModel
 
 
 class Icon(BaseModel):

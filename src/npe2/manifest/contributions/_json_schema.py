@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import builtins
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
-from npe2._pydantic_compat import (
+from pydantic import (
     BaseModel,
+    BeforeValidator,
+    ConfigDict,
     Field,
     PrivateAttr,
     conlist,
-    root_validator,
-    validator,
+    model_validator,
 )
 
 if TYPE_CHECKING:
@@ -29,9 +30,9 @@ __all__ = [
 ]
 
 JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
-JsonTypeArray = conlist(JsonType, min_items=1, unique_items=True)
-StringArrayMin1 = conlist(str, min_items=1, unique_items=True)
-StringArray = conlist(str, unique_items=True)
+JsonTypeArray = conlist(JsonType, min_length=1)
+StringArrayMin1 = conlist(str, min_length=1)
+StringArray = conlist(str)
 
 PY_NAME_TO_JSON_NAME = {
     "list": "array",
@@ -90,9 +91,7 @@ _python_equivalent: dict[str | None, type] = {
 
 
 class _JsonSchemaBase(BaseModel):
-    class Config:
-        alias_generator = _to_camel
-        allow_population_by_field_name = True
+    model_config = ConfigDict(alias_generator=_to_camel, validate_by_name=True)
 
     # underscore here to avoid name collision with pydantic's `schema` method
     schema_: str | None = Field(None, alias="$schema")
@@ -111,8 +110,10 @@ class _JsonSchemaBase(BaseModel):
     unique_items: bool = Field(False)
     max_properties: int | None = Field(None, ge=0)
     min_properties: int | None = Field(0, ge=0)
-    enum: conlist(Any, min_items=1, unique_items=True) | None = Field(None)  # type: ignore
-    type: JsonType | JsonTypeArray = Field(None)  # type: ignore
+    enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
+    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (  # type: ignore
+        Field(None)
+    )
     format: str | None = Field(None)
 
     _json_validator: builtins.type[Validator] = PrivateAttr()
@@ -126,9 +127,7 @@ class _JsonSchemaBase(BaseModel):
         any_of: Any
         one_of: Any
 
-    _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
-
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def _validate_root(cls, values: dict[str, Any]) -> Any:
         if "type" not in values:
             if "properties" in values:
@@ -136,6 +135,7 @@ class _JsonSchemaBase(BaseModel):
             elif "items" in values:
                 values["type"] = "array"
 
+        # TODO: is this still true?
         # Get around pydantic bug wherein `Optional[conlists]`` throw a
         # 'NoneType' object is not iterable error if `None` is provided in init.
         for conlists in ("enum", "required"):
@@ -147,12 +147,12 @@ class _JsonSchemaBase(BaseModel):
     @property
     def has_constraint(self) -> bool:
         """Return True if this schema has any constraints."""
-        return bool(_CONSTRAINT_FIELDS & self.__fields_set__)
+        return bool(_CONSTRAINT_FIELDS & self.model_fields_set)
 
     @property
     def has_default(self) -> bool:
         """Return True if the schema has a default value."""
-        return "default" in self.__fields_set__
+        return "default" in self.model_fields_set
 
     @property
     def python_type(self) -> builtins.type | list[builtins.type]:
@@ -187,7 +187,7 @@ class _JsonSchemaBase(BaseModel):
         if not hasattr(self, "_json_validator"):
             from jsonschema.validators import validator_for
 
-            schema = self.dict(by_alias=True, exclude_unset=True)
+            schema = self.model_dump(by_alias=True, exclude_unset=True)
             schema["$schema"] = self.schema_
             cls = validator_for(schema)
             cls.check_schema(schema)

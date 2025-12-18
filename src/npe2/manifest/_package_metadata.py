@@ -1,34 +1,28 @@
 from importlib import metadata
 from typing import Literal
 
-from npe2._pydantic_compat import (
-    SHAPE_LIST,
-    BaseModel,
-    Extra,
-    Field,
-    constr,
-    root_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, constr, model_validator
+
+from npe2._pydantic_util import is_list_type
 
 # https://packaging.python.org/specifications/core-metadata/
 
 MetadataVersion = Literal["1.0", "1.1", "1.2", "2.0", "2.1", "2.2", "2.3"]
 _alphanum = "[a-zA-Z0-9]"
-PackageName = constr(regex=f"^{_alphanum}[a-zA-Z0-9._-]*{_alphanum}$")
+PackageName = constr(pattern=f"^{_alphanum}[a-zA-Z0-9._-]*{_alphanum}$")
 
 
 class PackageMetadata(BaseModel):
     """Pydantic model for standard python package metadata.
 
     https://www.python.org/dev/peps/pep-0566/
-    https://packaging.python.org/specifications/core-metadata/
+    https://packaging.python.org/pattern/core-metadata/
 
     The `importlib.metadata` provides the `metadata()` function,
     but it returns a somewhat awkward `email.message.Message` object.
     """
 
-    class Config:
-        extra = Extra.ignore
+    model_config = ConfigDict(extra="ignore")
 
     # allow str as a fallback in case the metata-version specification has been
     # updated and we haven't updated the code yet
@@ -178,16 +172,15 @@ class PackageMetadata(BaseModel):
     provides_dist: list[str] | None = Field(None, min_ver="1.2")
     obsoletes_dist: list[str] | None = Field(None, min_ver="1.2")
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def _validate_root(cls, values):
         if "metadata_version" not in values:
-            fields = cls.__fields__
-            mins = {
-                fields[n].field_info.extra.get("min_ver", "1.0")
-                for n in values
-                if n in fields
-            }
-            values["metadata_version"] = str(max(float(x) for x in mins))
+            min_vers = {"1.0"}
+            for n, info in cls.model_fields.items():
+                if n in values and info.json_schema_extra is not None:
+                    min_vers.add(info.json_schema_extra.get("min_ver", "1.0"))
+            values["metadata_version"] = str(max(float(x) for x in min_vers))
         return values
 
     @classmethod
@@ -200,7 +193,7 @@ class PackageMetadata(BaseModel):
     @classmethod
     def from_dist_metadata(cls, meta: "metadata.PackageMetadata") -> "PackageMetadata":
         """Generate PackageMetadata from importlib.metadata.PackageMetdata."""
-        manys = [f.name for f in cls.__fields__.values() if f.shape == SHAPE_LIST]
+        manys = [n for n, f in cls.model_fields.items() if is_list_type(f.annotation)]
         d: dict[str, str | list[str]] = {}
         # looks like py3.10 changed the public protocol of metadata.PackageMetadata
         # and they don't want you to rely on the Mapping interface... however, the
@@ -213,7 +206,7 @@ class PackageMetadata(BaseModel):
                 d.setdefault(key, []).append(value)  # type: ignore
             else:
                 d[key] = value
-        return cls.parse_obj(d)
+        return cls.model_validate(d)
 
     def __hash__(self) -> int:
         return id(self)

@@ -27,7 +27,7 @@ def test_version():
         Version.parse("alkfdjs")
 
     with pytest.raises(TypeError):
-        Version.parse(1.2)  # type: ignore
+        Version.parse(1.2)  # type: ignore[arg-type]
 
 
 def test_merge_manifests():
@@ -35,7 +35,7 @@ def test_merge_manifests():
         merge_manifests([])
 
     with pytest.raises(AssertionError) as e:
-        merge_manifests([PluginManifest(name="p1"), PluginManifest(name="p2")])
+        merge_manifests([PluginManifest(name="plug1"), PluginManifest(name="plug2")])
     assert "All manifests must have same name" in str(e.value)
 
     pm1 = PluginManifest(

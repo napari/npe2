@@ -177,7 +177,7 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         ContribClass, contrib_name = CONTRIB_MAP[contrib_type]
         contrib = ContribClass(**self._store_command(name, kwargs))
         existing: list[dict] = self.contribution_points.setdefault(contrib_name, [])
-        existing.append(contrib.dict(exclude_unset=True))
+        existing.append(contrib.model_dump(exclude_unset=True))
 
     def _store_command(self, name: str, kwargs: dict[str, Any]) -> dict[str, Any]:
         cmd_params = inspect.signature(contributions.CommandContribution).parameters
@@ -186,11 +186,11 @@ class NPE2PluginModuleVisitor(_DecoratorVisitor):
         cmd_kwargs["python_name"] = self._qualified_pyname(name)
         cmd = contributions.CommandContribution(**cmd_kwargs)
         if cmd.id.startswith(self.plugin_name):
-            n = len(self.plugin_name)
+            n = len(self.plugin_name) + 1
             cmd.id = cmd.id[n:]
         cmd.id = f"{self.plugin_name}.{cmd.id.lstrip('.')}"
         cmd_contribs: list[dict] = self.contribution_points.setdefault("commands", [])
-        cmd_contribs.append(cmd.dict(exclude_unset=True))
+        cmd_contribs.append(cmd.model_dump(exclude_unset=True))
         kwargs["command"] = cmd.id
         return kwargs
 
@@ -402,7 +402,11 @@ def find_npe2_module_contributions(
     if "commands" in visitor.contribution_points:
         compress = {tuple(i.items()) for i in visitor.contribution_points["commands"]}
         visitor.contribution_points["commands"] = [dict(i) for i in compress]
-    return contributions.ContributionPoints(**visitor.contribution_points)
+    res = contributions.ContributionPoints(**visitor.contribution_points)
+    for name in visitor.contribution_points:
+        for command in getattr(res, name):
+            command._plugin_name = plugin_name
+    return res
 
 
 def find_npe1_module_contributions(

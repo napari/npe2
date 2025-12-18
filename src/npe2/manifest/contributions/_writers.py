@@ -1,6 +1,7 @@
 from enum import Enum
 
-from npe2._pydantic_compat import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from npe2.manifest.utils import Executable
 
 
@@ -57,7 +58,8 @@ class LayerTypeConstraint(BaseModel):
         "layers of `layer_type`",
     )
 
-    @validator("bounds")
+    @field_validator("bounds")
+    @classmethod
     def check_bounds(cls, v):
         mn, mx = v
         assert mn >= 0, "min must be >= 0"
@@ -164,10 +166,10 @@ class WriterContribution(Executable[list[str]]):
             )
         )
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
-    @validator("layer_types")
+    @field_validator("layer_types")
+    @classmethod
     def _parsable_layer_type_expr(cls, layer_types: list[str]) -> list[str]:
         try:
             # a successful parse means the string is valid
@@ -177,14 +179,16 @@ class WriterContribution(Executable[list[str]]):
             raise ValueError(f"Could not parse layer_types: {layer_types}. {e}") from e
         return layer_types
 
-    @validator("layer_types")
+    @field_validator("layer_types")
+    @classmethod
     def _nonempty_layer_types(cls, layer_types: list[str]) -> list[str]:
         """If layer_types is empty, raise a ValueError."""
         if not layer_types:
             raise ValueError("layer_types must not be empty")
         return layer_types
 
-    @validator("layer_types")
+    @field_validator("layer_types")
+    @classmethod
     def _layer_types_unique(cls, layer_types: list[str]) -> list[str]:
         """Each layer type can be refered to at most once."""
         from collections import Counter
@@ -194,7 +198,8 @@ class WriterContribution(Executable[list[str]]):
             raise ValueError(f"Duplicate layer type in {layer_types}")
         return layer_types
 
-    @validator("filename_extensions")
+    @field_validator("filename_extensions")
+    @classmethod
     def _coerce_common_glob_patterns(cls, exts: list[str]) -> list[str]:
         """If any of the listed extensions are common glob patterns, replace the
         list with one of all extensions.
