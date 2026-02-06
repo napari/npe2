@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from types import UnionType
 from typing import (
     Any,
     Generic,
     Literal,
     TypeVar,
-    get_args,
-    get_origin,
     overload,
 )
 
-from npe2._pydantic_compat import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError
+
+from npe2._pydantic_util import iter_inner_types
 
 from ._plugin_manager import PluginManager
 from .manifest.contributions import (
@@ -32,29 +31,14 @@ T = TypeVar("T", bound=Callable[..., Any])
 # a mapping of contribution type to string name in the ContributionPoints
 # e.g. {ReaderContribution: 'readers'}
 CONTRIB_ANNOTATIONS = {
-    v.annotation: k for k, v in ContributionPoints.__fields__.items()
+    v.annotation: k for k, v in ContributionPoints.model_fields.items()
 }
 CONTRIB_NAMES = {}
 
 
-def _get_root_types(type_):
-    origin = get_origin(type_)
-    args = get_args(type_)
-    if origin is list:
-        yield from _get_root_types(args[0])
-    elif origin is dict:
-        yield from _get_root_types(args[1])
-    elif origin is UnionType:
-        for arg in args:
-            yield from _get_root_types(arg)
-    else:
-        yield type_
-
-
 for key, value in CONTRIB_ANNOTATIONS.items():
-    for type_ in _get_root_types(key):
-        if type_ is not type(None):
-            CONTRIB_NAMES[type_] = value
+    for type_ in iter_inner_types(key):
+        CONTRIB_NAMES[type_] = value
 
 
 class DynamicPlugin:
@@ -277,7 +261,7 @@ class ContributionDecorator(Generic[C]):
         cmd_kwargs = {
             k: kwargs.pop(k)
             for k in list(kwargs)
-            if k in CommandContribution.__fields__
+            if k in CommandContribution.model_fields
         }
         cmd = CommandContribution(**cmd_kwargs)
         self.commands.append(cmd)

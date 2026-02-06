@@ -524,7 +524,7 @@ class PluginManager:
     ) -> builtins.dict[str, Any]:
         """Return a dictionary with the state of the plugin manager.
 
-        `include` and `exclude` will be passed to each `PluginManifest.dict()`
+        `include` and `exclude` will be passed to each `PluginManifest.model_dump()`
         See pydantic documentation for details:
         https://pydantic-docs.helpmanual.io/usage/exporting_models/#modeldict
 
@@ -555,7 +555,8 @@ class PluginManager:
         Dict[str, Any]
             Dictionary with the state of the plugin manager.  Keys will include
 
-                - `'plugins'`: dict of `{name: manifest.dict()} for discovered plugins
+                - `'plugins'`: dict of `{name: manifest.model_dump()} for
+                  discovered plugins
                 - `'disabled'`: set of disabled plugins
                 - `'activated'`: set of activated plugins
 
@@ -563,7 +564,7 @@ class PluginManager:
         # _include =
         out: dict[str, Any] = {
             "plugins": {
-                mf.name: mf.dict(
+                mf.name: mf.model_dump(
                     include=_expand_dotted_set(include),
                     exclude=_expand_dotted_set(exclude),
                 )

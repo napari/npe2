@@ -4,8 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import yaml
-
-from npe2._pydantic_compat import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 
 
 class ImportExportModel(BaseModel):
@@ -28,7 +27,7 @@ class ImportExportModel(BaseModel):
             If `True`, output will be in pyproject format, with all data under
             `tool.napari`, by default `False`.
         **kwargs
-            passed to `BaseModel.json()`
+            passed to `BaseModel.model_dump_json()`
         """
         import tomli_w
 
@@ -43,7 +42,7 @@ class ImportExportModel(BaseModel):
         Parameters
         ----------
         **kwargs
-            passed to `BaseModel.json()`
+            passed to `BaseModel.model_dump_json()`
         """
         return yaml.safe_dump(self._serialized_data(**kwargs), sort_keys=False)
 
@@ -101,20 +100,22 @@ class ImportExportModel(BaseModel):
         """using json encoders for all outputs"""
         kwargs.setdefault("exclude_unset", True)
         with self._required_export_fields_set():
-            return json.loads(self.json(**kwargs))
+            return json.loads(self.model_dump_json(**kwargs))
 
     @contextmanager
     def _required_export_fields_set(self):
-        fields = self.__fields__.items()
-        required = {k for k, v in fields if v.field_info.extra.get("always_export")}
+        field_schemas = self.model_json_schema()["properties"]
+        required = {
+            k for k, v in field_schemas.items() if v.get("always_export", False)
+        }
 
         was_there: dict[str, bool] = {}
         for f in required:
-            was_there[f] = f in self.__fields_set__
-            self.__fields_set__.add(f)
+            was_there[f] = f in self.model_fields_set
+            self.model_fields_set.add(f)
         try:
             yield
         finally:
             for f in required:
                 if not was_there.get(f):
-                    self.__fields_set__.discard(f)
+                    self.model_fields_set.discard(f)
