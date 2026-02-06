@@ -7,18 +7,20 @@ from enum import Enum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Annotated, Literal, NamedTuple
 
-from npe2._pydantic_compat import (
+from pydantic import (
+    AfterValidator,
     BaseModel,
-    ErrorWrapper,
-    Extra,
+    BeforeValidator,
+    ConfigDict,
     Field,
-    ModelMetaclass,
     ValidationError,
-    root_validator,
-    validator,
+    field_validator,
+    model_validator,
 )
+
+from npe2._pydantic_util import get_inner_type, iter_inner_types
 from npe2.types import PythonName
 
 from . import _validators
@@ -26,6 +28,8 @@ from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
 from .utils import Executable, Version
+
+__all__ = ("Category",)
 
 logger = getLogger(__name__)
 
@@ -86,27 +90,21 @@ class DiscoverResults(NamedTuple):
 
 
 class PluginManifest(ImportExportModel):
-    class Config:
-        underscore_attrs_are_private = True
-        extra = Extra.ignore
-        validate_assignment = True
+    model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
     # VS Code uses <publisher>.<name> as a unique ID for the extension
     # should this just be the package name ... not the module name? (yes)
     # do we normalize this? (i.e. underscores / dashes ?) (no)
     # TODO: enforce that this matches the package name
 
-    name: str = Field(
+    name: Annotated[str, BeforeValidator(_validators.package_name)] = Field(
         ...,
         description="The name of the plugin. Though this field is mandatory, it *must*"
         " match the package `name` as defined in the python package metadata.",
         allow_mutation=False,
     )
-    _validate_name = validator("name", pre=True, allow_reuse=True)(
-        _validators.package_name
-    )
 
-    display_name: str = Field(
+    display_name: Annotated[str, AfterValidator(_validators.display_name)] = Field(
         "",
         description="User-facing text to display as the name of this plugin. "
         "Must be 3-90 characters long and must not begin or end with an underscore, "
@@ -114,10 +112,6 @@ class PluginManifest(ImportExportModel):
         "will be used as the display name.",
         min_length=3,
         max_length=90,
-    )
-
-    _validate_display_name = validator("display_name", allow_reuse=True)(
-        _validators.display_name
     )
 
     visibility: Literal["public", "hidden"] = Field(
@@ -128,7 +122,7 @@ class PluginManifest(ImportExportModel):
         "results, change this to `'hidden'`.",
     )
 
-    icon: str = Field(
+    icon: Annotated[str, AfterValidator(_validators.icon_path)] = Field(
         "",
         description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
         "for Retina screens). May be one of: "
@@ -138,7 +132,6 @@ class PluginManifest(ImportExportModel):
         "`resource` are arguments to `importlib.resources.path(package, resource)`, "
         "(e.g. `top_module.some_folder:my_logo.png`).</li></ul>",
     )
-    _validate_icon_path = validator("icon", allow_reuse=True)(_validators.icon_path)
 
     categories: list[Category] = Field(
         default_factory=list,
@@ -161,7 +154,7 @@ class PluginManifest(ImportExportModel):
         SCHEMA_VERSION,
         description="A SemVer compatible version string matching the napari plugin "
         "schema version that the plugin is compatible with.",
-        always_export=True,
+        json_schema_extra={"always_export": True},
     )
 
     # TODO:
@@ -169,7 +162,9 @@ class PluginManifest(ImportExportModel):
     # the actual mechanism/consumption of plugin information) independently
     # of napari itself
 
-    on_activate: PythonName | None = Field(
+    on_activate: (
+        Annotated[PythonName, AfterValidator(_validators.python_name)] | None
+    ) = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "upon plugin activation (e.g. `'my_plugin.some_module:activate'`). The "
@@ -177,17 +172,14 @@ class PluginManifest(ImportExportModel):
         " perform other side-effects. A plugin will be 'activated' when one of its "
         "contributions is requested by the user (such as a widget, or reader).",
     )
-    _validate_activate_func = validator("on_activate", allow_reuse=True)(
-        _validators.python_name
-    )
-    on_deactivate: PythonName | None = Field(
+
+    on_deactivate: (
+        Annotated[PythonName, AfterValidator(_validators.python_name)] | None
+    ) = Field(
         default=None,
         description="Fully qualified python path to a function that will be called "
         "when a user deactivates a plugin (e.g. `'my_plugin.some_module:deactivate'`)"
         ". This is optional, and may be used to perform any plugin cleanup.",
-    )
-    _validate_deactivate_func = validator("on_deactivate", allow_reuse=True)(
-        _validators.python_name
     )
 
     contributions: ContributionPoints = Field(
@@ -249,16 +241,19 @@ class PluginManifest(ImportExportModel):
     def is_visible(self) -> bool:
         return self.visibility == "public"
 
-    @validator("contributions", pre=True)
+    @field_validator("contributions", mode="before")
     def _coerce_none_contributions(cls, value):
-        return [] if value is None else value
+        return ContributionPoints() if value is None else value
 
-    @root_validator
+    @model_validator(mode="before")
+    @classmethod
     def _validate_root(cls, values: dict) -> dict:
-        mf_name = values.get("name")
+        mf_name = _validators.package_name(values["name"])
 
         # validate schema version
-        declared_version = Version.parse(values.get("schema_version", ""))
+        declared_version = Version.parse(
+            values.get("schema_version", cls.model_fields["schema_version"].default)
+        )
         current_version = Version.parse(SCHEMA_VERSION)
         if current_version < declared_version:
             import warnings
@@ -272,9 +267,12 @@ class PluginManifest(ImportExportModel):
 
         invalid_commands: list[str] = []
         if values.get("contributions") is not None:
+            contributions = values["contributions"]
+            if isinstance(contributions, dict):
+                contributions = ContributionPoints(**contributions)
             invalid_commands.extend(
                 command.id
-                for command in values["contributions"].commands or []
+                for command in contributions.commands or []
                 if not command.id.startswith(f"{mf_name}.")
             )
 
@@ -386,9 +384,9 @@ class PluginManifest(ImportExportModel):
         entry_point: metadata.EntryPoint,
         distribution: metadata.Distribution | None = None,
     ) -> PluginManifest:
-        match = entry_point.pattern.match(entry_point.value)
-        assert match is not None
-        module = match.group("module")
+        module_match = entry_point.pattern.match(entry_point.value)
+        assert module_match is not None
+        module = module_match.group("module")
 
         spec = util.find_spec(module or "")
         if not spec:  # pragma: no cover
@@ -397,9 +395,9 @@ class PluginManifest(ImportExportModel):
                 f"entrypoint: {entry_point.value!r}"
             )
 
-        match = entry_point.pattern.match(entry_point.value)
-        assert match is not None
-        fname = match.group("attr")
+        file_match = entry_point.pattern.match(entry_point.value)
+        assert file_match is not None
+        fname = file_match.group("attr")
 
         for loc in spec.submodule_search_locations or []:
             mf_file = Path(loc) / fname
@@ -444,8 +442,9 @@ class PluginManifest(ImportExportModel):
             If the name does not resolve to either a distribution name or a filename.
 
         """
+        from pydantic import ValidationError
+
         from npe2 import PluginManifest
-        from npe2._pydantic_compat import ValidationError
 
         try:
             return PluginManifest.from_file(package_or_filename)
@@ -478,20 +477,33 @@ class PluginManifest(ImportExportModel):
                     continue
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
-                field = m.__fields__[name]
-                if isinstance(value, list) and isinstance(field.type_, ModelMetaclass):
+                annotation = type(m).model_fields[name].annotation
+                if isinstance(value, list) and all(
+                    isinstance(t, type(BaseModel)) for t in iter_inner_types(annotation)
+                ):
                     return [check_pynames(i, (*loc, n)) for n, i in enumerate(value)]
-                if field.outer_type_ is PythonName:
+                if get_inner_type(annotation) is PythonName:
                     try:
                         import_python_name(value)
                     except (ImportError, AttributeError) as e:
-                        errors.append(ErrorWrapper(e, (*loc, name)))
+                        errors.append(
+                            {
+                                "type": "value_error",
+                                "loc": (*loc, name),
+                                "input": value,
+                                "ctx": {"error": e},
+                            }
+                        )
 
         check_pynames(self)
         if errors:
-            raise ValidationError(errors, type(self))
+            raise ValidationError.from_exception_data(
+                "Some python names are invalid", line_errors=errors
+            )
 
-    ValidationError = ValidationError  # for convenience of access
+    def json(self, **kwargs):
+        # for backward compatibility
+        return self.model_dump_json(**kwargs)
 
 
 def _noop(*_, **__):
@@ -542,4 +554,7 @@ def _from_dist(dist: metadata.Distribution) -> PluginManifest | None:
 
 
 if __name__ == "__main__":
-    print(PluginManifest.schema_json(indent=2))
+    import json
+
+    dkt = PluginManifest.model_json_schema()
+    print(json.dumps(dkt, indent=2))

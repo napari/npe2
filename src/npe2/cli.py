@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import typer
+from pydantic import ValidationError
 
 from npe2 import PluginManager, PluginManifest, __version__
 
@@ -139,7 +140,7 @@ def validate(
         msg = f"✔ Manifest for {(pm.display_name or pm.name)!r} valid!"
         if imports:
             pm.validate_imports()
-    except PluginManifest.ValidationError as e:
+    except ValidationError as e:
         msg = f"🅇 Invalid! {e}"
         err = e
     except Exception as e:

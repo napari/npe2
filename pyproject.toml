@@ -28,6 +28,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -35,7 +36,8 @@ dependencies = [
     "platformdirs",
     "build>=1",
     "psygnal>=0.3.0",
-    "pydantic",
+    "pydantic>1",
+    "pydantic_extra_types",
     "tomli-w",
     "tomli; python_version < '3.11'",
     "rich",
@@ -57,6 +59,8 @@ testing = [
     "pytest-cov",
     "jsonschema",
     "pytest-pretty",
+    "build",
+    "pip",
 ]
 dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
 docs = ["Jinja2", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]

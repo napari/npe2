@@ -19,7 +19,9 @@ def test_compile(compiled_plugin_dir: Path, tmp_path: Path):
     assert mf.name == "my_compiled_plugin"
     assert mf.contributions.commands and len(mf.contributions.commands) == 5
     assert dest.exists()
-    assert PluginManifest.from_file(dest) == mf
+    # we need to model dump so we compare only fields; in pydantic2 otherwise
+    # private attributes are also compared during __eq__
+    assert PluginManifest.from_file(dest).model_dump() == mf.model_dump()
 
 
 def test_compile_with_template(compiled_plugin_dir: Path, tmp_path: Path):

@@ -1,6 +1,6 @@
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from npe2._pydantic_compat import BaseModel, Field, conlist, root_validator, validator
+from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
 
 from ._json_schema import (
     Draft07JsonSchema,
@@ -18,17 +18,19 @@ class ConfigurationProperty(Draft07JsonSchema):
     https://json-schema.org/understanding-json-schema/reference/index.html
     """
 
-    type: JsonType | JsonTypeArray = Field(
-        None,
-        description="The type of this variable. Either JSON Schema type names ('array',"
-        " 'boolean', 'object', ...) or python type names ('list', 'bool', 'dict', ...) "
-        "may be used, but they will be coerced to JSON Schema types. Numbers, strings, "
-        "and booleans will be editable in the UI, other types (lists, dicts) *may* be "
-        "editable in the UI depending on their content, but maby will only be editable "
-        "as text in the napari settings file. For boolean entries, the description "
-        "(or markdownDescription) will be used as the label for the checkbox.",
+    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (
+        Field(
+            None,
+            description="The type of this variable. Either JSON Schema type names "
+            "('array', 'boolean', 'object', ...) or python type names ('list', 'bool', "
+            "'dict', ...) may be used, but they will be coerced to JSON Schema types. "
+            "Numbers, strings, and booleans will be editable in the UI, other types "
+            "(lists, dicts) *may* be editable in the UI depending on their content, "
+            "but maby will only be editable as text in the napari settings file. For "
+            "boolean entries, the description (or markdownDescription) will be used as"
+            " the label for the checkbox.",
+        )
     )
-    _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
 
     default: Any = Field(None, description="The default value for this property.")
 
@@ -45,7 +47,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    enum: conlist(Any, min_items=1, unique_items=True) | None = Field(  # type: ignore
+    enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
         None,
         description="A list of valid options for this field. If you provide this field,"
         "the settings UI will render a dropdown menu.",
@@ -95,7 +97,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "the pattern does not match.",
     )
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def _validate_root(cls, values):
         values = super()._validate_root(values)
 
