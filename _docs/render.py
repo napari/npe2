@@ -10,7 +10,6 @@ from functools import lru_cache, partial
 from inspect import getsource
 from pathlib import Path
 from types import FunctionType
-from typing import Dict, Optional, Set
 from urllib.request import urlopen
 
 import yaml
@@ -46,7 +45,7 @@ def _mocked_qtwidgets():
 
 
 @lru_cache
-def type_strings() -> Dict[str, str]:
+def type_strings() -> dict[str, str]:
     """Return map of type name to source code for all types in types.py"""
     from npe2 import types as _t
 
@@ -76,7 +75,7 @@ def type_strings() -> Dict[str, str]:
     return type_strings
 
 
-def _get_needed_types(source: str, so_far: Optional[Set[str]] = None) -> Set[str]:
+def _get_needed_types(source: str, so_far: set[str] | None = None) -> set[str]:
     """Return the names of types in the npe2.types.py that are used in `source`"""
     so_far = so_far or set()
     for name, string in type_strings().items():
@@ -150,7 +149,7 @@ def example_contribution(
             if not ex.commands:
                 ex.commands = []
             ex.commands.append(associated_command)
-    output = {"contributions": json.loads(ex.json(exclude_unset=True))}
+    output = {"contributions": json.loads(ex.model_dump_json(exclude_unset=True))}
     if format == "yaml":
         return yaml.safe_dump(output, sort_keys=False)
     if format == "toml":
@@ -182,15 +181,17 @@ def main(dest: Path = _BUILD):
     env.filters["has_guide"] = has_guide
 
     dest.mkdir(exist_ok=True, parents=True)
-    schema = PluginManifest.schema()
     if local_schema := os.getenv("NPE2_SCHEMA"):
         with open(local_schema) as f:
             schema = json.load(f)
     else:
-        with urlopen(SCHEMA_URL) as response:
-            schema = json.load(response)
+        try:
+            schema = PluginManifest.schema()
+        except Exception:
+            with urlopen(SCHEMA_URL) as response:
+                schema = json.load(response)
 
-    contributions = schema["definitions"]["ContributionPoints"]["properties"]
+    contributions = schema["$defs"]["ContributionPoints"]["properties"]
     context = {
         "schema": schema,
         "contributions": contributions,

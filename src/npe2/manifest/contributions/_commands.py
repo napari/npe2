@@ -1,6 +1,9 @@
-from typing import TYPE_CHECKING, Any, Optional, Union
+from __future__ import annotations
 
-from npe2._pydantic_compat import BaseModel, Extra, Field, validator
+from typing import TYPE_CHECKING, Annotated, Any
+
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
 from npe2.manifest import _validators
 from npe2.types import PythonName
 
@@ -33,7 +36,7 @@ class CommandContribution(BaseModel):
     ```
     """
 
-    id: str = Field(
+    id: Annotated[str, AfterValidator(_validators.command_id)] = Field(
         ...,
         description="A unique identifier used to reference this command. While this may"
         " look like a python fully qualified name this does *not* refer to a python "
@@ -41,7 +44,6 @@ class CommandContribution(BaseModel):
         "the name of the package, and include only alphanumeric characters, plus "
         "dashes and underscores.",
     )
-    _valid_id = validator("id", allow_reuse=True)(_validators.command_id)
 
     title: str = Field(
         ...,
@@ -49,26 +51,27 @@ class CommandContribution(BaseModel):
         "for example, when searching in a command palette. Examples: 'Generate lily "
         "sample', 'Read tiff image', 'Open gaussian blur widget'. ",
     )
-    python_name: Optional[PythonName] = Field(
+    python_name: (
+        Annotated[PythonName, AfterValidator(_validators.python_name)] | None
+    ) = Field(
         None,
         description="Fully qualified name to a callable python object "
         "implementing this command. This usually takes the form of "
         "`{obj.__module__}:{obj.__qualname__}` "
         "(e.g. `my_package.a_module:some_function`)",
     )
-    _valid_pyname = validator("python_name", allow_reuse=True)(_validators.python_name)
 
-    short_title: Optional[str] = Field(
+    short_title: str | None = Field(
         None,
         description="Short title by which the command is represented in "
         "the UI. Menus pick either `title` or `short_title` depending on the context "
         "in which they show commands.",
     )
-    category: Optional[str] = Field(
+    category: str | None = Field(
         None,
         description="Category string by which the command may be grouped in the UI.",
     )
-    icon: Optional[Union[str, Icon]] = Field(
+    icon: str | Icon | None = Field(
         None,
         description="Icon used to represent this command in the UI, on "
         "buttons or in menus. These may be [superqt](https://github.com/napari/superqt)"
@@ -76,7 +79,7 @@ class CommandContribution(BaseModel):
         "expected to depend on any fonticon libraries they use, e.g "
         "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6).",
     )
-    enablement: Optional[str] = Field(
+    enablement: str | None = Field(
         None,
         description=(
             "Expression which must evaluate as true to enable the command in the UI "
@@ -85,14 +88,13 @@ class CommandContribution(BaseModel):
         ),
     )
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     def exec(
         self,
         args: tuple = (),
-        kwargs: Optional[dict] = None,
-        _registry: Optional["CommandRegistry"] = None,
+        kwargs: dict | None = None,
+        _registry: CommandRegistry | None = None,
     ) -> Any:
         if kwargs is None:
             kwargs = {}

@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import List, Tuple
 
-from npe2._pydantic_compat import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from npe2.manifest.utils import Executable
 
 
@@ -52,13 +52,14 @@ class LayerTypeConstraint(BaseModel):
     """
 
     layer_type: LayerType
-    bounds: Tuple[int, int] = Field(
+    bounds: tuple[int, int] = Field(
         ...,
         description="This writer consumes between bounds[0] and bounds[1] "
         "layers of `layer_type`",
     )
 
-    @validator("bounds")
+    @field_validator("bounds")
+    @classmethod
     def check_bounds(cls, v):
         mn, mx = v
         assert mn >= 0, "min must be >= 0"
@@ -113,7 +114,7 @@ class LayerTypeConstraint(BaseModel):
         return cls(layer_type=lt, bounds=bounds)
 
 
-class WriterContribution(Executable[List[str]]):
+class WriterContribution(Executable[list[str]]):
     r"""Contribute a layer writer.
 
     Writers accept data from one or more layers and write them to file. Writers declare
@@ -127,7 +128,7 @@ class WriterContribution(Executable[List[str]]):
     command: str = Field(
         ..., description="Identifier of the command providing a writer."
     )
-    layer_types: List[str] = Field(
+    layer_types: list[str] = Field(
         ...,
         description="List of layer type constraints. These determine what "
         "layers (or combinations thereof) this writer handles.",
@@ -136,7 +137,7 @@ class WriterContribution(Executable[List[str]]):
     # default something like ['.*'] is tempting but we don't actually use
     # these for glob matching and supporting this default ends up making the
     # code more complicated.
-    filename_extensions: List[str] = Field(
+    filename_extensions: list[str] = Field(
         default_factory=list,
         description="List of filename extensions compatible with this writer. "
         "The first entry is used as the default if necessary. Empty by default. "
@@ -150,7 +151,7 @@ class WriterContribution(Executable[List[str]]):
         "writer for the user. E.g. “lossy” or “lossless”.",
     )
 
-    def layer_type_constraints(self) -> List[LayerTypeConstraint]:
+    def layer_type_constraints(self) -> list[LayerTypeConstraint]:
         spec = [LayerTypeConstraint.from_str(lt) for lt in self.layer_types]
         unspecified_types = set(LayerType) - {lt.layer_type for lt in spec}
         return spec + [LayerTypeConstraint.zero(lt) for lt in unspecified_types]
@@ -165,11 +166,11 @@ class WriterContribution(Executable[List[str]]):
             )
         )
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
-    @validator("layer_types")
-    def _parsable_layer_type_expr(cls, layer_types: List[str]) -> List[str]:
+    @field_validator("layer_types")
+    @classmethod
+    def _parsable_layer_type_expr(cls, layer_types: list[str]) -> list[str]:
         try:
             # a successful parse means the string is valid
             for lt in layer_types:
@@ -178,15 +179,17 @@ class WriterContribution(Executable[List[str]]):
             raise ValueError(f"Could not parse layer_types: {layer_types}. {e}") from e
         return layer_types
 
-    @validator("layer_types")
-    def _nonempty_layer_types(cls, layer_types: List[str]) -> List[str]:
+    @field_validator("layer_types")
+    @classmethod
+    def _nonempty_layer_types(cls, layer_types: list[str]) -> list[str]:
         """If layer_types is empty, raise a ValueError."""
         if not layer_types:
             raise ValueError("layer_types must not be empty")
         return layer_types
 
-    @validator("layer_types")
-    def _layer_types_unique(cls, layer_types: List[str]) -> List[str]:
+    @field_validator("layer_types")
+    @classmethod
+    def _layer_types_unique(cls, layer_types: list[str]) -> list[str]:
         """Each layer type can be refered to at most once."""
         from collections import Counter
 
@@ -195,8 +198,9 @@ class WriterContribution(Executable[List[str]]):
             raise ValueError(f"Duplicate layer type in {layer_types}")
         return layer_types
 
-    @validator("filename_extensions")
-    def _coerce_common_glob_patterns(cls, exts: List[str]) -> List[str]:
+    @field_validator("filename_extensions")
+    @classmethod
+    def _coerce_common_glob_patterns(cls, exts: list[str]) -> list[str]:
         """If any of the listed extensions are common glob patterns, replace the
         list with one of all extensions.
 

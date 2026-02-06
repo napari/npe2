@@ -1,6 +1,7 @@
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
-from npe2._pydantic_compat import BaseModel as BaseModel
+from pydantic import BaseModel as BaseModel
 
 from .manifest import PluginManifest as PluginManifest
 from .manifest import contributions as contributions

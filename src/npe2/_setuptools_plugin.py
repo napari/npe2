@@ -13,16 +13,16 @@ import os
 import re
 import sys
 import warnings
-from typing import TYPE_CHECKING, Optional, Tuple, cast
+from typing import TYPE_CHECKING, cast
 
 from setuptools import Distribution
 from setuptools.command.build_py import build_py
 
 if TYPE_CHECKING:
     from distutils.cmd import Command
-    from typing import Any, Union
+    from typing import Any
 
-    PathT = Union["os.PathLike[str]", str]
+    PathT = "os.PathLike[str]" | str
 
 NPE2_ENTRY = "napari.manifest"
 DEBUG = bool(os.environ.get("SETUPTOOLS_NPE2_DEBUG"))
@@ -54,7 +54,7 @@ def _read_dist_name_from_setup_cfg() -> str | None:
     return parser.get("metadata", "name", fallback=None)
 
 
-def _check_absolute_root(root: PathT, relative_to: PathT | None) -> str:
+def _check_absolute_root(root: PathT, relative_to: PathT | None) -> str:  # type: ignore
     trace("abs root", repr(locals()))
     if relative_to:
         if (
@@ -85,9 +85,9 @@ class Configuration:
 
     def __init__(
         self,
-        relative_to: PathT | None = None,
-        root: PathT = ".",
-        write_to: PathT | None = None,
+        relative_to: PathT | None = None,  # type: ignore
+        root: PathT = ".",  # type: ignore
+        write_to: PathT | None = None,  # type: ignore
         write_to_template: str | None = None,
         dist_name: str | None = None,
         template: str | None = None,
@@ -109,7 +109,7 @@ class Configuration:
         return self._root
 
     @root.setter
-    def root(self, value: PathT) -> None:
+    def root(self, value: PathT) -> None:  # type: ignore
         self._absolute_root = _check_absolute_root(value, self._relative_to)
         self._root = os.fspath(value)
         trace("root", repr(self._absolute_root))
@@ -152,7 +152,7 @@ class Configuration:
         return cls(dist_name=dist_name, **section, **kwargs)
 
 
-def _mf_entry_from_dist(dist: Distribution) -> Optional[Tuple[str, str]]:
+def _mf_entry_from_dist(dist: Distribution) -> tuple[str, str] | None:
     """Return (module, attr) for a distribution's npe2 entry point."""
     eps: dict = getattr(dist, "entry_points", {})
     if napari_entrys := eps.get(NPE2_ENTRY, []):

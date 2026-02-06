@@ -4,21 +4,16 @@ import io
 import json
 import os
 import subprocess
+import sys
 import tempfile
-from contextlib import contextmanager
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, contextmanager
 from functools import lru_cache
 from importlib import metadata
 from logging import getLogger
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
-    ContextManager,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Union,
 )
 from unittest.mock import patch
 from urllib import error, request
@@ -36,7 +31,6 @@ NPE1_ENTRY_POINT = "napari.plugin"
 NPE2_ENTRY_POINT = "napari.manifest"
 __all__ = [
     "fetch_manifest",
-    "get_hub_plugin",
     "get_pypi_url",
 ]
 
@@ -118,7 +112,7 @@ def _guard_cwd() -> Iterator[None]:
         os.chdir(current)
 
 
-def _build_wheel(src: Union[str, Path]) -> Path:
+def _build_wheel(src: str | Path) -> Path:
     """Build a wheel from a source directory and extract it into dest."""
     from build.__main__ import build_package
 
@@ -148,7 +142,7 @@ def get_manifest_from_wheel(src: str) -> PluginManifest:
             return _manifest_from_extracted_wheel(Path(td))
 
 
-def _build_src_and_extract_manifest(src_dir: Union[str, Path]) -> PluginManifest:
+def _build_src_and_extract_manifest(src_dir: str | Path) -> PluginManifest:
     """Build a wheel from a source directory and extract the manifest."""
     return _manifest_from_extracted_wheel(_build_wheel(src_dir))
 
@@ -160,9 +154,47 @@ def _get_manifest_from_zip_url(url: str) -> PluginManifest:
     --------
     $ npe2 fetch https://github.com/org/project/archive/refs/heads/master.zip
     """
+    from npe2.manifest import PluginManifest
+
+    def find_manifest_file(root: Path) -> Path | None:
+        """Recursively find a napari manifest file."""
+        # Check current directory for manifest files
+        for filename in ["napari.yaml", "napari.yml"]:
+            manifest_path = root / filename
+            if manifest_path.exists():
+                return manifest_path
+
+        # Check for pyproject.toml with napari config
+        pyproject_path = root / "pyproject.toml"
+        if pyproject_path.exists():
+            try:
+                import tomllib
+            except ImportError:
+                import tomli as tomllib  # type: ignore
+
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+                if "tool" in data and "napari" in data["tool"]:
+                    return pyproject_path
+
+        # Recursively search subdirectories for the manifest file
+        for item in root.iterdir():
+            if item.is_dir() and not item.name.startswith("."):
+                result = find_manifest_file(item)
+                if result:
+                    return result
+        return None
+
     with _tmp_zip_download(url) as zip_path:
-        src_dir = next(Path(zip_path).iterdir())  # find first directory
-        return _build_src_and_extract_manifest(src_dir)
+        # In a zip file, we do not need to build a wheel. We can extract
+        # the manifest directly from the extracted files.
+        manifest_file = find_manifest_file(Path(zip_path))
+        if manifest_file:
+            return PluginManifest.from_file(manifest_file)
+        else:
+            # Keep original behavior to try to build a wheel as a fallback
+            src_dir = next(Path(zip_path).iterdir())
+            return _build_src_and_extract_manifest(src_dir)
 
 
 def _get_manifest_from_wheel_url(url: str) -> PluginManifest:
@@ -213,9 +245,7 @@ def _get_manifest_from_git_url(url: str) -> PluginManifest:
         return _build_src_and_extract_manifest(td)
 
 
-def fetch_manifest(
-    package_or_url: str, version: Optional[str] = None
-) -> PluginManifest:
+def fetch_manifest(package_or_url: str, version: str | None = None) -> PluginManifest:
     """Fetch a manifest for a pypi package name or URL to a wheel or source.
 
     Parameters
@@ -269,7 +299,7 @@ def fetch_manifest(
 
 
 def _manifest_from_pypi_sdist(
-    package: str, version: Optional[str] = None
+    package: str, version: str | None = None
 ) -> PluginManifest:
     """Extract a manifest from a source distribution on pypi."""
     with _tmp_pypi_sdist_download(package, version) as td:
@@ -284,7 +314,7 @@ def _pypi_info(package: str) -> dict:
 
 
 def get_pypi_url(
-    package: str, version: Optional[str] = None, packagetype: Optional[str] = None
+    package: str, version: str | None = None, packagetype: str | None = None
 ) -> str:
     """Get URL for a package on PyPI.
 
@@ -320,7 +350,7 @@ def get_pypi_url(
     if version:
         version = version.lstrip("v")
         try:
-            _releases: List[dict] = data["releases"][version]
+            _releases: list[dict] = data["releases"][version]
         except KeyError as e:  # pragma: no cover
             raise ValueError(f"{package} does not have version {version}") from e
     else:
@@ -353,28 +383,24 @@ def _tmp_targz_download(url: str) -> Iterator[Path]:
 
     with tempfile.TemporaryDirectory() as td, request.urlopen(url) as f:
         with tarfile.open(fileobj=f, mode="r:gz") as tar:
-            tar.extractall(td)
+            if sys.version_info >= (3, 11):
+                tar.extractall(td, filter="data")
+            else:
+                tar.extractall(td)
             yield Path(td)
 
 
 def _tmp_pypi_wheel_download(
-    package: str, version: Optional[str] = None
-) -> ContextManager[Path]:
+    package: str, version: str | None = None
+) -> AbstractContextManager[Path]:
     url = get_pypi_url(package, version=version, packagetype="bdist_wheel")
     logger.debug(f"downloading wheel for {package} {version or ''}")
     return _tmp_zip_download(url)
 
 
 def _tmp_pypi_sdist_download(
-    package: str, version: Optional[str] = None
-) -> ContextManager[Path]:
+    package: str, version: str | None = None
+) -> AbstractContextManager[Path]:
     url = get_pypi_url(package, version=version, packagetype="sdist")
     logger.debug(f"downloading sdist for {package} {version or ''}")
     return _tmp_targz_download(url)
-
-
-@lru_cache
-def get_hub_plugin(plugin_name: str) -> Dict[str, Any]:
-    """Return hub information for a specific plugin."""
-    with request.urlopen(f"https://api.napari-hub.org/plugins/{plugin_name}") as r:
-        return json.load(r)

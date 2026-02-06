@@ -1,7 +1,10 @@
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional, Union
+from __future__ import annotations
 
-from npe2._pydantic_compat import Field, GenericModel
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, ConfigDict, Field
+
 from npe2.manifest.utils import Executable
 from npe2.types import LayerData
 
@@ -9,7 +12,7 @@ if TYPE_CHECKING:
     from npe2._command_registry import CommandRegistry
 
 
-class _SampleDataContribution(GenericModel, ABC):
+class _SampleDataContribution(BaseModel, ABC):
     """Contribute sample data for use in napari.
 
     Sample data can take the form of a **command** that returns layer data, or a simple
@@ -24,11 +27,11 @@ class _SampleDataContribution(GenericModel, ABC):
 
     @abstractmethod
     def open(
-        self, *args, _registry: Optional["CommandRegistry"] = None, **kwargs
-    ) -> List[LayerData]: ...
+        self, *args, _registry: CommandRegistry | None = None, **kwargs
+    ) -> list[LayerData]: ...
 
 
-class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
+class SampleDataGenerator(_SampleDataContribution, Executable[list[LayerData]]):
     """Contribute a callable command that creates data on demand."""
 
     command: str = Field(
@@ -38,12 +41,11 @@ class SampleDataGenerator(_SampleDataContribution, Executable[List[LayerData]]):
     )
 
     def open(
-        self, *args, _registry: Optional["CommandRegistry"] = None, **kwargs
-    ) -> List[LayerData]:
+        self, *args, _registry: CommandRegistry | None = None, **kwargs
+    ) -> list[LayerData]:
         return self.exec(args, kwargs, _registry=_registry)
 
-    class Config:
-        title = "Sample Data Function"
+    model_config = ConfigDict(title="Sample Data Function")
 
 
 class SampleDataURI(_SampleDataContribution):
@@ -56,18 +58,17 @@ class SampleDataURI(_SampleDataContribution):
         description="Path or URL to a data resource. "
         "This URI should be a valid input to `io_utils.read`",
     )
-    reader_plugin: Optional[str] = Field(
+    reader_plugin: str | None = Field(
         None,
         description="Name of plugin to use to open URI",
     )
 
-    def open(self, *args, **kwargs) -> List[LayerData]:
+    def open(self, *args, **kwargs) -> list[LayerData]:
         from npe2.io_utils import read
 
         return read([self.uri], plugin_name=self.reader_plugin, stack=False)
 
-    class Config:
-        title = "Sample Data URI"
+    model_config = ConfigDict(title="Sample Data URI")
 
 
-SampleDataContribution = Union[SampleDataGenerator, SampleDataURI]
+SampleDataContribution = SampleDataGenerator | SampleDataURI

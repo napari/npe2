@@ -1,24 +1,20 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import total_ordering
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
-    Dict,
     Generic,
-    Optional,
-    Sequence,
     SupportsInt,
-    Tuple,
     TypeVar,
-    Union,
 )
 
-from npe2._pydantic_compat import GenericModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
+
 from npe2.types import PythonName
 
 if TYPE_CHECKING:
@@ -44,7 +40,7 @@ SHIM_NAME_PREFIX = "__npe1shim__."
 
 
 # TODO: add ParamSpec when it's supported better by mypy
-class Executable(GenericModel, Generic[R]):
+class Executable(BaseModel, Generic[R]):
     command: str
     # plugin_name gets populated in `PluginManifest.__init__`
     _plugin_name: str = PrivateAttr("")
@@ -52,8 +48,8 @@ class Executable(GenericModel, Generic[R]):
     def exec(
         self,
         args: tuple = (),
-        kwargs: Optional[dict] = None,
-        _registry: Optional[CommandRegistry] = None,
+        kwargs: dict | None = None,
+        _registry: CommandRegistry | None = None,
     ) -> R:
         if kwargs is None:
             kwargs = {}
@@ -62,7 +58,7 @@ class Executable(GenericModel, Generic[R]):
 
     def get_callable(
         self,
-        _registry: Optional[CommandRegistry] = None,
+        _registry: CommandRegistry | None = None,
     ) -> Callable[..., R]:
         if _registry is None:
             from npe2._plugin_manager import PluginManager
@@ -112,8 +108,8 @@ class Version:
     major: SupportsInt
     minor: SupportsInt = 0
     patch: SupportsInt = 0
-    prerelease: Union[bytes, str, int, None] = None
-    build: Union[bytes, str, int, None] = None
+    prerelease: bytes | str | int | None = None
+    build: bytes | str | int | None = None
 
     _SEMVER_PATTERN = re.compile(
         r"""
@@ -137,14 +133,14 @@ class Version:
     )
 
     @classmethod
-    def parse(cls, version: Union[bytes, str]) -> Version:
+    def parse(cls, version: bytes | str) -> Version:
         """Convert string or bytes into Version object."""
         if isinstance(version, bytes):
             version = version.decode("UTF-8")
         match = cls._SEMVER_PATTERN.match(version)
         if match is None:
             raise ValueError(f"{version} is not valid SemVer string")
-        matched_version_parts: Dict[str, Any] = match.groupdict()
+        matched_version_parts: dict[str, Any] = match.groupdict()
         return cls(**matched_version_parts)
 
     # NOTE: we're only comparing the numeric parts for now.
@@ -170,7 +166,7 @@ class Version:
             )
         return other
 
-    def to_tuple(self) -> Tuple[int, int, int, Optional[str], Optional[str]]:
+    def to_tuple(self) -> tuple[int, int, int, str | None, str | None]:
         """Return version as tuple (first three are int, last two Opt[str])."""
         return (
             int(self.major),
@@ -247,7 +243,7 @@ def _import_npe1_shim(shim_name: str) -> Any:
     return out
 
 
-def import_python_name(python_name: Union[PythonName, str]) -> Any:
+def import_python_name(python_name: PythonName | str) -> Any:
     from . import _validators
 
     if python_name.startswith(SHIM_NAME_PREFIX):
@@ -290,16 +286,16 @@ def merge_manifests(
         return manifests[0]
 
     assert len({mf.name for mf in manifests}) == 1, "All manifests must have same name"
-    assert (
-        len({mf.package_version for mf in manifests}) == 1
-    ), "All manifests must have same version"
+    assert len({mf.package_version for mf in manifests}) == 1, (
+        "All manifests must have same version"
+    )
     if not overwrite:
-        assert (
-            len({mf.display_name for mf in manifests}) == 1
-        ), "All manifests must have same display_name"
+        assert len({mf.display_name for mf in manifests}) == 1, (
+            "All manifests must have same display_name"
+        )
 
     mf0 = manifests[0]
-    info = mf0.dict(exclude={"contributions"}, exclude_unset=True)
+    info = mf0.model_dump(exclude={"contributions"}, exclude_unset=True)
     info["contributions"] = merge_contributions(
         [m.contributions for m in manifests], overwrite=overwrite
     )
@@ -308,7 +304,7 @@ def merge_manifests(
 
 # TODO: refactor this ugly thing
 def merge_contributions(
-    contribs: Sequence[Optional[ContributionPoints]], overwrite=False
+    contribs: Sequence[ContributionPoints | None], overwrite=False
 ) -> dict:
     """Merge a sequence of contribution points in a single dict.
 
@@ -326,11 +322,11 @@ def merge_contributions(
     dict
         Kwargs that can be passed to `ContributionPoints(**kwargs)`
     """
-    _contribs = [c for c in contribs if c and c.dict(exclude_unset=True)]
+    _contribs = [c for c in contribs if c and c.model_dump(exclude_unset=True)]
     if not _contribs:
         return {}  # pragma: no cover
 
-    out_dict = _contribs[0].dict(exclude_unset=True)
+    out_dict = _contribs[0].model_dump(exclude_unset=True)
     if len(_contribs) <= 1:
         # no need to merge a single contribution
         return out_dict  # pragma: no cover
@@ -338,7 +334,7 @@ def merge_contributions(
     for ctrb in _contribs[1:]:
         _renames = {}
         existing_cmds = {c["id"] for c in out_dict.get("commands", {})}
-        new_ctrb_dict = ctrb.dict(exclude_unset=True)
+        new_ctrb_dict = ctrb.model_dump(exclude_unset=True)
         for cmd in list(new_ctrb_dict.get("commands", ())):
             cmd_id = cmd["id"]
             if cmd_id in existing_cmds:

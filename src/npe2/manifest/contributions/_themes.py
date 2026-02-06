@@ -1,7 +1,8 @@
 import sys
-from typing import Literal, Optional, Union
+from typing import Literal
 
-from npe2._pydantic_compat import BaseModel, Field, color
+from pydantic import BaseModel, Field
+from pydantic_extra_types import color
 
 
 # pydantic doesn't implement color equality?
@@ -13,20 +14,20 @@ class Color(color.Color):
 
 
 class ThemeColors(BaseModel):
-    canvas: Optional[Color]
-    console: Optional[Color]
-    background: Optional[Color]
-    foreground: Optional[Color]
-    primary: Optional[Color]
-    secondary: Optional[Color]
-    highlight: Optional[Color]
-    text: Optional[Color]
-    icon: Optional[Color]
-    warning: Optional[Color]
-    current: Optional[Color]
+    canvas: Color | None = None
+    console: Color | None = None
+    background: Color | None = None
+    foreground: Color | None = None
+    primary: Color | None = None
+    secondary: Color | None = None
+    highlight: Color | None = None
+    text: Color | None = None
+    icon: Color | None = None
+    warning: Color | None = None
+    current: Color | None = None
 
 
-_color_keys = ", ".join([f"`{k}`" for k in ThemeColors.__fields__])
+_color_keys = ", ".join([f"`{k}`" for k in ThemeColors.model_fields])
 _color_args = """
     - name: `"Black"`, `"azure"`
     - hexadecimal value: `"0x000"`, `"#FFFFFF"`, `"7fffd4"`
@@ -50,19 +51,14 @@ class ThemeContribution(BaseModel):
         description="Identifier of the color theme as used in the user settings."
     )
     label: str = Field(description="Label of the color theme as shown in the UI.")
-    type: Union[Literal["dark"], Literal["light"]] = Field(
+    type: Literal["dark", "light"] = Field(
         description="Base theme type, used for icons and filling in unprovided colors. "
         "Must be either `'dark'` or  `'light'`."
     )
-    syntax_style: Optional[str]
+    syntax_style: str | None = None
     colors: ThemeColors = Field(
         description=f"Theme colors. Valid keys include: {_color_keys}. All keys "
-        "are optional. Color values can be defined via:\n"
-        '   - name: `"Black"`, `"azure"`\n'
-        '   - hexadecimal value: `"0x000"`, `"#FFFFFF"`, `"7fffd4"`\n'
-        "   - RGB/RGBA tuples: `(255, 255, 255)`, `(255, 255, 255, 0.5)`\n"
-        '   - RGB/RGBA strings: `"rgb(255, 255, 255)"`, `"rgba(255, 255, 255, 0.5)`"\n'
-        '   - HSL strings: "`hsl(270, 60%, 70%)"`, `"hsl(270, 60%, 70%, .5)`"\n'
+        "are optional. Color values can be defined via:\n{_color_args}"
     )
     font_size: str = Field(
         default="12pt" if sys.platform == "darwin" else "9pt",

@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Literal
 
-from npe2._pydantic_compat import BaseModel, Field, conlist, root_validator, validator
+from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
 
 from ._json_schema import (
     Draft07JsonSchema,
@@ -18,21 +18,23 @@ class ConfigurationProperty(Draft07JsonSchema):
     https://json-schema.org/understanding-json-schema/reference/index.html
     """
 
-    type: Union[JsonType, JsonTypeArray] = Field(
-        None,
-        description="The type of this variable. Either JSON Schema type names ('array',"
-        " 'boolean', 'object', ...) or python type names ('list', 'bool', 'dict', ...) "
-        "may be used, but they will be coerced to JSON Schema types. Numbers, strings, "
-        "and booleans will be editable in the UI, other types (lists, dicts) *may* be "
-        "editable in the UI depending on their content, but maby will only be editable "
-        "as text in the napari settings file. For boolean entries, the description "
-        "(or markdownDescription) will be used as the label for the checkbox.",
+    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (
+        Field(
+            None,
+            description="The type of this variable. Either JSON Schema type names "
+            "('array', 'boolean', 'object', ...) or python type names ('list', 'bool', "
+            "'dict', ...) may be used, but they will be coerced to JSON Schema types. "
+            "Numbers, strings, and booleans will be editable in the UI, other types "
+            "(lists, dicts) *may* be editable in the UI depending on their content, "
+            "but maby will only be editable as text in the napari settings file. For "
+            "boolean entries, the description (or markdownDescription) will be used as"
+            " the label for the checkbox.",
+        )
     )
-    _coerce_type_name = validator("type", pre=True, allow_reuse=True)(_coerce_type_name)
 
     default: Any = Field(None, description="The default value for this property.")
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         description="Your `description` appears after the title and before the input "
         "field, except for booleans, where the description is used as the label for "
@@ -45,12 +47,12 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    enum: Optional[conlist(Any, min_items=1, unique_items=True)] = Field(  # type: ignore
+    enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
         None,
         description="A list of valid options for this field. If you provide this field,"
         "the settings UI will render a dropdown menu.",
     )
-    enum_descriptions: List[str] = Field(
+    enum_descriptions: list[str] = Field(
         default_factory=list,
         description="If you provide a list of items under the `enum` field, you may "
         "provide `enum_descriptions` to add descriptive text for each enum.",
@@ -62,7 +64,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         "plain text, set this value to `plain`.",
     )
 
-    deprecation_message: Optional[str] = Field(
+    deprecation_message: str | None = Field(
         None,
         description="If you set deprecationMessage, the setting will get a warning "
         "underline with your specified message. It won't show up in the settings "
@@ -80,7 +82,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         description="By default, string settings will be rendered with a single-line "
         "editor. To render with a multi-line editor, set this value to `multiline`.",
     )
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         description="When specified, gives the order of this setting relative to other "
         "settings within the same category. Settings with an order property will be "
@@ -88,14 +90,14 @@ class ConfigurationProperty(Draft07JsonSchema):
         " will be placed in alphabetical order.",
     )
 
-    pattern_error_message: Optional[str] = Field(
+    pattern_error_message: str | None = Field(
         None,
         description="When restricting string types to a given regular expression with "
         "the `pattern` field, this field may be used to provide a custom error when "
         "the pattern does not match.",
     )
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def _validate_root(cls, values):
         values = super()._validate_root(values)
 
@@ -135,7 +137,7 @@ class ConfigurationContribution(BaseModel):
         '"Plugin", "Configuration", and "Settings" are redundant and should not be'
         "used in your title.",
     )
-    properties: Dict[str, ConfigurationProperty] = Field(
+    properties: dict[str, ConfigurationProperty] = Field(
         ...,
         description="Configuration properties. In the settings UI, your configuration "
         "key will be used to namespace and construct a title. Though a plugin can "

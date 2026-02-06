@@ -20,7 +20,6 @@ offers comprehensive information for **plugin users** and for **plugin developer
 ### Plugin users
 
 For plugin users, the docs include information about:
-- [Starting to use plugins](https://napari.org/stable/plugins/start_using_plugins/index.html#plugins-getting-started)
 - [Finding and installing plugins](https://napari.org/stable/plugins/start_using_plugins/finding_and_installing_plugins.html#find-and-install-plugins)
 
 ### Plugin developers

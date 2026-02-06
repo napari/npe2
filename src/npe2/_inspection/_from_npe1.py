@@ -3,6 +3,8 @@ import inspect
 import re
 import sys
 import warnings
+from collections import defaultdict
+from collections.abc import Callable, Iterator
 from configparser import ConfigParser
 from functools import lru_cache, partial
 from importlib import import_module, metadata
@@ -11,14 +13,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Union,
     cast,
 )
 
@@ -48,8 +42,8 @@ class HookImplementation:
     def __init__(
         self,
         function: Callable,
-        plugin: Optional[ModuleType] = None,
-        plugin_name: Optional[str] = None,
+        plugin: ModuleType | None = None,
+        plugin_name: str | None = None,
         **kwargs,
     ):
         self.function = function
@@ -68,7 +62,7 @@ class HookImplementation:
 
 
 def iter_hookimpls(
-    module: ModuleType, plugin_name: Optional[str] = None
+    module: ModuleType, plugin_name: str | None = None
 ) -> Iterator[HookImplementation]:
     # yield all routines in module that have "{self.project_name}_impl" attr
     for name in dir(module):
@@ -80,14 +74,14 @@ def iter_hookimpls(
 
 
 @lru_cache
-def plugin_packages() -> List[PackageInfo]:
+def plugin_packages() -> list[PackageInfo]:
     """List of all packages with napari entry points.
 
     This is useful to help resolve naming issues (due to the terrible confusion
     around *what* a npe1 plugin name actually was).
     """
 
-    packages: List[PackageInfo] = []
+    packages: list[PackageInfo] = []
     for dist in metadata.distributions():
         packages.extend(
             PackageInfo(package_name=dist.metadata["Name"], entry_points=[ep])
@@ -99,8 +93,8 @@ def plugin_packages() -> List[PackageInfo]:
 
 
 def manifest_from_npe1(
-    plugin: Union[str, metadata.Distribution, None] = None,
-    module: Optional[Any] = None,
+    plugin: str | metadata.Distribution | None = None,
+    module: Any | None = None,
     adapter=False,
 ) -> PluginManifest:
     """Return manifest object given npe1 plugin or package name.
@@ -109,7 +103,7 @@ def manifest_from_npe1(
 
     Parameters
     ----------
-    plugin : Union[str, metadata.Distribution, None]
+    plugin : str | metadata.Distribution | None
         Name of package/plugin to convert.  Or a `metadata.Distribution` object.
         If a string, this function should be prepared to accept both the name of the
         package, and the name of an npe1 `napari.plugin` entry_point. by default None
@@ -122,7 +116,7 @@ def manifest_from_npe1(
         python_names that are not supported natively by npe2. by default False
     """
     if module is not None:
-        modules: List[str] = [module]
+        modules: list[str] = [module]
         package_name = "dynamic"
         plugin_name = getattr(module, "__name__", "dynamic_plugin")
     elif isinstance(plugin, str):
@@ -152,7 +146,7 @@ def manifest_from_npe1(
     else:
         raise ValueError("one of plugin or module must be provided")  # pragma: no cover
 
-    manifests: List[PluginManifest] = []
+    manifests: list[PluginManifest] = []
     for mod_name in modules:
         logger.debug(
             "Discovering contributions for npe1 plugin %r: module %r",
@@ -192,7 +186,7 @@ class HookImplParser:
         """
         self.package = package
         self.plugin_name = plugin_name
-        self.contributions: DefaultDict[str, list] = DefaultDict(list)
+        self.contributions: defaultdict[str, list] = defaultdict(list)
         self.adapter = adapter
 
     def manifest(self) -> PluginManifest:
@@ -211,8 +205,8 @@ class HookImplParser:
                     )
 
     def napari_experimental_provide_theme(self, impl: HookImplementation):
-        ThemeDict = Dict[str, Union[str, Tuple, List]]
-        d: Dict[str, ThemeDict] = impl.function()
+        ThemeDict = dict[str, str | tuple | list]
+        d: dict[str, ThemeDict] = impl.function()
         for name, theme_dict in d.items():
             colors = ThemeColors(**theme_dict)
             clr = colors.background or colors.foreground
@@ -240,9 +234,9 @@ class HookImplParser:
     def napari_provide_sample_data(self, impl: HookImplementation):
         module = sys.modules[impl.function.__module__.split(".", 1)[0]]
 
-        samples: Dict[str, Union[dict, str, Callable]] = impl.function()
+        samples: dict[str, dict | str | Callable] = impl.function()
         for idx, (key, sample) in enumerate(samples.items()):
-            _sample: Union[str, Callable]
+            _sample: str | Callable
             if isinstance(sample, dict):
                 display_name = sample.get("display_name")
                 _sample = sample.get("data")  # type: ignore
@@ -273,7 +267,7 @@ class HookImplParser:
             self.contributions["sample_data"].append(s)
 
     def napari_experimental_provide_function(self, impl: HookImplementation):
-        items: Union[Callable, List[Callable]] = impl.function()
+        items: Callable | list[Callable] = impl.function()
         items = [items] if not isinstance(items, list) else items
 
         for idx, item in enumerate(items):
@@ -303,8 +297,8 @@ class HookImplParser:
                 warnings.warn(msg, stacklevel=2)
 
     def napari_experimental_provide_dock_widget(self, impl: HookImplementation):
-        WidgetCallable = Union[Callable, Tuple[Callable, dict]]
-        items: Union[WidgetCallable, List[WidgetCallable]] = impl.function()
+        WidgetCallable = Callable | tuple[Callable, dict]
+        items: WidgetCallable | list[WidgetCallable] = impl.function()
         if not isinstance(items, list):
             items = [items]  # pragma: no cover
 
@@ -419,7 +413,7 @@ def _is_magicgui_magic_factory(obj):
 
 
 def _python_name(
-    obj: Any, hook: Optional[Callable] = None, hook_idx: Optional[int] = None
+    obj: Any, hook: Callable | None = None, hook_idx: int | None = None
 ) -> str:
     """Get resolvable python name for `obj` returned from an npe1 `hook` implentation.
 
@@ -446,8 +440,8 @@ def _python_name(
     AttributeError
         If a resolvable string cannot be found
     """
-    obj_name: Optional[str] = None
-    mod_name: Optional[str] = None
+    obj_name: str | None = None
+    mod_name: str | None = None
     # first, check the global namespace of the module where the hook was declared
     # if we find `obj` itself, we can just use it.
     if hasattr(hook, "__module__"):
@@ -505,7 +499,7 @@ def _camel_to_spaces(val):
     return _camel_to_spaces_pattern.sub(r" \1", val)
 
 
-def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
+def get_top_module_path(package_name, top_module: str | None = None) -> Path:
     dist = metadata.distribution(package_name)
     if not top_module:
         top_mods = (dist.read_text("top_level.txt") or "").strip().splitlines()
@@ -528,8 +522,8 @@ def get_top_module_path(package_name, top_module: Optional[str] = None) -> Path:
 
 
 def convert_repository(
-    path: Union[Path, str], mf_name: str = "napari.yaml", dry_run=False
-) -> Tuple[PluginManifest, Path]:
+    path: Path | str, mf_name: str = "napari.yaml", dry_run=False
+) -> tuple[PluginManifest, Path]:
     """Convert repository at `path` to new npe2 style."""
     path = Path(path)
 

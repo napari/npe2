@@ -1,8 +1,9 @@
 import contextlib
+from collections.abc import Callable, Sequence
 from inspect import Parameter, Signature
-from typing import Any, Callable, List, Sequence, Type, TypeVar
+from typing import Any, TypeVar
 
-from npe2._pydantic_compat import BaseModel
+from pydantic import BaseModel
 
 from .manifest import contributions
 
@@ -22,7 +23,7 @@ T = TypeVar("T", bound=Callable[..., Any])
 CHECK_ARGS_PARAM = "ensure_args_valid"
 
 
-def _build_decorator(contrib: Type[BaseModel]) -> Callable:
+def _build_decorator(contrib: type[BaseModel]) -> Callable:
     """Create a decorator (e.g. `@implements.reader`) to mark an object as a contrib.
 
     Parameters
@@ -32,24 +33,26 @@ def _build_decorator(contrib: Type[BaseModel]) -> Callable:
     """
     # build a signature based on the fields in this contribution type, mixed with
     # the fields in the CommandContribution
-    contribs: Sequence[Type[BaseModel]] = (contributions.CommandContribution, contrib)
-    params: List[Parameter] = []
+    contribs: Sequence[type[BaseModel]] = (contributions.CommandContribution, contrib)
+    params: list[Parameter] = []
     for contrib in contribs:
         # iterate over the fields in the contribution types
-        for field in contrib.__fields__.values():
+        for name, field in contrib.model_fields.items():
             # we don't need python_name (since that will be gleaned from the function
             # we're decorating) ... and we don't need `command`, since that will just
             # be a string pointing to the contributions.commands entry that we are
             # creating here.
-            if field.name not in {"python_name", "command"}:
+            if name not in {"python_name", "command"}:
                 # ensure that required fields raise a TypeError if they are not provided
-                default = Parameter.empty if field.required else field.get_default()
+                default = (
+                    Parameter.empty if field.is_required() else field.get_default()
+                )
                 # create the parameter and add it to the signature.
                 param = Parameter(
-                    field.name,
+                    name,
                     Parameter.KEYWORD_ONLY,
                     default=default,
-                    annotation=field.outer_type_ or field.type_,
+                    annotation=field.annotation,
                 )
                 params.append(param)
 

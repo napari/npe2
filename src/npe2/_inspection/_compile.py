@@ -1,5 +1,6 @@
+from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import Iterator, List, Sequence, Tuple, Union, cast
+from typing import cast
 
 from npe2.manifest import PluginManifest, contributions
 from npe2.manifest.utils import merge_contributions, merge_manifests
@@ -8,21 +9,21 @@ from ._setuputils import get_package_dir_info
 from ._visitors import find_npe2_module_contributions
 
 
-def find_packages(where: Union[str, Path] = ".") -> List[Path]:
+def find_packages(where: str | Path = ".") -> list[Path]:
     """Return all folders that have an __init__.py file"""
     return [p.parent for p in Path(where).resolve().rglob("**/__init__.py")]
 
 
-def get_package_name(where: Union[str, Path] = ".") -> str:
+def get_package_name(where: str | Path = ".") -> str:
     return get_package_dir_info(where).package_name
 
 
 def compile(
-    src_dir: Union[str, Path],
-    dest: Union[str, Path, None] = None,
+    src_dir: str | Path,
+    dest: str | Path | None = None,
     packages: Sequence[str] = (),
     plugin_name: str = "",
-    template: Union[str, Path, None] = None,
+    template: str | Path | None = None,
 ) -> PluginManifest:
     """Compile plugin manifest from `src_dir`, where is a top-level repo.
 
@@ -75,7 +76,7 @@ def compile(
     if not plugin_name:
         plugin_name = get_package_name(src_path)
 
-    contribs: List[contributions.ContributionPoints] = []
+    contribs: list[contributions.ContributionPoints] = []
     for pkg_path in _packages:
         top_mod = pkg_path.name
         # TODO: add more tests with more complicated package structures
@@ -103,7 +104,7 @@ def compile(
     return mf
 
 
-def _iter_modules(path: Path) -> Iterator[Tuple[Path, str]]:
+def _iter_modules(path: Path) -> Iterator[tuple[Path, str]]:
     """Return all python modules in path"""
     for p in path.glob("*.py"):
         yield p, "" if p.name == "__init__.py" else p.stem

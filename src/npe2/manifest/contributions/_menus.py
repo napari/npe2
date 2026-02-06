@@ -1,6 +1,5 @@
-from typing import Optional, Union
+from pydantic import BaseModel, Field
 
-from npe2._pydantic_compat import BaseModel, Field
 from npe2.manifest.utils import Executable
 
 
@@ -8,20 +7,22 @@ from npe2.manifest.utils import Executable
 class _MenuItem(BaseModel):
     """Generic menu item contribution."""
 
-    when: Optional[str] = Field(
+    when: str | None = Field(
+        default=None,
         description="Condition which must be true to *show* this item in the menu. "
         "Note that ``when`` clauses apply to menus and ``enablement`` clauses to "
         "commands. The ``enablement`` applies to all menus and even keybindings while "
-        "the ``when`` only applies to a single menu."
+        "the ``when`` only applies to a single menu.",
     )
     # TODO: declare groups for every menu exposed by napari:
     # e.g. `2_compare`, `4_search`, `6_cutcopypaste`
-    group: Optional[str] = Field(
+    group: str | None = Field(
+        default=None,
         description="The `group` property defines sorting and grouping of menu items. "
         "The `'navigation'` group is special: it will always be sorted to the "
         "top/beginning of a menu. By default, the order *inside* a group depends on "
         "the `title`. The group-local order of a menu item can be specified by "
-        "appending @<int> to the group identifier: e.g. `group: 'myGroup@2'`."
+        "appending @<int> to the group identifier: e.g. `group: 'myGroup@2'`.",
     )
 
 
@@ -48,11 +49,12 @@ class MenuCommand(_MenuItem, Executable):
     # if command doesn't exist, you get:
     # "Menu item references a command `...` which is not defined in the
     # 'commands' section."
-    alt: Optional[str] = Field(
+    alt: str | None = Field(
+        default=None,
         description="Identifier of an alternative command to execute. "
         "It will be shown and invoked when pressing Alt while opening a menu."
-        "The command must be declared in the 'commands' section"
+        "The command must be declared in the 'commands' section",
     )
 
 
-MenuItem = Union[MenuCommand, Submenu]
+MenuItem = MenuCommand | Submenu
