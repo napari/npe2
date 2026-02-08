@@ -186,7 +186,7 @@ def main(dest: Path = _BUILD):
             schema = json.load(f)
     else:
         try:
-            schema = PluginManifest.schema()
+            schema = PluginManifest.model_json_shema()
         except Exception:
             with urlopen(SCHEMA_URL) as response:
                 schema = json.load(response)
