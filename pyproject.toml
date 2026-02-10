@@ -37,7 +37,7 @@ dependencies = [
     "build>=1",
     "psygnal>=0.3.0",
     "pydantic>2",
-    "pydantic_extra_types",
+    "pydantic_extra_types>2",
     "tomli-w>=1.0.0",
     "tomli; python_version < '3.11'",
     "rich>=13.5.0",
