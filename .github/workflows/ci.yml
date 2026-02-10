@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -e .[testing]
+          uv pip install -e .[testing,docs]
         env:
           UV_RESOLUTION: ${{ matrix.resolution }}
 
