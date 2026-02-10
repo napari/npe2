@@ -23,7 +23,7 @@ jobs:
         run: pipx run check-manifest
 
   test:
-    name: ${{ matrix.platform }} (${{ matrix.python-version }}) ${{ matrix.pydantic }}
+    name: ${{ matrix.platform }} (${{ matrix.python-version }}) ${{ matrix.resolution }}
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
