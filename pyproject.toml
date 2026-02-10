@@ -32,7 +32,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "PyYAML>=5.4",
+    "PyYAML>=6.0",
     "platformdirs>=4.3.0",
     "build>=1",
     "psygnal>=0.3.0",
