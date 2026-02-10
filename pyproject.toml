@@ -32,16 +32,16 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "PyYAML",
-    "platformdirs",
+    "PyYAML>=5.4",
+    "platformdirs>=4.3.0",
     "build>=1",
     "psygnal>=0.3.0",
     "pydantic>1",
     "pydantic_extra_types",
-    "tomli-w",
+    "tomli-w>=1.0.0",
     "tomli; python_version < '3.11'",
-    "rich",
-    "typer",
+    "rich>=13.5.0",
+    "typer>=0.8.0",
 ]
 
 [project.urls]
@@ -51,20 +51,19 @@ repository = "https://github.com/napari/npe2"
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
 [project.optional-dependencies]
 testing = [
-    "magicgui",
+    "magicgui>=0.10.0",
     "napari-plugin-engine",
     "napari-svg==0.1.5",
-    "numpy",
-    "pytest",
-    "pytest-cov",
-    "jsonschema",
-    "pytest-pretty",
-    "build",
-    "pip",
+    "numpy>=1.24.2",
+    "pytest>=9",
+    "pytest-cov>=7.0.0",
+    "jsonschema>=4.20",
+    "pytest-pretty>=1.2.0",
+    "pip>=23.0",
 ]
 dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
 docs = ["Jinja2", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]
-json = ["jsonschema"]
+json = ["jsonschema>=4.20"]
 
 # Entry points
 # https://peps.python.org/pep-0621/#entry-points
