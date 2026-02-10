@@ -41,7 +41,7 @@ dependencies = [
     "tomli-w>=1.0.0",
     "tomli; python_version < '3.11'",
     "rich>=13.5.0",
-    "typer>=0.8.0",
+    "typer>=0.13.0",
 ]
 
 [project.urls]
