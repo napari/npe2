@@ -97,7 +97,7 @@ def test_config_validation(schema, valid, invalid):
 
     match = schema.get("pattern_error_message", None)
     with pytest.raises(ValidationError, match=match):
-        assert cfg.validate_instance(invalid)
+        cfg.validate_instance(invalid)
 
     assert cfg.is_array is ("items" in schema or cfg.type == "array")
     assert cfg.is_object is (cfg.type == "object")
