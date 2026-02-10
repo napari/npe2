@@ -36,7 +36,7 @@ dependencies = [
     "platformdirs>=4.3.0",
     "build>=1",
     "psygnal>=0.3.0",
-    "pydantic>1",
+    "pydantic>2",
     "pydantic_extra_types",
     "tomli-w>=1.0.0",
     "tomli; python_version < '3.11'",
