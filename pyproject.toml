@@ -61,8 +61,8 @@ testing = [
     "pytest-pretty>=1.2.0",
     "pip>=23.0",
 ]
-#dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
-#docs = ["Jinja2>=3.1.0", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]
+dev = ["npe2[testing, docs]"]
+docs = ["Jinja2>=3.1.0", "magicgui>=0.3.3", "furo>=2025.12.19", "jupyter-book>=1.0.3,<2", "sphinx-tabs>=3.4.7"]
 json = ["jsonschema>=4.20"]
 
 # Entry points
