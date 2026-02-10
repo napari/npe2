@@ -57,13 +57,13 @@ testing = [
     "numpy>=1.24.2",
     "pytest>=9",
     "pytest-cov>=7.0.0",
-    "jsonschema>=4.20",
+    "jsonschema>=4.22",
     "pytest-pretty>=1.2.0",
     "pip>=23.0",
 ]
 dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
 docs = ["Jinja2>=3.1.0", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]
-json = ["jsonschema>=4.20"]
+json = ["jsonschema>=4.22"]
 
 # Entry points
 # https://peps.python.org/pep-0621/#entry-points
