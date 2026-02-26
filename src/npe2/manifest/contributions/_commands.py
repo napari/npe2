@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 class CommandContribution(BaseModel):
     """Contribute a **command** (a python callable) consisting of a unique `id`,
-    a `title` and (optionally) a `python_path` that points to a fully qualified python
-    callable.  If a `python_path` is not included in the manifest, it *must* be
+    a `title` and (optionally) a `python_name` that points to a fully qualified python
+    callable.  If a `python_name` is not included in the manifest, it *must* be
     registered during activation with `register_command`.
 
     Note, some other contributions (e.g. `readers`, `writers` and `widgets`) will
