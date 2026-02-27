@@ -32,16 +32,16 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "PyYAML",
-    "platformdirs",
+    "PyYAML>=6.0",
+    "platformdirs>=4.3.0",
     "build>=1",
     "psygnal>=0.3.0",
-    "pydantic>1",
-    "pydantic_extra_types",
-    "tomli-w",
-    "tomli; python_version < '3.11'",
-    "rich",
-    "typer",
+    "pydantic>=2.8",
+    "pydantic_extra_types>=2.8",
+    "tomli-w>=1.0.0",
+    "tomli>=2.0.2; python_version < '3.11'",
+    "rich>=14.0.0",
+    "typer>=0.15.4",
 ]
 
 [project.urls]
@@ -51,20 +51,19 @@ repository = "https://github.com/napari/npe2"
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
 [project.optional-dependencies]
 testing = [
-    "magicgui",
-    "napari-plugin-engine",
+    "npe2[json]",
+    "magicgui>=0.10.0",
+    "napari-plugin-engine>=0.2.0",
     "napari-svg==0.1.5",
-    "numpy",
-    "pytest",
-    "pytest-cov",
-    "jsonschema",
-    "pytest-pretty",
-    "build",
-    "pip",
+    "numpy>=1.24.2",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-pretty>=1.2.0",
+    "pip>=23.0",
 ]
-dev = ["ruff", "ipython", "isort", "mypy", "pre-commit"]
-docs = ["Jinja2", "magicgui>=0.3.3", "furo", "jupyter-book<2", "sphinx-tabs"]
-json = ["jsonschema"]
+dev = ["npe2[testing, docs]"]
+docs = ["Jinja2>=3.1.0", "magicgui>=0.3.3", "furo>=2025.12.19", "jupyter-book>=1.0.3,<2", "sphinx-tabs>=3.4.7"]
+json = ["jsonschema>=4.20"]
 
 # Entry points
 # https://peps.python.org/pep-0621/#entry-points
@@ -87,7 +86,7 @@ ignore = []
 
 [tool.pytest.ini_options]
 filterwarnings = ["error:::npe2"]
-addopts = "-m 'not github_main_only'"
+addopts = ["--maxfail=5",  "--durations=10", "-m", "not github_main_only"]
 markers = [
     "github_main_only: Test to run only on github main (verify it does not break latest napari docs build)",
 ]

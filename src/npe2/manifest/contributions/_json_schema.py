@@ -4,6 +4,8 @@ import builtins
 from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 from pydantic import (
+    AliasChoices,
+    AliasGenerator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -65,6 +67,14 @@ def _to_camel(string: str) -> str:
     return words[0] + "".join(w.capitalize() for w in words[1:])
 
 
+def _to_camel_validation(string: str) -> AliasChoices:
+    camel = _to_camel(string)
+    return AliasChoices(string, camel)
+
+
+TO_CAMEL = AliasGenerator(alias=_to_camel, validation_alias=_to_camel_validation)
+
+
 _CONSTRAINT_FIELDS = {
     "exclusive_minimum",
     "minimum",
@@ -91,7 +101,7 @@ _python_equivalent: dict[str | None, type] = {
 
 
 class _JsonSchemaBase(BaseModel):
-    model_config = ConfigDict(alias_generator=_to_camel, validate_by_name=True)
+    model_config = ConfigDict(alias_generator=TO_CAMEL, validate_by_name=True)
 
     # underscore here to avoid name collision with pydantic's `schema` method
     schema_: str | None = Field(None, alias="$schema")
