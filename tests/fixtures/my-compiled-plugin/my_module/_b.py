@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from npe2 import implements
 else:
-    D = type("D", (), {"__getattr__": lambda *_: (lambda **_: (lambda f: f))})
+    D = type("D", (), {"__getattr__": lambda *_: lambda **_: lambda f: f})
     implements = D()
 
 
