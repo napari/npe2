@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from npe2 import implements
 else:
     # create no-op `implements.anything(**kwargs)` decorator
-    D = type("D", (), {"__getattr__": lambda *_: (lambda **_: (lambda f: f))})
+    D = type("D", (), {"__getattr__": lambda *_: lambda **_: lambda f: f})
     implements = D()
 
 
