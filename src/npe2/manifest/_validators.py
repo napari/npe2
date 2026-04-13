@@ -1,7 +1,5 @@
 import re
 
-from npe2.manifest.contributions._icon import Icon
-
 _package_name = "([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])"
 _python_identifier = "([a-zA-Z_][a-zA-Z_0-9]*)"
 
@@ -66,24 +64,4 @@ def display_name(v: str) -> str:
             "and must not begin or end with an underscore, white space, or "
             "non-word character."
         )
-    return v
-
-
-def icon_path(v: str | Icon | None) -> str | Icon | None:
-    if isinstance(v, str) and v.startswith("http"):
-        if not v.startswith("https://"):
-            raise ValueError(
-                f"{v} is not a valid icon URL. It must start with 'https://'"
-            )
-    if isinstance(v, Icon):
-        if v.light is not None and v.light.startswith("http"):
-            if not v.light.startswith("https://"):
-                raise ValueError(
-                    f"{v.light} is not a valid icon URL. It must start with 'https://'"
-                )
-        if v.dark is not None and v.dark.startswith("http"):
-            if not v.dark.startswith("https://"):
-                raise ValueError(
-                    f"{v.dark} is not a valid icon URL. It must start with 'https://'"
-                )
     return v

@@ -123,7 +123,7 @@ class PluginManifest(ImportExportModel):
         "results, change this to `'hidden'`.",
     )
 
-    icon: Annotated[str | Icon | None, AfterValidator(_validators.icon_path)] = Field(
+    icon: str | Icon | None = Field(
         None,
         description="Icon used to represent this plugin in the UI, on"
         " buttons or in menus. Can be a single string or two different options"
@@ -249,6 +249,26 @@ class PluginManifest(ImportExportModel):
     @field_validator("contributions", mode="before")
     def _coerce_none_contributions(cls, value):
         return ContributionPoints() if value is None else value
+
+    @field_validator("icon", mode="after")
+    def _coerce_icon(cls, value):
+        if isinstance(value, str) and value.startswith("http"):
+            if not value.startswith("https://"):
+                raise ValueError(
+                    f"{value} is not a valid icon URL. It must start with 'https://'"
+                )
+        if isinstance(value, Icon):
+            if value.light is not None and value.light.startswith("http"):
+                if not value.light.startswith("https://"):
+                    raise ValueError(
+                        f"{value.light} is not a valid icon URL. It must start with 'https://'"
+                    )
+            if value.dark is not None and value.dark.startswith("http"):
+                if not value.dark.startswith("https://"):
+                    raise ValueError(
+                        f"{value.dark} is not a valid icon URL. It must start with 'https://'"
+                    )
+        return value
 
     @model_validator(mode="before")
     @classmethod
