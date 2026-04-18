@@ -304,7 +304,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         items = (
             list(return_.value.elts)
             if isinstance(return_.value, ast.List)
-            else [return_.value]  # type: ignore
+            else [return_.value]
         )
 
         for item in items:
@@ -336,7 +336,7 @@ class NPE1PluginModuleVisitor(_DecoratorVisitor):
         items = (
             list(return_.value.elts)
             if isinstance(return_.value, ast.List)
-            else [return_.value]  # type: ignore
+            else [return_.value]
         )
 
         for item in items:

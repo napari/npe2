@@ -107,7 +107,7 @@ def manifest_from_npe1(
         Name of package/plugin to convert.  Or a `metadata.Distribution` object.
         If a string, this function should be prepared to accept both the name of the
         package, and the name of an npe1 `napari.plugin` entry_point. by default None
-    module : Optional[Module]
+    module : Any | None
         namespace object, to directly import (mostly for testing.), by default None
     adapter : bool
         If True, the resulting manifest will be used internally by NPE1Adapter, but
