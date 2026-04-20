@@ -26,7 +26,7 @@ class SubmenuContribution(BaseModel):
         " for light and dark themes. These values may be:"
         "<ul><li> a secure (https) URL </li>"
         "<li>a string in the format `{package}:{resource}`, where `package` and "
-        "`resource` are arguments to `importlib.resources.files(package, resource)` "
+        "`resource` are arguments to `importlib.resources.path(package, resource)` "
         "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
         "shipped with the sdist)"
         "<li> a [superqt](https://github.com/napari/superqt) fonticon key, such as "
