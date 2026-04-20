@@ -1,4 +1,8 @@
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import AfterValidator, BaseModel, Field
+
+from npe2.manifest import _validators
 
 from ._icon import Icon
 
@@ -15,7 +19,7 @@ class SubmenuContribution(BaseModel):
     label: str = Field(
         description="The label of the menu item which leads to this submenu."
     )
-    icon: str | Icon | None = Field(
+    icon: Annotated[str | Icon | None, AfterValidator(_validators.coerce_icon)] = Field(
         None,
         description="Icon used to represent this submenu in the UI, on"
         " buttons or in menus. Can be a single string or two different options"

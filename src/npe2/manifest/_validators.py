@@ -65,3 +65,25 @@ def display_name(v: str) -> str:
             "non-word character."
         )
     return v
+
+
+def coerce_icon(cls, value):
+    if value is None:
+        return None
+    if isinstance(value, str) and value.startswith("http"):
+        if not value.startswith("https://"):
+            raise ValueError(
+                f"{value} is not a valid icon URL. It must start with 'https://'"
+            )
+    # aftervalidator, so it's guaranteed to be of type Icon
+    if value.light is not None and value.light.startswith("http"):
+        if not value.light.startswith("https://"):
+            raise ValueError(
+                f"{value.light} is not a valid icon URL. It must start with 'https://'"
+            )
+    if value.dark is not None and value.dark.startswith("http"):
+        if not value.dark.startswith("https://"):
+            raise ValueError(
+                f"{value.dark} is not a valid icon URL. It must start with 'https://'"
+            )
+    return value

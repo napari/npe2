@@ -71,7 +71,7 @@ class CommandContribution(BaseModel):
         None,
         description="Category string by which the command may be grouped in the UI.",
     )
-    icon: str | Icon | None = Field(
+    icon: Annotated[str | Icon | None, AfterValidator(_validators.coerce_icon)] = Field(
         None,
         description="Icon used to represent this command in the UI, on"
         " buttons or in menus. Can be a single string or two different options"
