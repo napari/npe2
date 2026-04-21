@@ -171,7 +171,8 @@ def _read(
                 # we don't return null layers if the user selected a plugin,
                 # so that we can raise a meaningful error
                 continue
-            return (layer_data, rdr) if return_reader else layer_data
+            if layer_data:
+                return (layer_data, rdr) if return_reader else layer_data
 
     if plugin_name:
         if tried_reader:

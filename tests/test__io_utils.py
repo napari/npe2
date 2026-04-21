@@ -123,6 +123,28 @@ def test_read_fails_with_null_layer():
         io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
 
 
+def test_read_fails_with_reader_returning_none():
+    pm = PluginManager()
+    plugin_name = "none-reader"
+    plugin = DynamicPlugin(plugin_name, plugin_manager=pm)
+    plugin.register()
+
+    def reader_func(path):
+        return None
+
+    @plugin.contribute.reader(filename_patterns=["*.fzzy"])
+    def get_read(path):
+        return reader_func
+
+    with pytest.raises(
+        ValueError, match=f"Reader {plugin_name!r} was selected .* returned no data"
+    ):
+        io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
+
+    with pytest.raises(ValueError, match="No readers returned data"):
+        io_utils._read(["some.fzzy"], stack=False, _pm=pm)
+
+
 def test_read_with_incompatible_reader(uses_sample_plugin):
     paths = ["some.notfzzy"]
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}"
