@@ -24,6 +24,7 @@ class ThemeColors(BaseModel):
     text: Color | None = None
     icon: Color | None = None
     warning: Color | None = None
+    error: Color | None = None
     current: Color | None = None
 
 
