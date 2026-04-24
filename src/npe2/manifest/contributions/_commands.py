@@ -71,13 +71,20 @@ class CommandContribution(BaseModel):
         None,
         description="Category string by which the command may be grouped in the UI.",
     )
-    icon: str | Icon | None = Field(
+    icon: Annotated[str | Icon | None, AfterValidator(_validators.coerce_icon)] = Field(
         None,
-        description="Icon used to represent this command in the UI, on "
-        "buttons or in menus. These may be [superqt](https://github.com/napari/superqt)"
-        " fonticon keys, such as `'fa6s.arrow_down'`; though note that plugins are "
-        "expected to depend on any fonticon libraries they use, e.g "
-        "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6).",
+        description="Icon used to represent this command in the UI, on"
+        " buttons or in menus. Can be a single string or two different options"
+        " for light and dark themes. These values may be:"
+        "<ul><li> a secure (https) URL </li>"
+        "<li>a string in the format `{package}:{resource}`, where `package` and "
+        "`resource` are arguments to `importlib.resources.path(package, resource)` "
+        "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
+        "shipped with the sdist)"
+        "<li> a [superqt](https://github.com/napari/superqt) fonticon key, such as "
+        "`'fa6s.arrow_down'` (though note that plugins are expected to depend on "
+        "any fonticon libraries they use, e.g "
+        "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6))</li></ul>",
     )
     enablement: str | None = Field(
         None,
