@@ -27,6 +27,7 @@ from . import _validators
 from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
 from .contributions import ContributionPoints
+from .contributions._icon import Icon
 from .utils import Executable, Version
 
 __all__ = ("Category",)
@@ -122,17 +123,21 @@ class PluginManifest(ImportExportModel):
         "results, change this to `'hidden'`.",
     )
 
-    icon: Annotated[str, AfterValidator(_validators.icon_path)] = Field(
-        "",
-        description="The path to a square PNG icon of at least 128x128 pixels (256x256 "
-        "for Retina screens). May be one of: "
-        "<ul><li>a secure (https) URL </li>"
-        "<li>a path relative to the manifest file, (must be shipped in the sdist)</li>"
+    icon: Annotated[str | Icon | None, AfterValidator(_validators.coerce_icon)] = Field(
+        None,
+        description="Icon used to represent this plugin in the UI, on"
+        " buttons or in menus. Can be a single string or two different options"
+        " for light and dark themes. These values may be:"
+        "<ul><li> a secure (https) URL </li>"
         "<li>a string in the format `{package}:{resource}`, where `package` and "
-        "`resource` are arguments to `importlib.resources.path(package, resource)`, "
-        "(e.g. `top_module.some_folder:my_logo.png`).</li></ul>",
+        "`resource` are arguments to `importlib.resources.path(package, resource)` "
+        "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
+        "shipped with the sdist)"
+        "<li> a [superqt](https://github.com/napari/superqt) fonticon key, such as "
+        "`'fa6s.arrow_down'` (though note that plugins are expected to depend on "
+        "any fonticon libraries they use, e.g "
+        "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6))</li></ul>",
     )
-
     categories: list[Category] = Field(
         default_factory=list,
         description="A list of categories that this plugin belongs to. This is used to "
