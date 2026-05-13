@@ -87,6 +87,7 @@ contributions:
         text: "#a1ef34"
         icon: "#a1ef34"
         warning: "#f92672"
+        error: "#ff5555"
         current: "#66d9ef"
   sample_data:
     - display_name: Some Random Data (512 x 512)

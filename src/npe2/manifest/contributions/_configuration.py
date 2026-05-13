@@ -6,7 +6,6 @@ from ._json_schema import (
     Draft07JsonSchema,
     JsonType,
     JsonTypeArray,
-    ValidationError,
     _coerce_type_name,
 )
 
@@ -116,9 +115,11 @@ class ConfigurationProperty(Draft07JsonSchema):
 
     def validate_instance(self, instance: object) -> dict:
         """Validate an object (instance) against this schema."""
+        from ._json_schema import ValidationError as JsonSchemaValidationError
+
         try:
             return super().validate_instance(instance)
-        except ValidationError as e:
+        except JsonSchemaValidationError as e:
             if e.validator == "pattern" and self.pattern_error_message:
                 e.message = self.pattern_error_message
             raise e

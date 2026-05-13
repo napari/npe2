@@ -18,11 +18,18 @@ from pydantic import (
 if TYPE_CHECKING:
     from jsonschema.exceptions import ValidationError
     from jsonschema.protocols import Validator
-else:
-    try:
-        from jsonschema.exceptions import ValidationError
-    except ImportError:
-        ValidationError = Exception
+
+
+# use PEP562 to defer the import of jsonschema.exceptions
+def __getattr__(name: str) -> Any:
+    if name == "ValidationError":
+        try:
+            from jsonschema.exceptions import ValidationError as validation_error
+        except ImportError:
+            validation_error = Exception
+        return validation_error
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "Draft04JsonSchema",
