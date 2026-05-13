@@ -67,24 +67,20 @@ def display_name(v: str) -> str:
     return v
 
 
+def _ensure_valid_https(value):
+    if value.startswith("http") and not value.startswith("https://"):
+        raise ValueError(
+            f"{value} is not a valid icon URL. It must start with 'https://'"
+        )
+
+
 def coerce_icon(value):
     if value is None:
         return None
-    if isinstance(value, str) and value.startswith("http"):
-        if not value.startswith("https://"):
-            raise ValueError(
-                f"{value} is not a valid icon URL. It must start with 'https://'"
-            )
-        return value
-    # aftervalidator, so it's guaranteed to be of type Icon
-    if value.light is not None and value.light.startswith("http"):
-        if not value.light.startswith("https://"):
-            raise ValueError(
-                f"{value.light} is not a valid icon URL. It must start with 'https://'"
-            )
-    if value.dark is not None and value.dark.startswith("http"):
-        if not value.dark.startswith("https://"):
-            raise ValueError(
-                f"{value.dark} is not a valid icon URL. It must start with 'https://'"
-            )
+    if isinstance(value, str):
+        _ensure_valid_https(value)
+    if light_url := getattr(value, "light", None):
+        _ensure_valid_https(light_url)
+    if dark_url := getattr(value, "dark", None):
+        _ensure_valid_https(dark_url)
     return value
