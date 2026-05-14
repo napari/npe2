@@ -19,18 +19,19 @@ class SubmenuContribution(BaseModel):
     label: str = Field(
         description="The label of the menu item which leads to this submenu."
     )
-    icon: Annotated[str | Icon | None, AfterValidator(_validators.coerce_icon)] = Field(
-        None,
-        description="Icon used to represent this submenu in the UI, on"
-        " buttons or in menus. Can be a single string or two different options"
-        " for light and dark themes. These values may be:"
-        "<ul><li> a secure (https) URL </li>"
-        "<li>a string in the format `{package}:{resource}`, where `package` and "
-        "`resource` are arguments to `importlib.resources.path(package, resource)` "
-        "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
-        "shipped with the sdist)"
-        "<li> a [superqt](https://github.com/napari/superqt) fonticon key, such as "
-        "`'fa6s.arrow_down'` (though note that plugins are expected to depend on "
-        "any fonticon libraries they use, e.g "
-        "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6))</li></ul>",
+    icon: Annotated[str | Icon | None, AfterValidator(_validators.validate_icon)] = (
+        Field(
+            None,
+            description="Icon used to represent this submenu in the UI, on"
+            " buttons or in menus. Can be a single string or two different options"
+            " for light and dark themes. These values may be:"
+            "<li>a string in the format `{package}:{resource}`, where `package` and "
+            "`resource` are arguments to `importlib.resources.path(package, resource)` "
+            "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
+            "shipped with the sdist)"
+            "<li> a [superqt](https://github.com/napari/superqt) fonticon key, such as "
+            "`'fa6s.arrow_down'` (though note that plugins are expected to depend on "
+            "any fonticon libraries they use, e.g "
+            "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6))</li></ul>",
+        )
     )

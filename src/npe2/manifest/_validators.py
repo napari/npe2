@@ -67,20 +67,24 @@ def display_name(v: str) -> str:
     return v
 
 
-def _ensure_valid_https(value):
-    if value.startswith("http") and not value.startswith("https://"):
+def _ensure_valid_resource(value):
+    if ":" not in value:
         raise ValueError(
-            f"{value} is not a valid icon URL. It must start with 'https://'"
+            f"{value} is not a valid path in the form `package:resource`, "
+            "where `package` and `resource` are arguments to "
+            "`importlib.resources.path(package, resource)` "
+            "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
+            "shipped with the sdist)"
         )
 
 
-def coerce_icon(value):
+def validate_icon(value):
     if value is None:
         return None
     if isinstance(value, str):
-        _ensure_valid_https(value)
-    if light_url := getattr(value, "light", None):
-        _ensure_valid_https(light_url)
-    if dark_url := getattr(value, "dark", None):
-        _ensure_valid_https(dark_url)
+        _ensure_valid_resource(value)
+    if light_url := getattr(value, "light", None) is not None:
+        _ensure_valid_resource(light_url)
+    if dark_url := getattr(value, "dark", None) is not None:
+        _ensure_valid_resource(dark_url)
     return value

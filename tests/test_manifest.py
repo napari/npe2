@@ -185,17 +185,16 @@ def test_visibility():
 def test_icon():
     pm = PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
     assert pm.icon == "my_plugin:myicon.png"
-    pm = PluginManifest(name="myplugin", icon="https://example.com/icon.png")
-    assert pm.icon == "https://example.com/icon.png"
-    with pytest.raises(ValueError, match="not a valid icon URL"):
-        pm = PluginManifest(name="myplugin", icon="http://example.com/bad_icon.png")
     pm = PluginManifest(
         name="myplugin",
-        icon={"dark": "my_plugin:myicon.png", "light": "https://example.com/icon.png"},
+        icon={
+            "dark": "my_plugin:myicon_dark.png",
+            "light": "my_plugin:myicon_light.png",
+        },
     )
     assert isinstance(pm.icon, Icon)
-    assert pm.icon.dark == "my_plugin:myicon.png"
-    assert pm.icon.light == "https://example.com/icon.png"
+    assert pm.icon.dark == "my_plugin:myicon_dark.png"
+    assert pm.icon.light == "my_plugin:myicon_light.png"
 
 
 def test_dotted_plugin_name():

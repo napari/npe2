@@ -69,8 +69,8 @@ def _mutator_writer_invalid_file_extension_2(data):
 
 
 def _mutator_invalid_icon(data):
-    """is not a valid icon URL. It must start with 'https://'"""
-    data["icon"] = "http://example.com/icon.png"
+    """is not a valid path"""
+    data["icon"] = "my_plugin/icon.png"
 
 
 @pytest.mark.parametrize(
