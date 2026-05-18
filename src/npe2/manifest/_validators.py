@@ -83,8 +83,8 @@ def validate_icon(value):
         return None
     if isinstance(value, str):
         _ensure_valid_resource(value)
-    if light_url := getattr(value, "light", None) is not None:
+    if light_url := getattr(value, "light", None):
         _ensure_valid_resource(light_url)
-    if dark_url := getattr(value, "dark", None) is not None:
+    if dark_url := getattr(value, "dark", None):
         _ensure_valid_resource(dark_url)
     return value
