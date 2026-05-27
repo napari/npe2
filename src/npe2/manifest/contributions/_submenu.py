@@ -22,16 +22,16 @@ class SubmenuContribution(BaseModel):
     icon: Annotated[str | Icon | None, AfterValidator(_validators.validate_icon)] = (
         Field(
             None,
-            description="Icon used to represent this submenu in the UI, on"
-            " buttons or in menus. Can be a single string or two different options"
-            " for light and dark themes. These values may be:"
-            "<li>a string in the format `{package}:{resource}`, where `package` and "
+            description="Icon used to represent this command in the UI, on "
+            "buttons or in menus. Can be a single string or two different options "
+            "for light and dark themes. These values may be:"
+            "<ul><li>a string in format `{package}:{resource}`, where `package` and"
             "`resource` are arguments to `importlib.resources.path(package, resource)` "
-            "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
-            "shipped with the sdist)"
+            "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be shipped"
+            "with the wheel, e.g. via the `package-data` entry in pyproject.toml)"
             "<li> a [superqt](https://github.com/napari/superqt) fonticon key, such as "
             "`'fa6s.arrow_down'` (though note that plugins are expected to depend on "
-            "any fonticon libraries they use, e.g "
-            "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6))</li></ul>",
+            "any fonticon libraries they use, e.g. "
+            "[fonticon-fontawesome6](https://github.com/tlambert03/fonticon-fontawesome6))",
         )
     )
