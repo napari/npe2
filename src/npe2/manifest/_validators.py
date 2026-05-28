@@ -68,10 +68,10 @@ def display_name(v: str) -> str:
 
 
 def _ensure_valid_resource(value):
-    if ":" not in value:
+    if "/" in value or (value.count(":") != 1 and value.count(".") != 1):
         raise ValueError(
-            f"{value} is not a valid path in the form `package:resource`, "
-            "where `package` and `resource` are arguments to "
+            f"{value} is not a valid fonticon or iconify key, nor a path in the form "
+            "`package:resource`, where `package` and `resource` are arguments to "
             "`importlib.resources.path(package, resource)` "
             "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
             "shipped with the sdist)"

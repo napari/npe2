@@ -68,9 +68,19 @@ def _mutator_writer_invalid_file_extension_2(data):
     data["contributions"]["writers"][0]["filename_extensions"] = ["."]
 
 
-def _mutator_invalid_icon(data):
-    """is not a valid path"""
+def _mutator_invalid_icon_1(data):
+    """is not a valid"""
     data["icon"] = "my_plugin/icon.png"
+
+
+def _mutator_invalid_icon_2(data):
+    """is not a valid"""
+    data["icon"] = "too:many:colons"
+
+
+def _mutator_invalid_icon_3(data):
+    """is not a valid"""
+    data["icon"] = "too.many.dots.and.no.colons"
 
 
 @pytest.mark.parametrize(
@@ -86,7 +96,9 @@ def _mutator_invalid_icon(data):
         _mutator_writer_invalid_layer_type_constraint,
         _mutator_writer_invalid_file_extension_1,
         _mutator_writer_invalid_file_extension_2,
-        _mutator_invalid_icon,
+        _mutator_invalid_icon_1,
+        _mutator_invalid_icon_2,
+        _mutator_invalid_icon_3,
     ],
 )
 def test_invalid(mutator, uses_sample_plugin):

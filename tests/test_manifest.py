@@ -185,6 +185,7 @@ def test_visibility():
 def test_icon():
     pm = PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
     assert pm.icon == "my_plugin:myicon.png"
+    # different icons per theme should be settable
     pm = PluginManifest(
         name="myplugin",
         icon={
@@ -195,6 +196,10 @@ def test_icon():
     assert isinstance(pm.icon, Icon)
     assert pm.icon.dark == "my_plugin:myicon_dark.png"
     assert pm.icon.light == "my_plugin:myicon_light.png"
+
+    # fonticon and iconify should work
+    pm = PluginManifest(name="myplugin", icon="fa6s.arrow_down")
+    pm = PluginManifest(name="myplugin", icon="fa6-solid:circle")
 
 
 def test_dotted_plugin_name():
