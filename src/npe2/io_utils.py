@@ -164,11 +164,25 @@ def _read(
         read_func = rdr.exec(
             kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
         )
+        # ── Path A: reader refused the file ──────────────────────────────
+        # rdr.exec() returned None -> the reader is skipped; tried_reader stays False.
         if read_func is None:
             continue
 
+        # ── Path B: reader returned a callable -> actually read ───────────
         tried_reader = True
+        # if the reader function raises an exception here, we don't catch
+        # instead, it propagates to the caller.
         layer_data = read_func(paths, stack=stack)
+
+        # ── null layer sentinel [(None,)] ─────────────────────
+        # The reader accepted the file and processed it successfully, but
+        # has no layer data to return. This is a documented contract value
+        # used e.g. by napari's built-in .py reader (scripts modify the
+        # viewer directly) and by third-party plugins that handle files
+        # through non-layer pathways, like opening a widget.
+        # We warn informatively when the user explicitly chose this plugin,
+        # but still return the data so the caller can handle it.
         if plugin_name and _is_null_layer_sentinel(layer_data):
             warnings.warn(
                 f"Reader {plugin_name!r} was selected to open {paths!r}, "
@@ -177,20 +191,31 @@ def _read(
                 "a script or opened a widget instead of producing layers",
                 stacklevel=2,
             )
+
+        # ── reader returns truthy ────────────────────
+        # layer_data is truthy (non-empty list). Return immediately (success).
+        # Covers both null layer sentinel [(None,)]
+        # and genuine [(data, meta, layer_type)] tuples.
         if layer_data:
             return (layer_data, rdr) if return_reader else layer_data
 
+    # ── No reader succeeded ──────────────────────────────────────────────
     if plugin_name:
         if tried_reader:
+            # Path B was reached (reader accepted the file) but the reader
+            # function returned falsy data (e.g. []) or raised and was caught.
             raise ValueError(
                 f"Reader {plugin_name!r} was selected to open "
                 + f"{paths!r}, but returned no data."
             )
         else:
+            # Path A for all readers — none of them accepted the file.
             raise ValueError(
                 f"Reader {plugin_name!r} was selected to open "
                 + f"{paths!r}, but refused the file."
             )
+    # No plugin was specified and no reader returned data (all Path B
+    # returns were skipped because layer_data was falsy).
     raise ValueError(f"No readers returned data for {paths!r}")
 
 
