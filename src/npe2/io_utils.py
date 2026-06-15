@@ -187,7 +187,7 @@ def _read(
             warnings.warn(
                 f"Reader {plugin_name!r} was selected to open {paths!r}, "
                 "but opened no layers`. This may be intentional. If you "
-                "expected layers to be opened, contact the plugin author"
+                "expected layers to be opened, contact the plugin author",
                 stacklevel=2,
             )
 
