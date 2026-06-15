@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
@@ -163,16 +164,21 @@ def _read(
         read_func = rdr.exec(
             kwargs={"path": paths, "stack": stack, "_registry": _pm.commands}
         )
-        if read_func is not None:
-            tried_reader = True
-            # if the reader function raises an exception here, we don't try to catch it
-            layer_data = read_func(paths, stack=stack)
-            if plugin_name and _is_null_layer_sentinel(layer_data):
-                # we don't return null layers if the user selected a plugin,
-                # so that we can raise a meaningful error
-                continue
-            if layer_data:
-                return (layer_data, rdr) if return_reader else layer_data
+        if read_func is None:
+            continue
+
+        tried_reader = True
+        layer_data = read_func(paths, stack=stack)
+        if plugin_name and _is_null_layer_sentinel(layer_data):
+            warnings.warn(
+                f"Reader {plugin_name!r} was selected to open {paths!r}, "
+                "but returned the null layer sentinel `[(None,)]`. This "
+                "may be intentional — e.g. the reader may have executed "
+                "a script or opened a widget instead of producing layers",
+                stacklevel=2,
+            )
+        if layer_data:
+            return (layer_data, rdr) if return_reader else layer_data
 
     if plugin_name:
         if tried_reader:
