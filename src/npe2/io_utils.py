@@ -186,7 +186,7 @@ def _read(
         if plugin_name and _is_null_layer_sentinel(layer_data):
             warnings.warn(
                 f"Reader {plugin_name!r} was selected to open {paths!r}, "
-                "but returned the null layer sentinel `[(None,)]`. This "
+                "but opened no layers`. This "
                 "may be intentional — e.g. the reader may have executed "
                 "a script or opened a widget instead of producing layers",
                 stacklevel=2,
