@@ -81,7 +81,7 @@ def test_read_uses_correct_passed_plugin(tmp_path):
     # the reader from "gooby" returns [(None,)] which is successfully returned
     with pytest.warns(
         UserWarning,
-        match=rf"Reader {short_name!r} was selected .* null layer sentinel",
+        match=rf"Reader {short_name!r} was selected .* no layers",
     ):
         result = io_utils._read(
             ["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm
@@ -126,7 +126,7 @@ def test_read_succeeds_with_null_layer_and_chosen_plugin():
 
     with pytest.warns(
         UserWarning,
-        match=rf"Reader {plugin_name!r} was selected .* null layer sentinel",
+        match=rf"Reader {plugin_name!r} was selected .* no layers",
     ):
         result = io_utils._read(
             ["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm
@@ -176,7 +176,7 @@ def test_read_with_reader_contribution_plugin(uses_sample_plugin):
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.some_reader"
     with pytest.warns(
         UserWarning,
-        match=rf"Reader {chosen_reader!r} was selected .* null layer sentinel",
+        match=rf"Reader {chosen_reader!r} was selected .* no layers",
     ):
         result = read(paths, stack=False, plugin_name=chosen_reader)
     assert result == [(None,)]
