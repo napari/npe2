@@ -7,6 +7,8 @@ from pydantic import ValidationError
 
 from npe2 import PluginManifest
 from npe2.manifest import PackageMetadata
+from npe2.manifest.contributions import CommandContribution, SubmenuContribution
+from npe2.manifest.contributions._icon import Icon
 from npe2.manifest.schema import ENTRY_POINT
 
 SAMPLE_PLUGIN_NAME = "my-plugin"
@@ -182,7 +184,41 @@ def test_visibility():
 
 
 def test_icon():
-    PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
+    pm = PluginManifest(name="myplugin", icon="my_plugin:myicon.png")
+    assert pm.icon == "my_plugin:myicon.png"
+
+    pm = PluginManifest(name="myplugin", icon="my_plugin.module.submodule:myicon.png")
+    assert pm.icon == "my_plugin.module.submodule:myicon.png"
+
+    # different icons per theme should be settable
+    pm = PluginManifest(
+        name="myplugin",
+        icon={
+            "dark": "my_plugin:myicon_dark.png",
+            "light": "my_plugin:myicon_light.png",
+        },
+    )
+    assert isinstance(pm.icon, Icon)
+    assert pm.icon.dark == "my_plugin:myicon_dark.png"
+    assert pm.icon.light == "my_plugin:myicon_light.png"
+
+    # fonticon and iconify should work
+    pm = PluginManifest(name="myplugin", icon="fa6s.arrow_down")
+    pm = PluginManifest(name="myplugin", icon="fa6-solid:circle")
+
+    command = CommandContribution(
+        id="myplugin.command",
+        title="Run command",
+        icon="fa6s.arrow_down",
+    )
+    assert command.icon == "fa6s.arrow_down"
+
+    submenu = SubmenuContribution(
+        id="myplugin.submenu",
+        label="Tools",
+        icon="fa6-solid:circle",
+    )
+    assert submenu.icon == "fa6-solid:circle"
 
 
 def test_dotted_plugin_name():
