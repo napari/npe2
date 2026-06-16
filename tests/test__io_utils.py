@@ -2,6 +2,8 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import logging
+
 import pytest
 
 from npe2 import (
@@ -50,7 +52,7 @@ def test_read_with_no_plugin():
         read(paths, stack=False)
 
 
-def test_read_uses_correct_passed_plugin(tmp_path):
+def test_read_uses_correct_passed_plugin(tmp_path, caplog):
     pm = PluginManager()
     long_name = "gooby-again"
     short_name = "gooby"
@@ -79,14 +81,15 @@ def test_read_uses_correct_passed_plugin(tmp_path):
 
     # "gooby-again" isn't used even though given plugin starts with the same name
     # the reader from "gooby" returns [(None,)] which is successfully returned
-    with pytest.warns(
-        UserWarning,
-        match=rf"Reader {short_name!r} was selected .* no layers",
-    ):
-        result = io_utils._read(
-            ["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm
-        )
+    caplog.set_level(logging.WARNING, logger="npe2.io_utils")
+    result = io_utils._read(
+        ["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm
+    )
     assert result == [(None,)]
+    assert any(
+        rf"Reader {short_name!r} was selected" in rec.message
+        for rec in caplog.records
+    )
 
 
 def test_read_fails_with_refused_reader():
@@ -108,10 +111,10 @@ def test_read_fails_with_refused_reader():
         io_utils._read(["some.fzzy"], stack=False, _pm=pm)
 
 
-def test_read_succeeds_with_null_layer_and_chosen_plugin():
+def test_read_succeeds_with_null_layer_and_chosen_plugin(caplog):
     """A selected reader returning [(None,)] is valid — it signals
     'file processed successfully, nothing to add to the viewer'.
-    A UserWarning is issued when a plugin was explicitly chosen."""
+    A WARNING log message is issued when a plugin was explicitly chosen."""
     pm = PluginManager()
     plugin_name = "always-fails"
     plugin = DynamicPlugin(plugin_name, plugin_manager=pm)
@@ -124,14 +127,15 @@ def test_read_succeeds_with_null_layer_and_chosen_plugin():
     def get_read(path):
         return reader_func
 
-    with pytest.warns(
-        UserWarning,
-        match=rf"Reader {plugin_name!r} was selected .* no layers",
-    ):
-        result = io_utils._read(
-            ["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm
-        )
+    caplog.set_level(logging.WARNING, logger="npe2.io_utils")
+    result = io_utils._read(
+        ["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm
+    )
     assert result == [(None,)]
+    assert any(
+        rf"Reader {plugin_name!r} was selected" in rec.message
+        for rec in caplog.records
+    )
 
 
 def test_read_fails_with_reader_returning_none():
@@ -171,15 +175,16 @@ def test_read_with_no_compatible_reader():
         read(paths, stack=False)
 
 
-def test_read_with_reader_contribution_plugin(uses_sample_plugin):
+def test_read_with_reader_contribution_plugin(uses_sample_plugin, caplog):
     paths = ["some.fzzy"]
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.some_reader"
-    with pytest.warns(
-        UserWarning,
-        match=rf"Reader {chosen_reader!r} was selected .* no layers",
-    ):
-        result = read(paths, stack=False, plugin_name=chosen_reader)
+    caplog.set_level(logging.WARNING, logger="npe2.io_utils")
+    result = read(paths, stack=False, plugin_name=chosen_reader)
     assert result == [(None,)]
+    assert any(
+        rf"Reader {chosen_reader!r} was selected" in rec.message
+        for rec in caplog.records
+    )
 
     # if the wrong contribution is passed we get useful error message
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.not_a_reader"

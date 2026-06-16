@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import warnings
+import logging
 from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from .manifest.contributions import ReaderContribution, WriterContribution
 
+logger = logging.getLogger(__name__)
 
 def read(
     paths: list[str], *, stack: bool, plugin_name: str | None = None
@@ -181,14 +182,11 @@ def _read(
         # used e.g. by napari's built-in .py reader (scripts modify the
         # viewer directly) and by third-party plugins that handle files
         # through non-layer pathways, like opening a widget.
-        # We warn informatively when the user explicitly chose this plugin,
-        # but still return the data so the caller can handle it.
         if plugin_name and _is_null_layer_sentinel(layer_data):
-            warnings.warn(
+            logger.warning(
                 f"Reader {plugin_name!r} was selected to open {paths!r}, "
-                "but opened no layers`. This may be intentional. If you "
-                "expected layers to be opened, contact the plugin author",
-                stacklevel=2,
+                "and opened no layers. This may be intentional. If you "
+                "expected layers to be opened, contact the plugin author."
             )
 
         # ── reader returns truthy ────────────────────
