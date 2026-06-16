@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 def read(
     paths: list[str], *, stack: bool, plugin_name: str | None = None
 ) -> list[LayerData]:

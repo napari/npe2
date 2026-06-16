@@ -1,8 +1,7 @@
 # extra underscore in name to run this first
+import logging
 from pathlib import Path
 from unittest.mock import patch
-
-import logging
 
 import pytest
 
@@ -82,13 +81,10 @@ def test_read_uses_correct_passed_plugin(tmp_path, caplog):
     # "gooby-again" isn't used even though given plugin starts with the same name
     # the reader from "gooby" returns [(None,)] which is successfully returned
     caplog.set_level(logging.WARNING, logger="npe2.io_utils")
-    result = io_utils._read(
-        ["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm
-    )
+    result = io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
     assert result == [(None,)]
     assert any(
-        rf"Reader {short_name!r} was selected" in rec.message
-        for rec in caplog.records
+        rf"Reader {short_name!r} was selected" in rec.message for rec in caplog.records
     )
 
 
@@ -128,13 +124,10 @@ def test_read_succeeds_with_null_layer_and_chosen_plugin(caplog):
         return reader_func
 
     caplog.set_level(logging.WARNING, logger="npe2.io_utils")
-    result = io_utils._read(
-        ["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm
-    )
+    result = io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
     assert result == [(None,)]
     assert any(
-        rf"Reader {plugin_name!r} was selected" in rec.message
-        for rec in caplog.records
+        rf"Reader {plugin_name!r} was selected" in rec.message for rec in caplog.records
     )
 
 
