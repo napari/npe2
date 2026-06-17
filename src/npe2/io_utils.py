@@ -184,7 +184,7 @@ def _read(
         # viewer directly) and by third-party plugins that handle files
         # through non-layer pathways, like opening a widget.
         if plugin_name and _is_null_layer_sentinel(layer_data):
-            logger.warning(
+            logger.debug(
                 f"Reader {plugin_name!r} was selected to open {paths!r}, "
                 "and opened no layers. This may be intentional. If you "
                 "expected layers to be opened, contact the plugin author."

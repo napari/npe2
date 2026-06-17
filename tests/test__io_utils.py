@@ -80,7 +80,7 @@ def test_read_uses_correct_passed_plugin(tmp_path, caplog):
 
     # "gooby-again" isn't used even though given plugin starts with the same name
     # the reader from "gooby" returns [(None,)] which is successfully returned
-    caplog.set_level(logging.WARNING, logger="npe2.io_utils")
+    caplog.set_level(logging.DEBUG, logger="npe2.io_utils")
     result = io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
     assert result == [(None,)]
     assert any(
@@ -110,7 +110,7 @@ def test_read_fails_with_refused_reader():
 def test_read_succeeds_with_null_layer_and_chosen_plugin(caplog):
     """A selected reader returning [(None,)] is valid — it signals
     'file processed successfully, nothing to add to the viewer'.
-    A WARNING log message is issued when a plugin was explicitly chosen."""
+    A DEBUG log message is issued when a plugin was explicitly chosen."""
     pm = PluginManager()
     plugin_name = "always-fails"
     plugin = DynamicPlugin(plugin_name, plugin_manager=pm)
@@ -123,7 +123,7 @@ def test_read_succeeds_with_null_layer_and_chosen_plugin(caplog):
     def get_read(path):
         return reader_func
 
-    caplog.set_level(logging.WARNING, logger="npe2.io_utils")
+    caplog.set_level(logging.DEBUG, logger="npe2.io_utils")
     result = io_utils._read(["some.fzzy"], plugin_name=plugin_name, stack=False, _pm=pm)
     assert result == [(None,)]
     assert any(
@@ -171,7 +171,7 @@ def test_read_with_no_compatible_reader():
 def test_read_with_reader_contribution_plugin(uses_sample_plugin, caplog):
     paths = ["some.fzzy"]
     chosen_reader = f"{SAMPLE_PLUGIN_NAME}.some_reader"
-    caplog.set_level(logging.WARNING, logger="npe2.io_utils")
+    caplog.set_level(logging.DEBUG, logger="npe2.io_utils")
     result = read(paths, stack=False, plugin_name=chosen_reader)
     assert result == [(None,)]
     assert any(
