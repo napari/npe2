@@ -67,14 +67,24 @@ def display_name(v: str) -> str:
     return v
 
 
-def icon_path(v: str) -> str:
-    if not v:
-        return ""
-    if v.startswith("http"):
-        if not v.startswith("https://"):
-            raise ValueError(
-                f"{v} is not a valid icon URL. It must start with 'https://'"
-            )
-        return v
-    assert isinstance(v, str), f"{v} must be a string"
-    return v
+def _ensure_valid_resource(value):
+    if "/" in value or (value.count(":") != 1 and value.count(".") != 1):
+        raise ValueError(
+            f"{value} is not a valid fonticon or iconify key, nor a path in the form "
+            "`package:resource`, where `package` and `resource` are arguments to "
+            "`importlib.resources.path(package, resource)` "
+            "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
+            "shipped with the sdist)"
+        )
+
+
+def validate_icon(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        _ensure_valid_resource(value)
+    if light_url := getattr(value, "light", None):
+        _ensure_valid_resource(light_url)
+    if dark_url := getattr(value, "dark", None):
+        _ensure_valid_resource(dark_url)
+    return value
