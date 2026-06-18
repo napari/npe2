@@ -59,7 +59,6 @@ def read(
     ValueError
         If no readers are found or none return data
     """
-    assert isinstance(paths, list)
     return _read(paths, plugin_name=plugin_name, stack=stack)
 
 
