@@ -196,6 +196,26 @@ def test_warn_on_register_disabled(uses_sample_plugin, plugin_manager: PluginMan
         plugin_manager.register(mf)
 
 
+def test_iter_compatible_readers_pathlib(
+    uses_sample_plugin, plugin_manager: PluginManager
+):
+    """`iter_compatible_readers` accepts a single Path and a list of Paths."""
+    from pathlib import Path
+
+    expected = f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+    cmds = [r.command for r in plugin_manager.iter_compatible_readers(Path("a.fzzy"))]
+    assert expected in cmds
+
+    cmds = [
+        r.command
+        for r in plugin_manager.iter_compatible_readers(
+            [Path("a.fzzy"), Path("b.fzzy")]
+        )
+    ]
+    assert expected in cmds
+
+
 def test_plugin_manager_dict(uses_sample_plugin, plugin_manager: PluginManager):
     """Test exporting the plugin manager state with `dict()`."""
     d = plugin_manager.dict()
