@@ -115,10 +115,15 @@ class _ContributionsIndex:
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
 
-    def iter_compatible_readers(self, paths: list[str]) -> Iterator[ReaderContribution]:
+    def iter_compatible_readers(
+        self, paths: list[PathLike]
+    ) -> Iterator[ReaderContribution]:
         assert isinstance(paths, list)
         if not paths:
             return  # pragma: no cover
+
+        # normalise Path -> str (urlparse/fnmatch and reader plugins expect str)
+        paths = [os.fspath(p) for p in paths]
 
         if len({Path(i).suffix for i in paths}) > 1:
             raise ValueError(
@@ -621,13 +626,13 @@ class PluginManager:
             yield from mf.contributions.themes or ()
 
     def iter_compatible_readers(
-        self, path: PathLike | Sequence[str]
+        self, path: PathLike | Sequence[PathLike]
     ) -> Iterator[ReaderContribution]:
         """Iterate over ReaderContributions compatible with `path`.
 
         Parameters
         ----------
-        path : PathLike | Sequence[str]
+        path : PathLike | Sequence[PathLike]
             Pathlike or list of pathlikes, with file(s) to read.
         """
         if isinstance(path, (str, Path)):
@@ -661,7 +666,10 @@ class PluginManager:
                 yield mf.name, mf.contributions.sample_data
 
     def get_writer(
-        self, path: str, layer_types: Sequence[str], plugin_name: str | None = None
+        self,
+        path: PathLike,
+        layer_types: Sequence[str],
+        plugin_name: str | None = None,
     ) -> tuple[WriterContribution | None, str]:
         """Get Writer contribution appropriate for `path`, and `layer_types`.
 
@@ -673,7 +681,7 @@ class PluginManager:
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Path to write
         layer_types : Sequence[str]
             Sequence of layer type strings (e.g. ['image', 'labels'])
@@ -686,6 +694,8 @@ class PluginManager:
         Tuple[Optional[WriterContribution], str]
             WriterContribution and path that will be written.
         """
+        # normalise Path -> str for suffix matching and `path + ext` below
+        path = os.fspath(path) if path else ""
         ext = Path(path).suffix.lower() if path else ""
 
         for writer in self.iter_compatible_writers(layer_types):

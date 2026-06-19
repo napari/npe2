@@ -85,6 +85,34 @@ def test_read_uses_correct_passed_plugin(tmp_path):
         io_utils._read(["some.fzzy"], plugin_name=short_name, stack=False, _pm=pm)
 
 
+def test_pathlib_normalized_to_str_for_plugins():
+    """Plugins must keep receiving ``str`` even when callers pass ``Path``.
+
+    Existing reader plugins assume ``str`` (e.g. ``path.startswith(...)``), so
+    npe2 normalises ``pathlib.Path`` to ``str`` before dispatching.
+    """
+    pm = PluginManager()
+    plugin = DynamicPlugin("str-only", plugin_manager=pm)
+    plugin.register()
+
+    received: dict = {}
+
+    @plugin.contribute.reader(filename_patterns=["*.fzzy"])
+    def get_read(path):
+        received["getter"] = path
+
+        def reader_func(paths):
+            received["reader"] = paths
+            return [(None,)]
+
+        return reader_func
+
+    io_utils._read([Path("some.fzzy")], stack=False, _pm=pm)
+    assert isinstance(received["getter"], str)
+    # the reader function receives the (normalised) list of str paths
+    assert all(isinstance(p, str) for p in received["reader"])
+
+
 def test_read_fails_with_refused_reader():
     pm = PluginManager()
     plugin_name = "always-fails"
@@ -225,6 +253,25 @@ def test_read_list(uses_sample_plugin):
     assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
 
 
+def test_read_pathlib(uses_sample_plugin):
+    """pathlib.Path inputs are accepted, not only str."""
+    assert read([Path("some.fzzy")], stack=False) == [(None,)]
+
+
+def test_read_return_reader_pathlib(uses_sample_plugin):
+    """pathlib.Path inputs are accepted by read_get_reader (npe1 path)."""
+    data, reader = read_get_reader(Path("some.fzzy"))
+    assert data == [(None,)]
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+
+def test_read_list_pathlib(uses_sample_plugin):
+    """A stacked list of pathlib.Path inputs is accepted."""
+    data, reader = read_get_reader([Path("some.fzzy"), Path("other.fzzy")])
+    assert data == [(None,)]
+    assert reader.command == f"{SAMPLE_PLUGIN_NAME}.some_reader"
+
+
 null_image: FullLayerData = ([], {}, "image")
 
 
@@ -234,6 +281,17 @@ def test_writer_exec(uses_sample_plugin):
     assert result == ["test.tif"]
 
     result, contrib = write_get_writer("test.tif", [null_image, null_image])
+    assert result == ["test.tif"]
+    assert contrib.command == f"{SAMPLE_PLUGIN_NAME}.my_writer"
+
+
+def test_writer_exec_pathlib(uses_sample_plugin):
+    """pathlib.Path inputs are accepted by the write helpers, returning str."""
+    result = write(Path("test.tif"), [null_image, null_image])
+    assert result == ["test.tif"]
+    assert all(isinstance(p, str) for p in result)
+
+    result, contrib = write_get_writer(Path("test.tif"), [null_image, null_image])
     assert result == ["test.tif"]
     assert contrib.command == f"{SAMPLE_PLUGIN_NAME}.my_writer"
 

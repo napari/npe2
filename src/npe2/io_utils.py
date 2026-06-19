@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
@@ -11,7 +12,7 @@ from typing import (
 
 from . import PluginManager
 from .manifest.utils import v1_to_v2
-from .types import FullLayerData, LayerData
+from .types import FullLayerData, LayerData, PathLike
 
 if TYPE_CHECKING:
     import napari.layers
@@ -19,14 +20,27 @@ if TYPE_CHECKING:
     from .manifest.contributions import ReaderContribution, WriterContribution
 
 
+def _normalize_paths(paths: PathLike | Sequence[PathLike]) -> str | list[str]:
+    """Normalise ``PathLike`` input to ``str`` for downstream/plugin use.
+
+    npe2 accepts ``str`` or ``pathlib.Path`` at its public API, but reader and
+    writer plugins (and the internal matching logic) expect ``str``. ``Path``
+    objects are converted with ``os.fspath``; ``str`` (including remote URLs)
+    is returned unchanged.
+    """
+    if isinstance(paths, (str, os.PathLike)):
+        return os.fspath(paths)
+    return [os.fspath(p) for p in paths]
+
+
 def read(
-    paths: list[str], *, stack: bool, plugin_name: str | None = None
+    paths: Sequence[PathLike], *, stack: bool, plugin_name: str | None = None
 ) -> list[LayerData]:
     """Try to read file at `path`, with plugins offering a ReaderContribution.
 
     Parameters
     ----------
-    paths : list of str
+    paths : list of str or pathlib.Path
         Path to the file or resource being read.
     stack : bool
         Should the readers stack the read files.
@@ -45,17 +59,18 @@ def read(
     ValueError
         If no readers are found or none return data
     """
-    assert isinstance(paths, list)
     return _read(paths, plugin_name=plugin_name, stack=stack)
 
 
 def read_get_reader(
-    path: str | Sequence[str],
+    path: PathLike | Sequence[PathLike],
     *,
     plugin_name: str | None = None,
     stack: bool | None = None,
 ) -> tuple[list[LayerData], ReaderContribution]:
     """Variant of `read` that also returns the `ReaderContribution` used."""
+    # normalise Path -> str before the assertions / dispatch below
+    path = _normalize_paths(path)
     if stack is None:
         # "npe1" old path
         # Napari 0.4.15 and older, hopefully we can drop this and make stack mandatory
@@ -71,7 +86,7 @@ def read_get_reader(
 
 
 def write(
-    path: str,
+    path: PathLike,
     layer_data: list[FullLayerData | napari.layers.Layer],
     *,
     plugin_name: str | None = None,
@@ -80,7 +95,7 @@ def write(
 
     Parameters
     ----------
-    path : str
+    path : str or pathlib.Path
         The path (file, directory, url) to write.
     layer_data : list of layer data tuples
         List of tuples in the form (data, metadata_dict, layer_type_string)
@@ -103,7 +118,7 @@ def write(
 
 
 def write_get_writer(
-    path: str,
+    path: PathLike,
     layer_data: list[FullLayerData | napari.layers.Layer],
     *,
     plugin_name: str | None = None,
@@ -117,7 +132,7 @@ def write_get_writer(
 
 @overload
 def _read(
-    paths: str | Sequence[str],
+    paths: PathLike | Sequence[PathLike],
     *,
     stack: bool,
     plugin_name: str | None = None,
@@ -128,7 +143,7 @@ def _read(
 
 @overload
 def _read(
-    paths: str | Sequence[str],
+    paths: PathLike | Sequence[PathLike],
     *,
     stack: bool,
     plugin_name: str | None = None,
@@ -138,7 +153,7 @@ def _read(
 
 
 def _read(
-    paths: str | Sequence[str],
+    paths: PathLike | Sequence[PathLike],
     *,
     stack: bool,
     plugin_name: str | None = None,
@@ -148,6 +163,9 @@ def _read(
     """Execute the `read...` functions above."""
     if _pm is None:
         _pm = PluginManager.instance()
+
+    # normalise Path -> str so reader plugins receive str
+    paths = _normalize_paths(paths)
 
     # get readers compatible with paths and chosen plugin - raise errors if
     # choices are invalid or there's nothing to try
@@ -189,7 +207,9 @@ def _read(
 
 
 def _get_compatible_readers_by_choice(
-    plugin_name: str | None, paths: str | Sequence[str], pm: PluginManager
+    plugin_name: str | None,
+    paths: PathLike | Sequence[PathLike],
+    pm: PluginManager,
 ):
     """Returns compatible readers filtered by validated plugin choice.
 
@@ -295,7 +315,7 @@ def _is_null_layer_sentinel(layer_data: Any) -> bool:
 
 @overload
 def _write(
-    path: str,
+    path: PathLike,
     layer_data: list[FullLayerData | napari.layers.Layer],
     *,
     plugin_name: str | None = None,
@@ -306,7 +326,7 @@ def _write(
 
 @overload
 def _write(
-    path: str,
+    path: PathLike,
     layer_data: list[FullLayerData | napari.layers.Layer],
     *,
     plugin_name: str | None = None,
@@ -316,7 +336,7 @@ def _write(
 
 
 def _write(
-    path: str,
+    path: PathLike,
     layer_data: list[FullLayerData | napari.layers.Layer],
     *,
     plugin_name: str | None = None,
@@ -327,6 +347,9 @@ def _write(
         raise ValueError("Must provide layer data")
     if _pm is None:
         _pm = PluginManager.instance()
+
+    # normalise Path -> str so writer plugins receive str
+    path = os.fspath(path)
 
     _layer_tuples: list[FullLayerData] = [
         (

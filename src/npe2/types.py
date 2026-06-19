@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pathlib
 from collections.abc import Callable, Mapping, Sequence
 from typing import (
     TYPE_CHECKING,
@@ -17,8 +18,9 @@ if TYPE_CHECKING:
 
 # General types
 
-# PathLike = Union[str, pathlib.Path]  # we really have to pick one
-PathLike = str
+# Accept str or pathlib.Path at the public API; paths are normalised to str
+# internally before plugin dispatch (see io_utils / _plugin_manager).
+PathLike = str | pathlib.Path
 PathOrPaths = PathLike | Sequence[PathLike]
 PythonName = NewType("PythonName", str)
 
