@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
 )
-from unittest.mock import patch
 from urllib import error, request
 from zipfile import ZipFile
 
@@ -125,6 +124,8 @@ def _build_wheel(src: str | Path) -> Path:
             kwargs["stdout"] = subprocess.DEVNULL
             kwargs["stderr"] = subprocess.DEVNULL
             super().__init__(*args, **kwargs)
+
+    from unittest.mock import patch
 
     with patch("subprocess.Popen", _QuietPopen), _guard_cwd():
         dist = Path(src) / "dist"
