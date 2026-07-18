@@ -20,7 +20,7 @@ def test_cli_validate_ok(sample_path, debug, imports, monkeypatch):
         m.setattr(sys, "path", [*sys.path, str(sample_path)])
         result = runner.invoke(app, cmd)
     assert "✔ Manifest for 'My Plugin' valid!" in result.stdout
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output_bytes
 
 
 def test_cli_validate_invalid(tmp_path, capsys):
@@ -184,7 +184,7 @@ def test_cli_cache_clear_named(mock_cache):
 )
 def test_cli_list(format, fields, uses_npe1_plugin):
     result = runner.invoke(app, ["list", "-f", format, "--fields", fields])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output_bytes
     assert "npe1-plugin" in result.output
     if fields and "author" in fields and format != "compact":
         assert "author" in result.output.lower()
