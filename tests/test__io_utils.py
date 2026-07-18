@@ -286,6 +286,50 @@ def test_read_list_pathlib(uses_sample_plugin):
 null_image: FullLayerData = ([], {}, "image")
 
 
+def test_get_writer_compound_extension():
+    """Writer selection prefers the longest matching extension, so ``.ome.tiff``
+    and ``.ome.zarr`` win over higher-priority plain ``.tiff`` / ``.zarr``
+    writers. Regression test for napari/napari#9088.
+    """
+    pm = PluginManager()
+    with DynamicPlugin(name="fmt-plugin", plugin_manager=pm) as plg:
+        # Registered first, so the plain writers also have higher priority.
+        @plg.contribute.writer(
+            filename_extensions=["*.tif", "*.tiff"], layer_types=["image"]
+        )
+        def tiff_writer(path, data): ...
+
+        @plg.contribute.writer(filename_extensions=["*.zarr"], layer_types=["image"])
+        def zarr_writer(path, data): ...
+
+        @plg.contribute.writer(
+            filename_extensions=["*.ome.tif", "*.ome.tiff"], layer_types=["image"]
+        )
+        def ome_tiff_writer(path, data): ...
+
+        @plg.contribute.writer(
+            filename_extensions=["*.ome.zarr"], layer_types=["image"]
+        )
+        def ome_zarr_writer(path, data): ...
+
+        # (path, expected writer command, expected returned path)
+        cases = [
+            ("img.ome.tiff", "fmt-plugin.ome_tiff_writer", "img.ome.tiff"),
+            ("img.ome.tif", "fmt-plugin.ome_tiff_writer", "img.ome.tif"),
+            ("img.tiff", "fmt-plugin.tiff_writer", "img.tiff"),
+            ("img.tif", "fmt-plugin.tiff_writer", "img.tif"),
+            ("img.ome.zarr", "fmt-plugin.ome_zarr_writer", "img.ome.zarr"),
+            ("img.zarr", "fmt-plugin.zarr_writer", "img.zarr"),
+            # No extension: first writer wins, its default extension appended.
+            ("img", "fmt-plugin.tiff_writer", "img.tif"),
+        ]
+        for path, expected_cmd, expected_out in cases:
+            writer, out = pm.get_writer(path, ["image"])
+            assert writer is not None, f"no writer selected for {path!r}"
+            assert writer.command == expected_cmd, path
+            assert out == expected_out, path
+
+
 def test_writer_exec(uses_sample_plugin):
     # the sample writer knows how to handle two image layers
     result = write("test.tif", [null_image, null_image])
