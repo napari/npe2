@@ -330,6 +330,44 @@ def test_get_writer_compound_extension():
             assert out == expected_out, path
 
 
+def test_get_writer_plugin_name_and_directory():
+    """Cover plugin_name filtering (with and without an extension) and the
+    no-extension directory writer path in get_writer.
+    """
+    pm = PluginManager()
+    with (
+        DynamicPlugin(name="aaa", plugin_manager=pm) as a,
+        DynamicPlugin(name="bbb", plugin_manager=pm) as b,
+    ):
+        # "aaa" is registered first, so it is tried (and skipped) before "bbb".
+        @a.contribute.writer(filename_extensions=["*.tif"], layer_types=["image"])
+        def a_writer(path, data): ...
+
+        @b.contribute.writer(filename_extensions=["*.tif"], layer_types=["image"])
+        def b_writer(path, data): ...
+
+        # a directory writer (no extensions) that accepts several image layers
+        @b.contribute.writer(layer_types=["image{2,3}"])
+        def b_dir_writer(path, data): ...
+
+        # plugin_name skips aaa's writer even though it also matches ".tif"
+        writer, _ = pm.get_writer("x.tif", ["image"], plugin_name="bbb")
+        assert writer is not None
+        assert writer.command == "bbb.b_writer"
+
+        # plugin_name filtering on the no-extension, single-layer path
+        writer, out = pm.get_writer("noext", ["image"], plugin_name="bbb")
+        assert writer is not None
+        assert writer.command == "bbb.b_writer"
+        assert out == "noext.tif"
+
+        # no extension + multiple layers selects the directory writer
+        writer, out = pm.get_writer("some_dir", ["image", "image"])
+        assert writer is not None
+        assert writer.command == "bbb.b_dir_writer"
+        assert out == "some_dir"
+
+
 def test_writer_exec(uses_sample_plugin):
     # the sample writer knows how to handle two image layers
     result = write("test.tif", [null_image, null_image])
