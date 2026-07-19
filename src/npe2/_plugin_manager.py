@@ -698,7 +698,7 @@ class PluginManager:
         path = os.fspath(path) if path else ""
         # Match against the whole filename rather than `Path.suffix`, so a
         # compound extension like ".ome.tiff" is not shadowed by a ".tiff" writer.
-        name = os.path.basename(path).lower()
+        filename = os.path.basename(path).lower()
         has_ext = bool(Path(path).suffix)
 
         if has_ext:
@@ -710,7 +710,9 @@ class PluginManager:
                 if plugin_name and not writer.command.startswith(plugin_name):
                     continue
                 matched = [
-                    e for e in writer.filename_extensions if name.endswith(e.lower())
+                    e
+                    for e in writer.filename_extensions
+                    if filename.endswith(e.lower())
                 ]
                 if matched and (longest := max(len(e) for e in matched)) > best_len:
                     best_writer, best_len = writer, longest
