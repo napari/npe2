@@ -1,11 +1,11 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from npe2.manifest.utils import Executable
 
 
-class LayerType(str, Enum):
+class LayerType(StrEnum):
     graph = "graph"
     image = "image"
     labels = "labels"
