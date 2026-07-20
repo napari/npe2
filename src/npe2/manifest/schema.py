@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager, suppress
-from enum import Enum
+from enum import StrEnum
 from importlib import metadata, util
 from logging import getLogger
 from pathlib import Path
@@ -40,7 +40,7 @@ ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
 
 
-class Category(str, Enum):
+class Category(StrEnum):
     """Broad plugin categories, values for PluginManifest.categories."""
 
     # drive devices (webcams, microscopes, etc) to acquire data
