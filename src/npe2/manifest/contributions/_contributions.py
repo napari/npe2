@@ -45,7 +45,7 @@ class ContributionPoints(BaseModel):
     submenus: list[SubmenuContribution] | None = None
     keybindings: list[KeyBindingContribution] | None = Field(None, hide_docs=True)
 
-    configuration: ConfigurationContribution|None = None
+    configuration: ConfigurationContribution | None = None
 
     @field_validator("configuration", mode="before")
     @classmethod
