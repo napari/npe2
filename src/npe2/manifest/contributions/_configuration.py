@@ -132,12 +132,6 @@ class ConfigurationContribution(BaseModel):
     Configuration contributions are used to generate the settings UI.
     """
 
-    title: str = Field(
-        ...,
-        description="The heading used for this configuration category. Words like "
-        '"Plugin", "Configuration", and "Settings" are redundant and should not be'
-        "used in your title.",
-    )
     properties: dict[str, ConfigurationProperty] = Field(
         ...,
         description="Configuration properties. In the settings UI, your configuration "
