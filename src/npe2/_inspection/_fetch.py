@@ -112,8 +112,9 @@ def _guard_cwd() -> Iterator[None]:
 
 def _build_wheel(src: str | Path) -> Path:
     """Build a wheel from a source directory and extract it into dest."""
-    from build.__main__ import build_package
     from unittest.mock import patch
+
+    from build.__main__ import build_package
 
     dest = Path(src) / "extracted_wheel"
 
