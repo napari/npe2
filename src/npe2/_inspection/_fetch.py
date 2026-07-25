@@ -113,6 +113,7 @@ def _guard_cwd() -> Iterator[None]:
 def _build_wheel(src: str | Path) -> Path:
     """Build a wheel from a source directory and extract it into dest."""
     from build.__main__ import build_package
+    from unittest.mock import patch
 
     dest = Path(src) / "extracted_wheel"
 
@@ -123,8 +124,6 @@ def _build_wheel(src: str | Path) -> Path:
             kwargs["stdout"] = subprocess.DEVNULL
             kwargs["stderr"] = subprocess.DEVNULL
             super().__init__(*args, **kwargs)
-
-    from unittest.mock import patch
 
     with patch("subprocess.Popen", _QuietPopen), _guard_cwd():
         dist = Path(src) / "dist"
