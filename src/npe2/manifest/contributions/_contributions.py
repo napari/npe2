@@ -45,16 +45,7 @@ class ContributionPoints(BaseModel):
     submenus: list[SubmenuContribution] | None = None
     keybindings: list[KeyBindingContribution] | None = Field(None, hide_docs=True)
 
-    configuration: list[ConfigurationContribution] = Field(
-        default_factory=list,
-        hide_docs=True,
-        description="Configuration options for this plugin."
-        "This section can either be a single object, representing a single category of"
-        "settings, or an array of objects, representing multiple categories of"
-        "settings. If there are multiple categories of settings, the Settings editor"
-        "will show a submenu in the table of contents for that extension, and the title"
-        "keys will be used for the submenu entry names.",
-    )
+    configuration: ConfigurationContribution|None = None
 
     @field_validator("configuration", mode="before")
     @classmethod

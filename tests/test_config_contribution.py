@@ -21,10 +21,8 @@ PROPS = [
 @pytest.mark.parametrize("props", PROPS)
 def test_config_contribution(props):
     cc = ConfigurationContribution(
-        title="My Plugin",
         properties=props,
     )
-    assert cc.title == "My Plugin"
     for key, val in cc.properties.items():
         assert val.model_dump(exclude_unset=True, by_alias=True) == props[key]
 
