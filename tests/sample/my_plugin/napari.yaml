@@ -31,8 +31,7 @@ contributions:
       title: Create widget from my function
       python_name: my_plugin:make_widget_from_function
   configuration:
-    - title: My Plugin
-      properties:
+    - properties:
         my_plugin.reader.lazy:
           type: boolean
           default: false
