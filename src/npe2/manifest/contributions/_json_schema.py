@@ -36,7 +36,7 @@ __all__ = [
     "ValidationError",
 ]
 
-JsonType = Literal["boolean", "integer", "null", "number", "string"]
+JsonType = Literal["boolean", "integer", "number", "string"]
 JsonTypeArray = conlist(JsonType, min_length=1)
 
 PY_NAME_TO_JSON_NAME = {
@@ -44,8 +44,6 @@ PY_NAME_TO_JSON_NAME = {
     "int": "integer",
     "float": "number",
     "str": "string",
-    "NoneType": "null",
-    "None": "null",
 }
 
 
@@ -89,7 +87,6 @@ _CONSTRAINT_FIELDS = {
 _python_equivalent: dict[str | None, type] = {
     "boolean": bool,
     "integer": int,
-    "null": type(None),
     "number": float,
     "string": str,
     None: object,
