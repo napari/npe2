@@ -12,7 +12,7 @@ name = "npe2"
 dynamic = ["version"]
 description = "napari plugin engine v2"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Talley Lambert", email = "talley.lambert@gmail.com" },
@@ -24,7 +24,6 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -39,7 +38,6 @@ dependencies = [
     "pydantic>=2.8,!=2.11.*",  # See rationale: https://github.com/napari/npe2/issues/448#issuecomment-4189746861
     "pydantic_extra_types>=2.8",
     "tomli-w>=1.0.0",
-    "tomli>=2.0.2; python_version < '3.11'",
     "rich>=14.0.0",
     "typer>=0.15.4",
 ]
@@ -94,7 +92,7 @@ markers = [
 # https://github.com/charliermarsh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 src = ["src/npe2", "tests"]
 lint.select = [

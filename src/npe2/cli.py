@@ -1,7 +1,7 @@
 import builtins
 import warnings
 from collections.abc import Iterator, Sequence
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -51,7 +51,7 @@ SYNTAX_THME = "monokai"
 SYNTAX_BACKGROUND = "black"
 
 
-class Format(str, Enum):
+class Format(StrEnum):
     """Valid manifest file formats."""
 
     yaml = "yaml"
@@ -59,7 +59,7 @@ class Format(str, Enum):
     toml = "toml"
 
 
-class ListFormat(str, Enum):
+class ListFormat(StrEnum):
     """Valid out formats for `npe2 list`."""
 
     table = "table"

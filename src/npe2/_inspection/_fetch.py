@@ -4,7 +4,6 @@ import io
 import json
 import os
 import subprocess
-import sys
 import tempfile
 from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
@@ -15,7 +14,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
 )
-from unittest.mock import patch
 from urllib import error, request
 from zipfile import ZipFile
 
@@ -114,6 +112,8 @@ def _guard_cwd() -> Iterator[None]:
 
 def _build_wheel(src: str | Path) -> Path:
     """Build a wheel from a source directory and extract it into dest."""
+    from unittest.mock import patch
+
     from build.__main__ import build_package
 
     dest = Path(src) / "extracted_wheel"
@@ -383,10 +383,7 @@ def _tmp_targz_download(url: str) -> Iterator[Path]:
 
     with tempfile.TemporaryDirectory() as td, request.urlopen(url) as f:
         with tarfile.open(fileobj=f, mode="r:gz") as tar:
-            if sys.version_info >= (3, 11):
-                tar.extractall(td, filter="data")
-            else:
-                tar.extractall(td)
+            tar.extractall(td, filter="data")
             yield Path(td)
 
 
