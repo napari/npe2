@@ -84,12 +84,11 @@ _CONSTRAINT_FIELDS = {
     "max_length",
 }
 
-_python_equivalent: dict[str | None, type] = {
+_python_equivalent: dict[str, type] = {
     "boolean": bool,
     "integer": int,
     "number": float,
     "string": str,
-    None: object,
 }
 
 
