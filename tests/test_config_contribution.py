@@ -40,15 +40,6 @@ def test_warn_on_refs_defs():
 
 
 CASES = [
-    (
-        {
-            "type": str,
-            "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$",
-            "pattern_error_message": "custom error",
-        },
-        "555-1212",
-        "(888)555-1212 ext. 532",
-    ),
     ({"type": "string", "minLength": 2}, "AB", "A"),
     ({"type": "string", "maxLength": 3}, "AB", "ABCD"),
     ({"type": "integer"}, 42, 3.123),
@@ -56,36 +47,6 @@ CASES = [
     ({"type": int, "multipleOf": 10}, 30, 23),
     ({"type": "number", "minimum": 100}, 100, 99),
     ({"type": "number", "exclusiveMaximum": 100}, 99, 100),
-    (
-        {"properties": {"number": {"type": "number"}}},
-        {"number": 1600},
-        {"number": "1600"},
-    ),
-    (
-        {
-            "type": dict,
-            "properties": {
-                "number": {"type": "number"},
-            },
-            "additional_properties": False,
-        },
-        {"number": 1600},
-        {"number": 1600, "street_name": "Pennsylvania"},
-    ),
-    ({"type": "array"}, [3, "diff", {"types": "of values"}], {"Not": "an array"}),
-    ({"items": {"type": "number"}}, [1, 2, 3, 4, 5], [1, 2, "3", 4, 5]),
-    (
-        {
-            "items": [
-                {"type": "number"},
-                {"type": "string"},
-                {"enum": ["Street", "Avenue", "Boulevard"]},
-                {"enum": ["NW", "NE", "SW", "SE"]},
-            ]
-        },
-        [1600, "Pennsylvania", "Avenue", "NW"],
-        [24, "Sussex", "Drive"],
-    ),
     ({"type": [bool, int]}, True, "True"),
 ]
 
@@ -95,12 +56,9 @@ def test_config_validation(schema, valid, invalid):
     cfg = ConfigurationProperty(**schema)
     assert cfg.validate_instance(valid) == valid
 
-    match = schema.get("pattern_error_message", None)
-    with pytest.raises(ValidationError, match=match):
+    with pytest.raises(ValidationError):
         cfg.validate_instance(invalid)
 
-    assert cfg.is_array is ("items" in schema or cfg.type == "array")
-    assert cfg.is_object is (cfg.type == "object")
     assert isinstance(cfg.has_constraint, bool)
 
     # check that we can can convert json type to python type

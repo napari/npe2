@@ -32,23 +32,17 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
-    "Draft04JsonSchema",
-    "Draft06JsonSchema",
-    "Draft07JsonSchema",
+    "ConfigurationJsonSchema",
     "ValidationError",
 ]
 
-JsonType = Literal["array", "boolean", "integer", "null", "number", "object", "string"]
+JsonType = Literal["boolean", "integer", "null", "number", "string"]
 JsonTypeArray = conlist(JsonType, min_length=1)
-StringArrayMin1 = conlist(str, min_length=1)
-StringArray = conlist(str)
 
 PY_NAME_TO_JSON_NAME = {
-    "list": "array",
     "bool": "boolean",
     "int": "integer",
     "float": "number",
-    "dict": "object",
     "str": "string",
     "NoneType": "null",
     "None": "null",
@@ -88,76 +82,65 @@ _CONSTRAINT_FIELDS = {
     "exclusive_maximum",
     "maximum",
     "multiple_of",
-    "min_items",
-    "max_items",
     "min_length",
     "max_length",
-    "pattern",
 }
 
 _python_equivalent: dict[str | None, type] = {
-    "array": list,
     "boolean": bool,
     "integer": int,
     "null": type(None),
     "number": float,
-    "object": dict,
     "string": str,
     None: object,
 }
 
 
-class _JsonSchemaBase(BaseModel):
+class ConfigurationJsonSchema(BaseModel):
+    """Model for (a subset of) Draft 2020-12 JSON Schema.
+
+    This is the schema model used for the `configuration` contribution.
+    https://json-schema.org/understanding-json-schema/reference
+    """
+
     model_config = ConfigDict(alias_generator=TO_CAMEL, validate_by_name=True)
 
     # underscore here to avoid name collision with pydantic's `schema` method
-    schema_: str | None = Field(None, alias="$schema")
+    schema_: str = Field(
+        "https://json-schema.org/draft/2020-12/schema", alias="$schema"
+    )
     title: str | None = Field(None)
     description: str | None = Field(None)
     default: Any = Field(None)
-    multiple_of: float | None = Field(None, ge=0)
-    maximum: float | None = Field(None)
-    minimum: float | None = Field(None)
-    max_length: int | None = Field(None, ge=0)
-    min_length: int | None = Field(0, ge=0)
-    # could be Pattern. but it's easier to work with as str
-    pattern: str | None = Field(None)
-    max_items: int | None = Field(None, ge=0)
-    min_items: int | None = Field(0, ge=0)
-    unique_items: bool = Field(False)
-    max_properties: int | None = Field(None, ge=0)
-    min_properties: int | None = Field(0, ge=0)
-    enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
     type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (  # type: ignore
         Field(None)
     )
-    format: str | None = Field(None)
+    # constraints to specific choices
+    enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
+
+    # min/max value for a property with type float or int
+    minimum: float | int | None = Field(None)
+    maximum: float | int | None = Field(None)
+
+    # allows you to define an open interval
+    exclusive_maximum: float | int | None = Field(None)
+    exclusive_minimum: float | int | None = Field(None)
+    # allows you to constrain number to be a multiple
+    multiple_of: float | int | None = Field(None, ge=0)
+
+    # min/max length for a property with type string
+    max_length: int | None = Field(None, ge=0)
+    min_length: int | None = Field(0, ge=0)
 
     _json_validator: builtins.type[Validator] = PrivateAttr()
 
-    # these will be redefined in subclasses with specific subschema types
-    # just here for type-checking in the methods of this base class
-    if TYPE_CHECKING:
-        items: Any
-        properties: Any
-        all_of: Any
-        any_of: Any
-        one_of: Any
-
     @model_validator(mode="before")
     def _validate_root(cls, values: dict[str, Any]) -> Any:
-        if "type" not in values:
-            if "properties" in values:
-                values["type"] = "object"
-            elif "items" in values:
-                values["type"] = "array"
-
         # TODO: is this still true?
         # Get around pydantic bug wherein `Optional[conlists]`` throw a
         # 'NoneType' object is not iterable error if `None` is provided in init.
-        for conlists in ("enum", "required"):
-            if conlists in values and not values[conlists]:
-                values.pop(conlists)
+        if "enum" in values and not values["enum"]:
+            values.pop("enum")
 
         return values
 
@@ -178,22 +161,6 @@ class _JsonSchemaBase(BaseModel):
             return [_python_equivalent[t] for t in self.type]
         else:
             return _python_equivalent[self.type]
-
-    @property
-    def is_array(self) -> bool:
-        """Return True if this schema is an array schema."""
-        return self.items is not None or self.type == "array"
-
-    @property
-    def is_object(self) -> bool:
-        """Return True if this schema is an object schema."""
-        return self.properties is not None or (
-            self.type == "object"
-            and not self.all_of
-            and not self.one_of
-            and not self.any_of
-            and not getattr(self, "ref", False)
-        )  # draft 6+
 
     @property
     def json_validator(self) -> builtins.type[Validator]:
@@ -219,90 +186,3 @@ class _JsonSchemaBase(BaseModel):
         if error is not None:
             raise error
         return instance
-
-
-class Draft04JsonSchema(_JsonSchemaBase):
-    """Model for Draft 4 JSON Schema."""
-
-    schema_: str = Field("http://json-schema.org/draft-04/schema#", alias="$schema")
-    id: str | None = Field(None)
-    exclusive_maximum: bool | None = Field(None)
-    exclusive_minimum: bool | None = Field(None)
-    required: StringArrayMin1 | None = Field(None)  # type: ignore
-    dependencies: dict[str, Draft04JsonSchema | StringArrayMin1] | None = Field(None)  # type: ignore
-
-    # common to all schemas (could go in _JsonSchemaBase)
-    # except we need the self-referrential type to be this class
-    additional_items: bool | Draft04JsonSchema | None = Field(None)
-    items: Draft04JsonSchema | list[Draft04JsonSchema] | None = Field(None)
-    additional_properties: bool | Draft04JsonSchema | None = Field(None)
-    definitions: dict[str, Draft04JsonSchema] | None = Field(None)
-    properties: dict[str, Draft04JsonSchema] | None = Field(None)
-    pattern_properties: dict[str, Draft04JsonSchema] | None = Field(None)
-    all_of: list[Draft04JsonSchema] | None = Field(None)
-    any_of: list[Draft04JsonSchema] | None = Field(None)
-    one_of: list[Draft04JsonSchema] | None = Field(None)
-    not_: Draft04JsonSchema | None = Field(None, alias="not")
-
-
-class _Draft06JsonSchema(_JsonSchemaBase):
-    id: str | None = Field(None, alias="$id")
-    # ref: Optional[str] = Field(None, alias="$ref")
-    examples: list[Any] | None = Field(None)
-    exclusive_maximum: float | None = Field(None)
-    exclusive_minimum: float | None = Field(None)
-    contains: Draft06JsonSchema | None = Field(None)
-    required: StringArray | None = Field(None)  # type: ignore
-    dependencies: dict[str, Draft06JsonSchema | StringArray] | None = Field(None)  # type: ignore
-    property_names: Draft06JsonSchema | None = Field(None)
-    const: Any = Field(None)
-
-
-class Draft06JsonSchema(_Draft06JsonSchema):
-    """Model for Draft 6 JSON Schema."""
-
-    schema_: str = Field("http://json-schema.org/draft-06/schema#", alias="$schema")
-
-    # common to all schemas (could go in _JsonSchemaBase)
-    # except we need the self-referrential type to be this class
-    # and... technically, all subschemas may also be booleans as of Draft 6,
-    # not just additional_properties and additional_items
-    additional_items: bool | Draft06JsonSchema | None = Field(None)
-    items: Draft06JsonSchema | list[Draft06JsonSchema] | None = Field(None)
-    additional_properties: bool | Draft06JsonSchema | None = Field(None)
-    # definitions: Optional[Dict[str, Draft06JsonSchema]] = Field(None)
-    properties: dict[str, Draft06JsonSchema] | None = Field(None)
-    pattern_properties: dict[str, Draft06JsonSchema] | None = Field(None)
-    all_of: list[Draft06JsonSchema] | None = Field(None)
-    any_of: list[Draft06JsonSchema] | None = Field(None)
-    one_of: list[Draft06JsonSchema] | None = Field(None)
-    not_: Draft06JsonSchema | None = Field(None, alias="not")
-
-
-class Draft07JsonSchema(_Draft06JsonSchema):
-    """Model for Draft 7 JSON Schema."""
-
-    schema_: str = Field("http://json-schema.org/draft-07/schema#", alias="$schema")
-    comment: str | None = Field(None, alias="$comment")
-    read_only: bool = Field(False)
-    write_only: bool = Field(False)
-    content_media_type: str | None = Field(None)
-    content_encoding: str | None = Field(None)
-    if_: Draft07JsonSchema | None = Field(None, alias="if")
-    then: Draft07JsonSchema | None = Field(None)
-    else_: Draft07JsonSchema | None = Field(None, alias="else")
-
-    # common to all schemas (could go in _JsonSchemaBase)
-    # except we need the self-referrential type to be this class
-    # and... technically, all subschemas may also be booleans as of Draft 6,
-    # not just additional_properties and additional_items
-    additional_items: bool | Draft07JsonSchema | None = Field(None)
-    items: Draft07JsonSchema | list[Draft07JsonSchema] | None = Field(None)
-    additional_properties: bool | Draft07JsonSchema | None = Field(None)
-    # definitions: Optional[Dict[str, Draft07JsonSchema]] = Field(None)
-    properties: dict[str, Draft07JsonSchema] | None = Field(None)
-    pattern_properties: dict[str, Draft07JsonSchema] | None = Field(None)
-    all_of: list[Draft07JsonSchema] | None = Field(None)
-    any_of: list[Draft07JsonSchema] | None = Field(None)
-    one_of: list[Draft07JsonSchema] | None = Field(None)
-    not_: Draft07JsonSchema | None = Field(None, alias="not")
