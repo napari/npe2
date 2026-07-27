@@ -47,7 +47,6 @@ CASES = [
     ({"type": int, "multipleOf": 10}, 30, 23),
     ({"type": "number", "minimum": 100}, 100, 99),
     ({"type": "number", "exclusiveMaximum": 100}, 99, 100),
-    ({"type": [bool, int]}, True, "True"),
 ]
 
 
@@ -61,9 +60,6 @@ def test_config_validation(schema, valid, invalid):
 
     assert isinstance(cfg.has_constraint, bool)
 
-    # check that we can can convert json type to python type
-    for t in (
-        cfg.python_type if isinstance(cfg.python_type, list) else [cfg.python_type]
-    ):
-        assert t.__module__ == "builtins"
+    # check that we can convert json type to python type
+    assert cfg.python_type.__module__ == "builtins"
     assert cfg.has_default is ("default" in schema)

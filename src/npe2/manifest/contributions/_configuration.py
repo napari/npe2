@@ -5,7 +5,6 @@ from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
 from ._json_schema import (
     ConfigurationJsonSchema,
     JsonType,
-    JsonTypeArray,
     _coerce_type_name,
 )
 
@@ -17,15 +16,13 @@ class ConfigurationProperty(ConfigurationJsonSchema):
     https://json-schema.org/understanding-json-schema/reference
     """
 
-    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (
-        Field(
-            description="The type of this variable. Either JSON Schema type names "
-            "('boolean', 'integer', 'number', 'string') or python type names "
-            "('bool', 'int', 'float', 'str') may be used, but they will be "
-            "coerced to JSON Schema types. Numbers, strings, and booleans will be "
-            "editable in the UI. For boolean entries, the description "
-            "will be used as the label for the checkbox.",
-        )
+    type: Annotated[JsonType, BeforeValidator(_coerce_type_name)] = Field(
+        description="The type of this variable. Either a JSON Schema type name "
+        "('boolean', 'integer', 'number', 'string') or a python type name "
+        "('bool', 'int', 'float', 'str') may be used, but it will be "
+        "coerced to a JSON Schema type. Numbers, strings, and booleans will be "
+        "editable in the UI. For boolean entries, the description "
+        "will be used as the label for the checkbox.",
     )
 
     default: Any = Field(None, description="The default value for this property.")

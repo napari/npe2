@@ -37,7 +37,6 @@ __all__ = [
 ]
 
 JsonType = Literal["boolean", "integer", "number", "string"]
-JsonTypeArray = conlist(JsonType, min_length=1)
 
 PY_NAME_TO_JSON_NAME = {
     "bool": "boolean",
@@ -56,8 +55,6 @@ def _to_json_type(type_: str | type) -> JsonType:
 
 def _coerce_type_name(v):
     """Coerce python type names to json schema type names."""
-    if isinstance(v, list):
-        return [_to_json_type(t) for t in v]
     return _to_json_type(v)
 
 
@@ -108,9 +105,7 @@ class ConfigurationJsonSchema(BaseModel):
     title: str | None = Field(None)
     description: str | None = Field(None)
     default: Any = Field(None)
-    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (  # type: ignore
-        Field()
-    )
+    type: Annotated[JsonType, BeforeValidator(_coerce_type_name)] = Field()
     # constraints to specific choices
     enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
 
@@ -151,12 +146,9 @@ class ConfigurationJsonSchema(BaseModel):
         return "default" in self.model_fields_set
 
     @property
-    def python_type(self) -> builtins.type | list[builtins.type]:
-        """Return Python type equivalent(s) for this schema (JSON) type."""
-        if isinstance(self.type, list):
-            return [_python_equivalent[t] for t in self.type]
-        else:
-            return _python_equivalent[self.type]
+    def python_type(self) -> builtins.type:
+        """Return the Python type equivalent for this schema's (JSON) type."""
+        return _python_equivalent[self.type]
 
     @property
     def json_validator(self) -> builtins.type[Validator]:
