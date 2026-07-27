@@ -110,7 +110,7 @@ class ConfigurationJsonSchema(BaseModel):
     description: str | None = Field(None)
     default: Any = Field(None)
     type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (  # type: ignore
-        Field(None)
+        Field()
     )
     # constraints to specific choices
     enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
