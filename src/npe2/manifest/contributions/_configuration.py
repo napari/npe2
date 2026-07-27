@@ -1,34 +1,28 @@
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
 
 from ._json_schema import (
-    Draft07JsonSchema,
+    ConfigurationJsonSchema,
     JsonType,
-    JsonTypeArray,
-    _coerce_type_name,
+    _to_json_type,
 )
 
 
-class ConfigurationProperty(Draft07JsonSchema):
+class ConfigurationProperty(ConfigurationJsonSchema):
     """Configuration for a single property in the plugin settings.
 
-    This is a super-set of the JSON Schema (draft 7) specification.
-    https://json-schema.org/understanding-json-schema/reference/index.html
+    This is a subset of the JSON Schema (draft 2020-12) specification.
+    https://json-schema.org/understanding-json-schema/reference
     """
 
-    type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (
-        Field(
-            None,
-            description="The type of this variable. Either JSON Schema type names "
-            "('array', 'boolean', 'object', ...) or python type names ('list', 'bool', "
-            "'dict', ...) may be used, but they will be coerced to JSON Schema types. "
-            "Numbers, strings, and booleans will be editable in the UI, other types "
-            "(lists, dicts) *may* be editable in the UI depending on their content, "
-            "but maby will only be editable as text in the napari settings file. For "
-            "boolean entries, the description (or markdownDescription) will be used as"
-            " the label for the checkbox.",
-        )
+    type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
+        description="The type of this variable. Either a JSON Schema type name "
+        "('boolean', 'integer', 'number', 'string') or a python type name "
+        "('bool', 'int', 'float', 'str') may be used, but it will be "
+        "coerced to a JSON Schema type. Numbers, strings, and booleans will be "
+        "editable in the UI. For boolean entries, the description "
+        "will be used as the label for the checkbox.",
     )
 
     default: Any = Field(None, description="The default value for this property.")
@@ -37,13 +31,7 @@ class ConfigurationProperty(Draft07JsonSchema):
         None,
         description="Your `description` appears after the title and before the input "
         "field, except for booleans, where the description is used as the label for "
-        "the checkbox. See also `markdown_description`.",
-    )
-    description_format: Literal["markdown", "plain"] = Field(
-        "markdown",
-        description="By default (`markdown`) your `description`, will be parsed "
-        "as CommonMark (with `markdown_it`) and rendered as rich text. To render as "
-        "plain text, set this value to `plain`.",
+        "the checkbox",
     )
 
     enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
@@ -56,12 +44,6 @@ class ConfigurationProperty(Draft07JsonSchema):
         description="If you provide a list of items under the `enum` field, you may "
         "provide `enum_descriptions` to add descriptive text for each enum.",
     )
-    enum_descriptions_format: Literal["markdown", "plain"] = Field(
-        "markdown",
-        description="By default (`markdown`) your `enum_description`s, will be parsed "
-        "as CommonMark (with `markdown_it`) and rendered as rich text. To render as "
-        "plain text, set this value to `plain`.",
-    )
 
     deprecation_message: str | None = Field(
         None,
@@ -69,31 +51,10 @@ class ConfigurationProperty(Draft07JsonSchema):
         "underline with your specified message. It won't show up in the settings "
         "UI unless it is configured by the user.",
     )
-    deprecation_message_format: Literal["markdown", "plain"] = Field(
-        "markdown",
-        description="By default (`markdown`) your `deprecation_message`, will be "
-        "parsed as CommonMark (with `markdown_it`) and rendered as rich text. To "
-        "render as plain text, set this value to `plain`.",
-    )
-
-    edit_presentation: Literal["singleline", "multiline"] = Field(
-        "singleline",
+    is_multiline: bool = Field(
+        False,
         description="By default, string settings will be rendered with a single-line "
-        "editor. To render with a multi-line editor, set this value to `multiline`.",
-    )
-    order: int | None = Field(
-        None,
-        description="When specified, gives the order of this setting relative to other "
-        "settings within the same category. Settings with an order property will be "
-        "placed before settings without this property set; and settings without `order`"
-        " will be placed in alphabetical order.",
-    )
-
-    pattern_error_message: str | None = Field(
-        None,
-        description="When restricting string types to a given regular expression with "
-        "the `pattern` field, this field may be used to provide a custom error when "
-        "the pattern does not match.",
+        "editor. To render with a multi-line editor, set this value to `True`.",
     )
 
     @model_validator(mode="before")
@@ -112,17 +73,6 @@ class ConfigurationProperty(Draft07JsonSchema):
                     stacklevel=2,
                 )
         return values
-
-    def validate_instance(self, instance: object) -> dict:
-        """Validate an object (instance) against this schema."""
-        from ._json_schema import ValidationError as JsonSchemaValidationError
-
-        try:
-            return super().validate_instance(instance)
-        except JsonSchemaValidationError as e:
-            if e.validator == "pattern" and self.pattern_error_message:
-                e.message = self.pattern_error_message
-            raise e
 
 
 class ConfigurationContribution(BaseModel):
