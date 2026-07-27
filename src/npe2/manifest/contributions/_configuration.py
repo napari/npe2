@@ -13,19 +13,18 @@ from ._json_schema import (
 class ConfigurationProperty(ConfigurationJsonSchema):
     """Configuration for a single property in the plugin settings.
 
-    This is a super-set of the JSON Schema (draft 7) specification.
-    https://json-schema.org/understanding-json-schema/reference/index.html
+    This is a subset of the JSON Schema (draft 2020-12) specification.
+    https://json-schema.org/understanding-json-schema/reference
     """
 
     type: Annotated[JsonType | JsonTypeArray, BeforeValidator(_coerce_type_name)] = (
         Field(
-            None,
             description="The type of this variable. Either JSON Schema type names "
-            "('boolean', 'integer', 'number', 'string', 'null') or python type names "
-            "('bool', 'int', 'float', 'str', 'None') may be used, but they will be "
+            "('boolean', 'integer', 'number', 'string') or python type names "
+            "('bool', 'int', 'float', 'str') may be used, but they will be "
             "coerced to JSON Schema types. Numbers, strings, and booleans will be "
-            "editable in the UI. For boolean entries, the description (or "
-            "markdownDescription) will be used as the label for the checkbox.",
+            "editable in the UI. For boolean entries, the description "
+            "will be used as the label for the checkbox.",
         )
     )
 
@@ -35,7 +34,7 @@ class ConfigurationProperty(ConfigurationJsonSchema):
         None,
         description="Your `description` appears after the title and before the input "
         "field, except for booleans, where the description is used as the label for "
-        "the checkbox. See also `markdown_description`.",
+        "the checkbox",
     )
 
     enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
