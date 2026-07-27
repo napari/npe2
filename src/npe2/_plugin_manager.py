@@ -696,19 +696,37 @@ class PluginManager:
         """
         # normalise Path -> str for suffix matching and `path + ext` below
         path = os.fspath(path) if path else ""
-        ext = Path(path).suffix.lower() if path else ""
+        # Match against the whole filename rather than `Path.suffix`, so a
+        # compound extension like ".ome.tiff" is not shadowed by a ".tiff" writer.
+        filename = os.path.basename(path).lower()
+        has_ext = bool(Path(path).suffix)
 
+        if has_ext:
+            # Prefer the longest matching extension; break ties by writer
+            # priority (iteration order).
+            best_writer = None
+            best_len = -1
+            for writer in self.iter_compatible_writers(layer_types):
+                if plugin_name and not writer.command.startswith(plugin_name):
+                    continue
+                matched = [
+                    e
+                    for e in writer.filename_extensions
+                    if filename.endswith(e.lower())
+                ]
+                if matched and (longest := max(len(e) for e in matched)) > best_len:
+                    best_writer, best_len = writer, longest
+            return (best_writer, path) if best_writer else (None, path)
+
+        # No extension in the filename.
         for writer in self.iter_compatible_writers(layer_types):
-            if not plugin_name or writer.command.startswith(plugin_name):
-                if (ext and ext in writer.filename_extensions) or (
-                    not ext and len(layer_types) != 1 and not writer.filename_extensions
-                ):
-                    return writer, path
-                elif not ext and len(layer_types) == 1:  # No extension, single layer.
-                    ext = next(iter(writer.filename_extensions), "")
-                    return writer, path + ext
-                # When the list of extensions for the writer doesn't match the
-                # extension in the filename, keep searching.
+            if plugin_name and not writer.command.startswith(plugin_name):
+                continue
+            if len(layer_types) == 1:  # No extension, single layer.
+                ext = next(iter(writer.filename_extensions), "")
+                return writer, path + ext
+            if not writer.filename_extensions:
+                return writer, path
 
         # Nothing got found
         return None, path
