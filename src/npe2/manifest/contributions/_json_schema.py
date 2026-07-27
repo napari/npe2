@@ -53,11 +53,6 @@ def _to_json_type(type_: str | type) -> JsonType:
     return PY_NAME_TO_JSON_NAME.get(type_, type_)  # type: ignore # (validated later)
 
 
-def _coerce_type_name(v):
-    """Coerce python type names to json schema type names."""
-    return _to_json_type(v)
-
-
 def _to_camel(string: str) -> str:
     words = string.split("_")
     return words[0] + "".join(w.capitalize() for w in words[1:])
@@ -105,7 +100,7 @@ class ConfigurationJsonSchema(BaseModel):
     title: str | None = Field(None)
     description: str | None = Field(None)
     default: Any = Field(None)
-    type: Annotated[JsonType, BeforeValidator(_coerce_type_name)] = Field()
+    type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field()
     # constraints to specific choices
     enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
 

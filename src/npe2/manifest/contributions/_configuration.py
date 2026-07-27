@@ -5,7 +5,7 @@ from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
 from ._json_schema import (
     ConfigurationJsonSchema,
     JsonType,
-    _coerce_type_name,
+    _to_json_type,
 )
 
 
@@ -16,7 +16,7 @@ class ConfigurationProperty(ConfigurationJsonSchema):
     https://json-schema.org/understanding-json-schema/reference
     """
 
-    type: Annotated[JsonType, BeforeValidator(_coerce_type_name)] = Field(
+    type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
         description="The type of this variable. Either a JSON Schema type name "
         "('boolean', 'integer', 'number', 'string') or a python type name "
         "('bool', 'int', 'float', 'str') may be used, but it will be "
