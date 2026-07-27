@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
 )
-from unittest.mock import patch
 from urllib import error, request
 from zipfile import ZipFile
 
@@ -113,6 +112,8 @@ def _guard_cwd() -> Iterator[None]:
 
 def _build_wheel(src: str | Path) -> Path:
     """Build a wheel from a source directory and extract it into dest."""
+    from unittest.mock import patch
+
     from build.__main__ import build_package
 
     dest = Path(src) / "extracted_wheel"
