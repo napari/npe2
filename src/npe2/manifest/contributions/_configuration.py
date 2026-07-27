@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
 
@@ -54,10 +54,10 @@ class ConfigurationProperty(ConfigurationJsonSchema):
         "underline with your specified message. It won't show up in the settings "
         "UI unless it is configured by the user.",
     )
-    edit_presentation: Literal["singleline", "multiline"] = Field(
-        "singleline",
+    is_multiline: bool = Field(
+        False,
         description="By default, string settings will be rendered with a single-line "
-        "editor. To render with a multi-line editor, set this value to `multiline`.",
+        "editor. To render with a multi-line editor, set this value to `True`.",
     )
 
     @model_validator(mode="before")
