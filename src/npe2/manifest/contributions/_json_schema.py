@@ -95,28 +95,82 @@ class ConfigurationJsonSchema(BaseModel):
 
     # underscore here to avoid name collision with pydantic's `schema` method
     schema_: str = Field(
-        "https://json-schema.org/draft/2020-12/schema", alias="$schema"
+        "https://json-schema.org/draft/2020-12/schema",
+        alias="$schema",
+        description="Identifies the JSON Schema dialect this document conforms to. "
+        "Applies to the schema itself, not to any particular instance type.",
     )
-    title: str | None = Field(None)
-    description: str | None = Field(None)
-    default: Any = Field(None)
-    type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field()
-    # constraints to specific choices
-    enum: conlist(Any, min_length=1) | None = Field(None)  # type: ignore
+    title: str | None = Field(
+        None,
+        description="The title of this configuration property. This will be displayed "
+        "in the settings UI as the label for this property.",
+    )
+    description: str | None = Field(
+        None,
+        description="Your `description` appears after the title and before the input "
+        "field, except for booleans, where the description is used as the label for "
+        "the checkbox",
+    )
 
+    type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
+        description="The type of this variable. Either a JSON Schema type name "
+        "('boolean', 'integer', 'number', 'string') or a python type name "
+        "('bool', 'int', 'float', 'str') may be used, but it will be "
+        "coerced to a JSON Schema type. For boolean entries, the description "
+        "will be used as the label for the checkbox.",
+    )
+    default: Any = Field(None, description="The default value for this property.")
+    enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
+        None,
+        description="A list of valid options for this field. If you provide this field,"
+        "the settings UI will render a dropdown menu. Enum members must be of the same "
+        "type as the `type` field.",
+    )
     # min/max value for a property with type float or int
-    minimum: float | int | None = Field(None)
-    maximum: float | int | None = Field(None)
+    minimum: float | int | None = Field(
+        None,
+        description="The inclusive lower bound: the value must be greater than or "
+        "equal to this number. Only valid for `integer` or `number` types.",
+    )
+    maximum: float | int | None = Field(
+        None,
+        description="The inclusive upper bound: the value must be less than or "
+        "equal to this number. Only valid for `integer` or `number` types.",
+    )
 
     # allows you to define an open interval
-    exclusive_maximum: float | int | None = Field(None)
-    exclusive_minimum: float | int | None = Field(None)
+    exclusive_maximum: float | int | None = Field(
+        None,
+        description="The exclusive upper bound: the value must be strictly less "
+        "than this number. Only valid for `integer` or `number` types.",
+    )
+    exclusive_minimum: float | int | None = Field(
+        None,
+        description="The exclusive lower bound: the value must be strictly greater "
+        "than this number. Only valid for `integer` or `number` types.",
+    )
     # allows you to constrain number to be a multiple
-    multiple_of: float | int | None = Field(None, ge=0)
+    multiple_of: float | int | None = Field(
+        None,
+        ge=0,
+        description="Restricts the value to an integer multiple of this number "
+        "(e.g. `multiple_of: 5` allows 0, 5, 10, ...). Only valid for `integer` or "
+        "`number` types.",
+    )
 
     # min/max length for a property with type string
-    max_length: int | None = Field(None, ge=0)
-    min_length: int | None = Field(0, ge=0)
+    max_length: int | None = Field(
+        None,
+        ge=0,
+        description="The maximum allowed length, in characters, of a string value. "
+        "Only valid for the `string` type.",
+    )
+    min_length: int | None = Field(
+        0,
+        ge=0,
+        description="The minimum allowed length, in characters, of a string value. "
+        "Only valid for the `string` type.",
+    )
 
     _json_validator: builtins.type[Validator] = PrivateAttr()
 

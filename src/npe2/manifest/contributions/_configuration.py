@@ -1,44 +1,16 @@
-from typing import Annotated, Any
+from pydantic import BaseModel, Field, model_validator
 
-from pydantic import BaseModel, BeforeValidator, Field, conlist, model_validator
-
-from ._json_schema import (
-    ConfigurationJsonSchema,
-    JsonType,
-    _to_json_type,
-)
+from ._json_schema import ConfigurationJsonSchema
 
 
 class ConfigurationProperty(ConfigurationJsonSchema):
     """Configuration for a single property in the plugin settings.
 
     This is a subset of the JSON Schema (draft 2020-12) specification.
-    https://json-schema.org/understanding-json-schema/reference
+    https://json-schema.org/draft/2020-12/ with some additional fields
+    for the settings UI.
     """
 
-    type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
-        description="The type of this variable. Either a JSON Schema type name "
-        "('boolean', 'integer', 'number', 'string') or a python type name "
-        "('bool', 'int', 'float', 'str') may be used, but it will be "
-        "coerced to a JSON Schema type. Numbers, strings, and booleans will be "
-        "editable in the UI. For boolean entries, the description "
-        "will be used as the label for the checkbox.",
-    )
-
-    default: Any = Field(None, description="The default value for this property.")
-
-    description: str | None = Field(
-        None,
-        description="Your `description` appears after the title and before the input "
-        "field, except for booleans, where the description is used as the label for "
-        "the checkbox",
-    )
-
-    enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
-        None,
-        description="A list of valid options for this field. If you provide this field,"
-        "the settings UI will render a dropdown menu.",
-    )
     enum_descriptions: list[str] = Field(
         default_factory=list,
         description="If you provide a list of items under the `enum` field, you may "
