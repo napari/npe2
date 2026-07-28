@@ -6,6 +6,7 @@ from npe2.manifest.contributions._json_schema import ValidationError
 PROPS = [
     {
         "plugin.heatmap.location": {
+            "title": "Heatmap location",
             "type": "string",
             "default": "right",
             "enum": ["left", "right"],
@@ -32,6 +33,7 @@ def test_config_contribution(props):
 def test_warn_on_refs_defs():
     with pytest.warns(UserWarning):
         ConfigurationProperty(
+            title="Test Property",
             type="string",
             default="baz",
             description="quux",
@@ -40,13 +42,17 @@ def test_warn_on_refs_defs():
 
 
 CASES = [
-    ({"type": "string", "minLength": 2}, "AB", "A"),
-    ({"type": "string", "maxLength": 3}, "AB", "ABCD"),
-    ({"type": "integer"}, 42, 3.123),
-    ({"type": float}, 42.45, "3.123"),
-    ({"type": int, "multipleOf": 10}, 30, 23),
-    ({"type": "number", "minimum": 100}, 100, 99),
-    ({"type": "number", "exclusiveMaximum": 100}, 99, 100),
+    ({"title": "T", "type": "string", "default": "AB", "minLength": 2}, "AB", "A"),
+    ({"title": "T", "type": "string", "default": "AB", "maxLength": 3}, "AB", "ABCD"),
+    ({"title": "T", "type": "integer", "default": 42}, 42, 3.123),
+    ({"title": "T", "type": float, "default": 42.45}, 42.45, "3.123"),
+    ({"title": "T", "type": int, "default": 30, "multipleOf": 10}, 30, 23),
+    ({"title": "T", "type": "number", "default": 100, "minimum": 100}, 100, 99),
+    (
+        {"title": "T", "type": "number", "default": 99, "exclusiveMaximum": 100},
+        99,
+        100,
+    ),
 ]
 
 
