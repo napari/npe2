@@ -100,18 +100,12 @@ class ConfigurationJsonSchema(BaseModel):
         description="Identifies the JSON Schema dialect this document conforms to. "
         "Applies to the schema itself, not to any particular instance type.",
     )
-    title: str | None = Field(
-        None,
+
+    # required fields for a configuration property
+    title: str = Field(
         description="The title of this configuration property. This will be displayed "
         "in the settings UI as the label for this property.",
     )
-    description: str | None = Field(
-        None,
-        description="Your `description` appears after the title and before the input "
-        "field, except for booleans, where the description is used as the label for "
-        "the checkbox",
-    )
-
     type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
         description="The type of this variable. Either a JSON Schema type name "
         "('boolean', 'integer', 'number', 'string') or a python type name "
@@ -119,7 +113,15 @@ class ConfigurationJsonSchema(BaseModel):
         "coerced to a JSON Schema type. For boolean entries, the description "
         "will be used as the label for the checkbox.",
     )
-    default: Any = Field(None, description="The default value for this property.")
+    default: Any = Field(description="The default value for this property.")
+
+    # optional fields for a configuration property
+    description: str | None = Field(
+        None,
+        description="Your `description` appears after the title and before the input "
+        "field, except for booleans, where the description is used as the label for "
+        "the checkbox",
+    )
     enum: conlist(Any, min_length=1) | None = Field(  # type: ignore
         None,
         description="A list of valid options for this field. If you provide this field,"
