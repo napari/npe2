@@ -327,7 +327,7 @@ class PluginManifest(ImportExportModel):
             for contribution_name in ("widgets", "readers", "writers", "sample_data"):
                 for contribution in getattr(contributions, contribution_name) or []:
                     command_id = getattr(contribution, "command", None)
-                    if command_id in worker_commands:
+                    if isinstance(command_id, str) and command_id in worker_commands:
                         incompatible_references.append((contribution_name, command_id))
             if incompatible_references:
                 details = ", ".join(
