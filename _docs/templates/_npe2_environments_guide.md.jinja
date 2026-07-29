@@ -1,0 +1,56 @@
+(environments-contribution-guide)=
+## Isolated worker environments
+
+Environment contributions let a plugin describe dependencies for qualified Python worker commands that napari executes outside the environment containing napari.
+This prevents worker-only dependencies from changing napari's packages or conflicting with another plugin's worker dependencies.
+
+The plugin package still has a host portion installed with napari.
+Its manifest, widgets, command-launching code, and all code that uses napari or Qt APIs must remain lightweight and importable in the napari process.
+Dependencies unavailable in a default napari installation belong in an environment contribution, and code that imports them belongs behind an associated worker command.
+
+```yaml
+contributions:
+  environments:
+    - id: example-plugin.segmentation
+      python: "3.12.*"
+      conda:
+        - numpy
+        - scikit-image
+      pypi:
+        - example-segmentation-framework>=2
+      channels:
+        - conda-forge
+      local_packages:
+        - path: worker-package
+          extras: [gpu]
+      lockfile: locks/pixi.lock
+  commands:
+    - id: example-plugin.segment
+      title: Segment image
+      python_name: example_worker.api:segment
+      environment: example-plugin.segmentation
+      accepts_worker_context: true
+```
+
+Environment and command identifiers must be qualified by the plugin name, and a worker command can reference only an environment in the same manifest.
+A worker command must provide `python_name`; dynamically registered or serialized callables are not worker targets.
+Widget, reader, writer, and sample-data contributions must use host commands because their existing call contracts require execution in the napari process.
+A widget can invoke a separate worker command through napari's managed worker API.
+
+`local_packages` and `lockfile` paths use `/` separators and are relative to `napari.yaml`.
+They cannot escape the manifest directory and must be included in the built plugin distribution.
+A local package is useful for keeping worker modules and their dependency metadata separate from the lightweight host package.
+
+If `accepts_worker_context` is true, napari passes the reserved keyword-only `napari_context` argument.
+Worker code can use this context for progress reporting and cooperative cancellation without importing napari or the environment backend.
+The remaining arguments and return value must use the values supported by napari's managed worker API, including ordinary NumPy arrays.
+
+Provisioned environments are persistent and reused until their declared recipe changes.
+An optional lockfile makes dependency resolution reproducible.
+Plugins migrating existing commands should opt in individually and keep the old host behavior until their packaging has been split; manifests without environment declarations remain fully compatible.
+
+```{warning}
+Managed environments provide dependency isolation, not a security sandbox.
+Worker code is plugin code and may retain access to the user's files, network, credentials, processes, and hardware.
+Users should install only plugins they trust.
+```

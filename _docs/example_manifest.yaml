@@ -1,9 +1,21 @@
 name: example-plugin
 display_name: Example Plugin
 contributions:
+  environments:
+    - id: example-plugin.segmentation
+      python: "3.12.*"
+      conda: [numpy, scikit-image]
+      channels: [conda-forge]
+      local_packages:
+        - path: worker-package
   commands:
     - id: example-plugin.hello_world
       title: Hello World
+    - id: example-plugin.segment_worker
+      title: Segment image in an isolated environment
+      python_name: example_worker.api:segment
+      environment: example-plugin.segmentation
+      accepts_worker_context: true
     - id: example-plugin.read_xyz
       title: Read ".xyz" files
       python_name: example_plugin.some_module:get_reader
