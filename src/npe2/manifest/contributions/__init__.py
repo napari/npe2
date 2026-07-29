@@ -1,6 +1,7 @@
 from ._commands import CommandContribution
 from ._configuration import ConfigurationContribution, ConfigurationProperty
 from ._contributions import ContributionPoints
+from ._environments import EnvironmentContribution, LocalPackageRequirement
 from ._menus import MenuCommand, MenuItem, Submenu
 from ._readers import ReaderContribution
 from ._sample_data import SampleDataContribution, SampleDataGenerator, SampleDataURI
@@ -14,8 +15,10 @@ __all__ = [
     "ConfigurationContribution",
     "ConfigurationProperty",
     "ContributionPoints",
+    "EnvironmentContribution",
     "LayerType",
     "LayerTypeConstraint",
+    "LocalPackageRequirement",
     "MenuCommand",
     "MenuItem",
     "ReaderContribution",

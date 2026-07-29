@@ -28,6 +28,16 @@ def command_id(id: str) -> str:
     return id
 
 
+def environment_id(id: str) -> str:
+    if id and not COMMAND_ID_PATTERN.match(id):
+        raise ValueError(
+            f"{id!r} is not a valid environment id. It must begin with the package "
+            "name followed by a period, then may contain only alphanumeric "
+            "characters and underscores."
+        )
+    return id
+
+
 def package_name(name: str) -> str:
     """Assert that `name` is a valid package name in accordance with PEP-0508."""
     if name and not PACKAGE_NAME_PATTERN.match(name):

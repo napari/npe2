@@ -113,7 +113,7 @@ class CommandRegistry:
         """Register all commands in a manifest"""
         if mf.contributions and mf.contributions.commands:
             for cmd in mf.contributions.commands:
-                if cmd.python_name and cmd.id not in self:
+                if cmd.python_name and cmd.environment is None and cmd.id not in self:
                     self.register(cmd.id, cmd.python_name)
 
     def unregister_manifest(self, mf: PluginManifest) -> None:

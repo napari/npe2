@@ -60,6 +60,21 @@ class CommandContribution(BaseModel):
         "`{obj.__module__}:{obj.__qualname__}` "
         "(e.g. `my_package.a_module:some_function`)",
     )
+    environment: Annotated[str, AfterValidator(_validators.environment_id)] | None = (
+        Field(
+            None,
+            description="Identifier of an isolated environment declared by this "
+            "plugin. "
+            "Commands associated with an environment execute as managed workers rather "
+            "than in the napari process.",
+        )
+    )
+    accepts_worker_context: bool = Field(
+        False,
+        description="Whether napari should inject a reserved keyword-only "
+        "`napari_context` argument for progress reporting and cooperative "
+        "cancellation. This is valid only for isolated worker commands.",
+    )
 
     short_title: str | None = Field(
         None,

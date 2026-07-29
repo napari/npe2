@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from ._commands import CommandContribution
 from ._configuration import ConfigurationContribution
+from ._environments import EnvironmentContribution
 from ._keybindings import KeyBindingContribution
 from ._menus import MenuItem
 from ._readers import ReaderContribution
@@ -14,6 +15,7 @@ from ._writers import WriterContribution
 __all__ = [
     "CommandContribution",
     "ContributionPoints",
+    "EnvironmentContribution",
     "KeyBindingContribution",
     "MenuItem",
     "ReaderContribution",
@@ -29,6 +31,7 @@ __all__ = [
 
 class ContributionPoints(BaseModel):
     commands: list[CommandContribution] | None = None
+    environments: list[EnvironmentContribution] | None = None
     readers: list[ReaderContribution] | None = None
     writers: list[WriterContribution] | None = None
     widgets: list[WidgetContribution] | None = None

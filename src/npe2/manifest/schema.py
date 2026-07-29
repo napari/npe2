@@ -26,7 +26,7 @@ from npe2.types import PythonName
 from . import _validators
 from ._bases import ImportExportModel
 from ._package_metadata import PackageMetadata
-from .contributions import ContributionPoints
+from .contributions import CommandContribution, ContributionPoints
 from .contributions._icon import Icon
 from .utils import Executable, Version
 
@@ -35,7 +35,7 @@ __all__ = ("Category",)
 logger = getLogger(__name__)
 
 
-SCHEMA_VERSION = "0.2.1"
+SCHEMA_VERSION = "0.3.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
 
@@ -272,6 +272,7 @@ class PluginManifest(ImportExportModel):
             )
 
         invalid_commands: list[str] = []
+        invalid_environments: list[str] = []
         if values.get("contributions") is not None:
             contributions = values["contributions"]
             if isinstance(contributions, dict):
@@ -281,12 +282,74 @@ class PluginManifest(ImportExportModel):
                 for command in contributions.commands or []
                 if not command.id.startswith(f"{mf_name}.")
             )
+            invalid_environments.extend(
+                environment.id
+                for environment in contributions.environments or []
+                if not environment.id.startswith(f"{mf_name}.")
+            )
+
+            environments = {
+                environment.id: environment
+                for environment in contributions.environments or []
+            }
+            if len(environments) != len(contributions.environments or []):
+                raise ValueError("Environment identifiers must be unique")
+
+            worker_commands = {
+                command.id: command
+                for command in contributions.commands or []
+                if command.environment is not None
+            }
+            for command in contributions.commands or []:
+                if command.accepts_worker_context and command.environment is None:
+                    raise ValueError(
+                        f"Command {command.id!r} accepts a worker context but does not "
+                        "declare an isolated environment"
+                    )
+                if command.environment is None:
+                    continue
+                if command.python_name is None:
+                    raise ValueError(
+                        f"Worker command {command.id!r} must declare a python_name"
+                    )
+                if not command.environment.startswith(f"{mf_name}."):
+                    raise ValueError(
+                        f"Worker command {command.id!r} must reference an environment "
+                        f"owned by plugin {mf_name!r}"
+                    )
+                if command.environment not in environments:
+                    raise ValueError(
+                        f"Worker command {command.id!r} references undeclared "
+                        f"environment {command.environment!r}"
+                    )
+
+            incompatible_references: list[tuple[str, str]] = []
+            for contribution_name in ("widgets", "readers", "writers", "sample_data"):
+                for contribution in getattr(contributions, contribution_name) or []:
+                    command_id = getattr(contribution, "command", None)
+                    if command_id in worker_commands:
+                        incompatible_references.append((contribution_name, command_id))
+            if incompatible_references:
+                details = ", ".join(
+                    f"{name}: {command_id}"
+                    for name, command_id in incompatible_references
+                )
+                raise ValueError(
+                    "Isolated worker commands cannot implement widgets, readers, "
+                    f"writers, or sample data contributions ({details})"
+                )
 
         if invalid_commands:
             raise ValueError(
                 "Commands identifiers must start with the current package name "
                 f"followed by a dot: '{mf_name}'. The following commands do not: "
                 f"{invalid_commands}"
+            )
+        if invalid_environments:
+            raise ValueError(
+                "Environment identifiers must start with the current package name "
+                f"followed by a dot: '{mf_name}'. The following environments do not: "
+                f"{invalid_environments}"
             )
 
         if not values.get("display_name"):
@@ -480,6 +543,12 @@ class PluginManifest(ImportExportModel):
         def check_pynames(m: BaseModel, loc=()):
             for name, value in m:
                 if not value:
+                    continue
+                if (
+                    isinstance(m, CommandContribution)
+                    and m.environment is not None
+                    and name == "python_name"
+                ):
                     continue
                 if isinstance(value, BaseModel):
                     return check_pynames(value, (*loc, name))
