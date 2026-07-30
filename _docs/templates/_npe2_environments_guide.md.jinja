@@ -12,6 +12,8 @@ Dependencies unavailable in a default napari installation belong in an environme
 contributions:
   environments:
     - id: example-plugin.segmentation
+      display_name: Segmentation
+      provision: on_install
       python: "3.12.*"
       conda:
         - numpy
@@ -21,8 +23,7 @@ contributions:
       channels:
         - conda-forge
       local_packages:
-        - path: worker-package
-          extras: [gpu]
+        - path: worker
       lockfile: locks/pixi.lock
   commands:
     - id: example-plugin.segment
@@ -33,13 +34,22 @@ contributions:
 ```
 
 Environment and command identifiers must be qualified by the plugin name, and a worker command can reference only an environment in the same manifest.
+Each environment also has a `display_name` for user interfaces that present its installation and runtime state.
 A worker command must provide `python_name`; dynamically registered or serialized callables are not worker targets.
 Widget, reader, writer, and sample-data contributions must use host commands because their existing call contracts require execution in the napari process.
 A widget can invoke a separate worker command through napari's managed worker API.
 
 `local_packages` and `lockfile` paths use `/` separators and are relative to `napari.yaml`.
 They cannot escape the manifest directory and must be included in the built plugin distribution.
-A local package is useful for keeping worker modules and their dependency metadata separate from the lightweight host package.
+Each local-package entry contains only a path to packaged worker source.
+Worker dependencies must be declared in the environment's `conda` and `pypi` lists rather than hidden in local-package extras or other package metadata.
+Napari owns the details of turning that source into an installable distribution for the managed environment.
+
+The `provision` policy controls when a napari-managed plugin installation should create an environment.
+`on_install` asks the plugin installation workflow to provision it immediately, while `on_demand` defers provisioning until the environment is prepared or a worker command first runs.
+The default is `on_demand`.
+This declaration does not make plugin discovery or installation with external tools such as `pip` and `conda` perform provisioning, and provisioning does not start workers.
+Napari starts managed workers lazily when a command needs them.
 
 If `accepts_worker_context` is true, napari passes the reserved keyword-only `napari_context` argument.
 Worker code can use this context for progress reporting and cooperative cancellation without importing napari or the environment backend.

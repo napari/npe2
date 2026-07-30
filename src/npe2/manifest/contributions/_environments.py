@@ -51,16 +51,17 @@ def _reject_duplicate_requirements(values: list[str]) -> list[str]:
 
 
 class LocalPackageRequirement(BaseModel):
-    """A Python package shipped alongside the plugin manifest.
+    """Embedded Python worker source shipped alongside the plugin manifest.
 
-    Local packages are installed only in the declared isolated environment. Paths are
-    resolved relative to the manifest file by the environment manager.
+    Napari makes the source importable only in the declared isolated environment.
+    Paths are resolved relative to the manifest file by the environment manager.
+    Dependencies belong in the environment recipe rather than the embedded source.
     """
 
     path: ManifestRelativePath = Field(
         ...,
-        description="Path to the package, relative to the plugin manifest. The package "
-        "must be included in the plugin distribution.",
+        description="Path to embedded worker source, relative to the plugin manifest. "
+        "The source must be included in the plugin distribution.",
     )
 
     model_config = ConfigDict(extra="forbid")
@@ -112,8 +113,9 @@ class EnvironmentContribution(BaseModel):
     )
     local_packages: list[LocalPackageRequirement] = Field(
         default_factory=list,
-        description="Python packages shipped alongside the manifest and installed only "
-        "in this environment.",
+        description="Embedded worker sources shipped alongside the manifest and made "
+        "importable only in this environment. Their dependencies must be declared by "
+        "this environment.",
     )
     lockfile: ManifestRelativePath | None = Field(
         None,

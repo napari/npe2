@@ -3,11 +3,13 @@ display_name: Example Plugin
 contributions:
   environments:
     - id: example-plugin.segmentation
+      display_name: Segmentation
+      provision: on_install
       python: "3.12.*"
       conda: [numpy, scikit-image]
       channels: [conda-forge]
       local_packages:
-        - path: worker-package
+        - path: worker
   commands:
     - id: example-plugin.hello_world
       title: Hello World
