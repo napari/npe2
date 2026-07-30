@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from enum import StrEnum
 from pathlib import PurePosixPath, PureWindowsPath
 from typing import Annotated
 
@@ -61,29 +62,15 @@ class LocalPackageRequirement(BaseModel):
         description="Path to the package, relative to the plugin manifest. The package "
         "must be included in the plugin distribution.",
     )
-    editable: bool = Field(
-        False,
-        description="Whether to install the local package in editable mode.",
-    )
-    extras: list[str] = Field(
-        default_factory=list,
-        description="Optional Python distribution extras to install.",
-    )
 
     model_config = ConfigDict(extra="forbid")
 
-    @field_validator("extras")
-    @classmethod
-    def _validate_extras(cls, values: list[str]) -> list[str]:
-        extras: list[str] = []
-        for value in values:
-            if not re.fullmatch(r"[A-Za-z0-9]+(?:[-_.][A-Za-z0-9]+)*", value):
-                raise ValueError(f"{value!r} is not a valid Python distribution extra")
-            normalized = re.sub(r"[-_.]+", "-", value).lower()
-            if normalized in {re.sub(r"[-_.]+", "-", item).lower() for item in extras}:
-                raise ValueError(f"Duplicate local package extra {value!r}")
-            extras.append(value)
-        return extras
+
+class EnvironmentProvision(StrEnum):
+    """When napari should provision a managed plugin environment."""
+
+    ON_INSTALL = "on_install"
+    ON_DEMAND = "on_demand"
 
 
 class EnvironmentContribution(BaseModel):
@@ -97,6 +84,15 @@ class EnvironmentContribution(BaseModel):
     id: Annotated[str, AfterValidator(_validators.environment_id)] = Field(
         ...,
         description="Plugin-qualified identifier for this environment.",
+    )
+    display_name: Annotated[str, AfterValidator(_validators.display_name)] = Field(
+        ...,
+        description="User-facing name for this environment.",
+    )
+    provision: EnvironmentProvision = Field(
+        EnvironmentProvision.ON_DEMAND,
+        description="When a napari-managed plugin installation should provision this "
+        "environment. This does not start worker processes.",
     )
     python: str = Field(
         ...,

@@ -10,13 +10,20 @@ from npe2._command_registry import CommandRegistry
 from npe2.cli import validate
 from npe2.manifest.contributions import (
     EnvironmentContribution,
+    EnvironmentProvision,
     LocalPackageRequirement,
 )
 
 
 def _worker_manifest(**contributions) -> PluginManifest:
     data = {
-        "environments": [{"id": "example-plugin.worker", "python": "3.12.*"}],
+        "environments": [
+            {
+                "id": "example-plugin.worker",
+                "display_name": "Worker",
+                "python": "3.12.*",
+            }
+        ],
         "commands": [
             {
                 "id": "example-plugin.segment",
@@ -38,14 +45,14 @@ name: example-plugin
 contributions:
   environments:
     - id: example-plugin.worker
+      display_name: Segmentation worker
+      provision: on_install
       python: "3.12.*"
       conda: [numpy=1.26, scikit-image]
       pypi: [segment-anything>=1]
       channels: [conda-forge, pytorch]
       local_packages:
         - path: worker-package
-          editable: true
-          extras: [gpu]
       lockfile: locks/pixi.lock
   commands:
     - id: example-plugin.segment
@@ -63,15 +70,13 @@ contributions:
 
     assert environment == EnvironmentContribution(
         id="example-plugin.worker",
+        display_name="Segmentation worker",
+        provision=EnvironmentProvision.ON_INSTALL,
         python="3.12.*",
         conda=["numpy=1.26", "scikit-image"],
         pypi=["segment-anything>=1"],
         channels=["conda-forge", "pytorch"],
-        local_packages=[
-            LocalPackageRequirement(
-                path="worker-package", editable=True, extras=["gpu"]
-            )
-        ],
+        local_packages=[LocalPackageRequirement(path="worker-package")],
         lockfile="locks/pixi.lock",
     )
     assert command.environment == environment.id
@@ -98,11 +103,53 @@ contributions:
 def test_invalid_environment_recipe(field: str, value: object) -> None:
     recipe: dict[str, object] = {
         "id": "example-plugin.worker",
+        "display_name": "Worker",
         "python": "3.12",
     }
     recipe[field] = value
     with pytest.raises(ValidationError):
         EnvironmentContribution(**recipe)
+
+
+def test_environment_provision_defaults_to_on_demand() -> None:
+    environment = EnvironmentContribution(
+        id="example-plugin.worker",
+        display_name="Worker",
+        python="3.12",
+    )
+
+    assert environment.provision is EnvironmentProvision.ON_DEMAND
+
+
+@pytest.mark.parametrize("display_name", [None, "", " worker"])
+def test_environment_requires_valid_display_name(
+    display_name: str | None,
+) -> None:
+    recipe = {
+        "id": "example-plugin.worker",
+        "python": "3.12",
+    }
+    if display_name is not None:
+        recipe["display_name"] = display_name
+
+    with pytest.raises(ValidationError, match="display_name"):
+        EnvironmentContribution(**recipe)
+
+
+def test_environment_rejects_invalid_provision_policy() -> None:
+    with pytest.raises(ValidationError, match=r"on_install|on_demand"):
+        EnvironmentContribution(
+            id="example-plugin.worker",
+            display_name="Worker",
+            provision="eager",
+            python="3.12",
+        )
+
+
+@pytest.mark.parametrize("field", ["editable", "extras"])
+def test_local_package_contains_only_a_path(field: str) -> None:
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        LocalPackageRequirement(path="worker-package", **{field: True})
 
 
 @pytest.mark.parametrize(
@@ -125,15 +172,29 @@ def test_local_package_path_must_be_manifest_relative(path: str) -> None:
 
 def test_environment_ids_are_unique_and_plugin_qualified() -> None:
     duplicate = [
-        {"id": "example-plugin.worker", "python": "3.12"},
-        {"id": "example-plugin.worker", "python": "3.11"},
+        {
+            "id": "example-plugin.worker",
+            "display_name": "First worker",
+            "python": "3.12",
+        },
+        {
+            "id": "example-plugin.worker",
+            "display_name": "Second worker",
+            "python": "3.11",
+        },
     ]
     with pytest.raises(ValidationError, match="identifiers must be unique"):
         _worker_manifest(environments=duplicate)
 
     with pytest.raises(ValidationError, match="current package name"):
         _worker_manifest(
-            environments=[{"id": "another-plugin.worker", "python": "3.12"}],
+            environments=[
+                {
+                    "id": "another-plugin.worker",
+                    "display_name": "Worker",
+                    "python": "3.12",
+                }
+            ],
             commands=[],
         )
 
@@ -281,7 +342,13 @@ def test_json_schema_contains_environment_contract() -> None:
     schema = PluginManifest.model_json_schema()
     contribution_fields = schema["$defs"]["ContributionPoints"]["properties"]
     command_fields = schema["$defs"]["CommandContribution"]["properties"]
+    environment_fields = schema["$defs"]["EnvironmentContribution"]["properties"]
+    local_package_fields = schema["$defs"]["LocalPackageRequirement"]["properties"]
 
     assert "environments" in contribution_fields
+    assert environment_fields["provision"]["default"] == "on_demand"
+    assert "display_name" in schema["$defs"]["EnvironmentContribution"]["required"]
+    assert {"display_name", "provision"} <= environment_fields.keys()
+    assert local_package_fields.keys() == {"path"}
     assert "environment" in command_fields
     assert "accepts_worker_context" in command_fields
