@@ -28,7 +28,7 @@ contributions:
   commands:
     - id: example-plugin.segment
       title: Segment image
-      python_name: example_worker.api:segment
+      python_name: example_worker:segment
       environment: example-plugin.segmentation
       accepts_worker_context: true
 ```
@@ -41,9 +41,37 @@ A widget can invoke a separate worker command through napari's managed worker AP
 
 `local_packages` and `lockfile` paths use `/` separators and are relative to `napari.yaml`.
 They cannot escape the manifest directory and must be included in the built plugin distribution.
-Each local-package entry contains only a path to packaged worker source.
-Worker dependencies must be declared in the environment's `conda` and `pypi` lists rather than hidden in local-package extras or other package metadata.
-Napari owns the details of turning that source into an installable distribution for the managed environment.
+Each local-package path must name an embedded Python project containing a `pyproject.toml`.
+The project metadata must provide a static `[project].name` and must not declare static or dynamic dependencies.
+Worker dependencies belong only in the environment's `conda` and `pypi` lists so the manifest remains the authoritative recipe napari can display, fingerprint, provision, and rebuild.
+
+A minimal flat worker project requires only two files:
+
+```text
+src/example_plugin/
+├── napari.yaml
+└── worker/
+    ├── pyproject.toml
+    └── example_worker.py
+```
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "example-plugin-worker"
+version = "1.0.0"
+dependencies = []
+
+[tool.setuptools]
+py-modules = ["example_worker"]
+```
+
+Napari's environment backend installs this embedded project into the declared environment so the qualified `example_worker:segment` target is importable there.
+The outer plugin build must include the worker `pyproject.toml`, modules, and resources as package data.
+The plugin author publishes only the outer plugin distribution; the embedded worker project is not published or installed separately by the user.
 
 The `provision` policy controls when a napari-managed plugin installation should create an environment.
 `on_install` asks the plugin installation workflow to provision it immediately, while `on_demand` defers provisioning until the environment is prepared or a worker command first runs.
