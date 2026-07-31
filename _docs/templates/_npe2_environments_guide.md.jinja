@@ -5,8 +5,15 @@ Environment contributions let a plugin describe dependencies for qualified Pytho
 This prevents worker-only dependencies from changing napari's packages or conflicting with another plugin's worker dependencies.
 
 The plugin package still has a host portion installed with napari.
-Its manifest, widgets, command-launching code, and all code that uses napari or Qt APIs must remain lightweight and importable in the napari process.
-Dependencies unavailable in a default napari installation belong in an environment contribution, and code that imports them belongs behind an associated worker command.
+Its manifest, widgets, command-launching code, and all code that uses napari or Qt APIs run in the napari process.
+This host code may rely only on the standard library, the plugin's own modules, napari, and packages in napari's direct base requirements for the current platform.
+Every other runtime dependency belongs in an environment contribution, and code that imports it belongs behind an associated worker command.
+This rule applies regardless of a package's size, import time, or perceived compatibility.
+
+The main plugin distribution still declares each allowed package that host code imports directly.
+Every declared version constraint must accept the version installed with napari.
+For managed installation to enforce this contract, napari must inspect the selected wheel before changing the host environment, reject incompatible or additional requirements, and install an accepted wheel without dependency resolution.
+Installations performed directly with `pip`, Conda, or another external tool remain outside that guarantee.
 
 ```yaml
 contributions:
@@ -70,8 +77,8 @@ py-modules = ["example_worker"]
 ```
 
 Napari's environment backend installs this embedded project into the declared environment so the qualified `example_worker:segment` target is importable there.
-The outer plugin build must include the worker `pyproject.toml`, modules, and resources as package data.
-The plugin author publishes only the outer plugin distribution; the embedded worker project is not published or installed separately by the user.
+The main plugin build must include the worker `pyproject.toml`, modules, and resources as package data.
+The plugin author publishes only the main plugin distribution; the embedded worker project is not published or installed separately by the user.
 
 The `provision` policy controls when a napari-managed plugin installation should create an environment.
 `on_install` asks the plugin installation workflow to provision it immediately, while `on_demand` defers provisioning until the environment is prepared or a worker command first runs.
