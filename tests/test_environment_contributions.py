@@ -345,6 +345,7 @@ def test_json_schema_contains_environment_contract() -> None:
     environment_fields = schema["$defs"]["EnvironmentContribution"]["properties"]
     local_package_fields = schema["$defs"]["LocalPackageRequirement"]["properties"]
 
+    assert schema["properties"]["schema_version"]["default"] == "0.3.0"
     assert "environments" in contribution_fields
     assert environment_fields["provision"]["default"] == "on_demand"
     assert "display_name" in schema["$defs"]["EnvironmentContribution"]["required"]
