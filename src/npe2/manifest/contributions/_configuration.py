@@ -23,14 +23,14 @@ def normalize_title(title: str) -> str:
     'main_widget'
     """
     # camelCase -> snake_case (e.g. someSetting -> some_Setting)
-    name = re.sub(r'(?<!^)(?=[A-Z])', '_', title)
+    name = re.sub(r"(?<!^)(?=[A-Z])", "_", title)
     # any run of non-alphanumeric characters is a separator
-    name = re.sub(r'[^0-9a-zA-Z]+', '_', name)
-    name = re.sub(r'_+', '_', name).strip('_').lower()
+    name = re.sub(r"[^0-9a-zA-Z]+", "_", name)
+    name = re.sub(r"_+", "_", name).strip("_").lower()
     if not name:
-        name = 'settings'
+        name = "settings"
     if name[0].isdigit():
-        name = f'_{name}'
+        name = f"_{name}"
     return name
 
 
