@@ -5,8 +5,8 @@ from npe2.manifest.contributions import (
     ConfigurationContribution,
     ConfigurationProperty,
     ContributionPoints,
-    normalize_title,
 )
+from npe2.manifest.contributions._configuration import normalize_title
 from npe2.manifest.contributions._json_schema import ValidationError
 
 PROPS = [
