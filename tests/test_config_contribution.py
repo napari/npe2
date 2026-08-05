@@ -1,6 +1,12 @@
 import pytest
+from pydantic import ValidationError as PydanticValidationError
 
-from npe2.manifest.contributions import ConfigurationContribution, ConfigurationProperty
+from npe2.manifest.contributions import (
+    ConfigurationContribution,
+    ConfigurationProperty,
+    ContributionPoints,
+    normalize_title,
+)
 from npe2.manifest.contributions._json_schema import ValidationError
 
 PROPS = [
@@ -69,3 +75,59 @@ def test_config_validation(schema, valid, invalid):
     # check that we can convert json type to python type
     assert cfg.python_type.__module__ == "builtins"
     assert cfg.has_default is ("default" in schema)
+
+
+def test_normalize_title():
+    assert (
+        normalize_title("Demo Configuration for widget 1")
+        == "demo_configuration_for_widget_1"
+    )
+    assert normalize_title("main widget") == "main_widget"
+    assert normalize_title("someSetting") == "some_setting"
+
+
+def test_duplicate_configuration_titles_raise():
+    with pytest.raises(PydanticValidationError, match="both normalize to"):
+        ContributionPoints(
+            configuration=[
+                {
+                    "title": "Main Widget",
+                    "properties": {
+                        "p.a": {
+                            "title": "A",
+                            "type": "boolean",
+                            "default": False,
+                        },
+                    },
+                },
+                {
+                    "title": "main widget",
+                    "properties": {
+                        "p.b": {
+                            "title": "B",
+                            "type": "boolean",
+                            "default": False,
+                        },
+                    },
+                },
+            ]
+        )
+
+
+def test_duplicate_property_keys_raise():
+    with pytest.raises(PydanticValidationError, match="both normalize to"):
+        ConfigurationContribution(
+            title="My Widget",
+            properties={
+                "plugin.a.lazy": {
+                    "title": "Lazy",
+                    "type": "boolean",
+                    "default": False,
+                },
+                "plugin.a-lazy": {
+                    "title": "Lazy 2",
+                    "type": "boolean",
+                    "default": False,
+                },
+            },
+        )
