@@ -77,13 +77,21 @@ def test_config_validation(schema, valid, invalid):
     assert cfg.has_default is ("default" in schema)
 
 
-def test_normalize_title():
-    assert (
-        normalize_title("Demo Configuration for widget 1")
-        == "demo_configuration_for_widget_1"
-    )
-    assert normalize_title("main widget") == "main_widget"
-    assert normalize_title("someSetting") == "some_setting"
+@pytest.mark.parametrize(
+    "title, expected",
+    [
+        ("Demo Configuration for widget 1", "demo_configuration_for_widget_1"),
+        ("main widget", "main_widget"),
+        ("someSetting", "some_setting"),
+        # no alphanumeric content at all -> fall back to a generic key
+        ("", "settings"),
+        ("!!!", "settings"),
+        # leading digit -> prefix underscore so the key is a valid identifier
+        ("123 hello", "_123_hello"),
+    ],
+)
+def test_normalize_title(title, expected):
+    assert normalize_title(title) == expected
 
 
 def test_duplicate_configuration_titles_raise():
