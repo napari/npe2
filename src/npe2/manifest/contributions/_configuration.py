@@ -117,12 +117,11 @@ class ConfigurationContribution(BaseModel):
     )
     properties: dict[str, ConfigurationProperty] = Field(
         ...,
-        description="Configuration properties. In the settings UI, your configuration "
-        "key will be used to namespace and construct a title. Though a plugin can "
-        "contain multiple categories of settings, each plugin setting must still have "
-        "its own unique key. Capital letters in your key are used to indicate word "
-        "breaks. For example, if your key is 'gitMagic.blame.dateFormat', the "
-        "generated title for the setting will look like 'Blame: Date Format'",
+        description="Configuration properties. The key is used to namespace each "
+        "setting and to derive its internal identifier (e.g. field name); the "
+        "`title` of each property is what the settings UI displays as its label. "
+        "Though a plugin can contain multiple categories of settings, each plugin "
+        "setting must still have its own unique key.",
     )
 
     @model_validator(mode="after")
