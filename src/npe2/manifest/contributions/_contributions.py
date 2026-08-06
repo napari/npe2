@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ._commands import CommandContribution
-from ._configuration import ConfigurationContribution
+from ._configuration import (
+    ConfigurationContribution,
+    _ensure_unique_normalized,
+)
 from ._keybindings import KeyBindingContribution
 from ._menus import MenuItem
 from ._readers import ReaderContribution
@@ -60,3 +63,12 @@ class ContributionPoints(BaseModel):
     @classmethod
     def _to_list(cls, v):
         return v if isinstance(v, list) else [v]
+
+    @model_validator(mode="after")
+    def _validate_unique_configuration_titles(self):
+        """Configuration titles must be unique once normalized to snake_case."""
+        _ensure_unique_normalized(
+            (conf.title for conf in self.configuration),
+            "Configuration titles",
+        )
+        return self
