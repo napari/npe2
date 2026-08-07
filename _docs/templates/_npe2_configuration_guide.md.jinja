@@ -53,6 +53,35 @@ The category title is converted to snake_case to form the attribute name
 each key becomes a snake_case field name on that model (with the plugin-name
 prefix stripped).
 
+### Events: Reacting to settings changes
+
+Settings are napari `EventedModel`s, so changing a value emits a
+[psygnal](https://github.com/pyapp-kit/psygnal) event that you can connect to.
+Each category exposes an `events` emitter group with one emitter per setting:
+
+```python
+my_settings = get_plugin_settings("example-plugin")
+
+def on_max_size_changed(event):
+    print("max size is now", event.value)
+
+my_settings.reader.events.max_size_mb.connect(on_max_size_changed)
+
+my_settings.reader.max_size_mb = 1024  # event causes a print: "max size is now 1024"
+```
+
+The top-level settings object also re-emits every change as a single
+`changed` event carrying a dotted `<category>.<property>` key, so one
+connection covers all of a plugin's settings:
+
+```python
+my_settings.events.changed.connect(lambda e: print(e.key, e.value))
+# after the assignment above -> "reader.max_size_mb 1024"
+```
+
+These events fire whether a value is changed in code or in the Preferences
+dialog, and the change is auto-saved to the config file.
+
 ### Supported types and constraints
 
 Each property follows a subset of
