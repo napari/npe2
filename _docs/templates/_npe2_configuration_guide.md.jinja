@@ -192,7 +192,7 @@ def my_settings():
     try:
         from napari.settings import get_plugin_settings
         return get_plugin_settings("example-plugin")
-    except ImportError:  # pragma: no cover - napari < 0.9.0
+    except ImportError:
         return _DEFAULTS
 ```
 
@@ -203,6 +203,6 @@ def max_size_mb() -> float:
     try:
         from napari.settings import get_plugin_settings
         return get_plugin_settings("example-plugin").reader.max_size_mb
-    except (ImportError, KeyError):
+    except ImportError:
         return 512.0
 ```
