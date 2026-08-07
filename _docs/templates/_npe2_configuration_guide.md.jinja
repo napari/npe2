@@ -1,0 +1,208 @@
+(configuration-contribution-guide)=
+## Configuration
+
+Plugin settings allow your plugin to expose user-configurable options in
+napari's **Preferences** dialog. They are declared in the
+manifest under `contributions.configuration` and are rendered automatically —
+no Python code is needed to build the settings UI.
+
+Configuration contribution values are exposed at runtime via
+`napari.settings.get_plugin_settings("example-plugin")` and persisted to
+`<config dir>/example-plugin.yaml`. Settings are written to disk
+*automatically* whenever a value changes.
+
+### A minimal example
+
+```yaml
+{{ 'configuration'|example_contribution }}
+```
+
+Each entry in `contributions.configuration` is a **category** of settings. The
+example above declares two categories, `Pre-processing Widget` and `Reader`, each with its
+own properties.
+
+### Categories, keys, and titles
+
+Three pieces of metadata determine how a setting is shown and accessed:
+
+- **`title` (of the category)** — the heading shown in the Preferences dialog
+  for that category of settings (e.g. `Pre-processing Widget`, `Reader`).
+  Avoid redundant words like "Plugin", "Configuration", or "Settings" in your
+  category title. The title is **not** just for display: it is snake_cased and
+  used as the attribute name for accessing that category programmatically
+  (see the **key** bullet below).
+- **`title` (of the property)** — the label shown next to the setting's input
+  widget in the Preferences dialog (e.g. `Default colormap`). Each property must
+  define a `title` for display in the Preferences dialog.
+- **key** (the dictionary key of a property, e.g. `example-plugin.colormap`) —
+  used to *namespace* the setting and to derive its internal identifier (the
+  Python field name). Keys are **never shown in the UI**, but they form the
+  attribute used to access the setting at runtime, nested under the category's
+  snake_cased title:
+
+  ```python
+  from napari.settings import get_plugin_settings
+
+  my_settings = get_plugin_settings("example-plugin")
+  my_settings.pre_processing_widget.colormap  # <snake_cased category title>.<key>
+  my_settings.reader.max_size_mb
+  ```
+
+The category title is converted to snake_case to form the attribute name
+(`Pre-processing Widget` → `pre_processing_widget`, `Reader` → `reader`), and
+each key becomes a snake_case field name on that model (with the plugin-name
+prefix stripped).
+
+### How settings render in napari
+
+For the example plugin above, the Preferences dialog shows one page per
+plugin, with each category rendered as its own group:
+
+```text
+Preferences
+  ...              ── existing napari sections ──
+  ----Plugin Preferences----
+  Example Plugin   ◄── page per plugin (display_name)
+
+  ╔═ Pre-processing Widget ══════════════╗   ◄── category title
+  ║  Default colormap          [dropdown] ║   ◄── property title + widget
+  ║  Gamma correction               [1.0] ║
+  ╚══════════════════════════════════════╝
+  ╔═ Reader ═════════════════════════════╗
+  ║  Max in-memory image size (MB)  [512] ║
+  ║  Auto-contrast on open            [x] ║
+  ╚══════════════════════════════════════╝
+```
+
+The `title` of each category becomes a group-box header, and each property
+renders as a labelled input (`title:` label + widget chosen by `type:`). The
+property `description:` becomes the widget's help/tooltip text.
+
+### Events: Reacting to settings changes
+
+Settings are napari `EventedModel`s, so changing a value emits a
+[psygnal](https://github.com/pyapp-kit/psygnal) event that you can connect to.
+Each category exposes an `events` emitter group with one emitter per setting:
+
+```python
+my_settings = get_plugin_settings("example-plugin")
+
+def on_max_size_changed(event):
+    print("max size is now", event.value)
+
+my_settings.reader.events.max_size_mb.connect(on_max_size_changed)
+
+my_settings.reader.max_size_mb = 1024  # event causes a print: "max size is now 1024"
+```
+
+The top-level settings object also re-emits every change as a single
+`changed` event carrying a dotted `<category>.<property>` key, so one
+connection covers all of a plugin's settings:
+
+```python
+my_settings.events.changed.connect(lambda e: print(e.key, e.value))
+# after the assignment above -> "reader.max_size_mb 1024"
+```
+
+These events fire whether a value is changed in code or in the Preferences
+dialog, and the change is auto-saved to the config file.
+
+### Supported types and constraints
+
+Each property follows a subset of
+[JSON Schema (draft 2020-12)](https://json-schema.org/draft/2020-12/). The
+`type` of a property is one of four JSON Schema types:
+
+| `type` | Widget in Preferences | Meaning | Extra options |
+| --- | --- | --- | --- |
+| `boolean` | checkbox | `true` / `false` | |
+| `string` | line edit | any text | `enum` → dropdown; `minLength` / `maxLength`; `is_multiline` |
+| `integer` | integer spin box | whole numbers | `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `multipleOf` |
+| `number` | float spin box | real numbers (floats) | `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `multipleOf` |
+
+`number` is JSON Schema's type for **floats** (any real number); `integer` is
+for whole numbers. npe2 also accepts the Python type names `bool`, `int`,
+`float`, and `str`, so `type: float` is equivalent to `type: number`.
+
+`enum` is supported on **any** property type (it renders a dropdown), not just
+strings. Both YAML styles are valid — a flow list (`enum: [gray, green,
+viridis]`) or a block list (as in the example above); the block style is
+clearer when there are several options.
+
+A `default` is required for every property. Constraints are enforced by the
+settings model, so invalid values cannot be saved.
+
+### Validation
+
+npe2 validates that configuration **titles** and **property keys** are unique
+within a plugin (after normalization to snake_case), and that every property
+has a valid type, default, and constraints. Invalid manifests are rejected at
+parse time, so mistakes surface early rather than as a broken Preferences page.
+
+### Testing your settings
+
+In a normal napari session your installed plugin is discovered and
+`get_plugin_settings("example-plugin")` just works. Under **pytest** it
+doesn't: npe2's pytest plugin blocks discovery so that test suites stay
+hermetic, and napari caches settings for the lifetime of the process. So in
+a test, register your plugin's manifest with the test
+plugin manager and reset the cache before calling `get_plugin_settings`:
+
+```python
+def test_my_settings(tmp_path):
+    from napari import settings as napari_settings
+    from npe2 import PluginManager, PluginManifest
+
+    pm = PluginManager.instance()
+    if 'example-plugin' not in pm:
+        pm.register(PluginManifest.from_distribution('example-plugin'))
+    # Reset the in-memory cache so the registered plugin is included (saved
+    # values are re-read from disk; this also allows path_dir=tmp_path).
+    napari_settings._PLUGIN_PREFERENCES.clear()
+
+    s = napari_settings.get_plugin_settings('example-plugin', path_dir=tmp_path)
+    assert s.reader.max_size_mb == 512
+    assert s.config_path.name == 'example-plugin.yaml'
+
+    s.reader.max_size_mb = 1024  # auto-saves to the config file
+    assert 'max_size_mb: 1024' in s.config_path.read_text()
+```
+
+### Supporting older napari
+
+Declaring `contributions.configuration` works on **every** napari — npe2
+parses the manifest regardless of version, so an older napari simply ignores
+the block (the settings just don't appear in Preferences). Only the runtime
+*read* API, `get_plugin_settings`, is available in napari>=0.9.0.
+
+If you need to support older napari, feature-detect the API and fall back to
+defaults — you don't need a full settings shim, only the values your code
+actually reads. In this way, older napari will not enable customizing the settings.
+
+```python
+from types import SimpleNamespace
+
+# Defaults mirroring your manifest (only the values your code reads).
+_DEFAULTS = SimpleNamespace(
+    reader=SimpleNamespace(max_size_mb=512, auto_contrast=True),
+)
+
+def my_settings():
+    """Return napari's settings, or defaults on napari < 0.9.0."""
+    try:
+        from napari.settings import get_plugin_settings
+        return get_plugin_settings("example-plugin")
+    except ImportError:  # pragma: no cover - napari < 0.9.0
+        return _DEFAULTS
+```
+
+If you only read one or two settings, inline the fallback instead:
+
+```python
+def max_size_mb() -> float:
+    try:
+        from napari.settings import get_plugin_settings
+        return get_plugin_settings("example-plugin").reader.max_size_mb
+    except (ImportError, KeyError):
+        return 512.0
+```

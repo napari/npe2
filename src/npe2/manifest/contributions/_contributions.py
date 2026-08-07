@@ -50,7 +50,6 @@ class ContributionPoints(BaseModel):
 
     configuration: list[ConfigurationContribution] = Field(
         default_factory=list,
-        hide_docs=True,
         description="Configuration options for this plugin."
         "This section can either be a single object, representing a single category of"
         "settings, or an array of objects, representing multiple categories of"
