@@ -53,6 +53,31 @@ The category title is converted to snake_case to form the attribute name
 each key becomes a snake_case field name on that model (with the plugin-name
 prefix stripped).
 
+### How settings render in napari
+
+For the example plugin above, the Preferences dialog shows one page per
+plugin, with each category rendered as its own group:
+
+```text
+Preferences
+  ...              ── existing napari sections ──
+  ----Plugin Preferences----
+  Example Plugin   ◄── page per plugin (display_name)
+
+  ╔═ Pre-processing Widget ══════════════╗   ◄── category title
+  ║  Default colormap          [dropdown] ║   ◄── property title + widget
+  ║  Gamma correction               [1.0] ║
+  ╚══════════════════════════════════════╝
+  ╔═ Reader ═════════════════════════════╗
+  ║  Max in-memory image size (MB)  [512] ║
+  ║  Auto-contrast on open            [x] ║
+  ╚══════════════════════════════════════╝
+```
+
+The `title` of each category becomes a group-box header, and each property
+renders as a labelled input (`title:` label + widget chosen by `type:`). The
+property `description:` becomes the widget's help/tooltip text.
+
 ### Events: Reacting to settings changes
 
 Settings are napari `EventedModel`s, so changing a value emits a
@@ -106,31 +131,6 @@ clearer when there are several options.
 
 A `default` is required for every property. Constraints are enforced by the
 settings model, so invalid values cannot be saved.
-
-### How settings render in napari
-
-For the example plugin above, the Preferences dialog shows one page per
-plugin, with each category rendered as its own group:
-
-```text
-Preferences
-  ...              ── existing napari sections ──
-  ----Plugin Preferences----
-  Example Plugin   ◄── page per plugin (display_name)
-
-  ╔═ Pre-processing Widget ══════════════╗   ◄── category title
-  ║  Default colormap          [dropdown] ║   ◄── property title + widget
-  ║  Gamma correction               [1.0] ║
-  ╚══════════════════════════════════════╝
-  ╔═ Reader ═════════════════════════════╗
-  ║  Max in-memory image size (MB)  [512] ║
-  ║  Auto-contrast on open            [x] ║
-  ╚══════════════════════════════════════╝
-```
-
-The `title` of each category becomes a group-box header, and each property
-renders as a labelled input (`title:` label + widget chosen by `type:`). The
-property `description:` becomes the widget's help/tooltip text.
 
 ### Validation
 
