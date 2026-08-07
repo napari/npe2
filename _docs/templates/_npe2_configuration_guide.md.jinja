@@ -8,7 +8,8 @@ no Python code is needed to build the settings UI.
 
 Configuration contribution values are exposed at runtime via
 `napari.settings.get_plugin_settings("example-plugin")` and persisted to
-`<config dir>/example-plugin.yaml`.
+`<config dir>/example-plugin.yaml`. Settings are written to disk
+*automatically* whenever a value changes.
 
 ### A minimal example
 
@@ -108,3 +109,32 @@ npe2 validates that configuration **titles** and **property keys** are unique
 within a plugin (after normalization to snake_case), and that every property
 has a valid type, default, and constraints. Invalid manifests are rejected at
 parse time, so mistakes surface early rather than as a broken Preferences page.
+
+### Testing your settings
+
+In a normal napari session your installed plugin is discovered and
+`get_plugin_settings("example-plugin")` just works. Under **pytest** it
+doesn't: npe2's pytest plugin blocks discovery so that test suites stay
+hermetic, and napari caches settings for the lifetime of the process. So in
+a test, register your plugin's manifest with the test
+plugin manager and reset the cache before calling `get_plugin_settings`:
+
+```python
+def test_my_settings(tmp_path):
+    from napari import settings as napari_settings
+    from npe2 import PluginManager, PluginManifest
+
+    pm = PluginManager.instance()
+    if 'example-plugin' not in pm:
+        pm.register(PluginManifest.from_distribution('example-plugin'))
+    # Reset the in-memory cache so the registered plugin is included (saved
+    # values are re-read from disk; this also allows path_dir=tmp_path).
+    napari_settings._PLUGIN_PREFERENCES.clear()
+
+    s = napari_settings.get_plugin_settings('example-plugin', path_dir=tmp_path)
+    assert s.reader.max_size_mb == 512
+    assert s.config_path.name == 'example-plugin.yaml'
+
+    s.reader.max_size_mb = 1024  # auto-saves to the config file
+    assert 'max_size_mb: 1024' in s.config_path.read_text()
+```
