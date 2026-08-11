@@ -7,6 +7,53 @@ import yaml
 from pydantic import BaseModel, PrivateAttr
 
 
+class _UniqueKeyYamlLoader(yaml.SafeLoader):
+    """YAML loader that raises on duplicate keys within a single mapping.
+
+    PyYAML (like the stdlib `json` module) silently keeps the *last* value
+    for a duplicate key within a mapping, which would let e.g. two
+    `contributions.configurations` entries share a key and silently
+    discard one during parsing -- before pydantic ever sees the data to
+    validate it. This loader catches that at parse time instead.
+    """
+
+    def construct_mapping(self, node, deep=False):
+        seen = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if key in seen:
+                raise yaml.constructor.ConstructorError(
+                    "while constructing a mapping",
+                    node.start_mark,
+                    f"found duplicate key {key!r}",
+                    key_node.start_mark,
+                )
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
+def _load_yaml_no_duplicates(stream):
+    return yaml.load(stream, Loader=_UniqueKeyYamlLoader)
+
+
+def _no_duplicate_keys_object_pairs_hook(pairs):
+    """`object_pairs_hook` for `json.load` that rejects duplicate object keys.
+
+    See `_UniqueKeyYamlLoader` for why: the stdlib `json` module otherwise
+    silently keeps the last value for a duplicate key.
+    """
+    seen: dict = {}
+    for key, value in pairs:
+        if key in seen:
+            raise ValueError(f"Duplicate key {key!r} found while parsing JSON.")
+        seen[key] = value
+    return seen
+
+
+def _load_json_no_duplicates(stream):
+    return json.load(stream, object_pairs_hook=_no_duplicate_keys_object_pairs_hook)
+
+
 class ImportExportModel(BaseModel):
     """Model mixin/base class that provides read/write from toml/yaml/json.
 
@@ -73,7 +120,7 @@ class ImportExportModel(BaseModel):
 
         loader: Callable
         if path.suffix.lower() == ".json":
-            loader = json.load
+            loader = _load_json_no_duplicates
         elif path.suffix.lower() == ".toml":
             try:
                 import tomllib
@@ -82,7 +129,7 @@ class ImportExportModel(BaseModel):
 
             loader = tomllib.load
         elif path.suffix.lower() in (".yaml", ".yml"):
-            loader = yaml.safe_load
+            loader = _load_yaml_no_duplicates
         else:
             raise ValueError(f"unrecognized file extension: {path}")  # pragma: no cover
 
