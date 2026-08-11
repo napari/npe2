@@ -60,7 +60,7 @@ class ConfigurationContribution(BaseModel):
     This enables plugins to provide a schema for their configurables.
     Configuration contributions are used to generate the settings UI. Each
     configuration contribution is declared under a unique key in
-    `contributions.configuration` (see `ContributionPoints.configuration`);
+    `contributions.configurations` (see `ContributionPoints.configurations`);
     that key, together with each property's key below, is used verbatim to
     build the path used to access this setting at runtime, e.g.
     `get_plugin_settings('plugin-name').<configuration-key>.<property-key>`.
@@ -71,7 +71,7 @@ class ConfigurationContribution(BaseModel):
         description="The heading used for this configuration category, displayed in "
         'the settings UI. Words like "Plugin", "Configuration", and "Settings" '
         "are redundant and should not be used in your title. Unlike the key under "
-        "which this contribution is declared in `contributions.configuration`, the "
+        "which this contribution is declared in `contributions.configurations`, the "
         "title is display text only and does not need to be unique.",
     )
     properties: dict[_ConfigurationKey, ConfigurationProperty] = Field(

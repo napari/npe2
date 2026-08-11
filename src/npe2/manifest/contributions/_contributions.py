@@ -45,7 +45,7 @@ class ContributionPoints(BaseModel):
     submenus: list[SubmenuContribution] | None = None
     keybindings: list[KeyBindingContribution] | None = Field(None, hide_docs=True)
 
-    configuration: dict[_ConfigurationKey, ConfigurationContribution] = Field(
+    configurations: dict[_ConfigurationKey, ConfigurationContribution] = Field(
         default_factory=dict,
         hide_docs=True,
         description="Configuration options for this plugin, keyed by a configuration "

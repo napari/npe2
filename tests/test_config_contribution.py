@@ -77,9 +77,9 @@ def test_config_validation(schema, valid, invalid):
 
 
 def test_configuration_dict_keyed():
-    """`contributions.configuration` is a dict keyed by configuration key."""
+    """`contributions.configurations` is a dict keyed by configuration key."""
     cp = ContributionPoints(
-        configuration={
+        configurations={
             "reader": {
                 "title": "Reader",
                 "properties": {
@@ -102,8 +102,8 @@ def test_configuration_dict_keyed():
             },
         }
     )
-    assert set(cp.configuration) == {"reader", "writer"}
-    assert cp.configuration["reader"].properties["num_layers"].default == 3
+    assert set(cp.configurations) == {"reader", "writer"}
+    assert cp.configurations["reader"].properties["num_layers"].default == 3
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,7 @@ def test_configuration_dict_keyed():
 def test_invalid_configuration_key_raises(key):
     with pytest.raises(PydanticValidationError, match="not a valid configuration key"):
         ContributionPoints(
-            configuration={
+            configurations={
                 key: {
                     "title": "Reader",
                     "properties": {
@@ -163,7 +163,7 @@ def test_invalid_property_key_raises(key):
 def test_duplicate_configuration_titles_allowed():
     """Titles are display text only; they no longer need to be unique."""
     cp = ContributionPoints(
-        configuration={
+        configurations={
             "reader": {
                 "title": "Main Widget",
                 "properties": {
@@ -178,4 +178,4 @@ def test_duplicate_configuration_titles_allowed():
             },
         }
     )
-    assert cp.configuration["reader"].title == cp.configuration["writer"].title
+    assert cp.configurations["reader"].title == cp.configurations["writer"].title
