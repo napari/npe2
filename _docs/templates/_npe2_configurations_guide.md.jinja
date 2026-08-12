@@ -1,9 +1,9 @@
-(configuration-contribution-guide)=
-## Configuration
+(configurations-contribution-guide)=
+## Configurations
 
 Plugin settings allow your plugin to expose user-configurable options in
 napari's **Preferences** dialog. They are declared in the
-manifest under `contributions.configuration` and are rendered automatically —
+manifest under `contributions.configurations` and are rendered automatically —
 no Python code is needed to build the settings UI.
 
 Configuration contribution values are exposed at runtime via
@@ -14,44 +14,47 @@ Configuration contribution values are exposed at runtime via
 ### A minimal example
 
 ```yaml
-{{ 'configuration'|example_contribution }}
+{{ 'configurations'|example_contribution }}
 ```
 
-Each entry in `contributions.configuration` is a **category** of settings. The
-example above declares two categories, `Pre-processing Widget` and `Reader`, each with its
-own properties.
+Each entry in `contributions.configurations` is a **category** of settings,
+keyed by a configuration key. The example above declares two categories,
+`pre_processing_widget` and `reader`, each with its own properties.
 
 ### Categories, keys, and titles
 
-Three pieces of metadata determine how a setting is shown and accessed:
+The **key** determines how a setting is accessed at runtime; **titles** determine
+how it is displayed:
 
+- **key** (the dictionary key of a category under `contributions.configurations`,
+  e.g. `reader`) — used **verbatim** as the attribute name for that category on
+  the generated settings model. Keys must be valid, non-reserved Python
+  identifiers that do not begin with an underscore (see
+  [Validation](#validation)), and must be unique within a manifest. Keys are
+  **never shown in the UI**.
 - **`title` (of the category)** — the heading shown in the Preferences dialog
-  for that category of settings (e.g. `Pre-processing Widget`, `Reader`).
-  Avoid redundant words like "Plugin", "Configuration", or "Settings" in your
-  category title. The title is **not** just for display: it is snake_cased and
-  used as the attribute name for accessing that category programmatically
-  (see the **key** bullet below).
+  for that category of settings (e.g. `Reader`, `Pre-processing Widget`). The
+  title is display text **only**: it does *not* become the attribute name and
+  does not need to be unique. Avoid redundant words like "Plugin",
+  "Configuration", or "Settings" in your category title.
 - **`title` (of the property)** — the label shown next to the setting's input
-  widget in the Preferences dialog (e.g. `Default colormap`). Each property must
-  define a `title` for display in the Preferences dialog.
-- **key** (the dictionary key of a property, e.g. `example-plugin.colormap`) —
-  used to *namespace* the setting and to derive its internal identifier (the
-  Python field name). Keys are **never shown in the UI**, but they form the
-  attribute used to access the setting at runtime, nested under the category's
-  snake_cased title:
+  widget in the Preferences dialog (e.g. `Max in-memory image size (MB)`). Each
+  property must define a `title` for display.
 
-  ```python
-  from napari.settings import get_plugin_settings
+Property keys (the dictionary keys inside `properties:`) are likewise used
+**verbatim** as attribute names, nested under the category's key:
 
-  my_settings = get_plugin_settings("example-plugin")
-  my_settings.pre_processing_widget.colormap  # <snake_cased category title>.<key>
-  my_settings.reader.max_size_mb
-  ```
+```python
+from napari.settings import get_plugin_settings
 
-The category title is converted to snake_case to form the attribute name
-(`Pre-processing Widget` → `pre_processing_widget`, `Reader` → `reader`), and
-each key becomes a snake_case field name on that model (with the plugin-name
-prefix stripped).
+my_settings = get_plugin_settings("example-plugin")
+my_settings.reader.max_size_mb               # <category key>.<property key>
+my_settings.pre_processing_widget.colormap
+```
+
+So the attribute path is always `<category key>.<property key>`, e.g.
+`reader.max_size_mb`; neither part is derived from a title, and property keys
+only need to be unique within their own category.
 
 ### How settings render in napari
 
@@ -134,9 +137,11 @@ settings model, so invalid values cannot be saved.
 
 ### Validation
 
-npe2 validates that configuration **titles** and **property keys** are unique
-within a plugin (after normalization to snake_case), and that every property
-has a valid type, default, and constraints. Invalid manifests are rejected at
+npe2 validates that configuration keys and property keys are valid,
+non-reserved Python identifiers that do not begin with an underscore (they are
+used verbatim as attribute names on the generated settings model), that
+configuration keys are unique within a manifest, and that every property has a
+valid `type`, `default`, and constraints. Invalid manifests are rejected at
 parse time, so mistakes surface early rather than as a broken Preferences page.
 
 ### Testing your settings
@@ -170,7 +175,7 @@ def test_my_settings(tmp_path):
 
 ### Supporting older napari
 
-Declaring `contributions.configuration` works on **every** napari — npe2
+Declaring `contributions.configurations` works on **every** napari — npe2
 parses the manifest regardless of version, so an older napari simply ignores
 the block (the settings just don't appear in Preferences). Only the runtime
 *read* API, `get_plugin_settings`, is available in napari>=0.9.0.
