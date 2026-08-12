@@ -21,28 +21,32 @@ Each entry in `contributions.configurations` is a **category** of settings,
 keyed by a configuration key. The example above declares two categories,
 `pre_processing_widget` and `reader`, each with its own properties.
 
-### Categories, keys, and titles
+### `ConfigurationContribution` or Categories
 
-The **key** determines how a setting is accessed at runtime; **titles** determine
-how it is displayed:
+Each `ConfigurationContribution`, or category of setting, is declared with a
+key in the manifest e.g. `pre_processing_widget` or `reader`. These keys must be
+valid, non-reserved Python identifiers that do not begin with an underscore (see
+[Validation](#validation)), and must be unique within a manifest. These keys are
+**never shown in the UI**, but are used to access your `ConfigurationContribution`
+programmatically at `get_plugin_settings("example-plugin").<configuration-key>`.
 
-- **key** (the dictionary key of a category under `contributions.configurations`,
-  e.g. `reader`) — used **verbatim** as the attribute name for that category on
-  the generated settings model. Keys must be valid, non-reserved Python
-  identifiers that do not begin with an underscore (see
-  [Validation](#validation)), and must be unique within a manifest. Keys are
-  **never shown in the UI**.
-- **`title` (of the category)** — the heading shown in the Preferences dialog
-  for that category of settings (e.g. `Reader`, `Pre-processing Widget`). The
-  title is display text **only**: it does *not* become the attribute name and
-  does not need to be unique. Avoid redundant words like "Plugin",
-  "Configuration", or "Settings" in your category title.
-- **`title` (of the property)** — the label shown next to the setting's input
-  widget in the Preferences dialog (e.g. `Max in-memory image size (MB)`). Each
-  property must define a `title` for display.
+The `title` of the `ConfigurationContribution` is displayed as a section header
+on the plugin's preferences page.
 
-Property keys (the dictionary keys inside `properties:`) are likewise used
-**verbatim** as attribute names, nested under the category's key:
+### `ConfigurationProperty` or Fields
+
+`ConfigurationContribution`s contain one or more `ConfigurationProperty`. Each
+`ConfigurationProperty` is an individual setting or field the user can configure.
+Each `ConfigurationProperty` has a key in the manifest. These keys must be
+valid, non-reserved Python identifiers that do not begin with an underscore (see
+[Validation](#validation)), and must be unique within their `ConfigurationContribution`.
+These keys are **never shown in the UI**, but are used to access your `ConfigurationContribution`
+programmatically at `get_plugin_settings("example-plugin").<configuration-key>.<property-key>`.
+
+The `title` of the `ConfigurationProperty` is displayed as a label to the left of
+the widget that allows the user to configure the value for this field.
+
+To access an individual field in your plugin preferences:
 
 ```python
 from napari.settings import get_plugin_settings
@@ -52,9 +56,18 @@ my_settings.reader.max_size_mb               # <category key>.<property key>
 my_settings.pre_processing_widget.colormap
 ```
 
-So the attribute path is always `<category key>.<property key>`, e.g.
-`reader.max_size_mb`; neither part is derived from a title, and property keys
-only need to be unique within their own category.
+Each `ConfigurationProperty` must have a set `title`, `type` and `default` value.
+
+#### Types & Constraints
+
+The `type` declared for a `ConfigurationProperty` determines the widget
+that will be created to allow the user to set the value of this property.
+
+We currently only support simple types like `boolean`, `integer`, `float` or `string`.
+Depending on the `type` you've selected, you can also set basic constraints
+to validate the user's provided value e.g. for `integer` types you can set a minimum
+and a maximum value. For the full list of available types, and their constraints, see
+the the [ConfigurationProperty reference](contributions-readers).
 
 ### How settings render in napari
 
@@ -109,31 +122,6 @@ my_settings.events.changed.connect(lambda e: print(e.key, e.value))
 
 These events fire whether a value is changed in code or in the Preferences
 dialog, and the change is auto-saved to the config file.
-
-### Supported types and constraints
-
-Each property follows a subset of
-[JSON Schema (draft 2020-12)](https://json-schema.org/draft/2020-12/). The
-`type` of a property is one of four JSON Schema types:
-
-| `type` | Widget in Preferences | Meaning | Extra options |
-| --- | --- | --- | --- |
-| `boolean` | checkbox | `true` / `false` | |
-| `string` | line edit | any text | `enum` → dropdown; `minLength` / `maxLength`; `is_multiline` |
-| `integer` | integer spin box | whole numbers | `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `multipleOf` |
-| `number` | float spin box | real numbers (floats) | `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `multipleOf` |
-
-`number` is JSON Schema's type for **floats** (any real number); `integer` is
-for whole numbers. npe2 also accepts the Python type names `bool`, `int`,
-`float`, and `str`, so `type: float` is equivalent to `type: number`.
-
-`enum` is supported on **any** property type (it renders a dropdown), not just
-strings. Both YAML styles are valid — a flow list (`enum: [gray, green,
-viridis]`) or a block list (as in the example above); the block style is
-clearer when there are several options.
-
-A `default` is required for every property. Constraints are enforced by the
-settings model, so invalid values cannot be saved.
 
 ### Validation
 
