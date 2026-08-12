@@ -54,7 +54,7 @@ class ContributionPoints(BaseModel):
         "editor, headed by that entry's `title`. Each configuration key must be a "
         "valid, non-reserved Python identifier that does not begin with an "
         "underscore, and must be unique within the manifest, since it is used "
-        "verbatim as the attribute name for that settings category on the generated "
+        "verbatim as the attribute name for that setting's category on the generated "
         "settings model (e.g. `get_plugin_settings('plugin-name').<configuration-key>"
         ".<property-key>`).",
     )
