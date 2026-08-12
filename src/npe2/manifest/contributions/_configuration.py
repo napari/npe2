@@ -1,61 +1,10 @@
-import re
-from collections.abc import Iterable
+from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AfterValidator, BaseModel, Field, model_validator
+
+from npe2.manifest import _validators
 
 from ._json_schema import ConfigurationJsonSchema
-
-
-def normalize_title(title: str) -> str:
-    """Return a canonical snake_case key for a configuration title.
-
-    Configuration titles are free-form text (e.g. "Demo Configuration for
-    widget 1") but consumers (e.g. napari) use them to derive identifier-like
-    keys / field names.  Normalizing titles to a canonical key lets npe2
-    enforce that titles are unique within a plugin, and lets consumers reuse
-    the same normalization instead of implementing (possibly divergent) ones.
-
-    Examples
-    --------
-    >>> normalize_title('Demo Configuration for widget 1')
-    'demo_configuration_for_widget_1'
-    >>> normalize_title('main widget')
-    'main_widget'
-    """
-    # camelCase -> snake_case (e.g. someSetting -> some_Setting)
-    name = re.sub(r"(?<!^)(?=[A-Z])", "_", title)
-    # any run of non-alphanumeric characters is a separator
-    name = re.sub(r"[^0-9a-zA-Z]+", "_", name)
-    name = re.sub(r"_+", "_", name).strip("_").lower()
-    if not name:
-        name = "settings"
-    if name[0].isdigit():
-        name = f"_{name}"
-    return name
-
-
-def _ensure_unique_normalized(items: Iterable[str], what: str) -> None:
-    """Raise if any two strings in ``items`` normalize to the same key.
-
-    Parameters
-    ----------
-    items : Iterable[str]
-        The free-form strings to check for collisions after
-        :func:`normalize_title`.
-    what : str
-        Human-readable noun phrase used in the error message, e.g.
-        "Configuration titles".
-    """
-    seen: dict[str, str] = {}
-    for original in items:
-        key = normalize_title(original)
-        if key in seen:
-            raise ValueError(
-                f"{what} {seen[key]!r} and {original!r} both normalize to "
-                f"{key!r}; duplicate {what.lower()} are not allowed (case, "
-                "whitespace, and punctuation are ignored)."
-            )
-        seen[key] = original
 
 
 class ConfigurationProperty(ConfigurationJsonSchema):
@@ -102,34 +51,40 @@ class ConfigurationProperty(ConfigurationJsonSchema):
         return values
 
 
+_ConfigurationKey = Annotated[str, AfterValidator(_validators.configuration_key)]
+
+
 class ConfigurationContribution(BaseModel):
     """A configuration contribution for a plugin.
 
     This enables plugins to provide a schema for their configurables.
-    Configuration contributions are used to generate the settings UI.
+    Configuration contributions are used to generate the settings UI. Each
+    configuration contribution is declared under a unique key in
+    `contributions.configurations` (see `ContributionPoints.configurations`);
+    that key, together with each property's key below, is used verbatim to
+    build the path used to access this setting at runtime, e.g.
+    `get_plugin_settings('plugin-name').<configuration-key>.<property-key>`.
     """
 
     title: str = Field(
         ...,
-        description="The heading used for this configuration category. Words like "
-        '"Plugin", "Configuration", and "Settings" are redundant and should not be'
-        "used in your title.",
+        description="The heading used for this configuration category, displayed in "
+        'the settings UI. Words like "Plugin", "Configuration", and "Settings" '
+        "are redundant and should not be used in your title. Unlike the key under "
+        "which this contribution is declared in `contributions.configurations`, the "
+        "title is display text only and does not need to be unique.",
     )
-    properties: dict[str, ConfigurationProperty] = Field(
+    properties: dict[_ConfigurationKey, ConfigurationProperty] = Field(
         ...,
-        description="Configuration properties. In the settings UI, your configuration "
-        "key will be used to namespace and construct a title. Though a plugin can "
-        "contain multiple categories of settings, each plugin setting must still have "
-        "its own unique key. Capital letters in your key are used to indicate word "
-        "breaks. For example, if your key is 'gitMagic.blame.dateFormat', the "
-        "generated title for the setting will look like 'Blame: Date Format'",
+        description="Configuration properties, keyed by a property key that is local "
+        "to this configuration contribution. Each property key must be a valid, "
+        "non-reserved Python identifier that does not begin with an underscore, "
+        "since it is used verbatim as the attribute name for that setting on the "
+        "generated settings model (e.g. "
+        "`get_plugin_settings('plugin-name').<configuration-key>.<property-key>`). "
+        "Property keys only need to be unique within this configuration "
+        "contribution, not across the whole plugin.",
     )
-
-    @model_validator(mode="after")
-    def _validate_unique_property_keys(self):
-        """Property keys must be unique once normalized to snake_case."""
-        _ensure_unique_normalized(self.properties, "Configuration properties")
-        return self
 
     # order: int  # vscode uses this to sort multiple configurations
     # ... I think we can just use the order in which they are declared

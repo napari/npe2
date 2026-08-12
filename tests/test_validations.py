@@ -251,3 +251,25 @@ def test_writer_invalid_layer_type_expressions(expr, uses_sample_plugin):
 def test_invalid_command_id(id):
     with pytest.raises(ValueError):
         _validators.command_id(id)
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "my.reader",  # dots are not valid identifier characters
+        "my-reader",  # dashes are not valid identifier characters
+        "has space",
+        "class",  # reserved keyword
+        "1reader",  # can't start with a digit
+        "_reader",  # leading underscore collides with pydantic private attrs
+        "",  # empty string
+    ],
+)
+def test_invalid_configuration_key(key):
+    with pytest.raises(ValueError, match="not a valid configuration key"):
+        _validators.configuration_key(key)
+
+
+@pytest.mark.parametrize("key", ["reader", "num_layers", "gpuAcceleration", "a1"])
+def test_valid_configuration_key(key):
+    assert _validators.configuration_key(key) == key

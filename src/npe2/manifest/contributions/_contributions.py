@@ -1,10 +1,7 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field
 
 from ._commands import CommandContribution
-from ._configuration import (
-    ConfigurationContribution,
-    _ensure_unique_normalized,
-)
+from ._configuration import ConfigurationContribution, _ConfigurationKey
 from ._keybindings import KeyBindingContribution
 from ._menus import MenuItem
 from ._readers import ReaderContribution
@@ -48,27 +45,16 @@ class ContributionPoints(BaseModel):
     submenus: list[SubmenuContribution] | None = None
     keybindings: list[KeyBindingContribution] | None = Field(None, hide_docs=True)
 
-    configuration: list[ConfigurationContribution] = Field(
-        default_factory=list,
+    configurations: dict[_ConfigurationKey, ConfigurationContribution] = Field(
+        default_factory=dict,
         hide_docs=True,
-        description="Configuration options for this plugin."
-        "This section can either be a single object, representing a single category of"
-        "settings, or an array of objects, representing multiple categories of"
-        "settings. If there are multiple categories of settings, the Settings editor"
-        "will show a submenu in the table of contents for that extension, and the title"
-        "keys will be used for the submenu entry names.",
+        description="Configuration options for this plugin, keyed by a configuration "
+        "key. A plugin can contribute multiple categories of settings by declaring "
+        "multiple entries here; each shows up as its own submenu in the Settings "
+        "editor, headed by that entry's `title`. Each configuration key must be a "
+        "valid, non-reserved Python identifier that does not begin with an "
+        "underscore, and must be unique within the manifest, since it is used "
+        "verbatim as the attribute name for that setting's category on the generated "
+        "settings model (e.g. `get_plugin_settings('plugin-name').<configuration-key>"
+        ".<property-key>`).",
     )
-
-    @field_validator("configuration", mode="before")
-    @classmethod
-    def _to_list(cls, v):
-        return v if isinstance(v, list) else [v]
-
-    @model_validator(mode="after")
-    def _validate_unique_configuration_titles(self):
-        """Configuration titles must be unique once normalized to snake_case."""
-        _ensure_unique_normalized(
-            (conf.title for conf in self.configuration),
-            "Configuration titles",
-        )
-        return self
