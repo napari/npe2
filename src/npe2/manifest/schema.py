@@ -35,7 +35,7 @@ __all__ = ("Category",)
 logger = getLogger(__name__)
 
 
-SCHEMA_VERSION = "0.2.1"
+SCHEMA_VERSION = "0.3.0"
 ENTRY_POINT = "napari.manifest"
 NPE1_ENTRY_POINT = "napari.plugin"
 

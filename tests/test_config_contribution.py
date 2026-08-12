@@ -6,12 +6,11 @@ from npe2.manifest.contributions import (
     ConfigurationProperty,
     ContributionPoints,
 )
-from npe2.manifest.contributions._configuration import normalize_title
 from npe2.manifest.contributions._json_schema import ValidationError
 
 PROPS = [
     {
-        "plugin.heatmap.location": {
+        "heatmap_location": {
             "title": "Heatmap location",
             "type": "string",
             "default": "right",
@@ -77,65 +76,106 @@ def test_config_validation(schema, valid, invalid):
     assert cfg.has_default is ("default" in schema)
 
 
+def test_configuration_dict_keyed():
+    """`contributions.configurations` is a dict keyed by configuration key."""
+    cp = ContributionPoints(
+        configurations={
+            "reader": {
+                "title": "Reader",
+                "properties": {
+                    "num_layers": {
+                        "title": "Number of layers",
+                        "type": "int",
+                        "default": 3,
+                    },
+                },
+            },
+            "writer": {
+                "title": "Writer",
+                "properties": {
+                    "compression": {
+                        "title": "Compression level",
+                        "type": "str",
+                        "default": "medium",
+                    },
+                },
+            },
+        }
+    )
+    assert set(cp.configurations) == {"reader", "writer"}
+    assert cp.configurations["reader"].properties["num_layers"].default == 3
+
+
 @pytest.mark.parametrize(
-    "title, expected",
+    "key",
     [
-        ("Demo Configuration for widget 1", "demo_configuration_for_widget_1"),
-        ("main widget", "main_widget"),
-        ("someSetting", "some_setting"),
-        # no alphanumeric content at all -> fall back to a generic key
-        ("", "settings"),
-        ("!!!", "settings"),
-        # leading digit -> prefix underscore so the key is a valid identifier
-        ("123 hello", "_123_hello"),
+        "my.reader",  # dots are not valid identifier characters
+        "my-reader",  # dashes are not valid identifier characters
+        "class",  # reserved keyword
+        "1reader",  # can't start with a digit
+        "_reader",  # leading underscore collides with pydantic private attrs
+        "",  # empty string
     ],
 )
-def test_normalize_title(title, expected):
-    assert normalize_title(title) == expected
-
-
-def test_duplicate_configuration_titles_raise():
-    with pytest.raises(PydanticValidationError, match="both normalize to"):
+def test_invalid_configuration_key_raises(key):
+    with pytest.raises(PydanticValidationError, match="not a valid configuration key"):
         ContributionPoints(
-            configuration=[
-                {
-                    "title": "Main Widget",
+            configurations={
+                key: {
+                    "title": "Reader",
                     "properties": {
-                        "p.a": {
-                            "title": "A",
-                            "type": "boolean",
-                            "default": False,
+                        "num_layers": {
+                            "title": "Number of layers",
+                            "type": "int",
+                            "default": 3,
                         },
                     },
                 },
-                {
-                    "title": "main widget",
-                    "properties": {
-                        "p.b": {
-                            "title": "B",
-                            "type": "boolean",
-                            "default": False,
-                        },
-                    },
-                },
-            ]
+            }
         )
 
 
-def test_duplicate_property_keys_raise():
-    with pytest.raises(PydanticValidationError, match="both normalize to"):
+@pytest.mark.parametrize(
+    "key",
+    [
+        "my.lazy",
+        "my-lazy",
+        "class",
+        "1lazy",
+        "_lazy",
+        "",
+    ],
+)
+def test_invalid_property_key_raises(key):
+    with pytest.raises(PydanticValidationError, match="not a valid configuration key"):
         ConfigurationContribution(
             title="My Widget",
             properties={
-                "plugin.a.lazy": {
+                key: {
                     "title": "Lazy",
-                    "type": "boolean",
-                    "default": False,
-                },
-                "plugin.a-lazy": {
-                    "title": "Lazy 2",
                     "type": "boolean",
                     "default": False,
                 },
             },
         )
+
+
+def test_duplicate_configuration_titles_allowed():
+    """Titles are display text only; they no longer need to be unique."""
+    cp = ContributionPoints(
+        configurations={
+            "reader": {
+                "title": "Main Widget",
+                "properties": {
+                    "a": {"title": "A", "type": "boolean", "default": False},
+                },
+            },
+            "writer": {
+                "title": "Main Widget",
+                "properties": {
+                    "b": {"title": "B", "type": "boolean", "default": False},
+                },
+            },
+        }
+    )
+    assert cp.configurations["reader"].title == cp.configurations["writer"].title
