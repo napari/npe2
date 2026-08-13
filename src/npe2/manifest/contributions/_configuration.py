@@ -15,23 +15,25 @@ class ConfigurationProperty(ConfigurationJsonSchema):
     for the settings UI.
     """
 
-    enum_descriptions: list[str] = Field(
-        default_factory=list,
-        description="If you provide a list of items under the `enum` field, you may "
-        "provide `enum_descriptions` to add descriptive text for each enum.",
-    )
+    # TODO: commenting these out so we can unblock napari 0.9.0
+    # will bring them back in a future PR
 
-    deprecation_message: str | None = Field(
-        None,
-        description="If you set deprecationMessage, the setting will get a warning "
-        "underline with your specified message. It won't show up in the settings "
-        "UI unless it is configured by the user.",
-    )
-    is_multiline: bool = Field(
-        False,
-        description="By default, string settings will be rendered with a single-line "
-        "editor. To render with a multi-line editor, set this value to `True`.",
-    )
+    # enum_descriptions: list[str] = Field(
+    #     default_factory=list,
+    #     description="If you provide a list of items under the `enum` field, you may "
+    #     "provide `enum_descriptions` to add descriptive text for each enum.",
+    # )
+    # deprecation_message: str | None = Field(
+    #     None,
+    #     description="If you set deprecationMessage, the setting will get a warning "
+    #     "underline with your specified message. It won't show up in the settings "
+    #     "UI unless it is configured by the user.",
+    # )
+    # is_multiline: bool = Field(
+    #     False,
+    #     description="By default, string settings will be rendered with a single-line "
+    #     "editor. To render with a multi-line editor, set this value to `True`.",
+    # )
 
     @model_validator(mode="before")
     def _validate_root(cls, values):
