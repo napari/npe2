@@ -21,28 +21,32 @@ Each entry in `contributions.configurations` is a **category** of settings,
 keyed by a configuration key. The example above declares two categories,
 `pre_processing_widget` and `reader`, each with its own properties.
 
-### Categories, keys, and titles
+### `ConfigurationContribution` or Categories
 
-The **key** determines how a setting is accessed at runtime; **titles** determine
-how it is displayed:
+Each `ConfigurationContribution`, or category of setting, is declared with a
+key in the manifest e.g. `pre_processing_widget` or `reader`. These keys must be
+valid, non-reserved Python identifiers that do not begin with an underscore (see
+[Validation](#validation)), and must be unique within a manifest. These keys are
+**never shown in the UI**, but are used to access your `ConfigurationContribution`
+programmatically at `get_plugin_settings("example-plugin").<configuration-key>`.
 
-- **key** (the dictionary key of a category under `contributions.configurations`,
-  e.g. `reader`) — used **verbatim** as the attribute name for that category on
-  the generated settings model. Keys must be valid, non-reserved Python
-  identifiers that do not begin with an underscore (see
-  [Validation](#validation)), and must be unique within a manifest. Keys are
-  **never shown in the UI**.
-- **`title` (of the category)** — the heading shown in the Preferences dialog
-  for that category of settings (e.g. `Reader`, `Pre-processing Widget`). The
-  title is display text **only**: it does *not* become the attribute name and
-  does not need to be unique. Avoid redundant words like "Plugin",
-  "Configuration", or "Settings" in your category title.
-- **`title` (of the property)** — the label shown next to the setting's input
-  widget in the Preferences dialog (e.g. `Max in-memory image size (MB)`). Each
-  property must define a `title` for display.
+The `title` of the `ConfigurationContribution` is displayed as a section header
+on the plugin's preferences page.
 
-Property keys (the dictionary keys inside `properties:`) are likewise used
-**verbatim** as attribute names, nested under the category's key:
+### `ConfigurationProperty` or Fields
+
+`ConfigurationContribution`s contain one or more `ConfigurationProperty`. Each
+`ConfigurationProperty` is an individual setting or field the user can configure.
+Each `ConfigurationProperty` has a key in the manifest. These keys must be
+valid, non-reserved Python identifiers that do not begin with an underscore (see
+[Validation](#validation)), and must be unique within their `ConfigurationContribution`.
+These keys are **never shown in the UI**, but are used to access your `ConfigurationContribution`
+programmatically at `get_plugin_settings("example-plugin").<configuration-key>.<property-key>`.
+
+The `title` of the `ConfigurationProperty` is displayed as a label to the left of
+the widget that allows the user to configure the value for this field.
+
+To access an individual field in your plugin preferences:
 
 ```python
 from napari.settings import get_plugin_settings
@@ -52,9 +56,26 @@ my_settings.reader.max_size_mb               # <category key>.<property key>
 my_settings.pre_processing_widget.colormap
 ```
 
-So the attribute path is always `<category key>.<property key>`, e.g.
-`reader.max_size_mb`; neither part is derived from a title, and property keys
-only need to be unique within their own category.
+Each `ConfigurationProperty` must have a set `title`, `type` and `default` value.
+
+#### Types & Constraints
+
+The `type` declared for a `ConfigurationProperty` determines the widget
+that will be created to allow the user to set the value of this property.
+
+We currently only support simple types like `boolean`, `integer`, `float` or `string`.
+Depending on the `type` you've selected, you can also set basic constraints
+to validate the user's provided value e.g. for `integer` types you can set a minimum
+and a maximum value. For the full list of available types, and their constraints, see
+the [ConfigurationProperty reference](contributions-configurationproperty).
+
+`enum` is supported on **any** property type (it renders a dropdown), not just
+strings. Both YAML styles are valid — a flow list (`enum: [gray, green,
+viridis]`) or a block list (as in the example above); the block style is
+clearer when there are many options.
+
+A `default` is required for every property. Constraints are enforced by the
+settings model, so invalid values cannot be saved.
 
 ### How settings render in napari
 
@@ -110,79 +131,85 @@ my_settings.events.changed.connect(lambda e: print(e.key, e.value))
 These events fire whether a value is changed in code or in the Preferences
 dialog, and the change is auto-saved to the config file.
 
-### Supported types and constraints
-
-Each property follows a subset of
-[JSON Schema (draft 2020-12)](https://json-schema.org/draft/2020-12/). The
-`type` of a property is one of four JSON Schema types:
-
-| `type` | Widget in Preferences | Meaning | Extra options |
-| --- | --- | --- | --- |
-| `boolean` | checkbox | `true` / `false` | |
-| `string` | line edit | any text | `enum` → dropdown; `minLength` / `maxLength`; `is_multiline` |
-| `integer` | integer spin box | whole numbers | `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `multipleOf` |
-| `number` | float spin box | real numbers (floats) | `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `multipleOf` |
-
-`number` is JSON Schema's type for **floats** (any real number); `integer` is
-for whole numbers. npe2 also accepts the Python type names `bool`, `int`,
-`float`, and `str`, so `type: float` is equivalent to `type: number`.
-
-`enum` is supported on **any** property type (it renders a dropdown), not just
-strings. Both YAML styles are valid — a flow list (`enum: [gray, green,
-viridis]`) or a block list (as in the example above); the block style is
-clearer when there are several options.
-
-A `default` is required for every property. Constraints are enforced by the
-settings model, so invalid values cannot be saved.
-
 ### Validation
 
 npe2 validates that configuration keys and property keys are valid,
 non-reserved Python identifiers that do not begin with an underscore (they are
-used verbatim as attribute names on the generated settings model), that
-configuration keys are unique within a manifest, and that every property has a
-valid `type`, `default`, and constraints. Invalid manifests are rejected at
-parse time, so mistakes surface early rather than as a broken Preferences page.
+used verbatim as attribute names on the generated settings model), and
+that every property has a valid `type`, `default`, and constraints.
 
 ### Testing your settings
 
 In a normal napari session your installed plugin is discovered and
-`get_plugin_settings("example-plugin")` just works. Under **pytest** it
-doesn't: npe2's pytest plugin blocks discovery so that test suites stay
-hermetic, and napari caches settings for the lifetime of the process. So in
-a test, register your plugin's manifest with the test
-plugin manager and reset the cache before calling `get_plugin_settings`:
+`get_plugin_settings("example-plugin")` just works. For testing,
+use `npe2`'s `npe2pm` pytest fixture for a clean plugin manager,
+and `napari`'s `plugin_settings` pytest fixture for fresh settings
+in each test. These two fixtures will be available to you if you
+have `napari` and `npe2` installed in your testing environment.
+
 
 ```python
-def test_my_settings(tmp_path):
-    from napari import settings as napari_settings
-    from npe2 import PluginManager, PluginManifest
+from npe2 import PluginManifest
 
-    pm = PluginManager.instance()
-    if 'example-plugin' not in pm:
-        pm.register(PluginManifest.from_distribution('example-plugin'))
-    # Reset the in-memory cache so the registered plugin is included (saved
-    # values are re-read from disk; this also allows path_dir=tmp_path).
-    napari_settings._PLUGIN_PREFERENCES.clear()
+MANIFEST = PluginManifest(
+    name='example-plugin',
+    display_name='Example Plugin',
+    contributions={
+        'configurations': {
+            'reader': {
+                'title': 'Reader settings',
+                'properties': {
+                    'lazy': {
+                        'type': 'boolean',
+                        'default': False,
+                        'title': 'Load lazily',
+                    },
+                    'max_size_mb': {
+                        'type': 'integer',
+                        'default': 512,
+                        'minimum': 0,
+                        'maximum': 4096,
+                        'title': 'Max size (MB)',
+                    },
+                },
+            },
+        },
+    },
+)
 
-    s = napari_settings.get_plugin_settings('example-plugin', path_dir=tmp_path)
-    assert s.reader.max_size_mb == 512
-    assert s.config_path.name == 'example-plugin.yaml'
 
-    s.reader.max_size_mb = 1024  # auto-saves to the config file
-    assert 'max_size_mb: 1024' in s.config_path.read_text()
+# plugin_settings fixture is exposed by napari
+# npe2pm fixture is exposed by npe2
+def test_plugin_settings_defaults_and_updates(plugin_settings, npe2pm):
+    # with npe2pm fixture this plugin is scoped only to this test
+    with npe2pm.tmp_plugin(manifest=MANIFEST):
+        # with plugin_settings fixture, these settings are scoped
+        # only to this test
+        from napari.settings import get_plugin_settings
+        settings = get_plugin_settings('example-plugin')
+
+        # defaults come straight from the manifest
+        assert settings.reader.lazy is False
+        assert settings.reader.max_size_mb == 512
+
+        # changing a value auto-saves to the yaml file at settings.config_path
+        settings.reader.max_size_mb = 1024
+        assert settings.reader.max_size_mb == 1024
+        assert 'max_size_mb: 1024' in settings.config_path.read_text()
+
+    ...
 ```
+
 
 ### Supporting older napari
 
-Declaring `contributions.configurations` works on **every** napari — npe2
-parses the manifest regardless of version, so an older napari simply ignores
-the block (the settings just don't appear in Preferences). Only the runtime
-*read* API, `get_plugin_settings`, is available in napari>=0.9.0.
+Declared `contributions.configurations` are ignored by older versions of `napari`
+and `npe2`. However, the `get_plugin_settings` API, and automatic GUI generation,
+is only available in napari>=0.9.0.
 
 If you need to support older napari, feature-detect the API and fall back to
 defaults — you don't need a full settings shim, only the values your code
-actually reads. In this way, older napari will not enable customizing the settings.
+actually reads.
 
 ```python
 from types import SimpleNamespace
