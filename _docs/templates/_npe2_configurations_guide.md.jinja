@@ -129,48 +129,79 @@ npe2 validates that configuration keys and property keys are valid,
 non-reserved Python identifiers that do not begin with an underscore (they are
 used verbatim as attribute names on the generated settings model), and
 that every property has a valid `type`, `default`, and constraints.
-Invalid manifests are rejected at parse time, so mistakes surface early
-rather than as a broken Preferences page.
 
 ### Testing your settings
 
 In a normal napari session your installed plugin is discovered and
-`get_plugin_settings("example-plugin")` just works. Under **pytest** it
-doesn't: npe2's pytest plugin blocks discovery so that test suites stay
-hermetic, and napari caches settings for the lifetime of the process. So in
-a test, register your plugin's manifest with the test
-plugin manager and reset the cache before calling `get_plugin_settings`:
+`get_plugin_settings("example-plugin")` just works. For testing,
+use `npe2`'s `npe2pm` pytest fixture for a clean plugin manager,
+and `napari`'s `plugin_settings` pytest fixture for fresh settings
+in each test. These two fixtures will be available to you if you
+have `napari` and `npe2` installed in your testing environment.
+
 
 ```python
-def test_my_settings(tmp_path):
-    from napari import settings as napari_settings
-    from npe2 import PluginManager, PluginManifest
+from npe2 import PluginManifest
 
-    pm = PluginManager.instance()
-    if 'example-plugin' not in pm:
-        pm.register(PluginManifest.from_distribution('example-plugin'))
-    # Reset the in-memory cache so the registered plugin is included (saved
-    # values are re-read from disk; this also allows path_dir=tmp_path).
-    napari_settings._PLUGIN_PREFERENCES.clear()
+MANIFEST = PluginManifest(
+    name='example-plugin',
+    display_name='Example Plugin',
+    contributions={
+        'configurations': {
+            'reader': {
+                'title': 'Reader settings',
+                'properties': {
+                    'lazy': {
+                        'type': 'boolean',
+                        'default': False,
+                        'title': 'Load lazily',
+                    },
+                    'max_size_mb': {
+                        'type': 'integer',
+                        'default': 512,
+                        'minimum': 0,
+                        'maximum': 4096,
+                        'title': 'Max size (MB)',
+                    },
+                },
+            },
+        },
+    },
+)
 
-    s = napari_settings.get_plugin_settings('example-plugin', path_dir=tmp_path)
-    assert s.reader.max_size_mb == 512
-    assert s.config_path.name == 'example-plugin.yaml'
 
-    s.reader.max_size_mb = 1024  # auto-saves to the config file
-    assert 'max_size_mb: 1024' in s.config_path.read_text()
+# plugin_settings fixture is exposed by napari
+# npe2pm fixture is exposed by npe2
+def test_plugin_settings_defaults_and_updates(plugin_settings, npe2pm):
+    # with npe2pm fixture this plugin is scoped only to this test
+    with npe2pm.tmp_plugin(manifest=MANIFEST):
+        # with plugin_settings fixture, these settings are scoped
+        # only to this test
+        from napari.settings import get_plugin_settings
+        settings = get_plugin_settings('example-plugin')
+
+        # defaults come straight from the manifest
+        assert settings.reader.lazy is False
+        assert settings.reader.max_size_mb == 512
+
+        # changing a value auto-saves to the yaml file at settings.config_path
+        settings.reader.max_size_mb = 1024
+        assert settings.reader.max_size_mb == 1024
+        assert 'max_size_mb: 1024' in settings.config_path.read_text()
+
+    ...
 ```
+
 
 ### Supporting older napari
 
-Declaring `contributions.configurations` works on **every** napari — npe2
-parses the manifest regardless of version, so an older napari simply ignores
-the block (the settings just don't appear in Preferences). Only the runtime
-*read* API, `get_plugin_settings`, is available in napari>=0.9.0.
+Declared `contributions.configurations` are ignored by older versions of `napari`
+and `npe2`. However, the `get_plugin_settings` API, and automatic GUI generation,
+is only available in napari>=0.9.0.
 
 If you need to support older napari, feature-detect the API and fall back to
 defaults — you don't need a full settings shim, only the values your code
-actually reads. In this way, older napari will not enable customizing the settings.
+actually reads.
 
 ```python
 from types import SimpleNamespace
