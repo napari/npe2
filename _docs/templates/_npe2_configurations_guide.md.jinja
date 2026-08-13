@@ -147,42 +147,21 @@ and `napari`'s `plugin_settings` pytest fixture for fresh settings
 in each test. These two fixtures will be available to you if you
 have `napari` and `npe2` installed in your testing environment.
 
-
 ```python
-from npe2 import PluginManifest
+from pathlib import Path
 
-MANIFEST = PluginManifest(
-    name='example-plugin',
-    display_name='Example Plugin',
-    contributions={
-        'configurations': {
-            'reader': {
-                'title': 'Reader settings',
-                'properties': {
-                    'lazy': {
-                        'type': 'boolean',
-                        'default': False,
-                        'title': 'Load lazily',
-                    },
-                    'max_size_mb': {
-                        'type': 'integer',
-                        'default': 512,
-                        'minimum': 0,
-                        'maximum': 4096,
-                        'title': 'Max size (MB)',
-                    },
-                },
-            },
-        },
-    },
+# the plugin's actual napari.yaml; adjust the path for your package layout
+MANIFEST_PATH = (
+    Path(__file__).parent.parent / 'src' / 'example_plugin' / 'napari.yaml'
 )
 
 
 # plugin_settings fixture is exposed by napari
 # npe2pm fixture is exposed by npe2
 def test_plugin_settings_defaults_and_updates(plugin_settings, npe2pm):
-    # with npe2pm fixture this plugin is scoped only to this test
-    with npe2pm.tmp_plugin(manifest=MANIFEST):
+    # with npe2pm fixture this plugin is scoped only to this test;
+    # tmp_plugin accepts a path to a manifest file
+    with npe2pm.tmp_plugin(manifest=MANIFEST_PATH):
         # with plugin_settings fixture, these settings are scoped
         # only to this test
         from napari.settings import get_plugin_settings
