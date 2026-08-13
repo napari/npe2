@@ -67,7 +67,7 @@ We currently only support simple types like `boolean`, `integer`, `float` or `st
 Depending on the `type` you've selected, you can also set basic constraints
 to validate the user's provided value e.g. for `integer` types you can set a minimum
 and a maximum value. For the full list of available types, and their constraints, see
-the the [ConfigurationProperty reference](contributions-readers).
+the the [ConfigurationProperty reference](contributions-configurationproperty).
 
 ### How settings render in napari
 
@@ -127,10 +127,10 @@ dialog, and the change is auto-saved to the config file.
 
 npe2 validates that configuration keys and property keys are valid,
 non-reserved Python identifiers that do not begin with an underscore (they are
-used verbatim as attribute names on the generated settings model), that
-configuration keys are unique within a manifest, and that every property has a
-valid `type`, `default`, and constraints. Invalid manifests are rejected at
-parse time, so mistakes surface early rather than as a broken Preferences page.
+used verbatim as attribute names on the generated settings model), and
+that every property has a valid `type`, `default`, and constraints.
+Invalid manifests are rejected at parse time, so mistakes surface early
+rather than as a broken Preferences page.
 
 ### Testing your settings
 
