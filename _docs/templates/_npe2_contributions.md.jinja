@@ -76,6 +76,21 @@ for more details on implementing this contribution.
 {% endfor -%}
 {% endfor %}
 
+{%- if contrib_name == 'configurations' %}
+{%- set _cp = schema['$defs']['ConfigurationProperty'] %}
+
+(contributions-configurationproperty)=
+**`ConfigurationProperty` fields**
+
+{{ _cp['description'] }}
+
+**Fields**
+{%- for field_name, field_props in _cp['properties'].items() if field_name != '$schema' -%}
+{%- set required = field_name in _cp['required'] %}
+- **`{{ field_name }}`** : {% if required %}*(required)* {% endif %}{{ field_props.description }}
+{%- endfor %}
+{%- endif %}
+
 ### {{ contrib_name.title()|replace("_", " ") }} example
 ::::{tab-set}
 {% for format in ['yaml', 'toml'] %}
