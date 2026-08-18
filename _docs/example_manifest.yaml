@@ -82,3 +82,40 @@ contributions:
     - key: napari
       display_name: Tabueran Kiribati
       uri: https://en.wikipedia.org/wiki/Napari#/media/File:Tabuaeran_Kiribati.jpg
+  configurations:
+    pre_processing_widget:
+      title: Pre-processing Widget
+      properties:
+        colormap:
+          title: Default colormap
+          type: string
+          default: gray
+          enum:
+            - gray
+            - green
+            - viridis
+          description: Colormap applied to output images.
+        gamma:
+          title: Gamma correction
+          type: float
+          default: 1.0
+          minimum: 0.1
+          maximum: 2.0
+          description: Gamma value applied to output images.
+    reader:
+      title: Reader
+      properties:
+        max_size_mb:
+          title: Max in-memory image size (MB)
+          type: integer
+          default: 512
+          minimum: 1
+          maximum: 4096
+          description: >-
+            Images larger than this are lazy-loaded via dask instead of being
+            loaded eagerly.
+        auto_contrast:
+          title: Auto-contrast on open
+          type: boolean
+          default: true
+          description: Turn on auto-contrast on all opened layers.

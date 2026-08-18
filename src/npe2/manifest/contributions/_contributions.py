@@ -47,7 +47,6 @@ class ContributionPoints(BaseModel):
 
     configurations: dict[_ConfigurationKey, ConfigurationContribution] = Field(
         default_factory=dict,
-        hide_docs=True,
         description="Configuration options for this plugin, keyed by a configuration "
         "key. A plugin can contribute multiple categories of settings by declaring "
         "multiple entries here; each shows up as its own submenu in the Settings "
