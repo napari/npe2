@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import builtins
-from typing import TYPE_CHECKING, Annotated, Any, get_args, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal, get_args
 
 from pydantic import (
     AliasChoices,
