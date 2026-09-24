@@ -119,8 +119,8 @@ class ConfigurationJsonSchema(BaseModel):
     )
     type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
         description="The type of this variable. Either a JSON Schema type name "
-        "('boolean', 'integer', 'number', 'string') or a python type name "
-        "('bool', 'int', 'float', 'str') may be used, but it will be "
+        "('array', 'boolean', 'integer', 'number', 'string') or a python type name "
+        "('list', 'bool', 'int', 'float', 'str') may be used, but it will be "
         "coerced to a JSON Schema type. For boolean entries, the description "
         "will be used as the label for the checkbox.",
     )
