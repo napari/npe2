@@ -210,20 +210,24 @@ class ConfigurationJsonSchema(BaseModel):
         if self.type != "array":
             return self
         if not isinstance(self.items, dict):
-            return self
+            raise ValueError(
+                "Array/List items must be a schema that includes item type."
+            )
 
         items = dict(self.items)
         item_type = items.get("type")
 
-        if item_type is not None:
-            item_type = _to_json_type(item_type)
-            items["type"] = item_type
+        if item_type is None:
+            raise ValueError("Array/List items must specify an item type.")
+
+        item_type = _to_json_type(item_type)
+        items["type"] = item_type
 
         allowed_types = get_args(_ARRAY_ITEM_TYPES)
 
         if item_type not in allowed_types:
             allowed = ", ".join(allowed_types)
-            raise ValueError(f"Array items must be one of {allowed}")
+            raise ValueError(f"Array items must be one of {allowed}.")
 
         self.items = items
         return self
