@@ -218,7 +218,7 @@ class ConfigurationJsonSchema(BaseModel):
         item_type = items.get("type")
 
         if item_type is None:
-            raise ValueError("Array/List items must specify an item type.")
+            raise ValueError("Array/List items field must specify a type.")
 
         item_type = _to_json_type(item_type)
         items["type"] = item_type
