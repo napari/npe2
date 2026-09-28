@@ -44,7 +44,7 @@ class WidgetContribution(Executable[Widget]):
 
     model_config = ConfigDict(extra="forbid")
 
-    default_area: Literal["right", "left", "top", "bottom"] = Field(
+    default_dock_area: Literal["right", "left", "top", "bottom"] = Field(
         default="right",
         description="Default docking area to place the widget in at first launch.",
     )
