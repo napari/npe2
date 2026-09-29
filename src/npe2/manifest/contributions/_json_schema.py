@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import builtins
-from typing import TYPE_CHECKING, Annotated, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal, get_args
 
 from pydantic import (
     AliasChoices,
@@ -36,14 +36,24 @@ __all__ = [
     "ValidationError",
 ]
 
-JsonType = Literal["boolean", "integer", "number", "string"]
+JsonType = Literal["array", "boolean", "integer", "number", "string"]
 
 PY_NAME_TO_JSON_NAME = {
+    "list": "array",
     "bool": "boolean",
     "int": "integer",
     "float": "number",
     "str": "string",
 }
+
+# Added independently from PY_NAME_TO_JSON_NAME in case dict of something else is
+# added in the future
+_ARRAY_ITEM_TYPES = Literal[
+    "boolean",
+    "integer",
+    "number",
+    "string",
+]
 
 
 def _to_json_type(type_: str | type) -> JsonType:
@@ -77,6 +87,7 @@ _CONSTRAINT_FIELDS = {
 }
 
 _python_equivalent: dict[str, type] = {
+    "array": list,
     "boolean": bool,
     "integer": int,
     "number": float,
@@ -108,12 +119,17 @@ class ConfigurationJsonSchema(BaseModel):
     )
     type: Annotated[JsonType, BeforeValidator(_to_json_type)] = Field(
         description="The type of this variable. Either a JSON Schema type name "
-        "('boolean', 'integer', 'number', 'string') or a python type name "
-        "('bool', 'int', 'float', 'str') may be used, but it will be "
+        "('array', 'boolean', 'integer', 'number', 'string') or a python type name "
+        "('list', 'bool', 'int', 'float', 'str') may be used, but it will be "
         "coerced to a JSON Schema type. For boolean entries, the description "
         "will be used as the label for the checkbox.",
     )
     default: Any = Field(description="The default value for this property.")
+
+    # specify the items inside array entries
+    items: dict[str, Any] | bool | None = Field(
+        None, description="Schema for array items."
+    )
 
     # optional fields for a configuration property
     description: str | None = Field(
@@ -185,6 +201,36 @@ class ConfigurationJsonSchema(BaseModel):
             values.pop("enum")
 
         return values
+
+    @model_validator(mode="after")
+    def _validate_array_items(self):
+        # Constraint the types of items inside an array
+        # The supported types are inside _ARRAY_ITEM_TYPES, we don't want
+        # to allow nesting or other types for now.
+        if self.type != "array":
+            return self
+        if not isinstance(self.items, dict):
+            raise ValueError(
+                "Array/List items must be a schema that includes item type."
+            )
+
+        items = dict(self.items)
+        item_type = items.get("type")
+
+        if item_type is None:
+            raise ValueError("Array/List items field must specify a type.")
+
+        item_type = _to_json_type(item_type)
+        items["type"] = item_type
+
+        allowed_types = get_args(_ARRAY_ITEM_TYPES)
+
+        if item_type not in allowed_types:
+            allowed = ", ".join(allowed_types)
+            raise ValueError(f"Array items must be one of {allowed}.")
+
+        self.items = items
+        return self
 
     @property
     def has_constraint(self) -> bool:
