@@ -78,6 +78,37 @@ def test_config_validation(schema, valid, invalid):
     assert cfg.has_default is ("default" in schema)
 
 
+@pytest.mark.parametrize(
+    "schema",
+    [
+        {
+            "title": "T",
+            "type": "string",
+            "default": "blue",
+            "enum": ["red", "green"],
+        },
+        {"title": "T", "type": "integer", "default": 3, "enum": [1, 2]},
+    ],
+)
+def test_default_must_be_in_enum(schema):
+    with pytest.raises(PydanticValidationError, match="not one of the enum values"):
+        ConfigurationProperty(**schema)
+
+
+@pytest.mark.parametrize(
+    "schema",
+    [
+        {"title": "T", "type": "integer", "default": 1, "enum": [1, "two"]},
+        {"title": "T", "type": "boolean", "default": True, "enum": [True, 1]},
+        {"title": "T", "type": "string", "default": "a", "enum": ["a", 2]},
+        {"title": "T", "type": "number", "default": 1.5, "enum": [1.5, "x"]},
+    ],
+)
+def test_enum_members_must_match_type(schema):
+    with pytest.raises(PydanticValidationError, match="do not match the property type"):
+        ConfigurationProperty(**schema)
+
+
 def test_configuration_dict_keyed():
     """`contributions.configurations` is a dict keyed by configuration key."""
     cp = ContributionPoints(
