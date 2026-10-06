@@ -181,3 +181,51 @@ def test_duplicate_configuration_titles_allowed():
         }
     )
     assert cp.configurations["reader"].title == cp.configurations["writer"].title
+
+
+def test_array_config_valid():
+    config = ConfigurationProperty(
+        title="Values",
+        type="array",
+        default=[2, 3, 4],
+        items={"type": "int"},
+    )
+
+    assert config.python_type is list
+    assert config.validate_instance([10, 11, 12]) == [10, 11, 12]
+
+    with pytest.raises(ValidationError):
+        config.validate_instance([12, "hello"])
+
+
+def test_array_config_accepts_python_names():
+    config = ConfigurationProperty(
+        title="Values",
+        type=list,
+        default=["x", "y", "z"],
+        items={"type": str},
+    )
+
+    assert config.type == "array"
+    assert config.items == {"type": "string"}
+
+
+@pytest.mark.parametrize(
+    "items",
+    [
+        None,
+        True,
+        False,
+        {},
+        {"type": "array"},
+        {"type": "object"},
+    ],
+)
+def test_array_config_rejects_invalid_items(items):
+    with pytest.raises(PydanticValidationError):
+        ConfigurationProperty(
+            title="Values",
+            type="array",
+            default=[],
+            items=items,
+        )
