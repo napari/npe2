@@ -84,6 +84,21 @@ _python_equivalent: dict[str, type] = {
 }
 
 
+def _enum_member_type_ok(member: Any, json_type: str) -> bool:
+    """Return True if ``member`` is an acceptable value for ``json_type``."""
+    # ``bool`` is a subclass of ``int`` in Python, so exclude booleans from
+    # the numeric types explicitly.
+    if json_type == "boolean":
+        return isinstance(member, bool)
+    if json_type == "integer":
+        return isinstance(member, int) and not isinstance(member, bool)
+    if json_type == "number":
+        return isinstance(member, (int, float)) and not isinstance(member, bool)
+    if json_type == "string":
+        return isinstance(member, str)
+    return False
+
+
 class ConfigurationJsonSchema(BaseModel):
     """Model for (a subset of) Draft 2020-12 JSON Schema.
 
@@ -185,6 +200,30 @@ class ConfigurationJsonSchema(BaseModel):
             values.pop("enum")
 
         return values
+
+    @model_validator(mode="after")
+    def _validate_enum(self) -> ConfigurationJsonSchema:
+        """Validate `enum` members and `default` against the declared `type`.
+
+        `enum` members must be of the same type as the property's `type`, and
+        the (required) `default` must be one of the enum values. Without these
+        checks a bad manifest only fails much later, when napari tries to build
+        the settings model.
+        """
+        if self.enum is None:
+            return self
+        bad_members = [m for m in self.enum if not _enum_member_type_ok(m, self.type)]
+        if bad_members:
+            raise ValueError(
+                f"enum members {bad_members!r} do not match the property type "
+                f"{self.type!r}; enum members must be of the same type as "
+                "`type`"
+            )
+        if self.default not in self.enum:
+            raise ValueError(
+                f"default {self.default!r} is not one of the enum values {self.enum!r}"
+            )
+        return self
 
     @property
     def has_constraint(self) -> bool:
