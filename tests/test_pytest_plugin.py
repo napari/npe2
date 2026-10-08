@@ -57,8 +57,20 @@ def test_something_6(npe2pm):
         npe2pm.tmp_plugin(manifest='some_path.yaml')
 """
 
+CASE7 = """
+def test_something_7_1(npe2pm):
+    assert len(list(npe2pm.iter_manifests())) == 00
+"""
 
-@pytest.mark.parametrize("case", [CASE1, CASE2, CASE3, CASE4, CASE5, CASE6])
+CASE8 = """
+def test_something_7_2(npe2pm_wp):
+    assert len(list(npe2pm_wp.iter_manifests())) == 1
+"""
+
+
+@pytest.mark.parametrize(
+    "case", [CASE1, CASE2, CASE3, CASE4, CASE5, CASE6, CASE7, CASE8]
+)
 def test_npe2pm_fixture(pytester_pretty: pytest.Pytester, case):
     """Make sure that the npe2pm fixture works."""
 
