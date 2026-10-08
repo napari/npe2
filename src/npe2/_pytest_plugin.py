@@ -1,9 +1,8 @@
 import logging
 import warnings
-from unittest.mock import patch
 from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -105,20 +104,25 @@ def npe2pm() -> Generator[TestPluginManager, None, None]:
     with patch("npe2.PluginManager.instance", return_value=_pm):
         yield _pm
 
+
 @pytest.fixture
 def manifest_path() -> str:
     path_to = (
         Path(__file__)
-        .parent.joinpath('_test_plugin', '_sample_manifest.yaml')
+        .parent.joinpath("_test_plugin", "_sample_manifest.yaml")
         .resolve()
     )
-    assert path_to.exists(), f'Manifest path {path_to} does not exist.'
+    assert path_to.exists(), f"Manifest path {path_to} does not exist."
     return str(path_to)
 
 
 @pytest.fixture
-def npe2pm_wp(npe2pm: TestPluginManager, manifest_path: str) -> Generator[TestPluginManager, None, None]:
-    """Mocked Global plugin manager instance, unable to discover plugins, with a temporary plugin registered."""
+def npe2pm_wp(
+    npe2pm: TestPluginManager, manifest_path: str
+) -> Generator[TestPluginManager, None, None]:
+    """Mocked Global plugin manager instance, unable to
+    discover plugins, with a temporary plugin registered.
+    """
     mock_reg = MagicMock()
     npe2pm._command_registry = mock_reg
     with npe2pm.tmp_plugin(manifest=manifest_path):

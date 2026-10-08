@@ -68,8 +68,9 @@ def test_something_7_2(npe2pm_wp):
 """
 
 
-
-@pytest.mark.parametrize("case", [CASE1, CASE2, CASE3, CASE4, CASE5, CASE6, CASE7, CASE8])
+@pytest.mark.parametrize(
+    "case", [CASE1, CASE2, CASE3, CASE4, CASE5, CASE6, CASE7, CASE8]
+)
 def test_npe2pm_fixture(pytester_pretty: pytest.Pytester, case):
     """Make sure that the npe2pm fixture works."""
 
