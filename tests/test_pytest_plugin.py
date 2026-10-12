@@ -59,7 +59,7 @@ def test_something_6(npe2pm):
 
 CASE7 = """
 def test_something_7_1(npe2pm):
-    assert len(list(npe2pm.iter_manifests())) == 00
+    assert len(list(npe2pm.iter_manifests())) == 0
 """
 
 CASE8 = """
