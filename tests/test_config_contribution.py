@@ -102,6 +102,7 @@ def test_default_must_be_in_enum(schema):
         {"title": "T", "type": "boolean", "default": True, "enum": [True, 1]},
         {"title": "T", "type": "string", "default": "a", "enum": ["a", 2]},
         {"title": "T", "type": "number", "default": 1.5, "enum": [1.5, "x"]},
+        {"title": "T", "type": "not_enum", "default": True, "enum": [True, False]},
     ],
 )
 def test_enum_members_must_match_type(schema):
