@@ -49,9 +49,9 @@ class WidgetContribution(Executable[Widget]):
         description="Default docking area to place the widget in at first launch.",
     )
 
-    default_tabify: bool = Field(
+    tabify: bool = Field(
         default=False,
-        description="Default tabify behavior: if True, the widget will be added as a "
+        description="Tabify behavior: if True, the widget will be added as a "
         "new tab instead of side by side to existing widgets.",
     )
 
