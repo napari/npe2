@@ -87,7 +87,7 @@ _python_equivalent: dict[str, type] = {
 class ConfigurationJsonSchema(BaseModel):
     """Model for (a subset of) Draft 2020-12 JSON Schema.
 
-    This is the schema model used for the `configuration` contribution.
+    This is the schema model used for the `configurations` contribution.
     https://json-schema.org/understanding-json-schema/reference
     """
 

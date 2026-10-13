@@ -1,3 +1,4 @@
+import keyword
 import re
 
 _package_name = "([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])"
@@ -76,6 +77,25 @@ def _ensure_valid_resource(value):
             "(e.g. `my_plugin.some_module:my_logo.png`). This resource must be "
             "shipped with the sdist)"
         )
+
+
+def configuration_key(key: str) -> str:
+    """Assert that `key` is usable as a pydantic field / attribute name.
+
+    Configuration and property keys become attribute names on the settings
+    model generated from the manifest (e.g.
+    `get_plugin_settings('plugin').key.subkey`), so they must be valid,
+    non-reserved Python identifiers that do not begin with an underscore
+    (leading underscores are treated as private attributes by pydantic).
+    """
+    if not key.isidentifier() or keyword.iskeyword(key) or key.startswith("_"):
+        raise ValueError(
+            f"{key!r} is not a valid configuration key. Configuration and "
+            "property keys become attribute names on the generated settings "
+            "model, so they must be valid, non-reserved Python identifiers "
+            "that do not begin with an underscore."
+        )
+    return key
 
 
 def validate_icon(value):
