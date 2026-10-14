@@ -11,9 +11,11 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
+    TypeAdapter,
     conlist,
     model_validator,
 )
+from pydantic import ValidationError as PydanticValidationError
 
 if TYPE_CHECKING:
     from jsonschema.exceptions import ValidationError
@@ -82,21 +84,6 @@ _python_equivalent: dict[str, type] = {
     "number": float,
     "string": str,
 }
-
-
-def _enum_member_type_ok(member: Any, json_type: str) -> bool:
-    """Return True if ``member`` is an acceptable value for ``json_type``."""
-    # ``bool`` is a subclass of ``int`` in Python, so exclude booleans from
-    # the numeric types explicitly.
-    if json_type == "boolean":
-        return isinstance(member, bool)
-    if json_type == "integer":
-        return isinstance(member, int) and not isinstance(member, bool)
-    if json_type == "number":
-        return isinstance(member, (int, float)) and not isinstance(member, bool)
-    if json_type == "string":
-        return isinstance(member, str)
-    return False
 
 
 class ConfigurationJsonSchema(BaseModel):
@@ -212,13 +199,20 @@ class ConfigurationJsonSchema(BaseModel):
         """
         if self.enum is None:
             return self
-        bad_members = [m for m in self.enum if not _enum_member_type_ok(m, self.type)]
-        if bad_members:
+
+        try:
+            # strict mode: no coercion (``"1"`` is not an integer) and ``bool`` is
+            # not accepted as ``integer`` or ``number`` (as it is sublcassed in Python)
+            TypeAdapter(list[self.python_type]).validate_python(  # type: ignore
+                self.enum, strict=True
+            )
+        except PydanticValidationError as e:
+            bad_members = [self.enum[err["loc"][0]] for err in e.errors()]
             raise ValueError(
                 f"enum members {bad_members!r} do not match the property type "
                 f"{self.type!r}; enum members must be of the same type as "
                 "`type`"
-            )
+            ) from None
         if self.default not in self.enum:
             raise ValueError(
                 f"default {self.default!r} is not one of the enum values {self.enum!r}"
