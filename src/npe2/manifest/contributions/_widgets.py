@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import ConfigDict, Field
 
@@ -43,6 +43,17 @@ class WidgetContribution(Executable[Widget]):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    default_dock_area: Literal["right", "left", "top", "bottom"] = Field(
+        default="right",
+        description="Default docking area to place the widget in at first launch.",
+    )
+
+    tabify: bool = Field(
+        default=False,
+        description="If True, the widget will be added as a new tab to the "
+        "dock widget area. If false, the widget will be appended in sequence.",
+    )
 
     def get_callable(
         self, _registry: CommandRegistry | None = None
