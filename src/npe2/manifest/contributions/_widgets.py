@@ -51,8 +51,8 @@ class WidgetContribution(Executable[Widget]):
 
     tabify: bool = Field(
         default=False,
-        description="Tabify behavior: if True, the widget will be added as a "
-        "new tab instead of side by side to existing widgets.",
+        description="If True, the widget will be added as a new tab to the "
+        "dock widget area. If false, the widget will be appended in sequence.",
     )
 
     def get_callable(
