@@ -78,36 +78,73 @@ def test_config_validation(schema, valid, invalid):
     assert cfg.has_default is ("default" in schema)
 
 
+_NOT_TYPE = "do not match the property type"
+
+
 @pytest.mark.parametrize(
-    "schema",
+    ("schema", "match"),
     [
-        {
-            "title": "T",
-            "type": "string",
-            "default": "blue",
-            "enum": ["red", "green"],
-        },
-        {"title": "T", "type": "integer", "default": 3, "enum": [1, 2]},
+        pytest.param(
+            {"type": "string", "default": "blue", "enum": ["red", "green"]},
+            "not one of the enum values",
+            id="default-not-in-enum",
+        ),
+        pytest.param(
+            {"type": "integer", "default": 1, "enum": [1, "two"]},
+            _NOT_TYPE,
+            id="integer-with-str-member",
+        ),
+        pytest.param(
+            {"type": "string", "default": "a", "enum": ["a", 2]},
+            _NOT_TYPE,
+            id="string-with-int-member",
+        ),
+        pytest.param(
+            {"type": "boolean", "default": True, "enum": [True, 1]},
+            _NOT_TYPE,
+            id="boolean-with-int-member",
+        ),
+        # strict: no coercion of numeric strings or integral floats
+        pytest.param(
+            {"type": "integer", "default": 1, "enum": [1, "2"]},
+            _NOT_TYPE,
+            id="integer-rejects-numeric-str",
+        ),
+        pytest.param(
+            {"type": "integer", "default": 1, "enum": [1, 2.0]},
+            _NOT_TYPE,
+            id="integer-rejects-integral-float",
+        ),
+        # bool is not a number, even though it is an int subclass
+        pytest.param(
+            {"type": "number", "default": 1.5, "enum": [1.5, True]},
+            _NOT_TYPE,
+            id="number-rejects-bool",
+        ),
+        # an unknown `type` is rejected by the `type` field before enum checks
+        pytest.param(
+            {"type": "not_enum", "default": True, "enum": [True, False]},
+            "Input should be 'boolean'",
+            id="unknown-type",
+        ),
     ],
 )
-def test_default_must_be_in_enum(schema):
-    with pytest.raises(PydanticValidationError, match="not one of the enum values"):
-        ConfigurationProperty(**schema)
+def test_invalid_enum_rejected(schema, match):
+    with pytest.raises(PydanticValidationError, match=match):
+        ConfigurationProperty(title="T", **schema)
 
 
 @pytest.mark.parametrize(
     "schema",
     [
-        {"title": "T", "type": "integer", "default": 1, "enum": [1, "two"]},
-        {"title": "T", "type": "boolean", "default": True, "enum": [True, 1]},
-        {"title": "T", "type": "string", "default": "a", "enum": ["a", 2]},
-        {"title": "T", "type": "number", "default": 1.5, "enum": [1.5, "x"]},
-        {"title": "T", "type": "not_enum", "default": True, "enum": [True, False]},
+        {"title": "T", "type": "integer", "default": 1, "enum": [1, 2]},
+        {"title": "T", "type": "number", "default": 1, "enum": [1, 2.5]},
+        {"title": "T", "type": "boolean", "default": True, "enum": [True, False]},
+        {"title": "T", "type": "string", "default": "a", "enum": ["a", "b"]},
     ],
 )
-def test_enum_members_must_match_type(schema):
-    with pytest.raises(PydanticValidationError, match="do not match the property type"):
-        ConfigurationProperty(**schema)
+def test_valid_enum_accepted(schema):
+    assert ConfigurationProperty(**schema).enum == schema["enum"]
 
 
 def test_configuration_dict_keyed():
