@@ -49,6 +49,12 @@ class WidgetContribution(Executable[Widget]):
         description="Default docking area to place the widget in at first launch.",
     )
 
+    tabify: bool = Field(
+        default=False,
+        description="If True, the widget will be added as a new tab to the "
+        "dock widget area. If false, the widget will be appended in sequence.",
+    )
+
     def get_callable(
         self, _registry: CommandRegistry | None = None
     ) -> Callable[..., Widget]:
