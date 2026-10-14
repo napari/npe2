@@ -117,7 +117,7 @@ def manifest_path() -> str:
 
 
 @pytest.fixture
-def npe2pm_wp(
+def npe2pm_w_plugin(
     npe2pm: TestPluginManager, manifest_path: str
 ) -> Generator[TestPluginManager, None, None]:
     """Mocked Global plugin manager instance, unable to

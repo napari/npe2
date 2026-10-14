@@ -63,8 +63,8 @@ def test_something_7_1(npe2pm):
 """
 
 CASE8 = """
-def test_something_7_2(npe2pm_wp):
-    assert len(list(npe2pm_wp.iter_manifests())) == 1
+def test_something_7_2(npe2pm_w_plugin):
+    assert len(list(npe2pm_w_plugin.iter_manifests())) == 1
 """
 
 
