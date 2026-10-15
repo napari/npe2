@@ -201,8 +201,8 @@ class ConfigurationJsonSchema(BaseModel):
             return self
 
         try:
-            # strict mode: no coercion (``"1"`` is not an integer) and ``bool`` is
-            # not accepted as ``integer`` or ``number`` (as it is sublcassed in Python)
+            # strict mode: no coercion ("1" is not an integer) and bool is
+            # not accepted as integer or number (as it is subclassed in Python)
             TypeAdapter(list[self.python_type]).validate_python(  # type: ignore
                 self.enum, strict=True
             )
