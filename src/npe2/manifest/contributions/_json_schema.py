@@ -11,9 +11,11 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
+    TypeAdapter,
     conlist,
     model_validator,
 )
+from pydantic import ValidationError as PydanticValidationError
 
 if TYPE_CHECKING:
     from jsonschema.exceptions import ValidationError
@@ -185,6 +187,37 @@ class ConfigurationJsonSchema(BaseModel):
             values.pop("enum")
 
         return values
+
+    @model_validator(mode="after")
+    def _validate_enum(self) -> ConfigurationJsonSchema:
+        """Validate `enum` members and `default` against the declared `type`.
+
+        `enum` members must be of the same type as the property's `type`, and
+        the (required) `default` must be one of the enum values. Without these
+        checks a bad manifest only fails much later, when napari tries to build
+        the settings model.
+        """
+        if self.enum is None:
+            return self
+
+        try:
+            # strict mode: no coercion ("1" is not an integer) and bool is
+            # not accepted as integer or number (as it is subclassed in Python)
+            TypeAdapter(list[self.python_type]).validate_python(  # type: ignore
+                self.enum, strict=True
+            )
+        except PydanticValidationError as e:
+            bad_members = [self.enum[err["loc"][0]] for err in e.errors()]
+            raise ValueError(
+                f"enum members {bad_members!r} do not match the property type "
+                f"{self.type!r}; enum members must be of the same type as "
+                "`type`"
+            ) from None
+        if self.default not in self.enum:
+            raise ValueError(
+                f"default {self.default!r} is not one of the enum values {self.enum!r}"
+            )
+        return self
 
     @property
     def has_constraint(self) -> bool:
