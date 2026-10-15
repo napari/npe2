@@ -7,6 +7,7 @@
 **Implemented enhancements:**
 
 - Allow plugins to choose tabify behaviour [\#523](https://github.com/napari/npe2/pull/523) ([brisvag](https://github.com/brisvag))
+- Add default dock area field [\#512](https://github.com/napari/npe2/pull/512) ([brisvag](https://github.com/brisvag))
 - Validate Enum values for ConfigurationJsonSchema [\#508](https://github.com/napari/npe2/pull/508) ([TimMonko](https://github.com/TimMonko))
 
 **Fixed bugs:**
@@ -22,7 +23,6 @@
 - ci\(dependabot\): bump astral-sh/setup-uv from 10.1.0 to 10.2.0 [\#517](https://github.com/napari/npe2/pull/517) ([dependabot[bot]](https://github.com/apps/dependabot))
 - ci\(dependabot\): bump conda-incubator/setup-miniconda from 4.0.1 to 4.1.0 [\#516](https://github.com/napari/npe2/pull/516) ([dependabot[bot]](https://github.com/apps/dependabot))
 - ci\(dependabot\): bump codecov/codecov-action from 7.0.0 to 7.1.1 [\#513](https://github.com/napari/npe2/pull/513) ([dependabot[bot]](https://github.com/apps/dependabot))
-- Add default dock area field [\#512](https://github.com/napari/npe2/pull/512) ([brisvag](https://github.com/brisvag))
 - ci\(dependabot\): bump astral-sh/setup-uv from 9.0.0 to 10.1.0 [\#511](https://github.com/napari/npe2/pull/511) ([dependabot[bot]](https://github.com/apps/dependabot))
 - ci: \[pre-commit.ci\] autoupdate [\#510](https://github.com/napari/npe2/pull/510) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 - ci\(dependabot\): bump softprops/action-gh-release from 3.0.2 to 3.0.3 [\#509](https://github.com/napari/npe2/pull/509) ([dependabot[bot]](https://github.com/apps/dependabot))
@@ -35,32 +35,44 @@
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.9.0rc0...v0.9.0)
 
+**Documentation:**
+
+- Docs: ConfigurationContribution guide [\#502](https://github.com/napari/npe2/pull/502) ([TimMonko](https://github.com/TimMonko))
+
 **Merged pull requests:**
 
 - Comment unimplemented ConfigurationProperty fields [\#506](https://github.com/napari/npe2/pull/506) ([DragaDoncila](https://github.com/DragaDoncila))
-- Docs: ConfigurationContribution guide [\#502](https://github.com/napari/npe2/pull/502) ([TimMonko](https://github.com/TimMonko))
 
 ## [v0.9.0rc0](https://github.com/napari/npe2/tree/v0.9.0rc0) (2026-08-12)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.8.3...v0.9.0rc0)
 
-**Merged pull requests:**
+**Implemented enhancements:**
 
 - Make manifest.configuration a dictionary [\#503](https://github.com/napari/npe2/pull/503) ([DragaDoncila](https://github.com/DragaDoncila))
 - Validate titles and keys of ConfigurationContribution [\#501](https://github.com/napari/npe2/pull/501) ([TimMonko](https://github.com/TimMonko))
-- ci: \[pre-commit.ci\] autoupdate [\#500](https://github.com/napari/npe2/pull/500) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
-- ci\(dependabot\): bump astral-sh/setup-uv from 8.3.2 to 9.0.0 [\#499](https://github.com/napari/npe2/pull/499) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Make title, type and default required fields for ConfigurationProperty [\#496](https://github.com/napari/npe2/pull/496) ([DragaDoncila](https://github.com/DragaDoncila))
-- Fully document all `ConfigurationJsonSchema` and `ConfigurationProperty` fields [\#495](https://github.com/napari/npe2/pull/495) ([DragaDoncila](https://github.com/DragaDoncila))
-- ci\(dependabot\): bump actions/checkout from 7.0.0 to 7.0.1 in the github-actions group across 1 directory [\#493](https://github.com/napari/npe2/pull/493) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Unify configuration schema and greatly simplify fields [\#491](https://github.com/napari/npe2/pull/491) ([DragaDoncila](https://github.com/DragaDoncila))
-- ci\(dependabot\): bump softprops/action-gh-release from 3.0.1 to 3.0.2 [\#489](https://github.com/napari/npe2/pull/489) ([dependabot[bot]](https://github.com/apps/dependabot))
-- ci\(dependabot\): bump actions/setup-python from 6.3.0 to 7.0.0 in the github-actions group across 1 directory [\#488](https://github.com/napari/npe2/pull/488) ([dependabot[bot]](https://github.com/apps/dependabot))
-- Drop python 3.10 [\#487](https://github.com/napari/npe2/pull/487) ([brisvag](https://github.com/brisvag))
+
+**Fixed bugs:**
+
 - Fix napari CI job for Python 3.11 \(napari dropped 3.10\) [\#486](https://github.com/napari/npe2/pull/486) ([omkar-334](https://github.com/omkar-334))
 - Fix CLI `--fields` option under `typer 0.27.0` [\#485](https://github.com/napari/npe2/pull/485) ([omkar-334](https://github.com/omkar-334))
 - Select writers by compound file extensions \(e.g. `.ome.tiff`, `.ome.zarr`\) [\#484](https://github.com/napari/npe2/pull/484) ([omkar-334](https://github.com/omkar-334))
 - Defer unittest import [\#483](https://github.com/napari/npe2/pull/483) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+
+**Documentation:**
+
+- Fully document all `ConfigurationJsonSchema` and `ConfigurationProperty` fields [\#495](https://github.com/napari/npe2/pull/495) ([DragaDoncila](https://github.com/DragaDoncila))
+
+**Merged pull requests:**
+
+- ci: \[pre-commit.ci\] autoupdate [\#500](https://github.com/napari/npe2/pull/500) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump astral-sh/setup-uv from 8.3.2 to 9.0.0 [\#499](https://github.com/napari/npe2/pull/499) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/checkout from 7.0.0 to 7.0.1 in the github-actions group across 1 directory [\#493](https://github.com/napari/npe2/pull/493) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump softprops/action-gh-release from 3.0.1 to 3.0.2 [\#489](https://github.com/napari/npe2/pull/489) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/setup-python from 6.3.0 to 7.0.0 in the github-actions group across 1 directory [\#488](https://github.com/napari/npe2/pull/488) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Drop python 3.10 [\#487](https://github.com/napari/npe2/pull/487) ([brisvag](https://github.com/brisvag))
 - ci\(dependabot\): bump astral-sh/setup-uv from 8.2.0 to 8.3.2 [\#482](https://github.com/napari/npe2/pull/482) ([dependabot[bot]](https://github.com/apps/dependabot))
 - ci: \[pre-commit.ci\] autoupdate [\#481](https://github.com/napari/npe2/pull/481) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
 - ci\(dependabot\): bump actions/setup-python from 6.2.0 to 6.3.0 in the github-actions group [\#479](https://github.com/napari/npe2/pull/479) ([dependabot[bot]](https://github.com/apps/dependabot))
@@ -78,7 +90,7 @@
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.8.3rc0...v0.8.3rc1)
 
-**Merged pull requests:**
+**Implemented enhancements:**
 
 - Log Warning for null layer sentinel instead of ValueError [\#474](https://github.com/napari/npe2/pull/474) ([TimMonko](https://github.com/TimMonko))
 - Accept `pathlib.Path` in reading and writing utilities [\#473](https://github.com/napari/npe2/pull/473) ([omkar-334](https://github.com/omkar-334))
