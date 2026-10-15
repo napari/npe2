@@ -1,5 +1,330 @@
 # Changelog
 
+## [v0.10.0](https://github.com/napari/npe2/tree/v0.10.0) (2026-10-15)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.9.0rc1...v0.10.0)
+
+**Implemented enhancements:**
+
+- Allow plugins to choose tabify behaviour [\#523](https://github.com/napari/npe2/pull/523) ([brisvag](https://github.com/brisvag))
+- Validate Enum values for ConfigurationJsonSchema [\#508](https://github.com/napari/npe2/pull/508) ([TimMonko](https://github.com/TimMonko))
+
+**Fixed bugs:**
+
+- Add plugin manifest with tmp plugin as fixture [\#520](https://github.com/napari/npe2/pull/520) ([Czaki](https://github.com/Czaki))
+- Disallow duplicate keys in the same yaml/json mapping [\#505](https://github.com/napari/npe2/pull/505) ([DragaDoncila](https://github.com/DragaDoncila))
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump astral-sh/setup-uv from 10.2.0 to 10.3.0 [\#522](https://github.com/napari/npe2/pull/522) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump the github-actions group across 1 directory with 2 updates [\#521](https://github.com/napari/npe2/pull/521) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#519](https://github.com/napari/npe2/pull/519) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump astral-sh/setup-uv from 10.1.0 to 10.2.0 [\#517](https://github.com/napari/npe2/pull/517) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump conda-incubator/setup-miniconda from 4.0.1 to 4.1.0 [\#516](https://github.com/napari/npe2/pull/516) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump codecov/codecov-action from 7.0.0 to 7.1.1 [\#513](https://github.com/napari/npe2/pull/513) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Add default dock area field [\#512](https://github.com/napari/npe2/pull/512) ([brisvag](https://github.com/brisvag))
+- ci\(dependabot\): bump astral-sh/setup-uv from 9.0.0 to 10.1.0 [\#511](https://github.com/napari/npe2/pull/511) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#510](https://github.com/napari/npe2/pull/510) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump softprops/action-gh-release from 3.0.2 to 3.0.3 [\#509](https://github.com/napari/npe2/pull/509) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v0.9.0rc1](https://github.com/napari/npe2/tree/v0.9.0rc1) (2026-08-18)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.9.0...v0.9.0rc1)
+
+## [v0.9.0](https://github.com/napari/npe2/tree/v0.9.0) (2026-08-18)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.9.0rc0...v0.9.0)
+
+**Merged pull requests:**
+
+- Comment unimplemented ConfigurationProperty fields [\#506](https://github.com/napari/npe2/pull/506) ([DragaDoncila](https://github.com/DragaDoncila))
+- Docs: ConfigurationContribution guide [\#502](https://github.com/napari/npe2/pull/502) ([TimMonko](https://github.com/TimMonko))
+
+## [v0.9.0rc0](https://github.com/napari/npe2/tree/v0.9.0rc0) (2026-08-12)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.3...v0.9.0rc0)
+
+**Merged pull requests:**
+
+- Make manifest.configuration a dictionary [\#503](https://github.com/napari/npe2/pull/503) ([DragaDoncila](https://github.com/DragaDoncila))
+- Validate titles and keys of ConfigurationContribution [\#501](https://github.com/napari/npe2/pull/501) ([TimMonko](https://github.com/TimMonko))
+- ci: \[pre-commit.ci\] autoupdate [\#500](https://github.com/napari/npe2/pull/500) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump astral-sh/setup-uv from 8.3.2 to 9.0.0 [\#499](https://github.com/napari/npe2/pull/499) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Make title, type and default required fields for ConfigurationProperty [\#496](https://github.com/napari/npe2/pull/496) ([DragaDoncila](https://github.com/DragaDoncila))
+- Fully document all `ConfigurationJsonSchema` and `ConfigurationProperty` fields [\#495](https://github.com/napari/npe2/pull/495) ([DragaDoncila](https://github.com/DragaDoncila))
+- ci\(dependabot\): bump actions/checkout from 7.0.0 to 7.0.1 in the github-actions group across 1 directory [\#493](https://github.com/napari/npe2/pull/493) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Unify configuration schema and greatly simplify fields [\#491](https://github.com/napari/npe2/pull/491) ([DragaDoncila](https://github.com/DragaDoncila))
+- ci\(dependabot\): bump softprops/action-gh-release from 3.0.1 to 3.0.2 [\#489](https://github.com/napari/npe2/pull/489) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/setup-python from 6.3.0 to 7.0.0 in the github-actions group across 1 directory [\#488](https://github.com/napari/npe2/pull/488) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Drop python 3.10 [\#487](https://github.com/napari/npe2/pull/487) ([brisvag](https://github.com/brisvag))
+- Fix napari CI job for Python 3.11 \(napari dropped 3.10\) [\#486](https://github.com/napari/npe2/pull/486) ([omkar-334](https://github.com/omkar-334))
+- Fix CLI `--fields` option under `typer 0.27.0` [\#485](https://github.com/napari/npe2/pull/485) ([omkar-334](https://github.com/omkar-334))
+- Select writers by compound file extensions \(e.g. `.ome.tiff`, `.ome.zarr`\) [\#484](https://github.com/napari/npe2/pull/484) ([omkar-334](https://github.com/omkar-334))
+- Defer unittest import [\#483](https://github.com/napari/npe2/pull/483) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+- ci\(dependabot\): bump astral-sh/setup-uv from 8.2.0 to 8.3.2 [\#482](https://github.com/napari/npe2/pull/482) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#481](https://github.com/napari/npe2/pull/481) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump actions/setup-python from 6.2.0 to 6.3.0 in the github-actions group [\#479](https://github.com/napari/npe2/pull/479) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v0.8.3](https://github.com/napari/npe2/tree/v0.8.3) (2026-06-22)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.3rc1...v0.8.3)
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump softprops/action-gh-release from 3.0.0 to 3.0.1 [\#477](https://github.com/napari/npe2/pull/477) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/checkout from 6.0.3 to 7.0.0 in the github-actions group [\#476](https://github.com/napari/npe2/pull/476) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v0.8.3rc1](https://github.com/napari/npe2/tree/v0.8.3rc1) (2026-06-19)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.3rc0...v0.8.3rc1)
+
+**Merged pull requests:**
+
+- Log Warning for null layer sentinel instead of ValueError [\#474](https://github.com/napari/npe2/pull/474) ([TimMonko](https://github.com/TimMonko))
+- Accept `pathlib.Path` in reading and writing utilities [\#473](https://github.com/napari/npe2/pull/473) ([omkar-334](https://github.com/omkar-334))
+
+## [v0.8.3rc0](https://github.com/napari/npe2/tree/v0.8.3rc0) (2026-06-15)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.2rc0...v0.8.3rc0)
+
+**Implemented enhancements:**
+
+- Unify icon contributions and clarify supported formats [\#450](https://github.com/napari/npe2/pull/450) ([brisvag](https://github.com/brisvag))
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump astral-sh/setup-uv from 8.1.0 to 8.2.0 [\#472](https://github.com/napari/npe2/pull/472) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump codecov/codecov-action from 6.0.1 to 7.0.0 [\#471](https://github.com/napari/npe2/pull/471) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/checkout from 6.0.2 to 6.0.3 in the github-actions group [\#470](https://github.com/napari/npe2/pull/470) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#469](https://github.com/napari/npe2/pull/469) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump codecov/codecov-action from 6.0.0 to 6.0.1 [\#468](https://github.com/napari/npe2/pull/468) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#467](https://github.com/napari/npe2/pull/467) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump conda-incubator/setup-miniconda from 3.3.0 to 4.0.1 [\#466](https://github.com/napari/npe2/pull/466) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Small code touchups to theme contribution [\#465](https://github.com/napari/npe2/pull/465) ([TimMonko](https://github.com/TimMonko))
+- ci\(dependabot\): bump astral-sh/setup-uv from 8.0.0 to 8.1.0 [\#462](https://github.com/napari/npe2/pull/462) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Defer importing jsonschema.exceptions [\#461](https://github.com/napari/npe2/pull/461) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+- ci\(dependabot\): bump peter-evans/create-pull-request from 8.1.0 to 8.1.1 [\#460](https://github.com/napari/npe2/pull/460) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump softprops/action-gh-release from 2.6.1 to 3.0.0 [\#459](https://github.com/napari/npe2/pull/459) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump the github-actions group with 2 updates [\#458](https://github.com/napari/npe2/pull/458) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update type in docstring parameter for manifest\_from\_npe1 [\#457](https://github.com/napari/npe2/pull/457) ([willingc](https://github.com/willingc))
+- Remove stale fetch test that has been skipped for over 2 years [\#456](https://github.com/napari/npe2/pull/456) ([willingc](https://github.com/willingc))
+- ci: \[pre-commit.ci\] autoupdate [\#455](https://github.com/napari/npe2/pull/455) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Add rationale for pydantic 2.11.x exclusion [\#454](https://github.com/napari/npe2/pull/454) ([willingc](https://github.com/willingc))
+- Improve reading error for selected plugins [\#377](https://github.com/napari/npe2/pull/377) ([DragaDoncila](https://github.com/DragaDoncila))
+
+## [v0.8.2rc0](https://github.com/napari/npe2/tree/v0.8.2rc0) (2026-04-04)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.2...v0.8.2rc0)
+
+## [v0.8.2](https://github.com/napari/npe2/tree/v0.8.2) (2026-04-04)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.1rc0...v0.8.2)
+
+**Merged pull requests:**
+
+- Remove render.py from mypy pre-commit exclusion [\#453](https://github.com/napari/npe2/pull/453) ([willingc](https://github.com/willingc))
+- Fix model schema generation [\#451](https://github.com/napari/npe2/pull/451) ([dstansby](https://github.com/dstansby))
+- fix: exclude pydantic 2.11.x to avoid error generating PluginManifest [\#449](https://github.com/napari/npe2/pull/449) ([jasper-tms](https://github.com/jasper-tms))
+- ci\(dependabot\): bump astral-sh/setup-uv from 7.3.1 to 8.0.0 [\#447](https://github.com/napari/npe2/pull/447) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump codecov/codecov-action from 5.5.2 to 6.0.0 [\#446](https://github.com/napari/npe2/pull/446) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump softprops/action-gh-release from 2.5.0 to 2.6.1 [\#441](https://github.com/napari/npe2/pull/441) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/download-artifact from 8.0.0 to 8.0.1 in the github-actions group [\#440](https://github.com/napari/npe2/pull/440) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#439](https://github.com/napari/npe2/pull/439) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump astral-sh/setup-uv from 7.3.0 to 7.3.1 [\#438](https://github.com/napari/npe2/pull/438) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump the github-actions group with 2 updates [\#437](https://github.com/napari/npe2/pull/437) ([dependabot[bot]](https://github.com/apps/dependabot))
+- docs\(manifest.contributions.commands\): python\_path \> python\_name [\#436](https://github.com/napari/npe2/pull/436) ([ns-rse](https://github.com/ns-rse))
+
+## [v0.8.1rc0](https://github.com/napari/npe2/tree/v0.8.1rc0) (2026-02-10)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.1...v0.8.1rc0)
+
+## [v0.8.1](https://github.com/napari/npe2/tree/v0.8.1) (2026-02-10)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.0rc0...v0.8.1)
+
+**Merged pull requests:**
+
+- chore: add testing against minimum requirements [\#434](https://github.com/napari/npe2/pull/434) ([Czaki](https://github.com/Czaki))
+- chore: fix pydantic constraints [\#433](https://github.com/napari/npe2/pull/433) ([Czaki](https://github.com/Czaki))
+- Resolve deprecation warning in docs build [\#432](https://github.com/napari/npe2/pull/432) ([Czaki](https://github.com/Czaki))
+
+## [v0.8.0rc0](https://github.com/napari/npe2/tree/v0.8.0rc0) (2026-02-06)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.8.0...v0.8.0rc0)
+
+## [v0.8.0](https://github.com/napari/npe2/tree/v0.8.0) (2026-02-06)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.9rc0...v0.8.0)
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump peter-evans/create-pull-request from 7.0.9 to 8.1.0 [\#431](https://github.com/napari/npe2/pull/431) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump conda-incubator/setup-miniconda from 3.2.0 to 3.3.0 [\#429](https://github.com/napari/npe2/pull/429) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump the github-actions group with 2 updates [\#428](https://github.com/napari/npe2/pull/428) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#427](https://github.com/napari/npe2/pull/427) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump codecov/codecov-action from 5.5.1 to 5.5.2 [\#426](https://github.com/napari/npe2/pull/426) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump the github-actions group with 2 updates [\#423](https://github.com/napari/npe2/pull/423) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump min python version to 3.10, run precommit, fix everything [\#421](https://github.com/napari/npe2/pull/421) ([brisvag](https://github.com/brisvag))
+- Update python in CI [\#420](https://github.com/napari/npe2/pull/420) ([brisvag](https://github.com/brisvag))
+- Adapt to python 3.14 [\#419](https://github.com/napari/npe2/pull/419) ([brisvag](https://github.com/brisvag))
+- ci\(dependabot\): bump the github-actions group across 1 directory with 4 updates [\#418](https://github.com/napari/npe2/pull/418) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump peter-evans/create-pull-request from 7.0.8 to 7.0.9 [\#417](https://github.com/napari/npe2/pull/417) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump softprops/action-gh-release from 2.3.2 to 2.4.2 [\#416](https://github.com/napari/npe2/pull/416) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Expand reader guide to provide more information about the `get_reader` function [\#414](https://github.com/napari/npe2/pull/414) ([DragaDoncila](https://github.com/DragaDoncila))
+- ci: \[pre-commit.ci\] autoupdate [\#411](https://github.com/napari/npe2/pull/411) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump codecov/codecov-action from 5.5.0 to 5.5.1 [\#406](https://github.com/napari/npe2/pull/406) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#405](https://github.com/napari/npe2/pull/405) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- ci\(dependabot\): bump codecov/codecov-action from 5.4.3 to 5.5.0 [\#403](https://github.com/napari/npe2/pull/403) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump actions/upload-pages-artifact from 3.0.1 to 4.0.0 in the github-actions group [\#402](https://github.com/napari/npe2/pull/402) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump conda-incubator/setup-miniconda from 3.1.1 to 3.2.0 [\#401](https://github.com/napari/npe2/pull/401) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump the github-actions group with 2 updates [\#400](https://github.com/napari/npe2/pull/400) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#399](https://github.com/napari/npe2/pull/399) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Remove napari-hub API function and tests [\#398](https://github.com/napari/npe2/pull/398) ([DragaDoncila](https://github.com/DragaDoncila))
+- Remove link that no longer exists in README [\#396](https://github.com/napari/npe2/pull/396) ([willingc](https://github.com/willingc))
+- Pin Github Actions actions to their hashes [\#394](https://github.com/napari/npe2/pull/394) ([jaimergp](https://github.com/jaimergp))
+
+## [v0.7.9rc0](https://github.com/napari/npe2/tree/v0.7.9rc0) (2025-07-07)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.9...v0.7.9rc0)
+
+## [v0.7.9](https://github.com/napari/npe2/tree/v0.7.9) (2025-07-07)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.8rc0...v0.7.9)
+
+**Merged pull requests:**
+
+- ci: \[pre-commit.ci\] autoupdate [\#392](https://github.com/napari/npe2/pull/392) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Relax codecov to 98% [\#391](https://github.com/napari/npe2/pull/391) ([willingc](https://github.com/willingc))
+- Show menus and submenus in the contributions page [\#390](https://github.com/napari/npe2/pull/390) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+- Add test for get manifest from zip and improve logic to recurse the zip to find manifest [\#389](https://github.com/napari/npe2/pull/389) ([willingc](https://github.com/willingc))
+- Fix error box displayed when CLI launched with no options [\#388](https://github.com/napari/npe2/pull/388) ([willingc](https://github.com/willingc))
+- Update example\_manifest.yaml to add a menu contribution [\#387](https://github.com/napari/npe2/pull/387) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+- Update ci.yml to build docs and upload artifact [\#385](https://github.com/napari/npe2/pull/385) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+- Fix CI by skipping test and adding `src/` to napari test paths [\#384](https://github.com/napari/npe2/pull/384) ([DragaDoncila](https://github.com/DragaDoncila))
+- Add guide for menu contributions [\#383](https://github.com/napari/npe2/pull/383) ([Modjular](https://github.com/Modjular))
+- Replace appdirs with platformdirs and silence importlib warning in tests [\#382](https://github.com/napari/npe2/pull/382) ([klmurussi](https://github.com/klmurussi))
+- Clarify that sample data contributions must return valid layer data [\#379](https://github.com/napari/npe2/pull/379) ([DragaDoncila](https://github.com/DragaDoncila))
+- ci: \[pre-commit.ci\] autoupdate [\#376](https://github.com/napari/npe2/pull/376) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+
+## [v0.7.8rc0](https://github.com/napari/npe2/tree/v0.7.8rc0) (2025-02-19)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.8...v0.7.8rc0)
+
+## [v0.7.8](https://github.com/napari/npe2/tree/v0.7.8) (2025-02-19)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.7rc0...v0.7.8)
+
+**Merged pull requests:**
+
+- Fix naming of npe1 converted contribution commands and add tests [\#374](https://github.com/napari/npe2/pull/374) ([DragaDoncila](https://github.com/DragaDoncila))
+- ci: \[pre-commit.ci\] autoupdate [\#373](https://github.com/napari/npe2/pull/373) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Add utility for retrieving the name of all shimmed plugins [\#372](https://github.com/napari/npe2/pull/372) ([DragaDoncila](https://github.com/DragaDoncila))
+- Remove utilities for fetching all plugins [\#371](https://github.com/napari/npe2/pull/371) ([DragaDoncila](https://github.com/DragaDoncila))
+- Fix `test_all_plugins` workflow [\#370](https://github.com/napari/npe2/pull/370) ([DragaDoncila](https://github.com/DragaDoncila))
+- Instantiate `_command_menu_map` with all needed `defaultdicts` [\#369](https://github.com/napari/npe2/pull/369) ([DragaDoncila](https://github.com/DragaDoncila))
+- Tolerate distributions with no Name [\#368](https://github.com/napari/npe2/pull/368) ([cjwatson](https://github.com/cjwatson))
+- Update reader guide to include option to return full `Layer` objects. [\#367](https://github.com/napari/npe2/pull/367) ([DragaDoncila](https://github.com/DragaDoncila))
+- ci\(dependabot\): bump codecov/codecov-action from 4 to 5 [\#366](https://github.com/napari/npe2/pull/366) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update the README [\#365](https://github.com/napari/npe2/pull/365) ([willingc](https://github.com/willingc))
+- Change npe1 plugin used for sample data test [\#364](https://github.com/napari/npe2/pull/364) ([DragaDoncila](https://github.com/DragaDoncila))
+- Update widgets guide to point to napari-plugin-template [\#362](https://github.com/napari/npe2/pull/362) ([melissawm](https://github.com/melissawm))
+- ci: \[pre-commit.ci\] autoupdate [\#360](https://github.com/napari/npe2/pull/360) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Fix link in readme to napari documentation [\#359](https://github.com/napari/npe2/pull/359) ([Czaki](https://github.com/Czaki))
+- ci\(dependabot\): bump peter-evans/create-pull-request from 6 to 7 [\#358](https://github.com/napari/npe2/pull/358) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Change type of layer Metadata from Dict to Mapping [\#357](https://github.com/napari/npe2/pull/357) ([Czaki](https://github.com/Czaki))
+- Add registration to plugin categories [\#355](https://github.com/napari/npe2/pull/355) ([jni](https://github.com/jni))
+- ci\(dependabot\): bump the github-actions group with 2 updates [\#354](https://github.com/napari/npe2/pull/354) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump heinrichreimer/github-changelog-generator-action from 2.3 to 2.4 [\#333](https://github.com/napari/npe2/pull/333) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: \[pre-commit.ci\] autoupdate [\#330](https://github.com/napari/npe2/pull/330) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+
+## [v0.7.7rc0](https://github.com/napari/npe2/tree/v0.7.7rc0) (2024-07-29)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.7...v0.7.7rc0)
+
+## [v0.7.7](https://github.com/napari/npe2/tree/v0.7.7) (2024-07-29)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.6...v0.7.7)
+
+**Merged pull requests:**
+
+- On disable, dont try to pop a key that doesn't exist [\#356](https://github.com/napari/npe2/pull/356) ([psobolewskiPhD](https://github.com/psobolewskiPhD))
+
+## [v0.7.6](https://github.com/napari/npe2/tree/v0.7.6) (2024-06-21)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.3rc0...v0.7.6)
+
+**Merged pull requests:**
+
+- ci\(dependabot\): bump softprops/action-gh-release from 1 to 2 [\#353](https://github.com/napari/npe2/pull/353) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump peter-evans/create-pull-request from 5 to 6 [\#351](https://github.com/napari/npe2/pull/351) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump codecov to v4 [\#350](https://github.com/napari/npe2/pull/350) ([Czaki](https://github.com/Czaki))
+- Group dependabot updates [\#349](https://github.com/napari/npe2/pull/349) ([Czaki](https://github.com/Czaki))
+- Add dictionary mapping `command_id` to its associated `MenuCommand`s for each plugin [\#348](https://github.com/napari/npe2/pull/348) ([DragaDoncila](https://github.com/DragaDoncila))
+- DOC Add note on string type annotations in widget contributions [\#345](https://github.com/napari/npe2/pull/345) ([lucyleeow](https://github.com/lucyleeow))
+- Adopt quotes around type names to make Reader ex. copy/paste-ready [\#340](https://github.com/napari/npe2/pull/340) ([vreuter](https://github.com/vreuter))
+- ci\(dependabot\): bump actions/setup-python from 4 to 5 [\#334](https://github.com/napari/npe2/pull/334) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci\(dependabot\): bump aganders3/headless-gui from 1 to 2 [\#332](https://github.com/napari/npe2/pull/332) ([dependabot[bot]](https://github.com/apps/dependabot))
+- DOC Add cross references to widget contributions [\#331](https://github.com/napari/npe2/pull/331) ([lucyleeow](https://github.com/lucyleeow))
+- ci\(dependabot\): bump actions/checkout from 3 to 4 [\#328](https://github.com/napari/npe2/pull/328) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v0.7.3rc0](https://github.com/napari/npe2/tree/v0.7.3rc0) (2024-03-22)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.5rc0...v0.7.3rc0)
+
+## [v0.7.5rc0](https://github.com/napari/npe2/tree/v0.7.5rc0) (2024-03-22)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.5...v0.7.5rc0)
+
+## [v0.7.5](https://github.com/napari/npe2/tree/v0.7.5) (2024-03-22)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.4...v0.7.5)
+
+**Merged pull requests:**
+
+- allow v2.3 in metadataversion, fallback to any string [\#344](https://github.com/napari/npe2/pull/344) ([tlambert03](https://github.com/tlambert03))
+- TST Fix `test_conversion_missing` [\#341](https://github.com/napari/npe2/pull/341) ([lucyleeow](https://github.com/lucyleeow))
+- Add permisions to deploy steep [\#338](https://github.com/napari/npe2/pull/338) ([Czaki](https://github.com/Czaki))
+
+## [v0.7.4](https://github.com/napari/npe2/tree/v0.7.4) (2024-01-05)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.3...v0.7.4)
+
+**Merged pull requests:**
+
+- replace module separator with path separator [\#336](https://github.com/napari/npe2/pull/336) ([Czaki](https://github.com/Czaki))
+- ci\(dependabot\): bump conda-incubator/setup-miniconda from 2 to 3 [\#329](https://github.com/napari/npe2/pull/329) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Add constraint for brainreg-segment in test [\#327](https://github.com/napari/npe2/pull/327) ([Czaki](https://github.com/Czaki))
+- Fix rendering of manifest reference table. [\#326](https://github.com/napari/npe2/pull/326) ([melissawm](https://github.com/melissawm))
+- Catch errors and log in `_dispose` in `PluginContext` [\#325](https://github.com/napari/npe2/pull/325) ([lucyleeow](https://github.com/lucyleeow))
+- Move coverage upload to separate step [\#323](https://github.com/napari/npe2/pull/323) ([Czaki](https://github.com/Czaki))
+
+## [v0.7.3](https://github.com/napari/npe2/tree/v0.7.3) (2023-10-20)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.2...v0.7.3)
+
+**Merged pull requests:**
+
+- Add pydantic 2 compatibility layer  [\#321](https://github.com/napari/npe2/pull/321) ([Czaki](https://github.com/Czaki))
+- Fix tests by disble broken one [\#319](https://github.com/napari/npe2/pull/319) ([Czaki](https://github.com/Czaki))
+- Use concurency for canceling workflows [\#318](https://github.com/napari/npe2/pull/318) ([Czaki](https://github.com/Czaki))
+- DOC Add doc in `CommandRegistry` about when it is updated [\#316](https://github.com/napari/npe2/pull/316) ([lucyleeow](https://github.com/lucyleeow))
+- update url for fetching plugin listing from napari hub [\#313](https://github.com/napari/npe2/pull/313) ([nclack](https://github.com/nclack))
+- ci\(dependabot\): bump actions/checkout from 3 to 4 [\#311](https://github.com/napari/npe2/pull/311) ([dependabot[bot]](https://github.com/apps/dependabot))
+- DOC Update and clarify supported widget contributions [\#310](https://github.com/napari/npe2/pull/310) ([lucyleeow](https://github.com/lucyleeow))
+- Fix invalid JSON Schema [\#309](https://github.com/napari/npe2/pull/309) ([aganders3](https://github.com/aganders3))
+- ci: \[pre-commit.ci\] autoupdate [\#306](https://github.com/napari/npe2/pull/306) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Add `font_size` field to `ThemeContribution` class [\#300](https://github.com/napari/npe2/pull/300) ([dalthviz](https://github.com/dalthviz))
+- ci: \[pre-commit.ci\] autoupdate [\#295](https://github.com/napari/npe2/pull/295) ([pre-commit-ci[bot]](https://github.com/apps/pre-commit-ci))
+- Fix converting of editable package [\#288](https://github.com/napari/npe2/pull/288) ([Czaki](https://github.com/Czaki))
+
+## [v0.7.2](https://github.com/napari/npe2/tree/v0.7.2) (2023-07-19)
+
+[Full Changelog](https://github.com/napari/npe2/compare/v0.7.1...v0.7.2)
+
+**Merged pull requests:**
+
+- Add check for passed reader contribution [\#301](https://github.com/napari/npe2/pull/301) ([DragaDoncila](https://github.com/DragaDoncila))
+
 ## [v0.7.1](https://github.com/napari/npe2/tree/v0.7.1) (2023-07-16)
 
 [Full Changelog](https://github.com/napari/npe2/compare/v0.7.0...v0.7.1)
