@@ -32,6 +32,9 @@ jobs:
         platform: [ubuntu-latest, macos-latest, windows-latest]
         resolution: [highest]
         include:
+          - python-version: "3.12"
+            platform: "ubuntu-24.04-arm"
+            resolution: "highest"
           - python-version: "3.11"
             platform: "ubuntu-latest"
             resolution: "lowest-direct"
