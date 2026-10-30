@@ -43,7 +43,9 @@ class ContributionPoints(BaseModel):
         "napari's menu structure.",
     )
     submenus: list[SubmenuContribution] | None = None
-    keybindings: list[KeyBindingContribution] | None = Field(None, hide_docs=True)
+    keybindings: list[KeyBindingContribution] | None = Field(
+        None, json_schema_extra={"hide_docs": True}
+    )
 
     configurations: dict[_ConfigurationKey, ConfigurationContribution] = Field(
         default_factory=dict,

@@ -46,7 +46,7 @@ class PackageMetadata(BaseModel):
         None,
         description="A string containing the name of another core metadata "
         "field. The field names Name and Version may not be specified in this field.",
-        min_ver="2.2",
+        json_schema_extra={"min_ver": "2.2"},
     )
     platform: list[str] | None = Field(
         None,
@@ -59,7 +59,7 @@ class PackageMetadata(BaseModel):
         description="Binary distributions containing a PKG-INFO file will use the "
         "Supported-Platform field in their metadata to specify the OS and CPU for "
         "which the binary distribution was compiled",
-        min_ver="1.1",
+        json_schema_extra={"min_ver": "1.1"},
     )
     summary: str | None = Field(
         None, description="A one-line summary of what the distribution does."
@@ -75,7 +75,7 @@ class PackageMetadata(BaseModel):
         "distribution's description, so that tools can intelligently render the "
         "description. The type/subtype part has only a few legal values: "
         "text/plain, text/x-rst, text/markdown",
-        min_ver="2.1",
+        json_schema_extra={"min_ver": "2.1"},
     )
     keywords: str | None = Field(
         None,
@@ -90,7 +90,7 @@ class PackageMetadata(BaseModel):
         None,
         description="A string containing the URL from which THIS version of the "
         "distribution can be downloaded.",
-        min_ver="1.1",
+        json_schema_extra={"min_ver": "1.1"},
     )
     author: str | None = Field(
         None,
@@ -106,14 +106,14 @@ class PackageMetadata(BaseModel):
         None,
         description="A string containing the maintainer's name at a minimum; "
         "additional contact information may be provided.",
-        min_ver="1.2",
+        json_schema_extra={"min_ver": "1.2"},
     )
     maintainer_email: str | None = Field(
         None,
         description="A string containing the maintainer's e-mail address. It can "
         "contain a name and e-mail address in the legal forms for a "
         "RFC-822 From: header.",
-        min_ver="1.2",
+        json_schema_extra={"min_ver": "1.2"},
     )
     license: str | None = Field(
         None,
@@ -128,14 +128,14 @@ class PackageMetadata(BaseModel):
         description="Each entry is a string giving a single classification value for "
         "the distribution. Classifiers are described in PEP 301, and the Python "
         "Package Index publishes a dynamic list of currently defined classifiers.",
-        min_ver="1.1",
+        json_schema_extra={"min_ver": "1.1"},
     )
     requires_dist: list[str] | None = Field(
         None,
         description="The field format specification was relaxed to accept the syntax "
         "used by popular publishing tools. Each entry contains a string naming some "
         "other distutils project required by this distribution.",
-        min_ver="1.2",
+        json_schema_extra={"min_ver": "1.2"},
     )
     requires_python: str | None = Field(
         None,
@@ -143,7 +143,7 @@ class PackageMetadata(BaseModel):
         "is guaranteed to be compatible with. Installation tools may look at this "
         "when picking which version of a project to install. "
         "The value must be in the format specified in Version specifiers (PEP 440).",
-        min_ver="1.2",
+        json_schema_extra={"min_ver": "1.2"},
     )
     requires_external: list[str] | None = Field(
         None,
@@ -152,25 +152,25 @@ class PackageMetadata(BaseModel):
         "some dependency in the system that the distribution is to be used. This "
         "field is intended to serve as a hint to downstream project maintainers, and "
         "has no semantics which are meaningful to the distutils distribution.",
-        min_ver="1.2",
+        json_schema_extra={"min_ver": "1.2"},
     )
     project_url: list[str] | None = Field(
         None,
         description="A string containing a browsable URL for the project and a label "
         "for it, separated by a comma.",
-        min_ver="1.2",
+        json_schema_extra={"min_ver": "1.2"},
     )
     provides_extra: list[str] | None = Field(
         None,
         description="A string containing the name of an optional feature. Must be a "
         "valid Python identifier. May be used to make a dependency conditional on "
         "whether the optional feature has been requested.",
-        min_ver="2.1",
+        json_schema_extra={"min_ver": "2.1"},
     )
 
     # rarely_used
-    provides_dist: list[str] | None = Field(None, min_ver="1.2")
-    obsoletes_dist: list[str] | None = Field(None, min_ver="1.2")
+    provides_dist: list[str] | None = Field(None, json_schema_extra={"min_ver": "1.2"})
+    obsoletes_dist: list[str] | None = Field(None, json_schema_extra={"min_ver": "1.2"})
 
     @model_validator(mode="before")
     @classmethod
