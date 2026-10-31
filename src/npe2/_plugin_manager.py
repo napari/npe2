@@ -7,7 +7,6 @@ import warnings
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence, Set
 from fnmatch import fnmatch
-from importlib import metadata
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -241,19 +240,6 @@ class PluginManager:
             # the current schema.
             defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         )
-
-        # up to napari 0.4.15, discovery happened in the init here
-        # so if we're running on an older version of napari, we need to discover
-        try:
-            nv = metadata.version("napari")
-        except metadata.PackageNotFoundError:  # pragma: no cover
-            pass
-        else:  # pragma: no cover
-            vsplit = nv.split(".")[:4]
-            if ("dev" in nv and vsplit < ["0", "4", "16", "dev4"]) or (
-                "dev" not in nv and vsplit < ["0", "4", "16"]
-            ):
-                self.discover()
 
     @classmethod
     def instance(cls) -> PluginManager:
