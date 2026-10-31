@@ -55,11 +55,6 @@ class _ContributionsIndex:
         self._readers: list[tuple[str, ReaderContribution]] = []
         self._writers: list[tuple[LayerType, int, int, WriterContribution]] = []
 
-        # DEPRECATED: only here for napari <= 0.4.15 compat.
-        self._samples: defaultdict[str, list[SampleDataContribution]] = defaultdict(
-            list
-        )
-
     def reindex(self, manifest):
         self.remove_contributions(manifest.name)
         self.index_contributions(manifest)
@@ -80,10 +75,6 @@ class _ContributionsIndex:
         for writer in ctrb.writers or ():
             for c in writer.layer_type_constraints():
                 self._writers.append((c.layer_type, *c.bounds, writer))
-
-        # DEPRECATED: only here for napari <= 0.4.15 compat.
-        if ctrb.sample_data:
-            self._samples[manifest.name] = ctrb.sample_data
 
     def remove_contributions(self, key: PluginName) -> None:
         """This must completely remove everything added by `index_contributions`."""
@@ -107,9 +98,6 @@ class _ContributionsIndex:
         ]
 
         self._indexed.remove(key)
-
-        # DEPRECATED: only here for napari <= 0.4.15 compat.
-        self._samples.pop(key, None)
 
     def get_command(self, command_id: str) -> CommandContribution:
         return self._commands[command_id][0]
