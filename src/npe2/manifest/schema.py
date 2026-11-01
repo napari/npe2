@@ -102,7 +102,7 @@ class PluginManifest(ImportExportModel):
         ...,
         description="The name of the plugin. Though this field is mandatory, it *must*"
         " match the package `name` as defined in the python package metadata.",
-        allow_mutation=False,
+        frozen=True,
     )
 
     display_name: Annotated[str, AfterValidator(_validators.display_name)] = Field(
@@ -200,13 +200,13 @@ class PluginManifest(ImportExportModel):
         "https://packaging.python.org/specifications/core-metadata/. "
         "For normal (non-dynamic) plugins, this data will come from the package's "
         "setup.cfg",
-        hide_docs=True,
+        json_schema_extra={"hide_docs": True},
     )
 
     npe1_shim: bool = Field(
         False,
         description="Whether this manifest was created as a shim for an npe1 plugin.",
-        hide_docs=True,
+        json_schema_extra={"hide_docs": True},
     )
 
     def __init__(self, **data):
