@@ -34,6 +34,7 @@ dependencies = [
     "PyYAML>=6.0",
     "platformdirs>=4.3.0",
     "build>=1",
+    "packaging>=25.0",
     "psygnal>=0.3.0",
     "pydantic>=2.8,!=2.11.*",  # See rationale: https://github.com/napari/npe2/issues/448#issuecomment-4189746861
     "pydantic_extra_types>=2.8",

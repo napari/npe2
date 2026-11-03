@@ -16,6 +16,7 @@ from typing import (
 )
 from urllib import parse
 
+from packaging.version import Version
 from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
@@ -249,10 +250,7 @@ class PluginManager:
         except metadata.PackageNotFoundError:  # pragma: no cover
             pass
         else:  # pragma: no cover
-            vsplit = nv.split(".")[:4]
-            if ("dev" in nv and vsplit < ["0", "4", "16", "dev4"]) or (
-                "dev" not in nv and vsplit < ["0", "4", "16"]
-            ):
+            if Version(nv) < Version("0.4.16.dev4"):
                 self.discover()
 
     @classmethod
