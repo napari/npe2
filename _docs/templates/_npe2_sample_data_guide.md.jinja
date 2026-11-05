@@ -16,8 +16,6 @@ will cause an error.
 
 ### Sample Data example
 
-::::{tab-set}
-:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -33,34 +31,3 @@ for field details.
 ```yaml
 {{ 'sample_data'|example_contribution }}
 ```
-:::
-
-:::{tab-item} napari-plugin-engine
-
-```{admonition} Deprecated!
-This demonstrates the now-deprecated `napari-plugin-engine` pattern.
-```
-
-**python implementation**
-
-```python
-import numpy as np
-from napari_plugin_engine import napari_hook_implementation
-
-def _generate_random_data(shape=(512, 512)):
-    data = np.random.rand(*shape)
-    return [(data, {'name': 'random data'})]
-
-@napari_hook_implementation
-def napari_provide_sample_data():
-    return {
-        'random data': _generate_random_data,
-        'random image': 'https://picsum.photos/1024',
-        'sample_key': {
-            'display_name': 'Some Random Data (512 x 512)'
-            'data': _generate_random_data,
-        }
-    }
-```
-:::
-::::
