@@ -65,8 +65,6 @@ otherwise, they will not be invoked when a directory is passed to `viewer.open`.
 
 ### Reader example
 
-::::{tab-set}
-:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -82,33 +80,3 @@ for field details.
 ```yaml
 {{ 'readers'|example_contribution }}
 ```
-:::
-
-:::{tab-item} napari-plugin-engine
-
-```{admonition} Deprecated!
-This demonstrates the now-deprecated `napari-plugin-engine` pattern.
-```
-
-**python implementation**
-
-```python
-from napari_plugin_engine import napari_hook_implementation
-
-
-@napari_hook_implementation
-def napari_get_reader(path: PathOrPaths) -> Optional[ReaderFunction]:
-    # If we recognize the format, we return the actual reader function
-    if isinstance(path, str) and path.endswith(".xyz"):
-        return xyz_file_reader
-    # otherwise we return None.
-    return None
-
-
-def xyz_file_reader(path: PathOrPaths) -> List[LayerData]:
-    data = ...  # somehow read data from path
-    layer_properties = {"name": "etc..."}
-    return [(data, layer_properties)]
-```
-:::
-::::

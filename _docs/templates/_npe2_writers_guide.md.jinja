@@ -104,8 +104,6 @@ and a `vectors` layer, because `vectors` is not listed in the `layer_types`.
 
 ### Writer example
 
-::::{tab-set}
-:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -121,38 +119,3 @@ for field details.
 ```yaml
 {{ 'writers'|example_contribution }}
 ```
-:::
-
-::::{tab-item} napari-plugin-engine
-
-```{admonition} Deprecated!
-This demonstrates the now-deprecated `napari-plugin-engine` pattern.
-```
-
-**python implementation**
-
-```python
-from napari_plugin_engine import napari_hook_implementation
-
-@napari_hook_implementation
-def napari_write_points(path: str, data: Any, meta: dict) -> Optional[str]:
-    """Write points data and metadata into a path.
-
-    Parameters
-    ----------
-    path : str
-        Path to file, directory, or resource (like a URL).
-    data : array (N, D)
-        Points layer data
-    meta : dict
-        Points metadata.
-
-    Returns
-    -------
-    path : str or None
-        If data is successfully written, return the ``path`` that was written.
-        Otherwise, if nothing was done, return ``None``.
-    """
-```
-:::
-::::
