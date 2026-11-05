@@ -19,7 +19,7 @@ class WidgetContribution(Executable[Widget]):
     *instance*; this includes functions that return a widget instance, (e.g. those
     decorated with `magicgui.magic_factory`) and subclasses of either
     [`QtWidgets.QWidget`](https://doc.qt.io/qt-5/qwidget.html) or
-    [`magicgui.widgets.Widget`](https://napari.org/magicgui/api/_autosummary/magicgui.widgets._bases.Widget.html).
+    [`magicgui.widgets.Widget`](https://pyapp-kit.github.io/magicgui/api/widgets/bases/#magicgui.widgets.bases.Widget).
 
     Optionally, **autogenerate** may be used to create a widget (using
     [magicgui](https://napari.org/magicgui/)) from a command.  (In this case, the
