@@ -74,8 +74,6 @@ avoid including `napari` as a plugin dependency when not strictly required.
 
 ### Widget example
 
-::::{tab-set}
-:::{tab-item} npe2
 **python implementation**
 
 ```python
@@ -90,60 +88,3 @@ See [Widgets contribution reference](contributions-widgets) for field details.
 ```yaml
 {{ 'widgets'|example_contribution }}
 ```
-:::
-
-:::{tab-item} napari-plugin-engine
-
-```{admonition} Deprecated!
-This demonstrates the now-deprecated `napari-plugin-engine` pattern.
-```
-
-**python implementation**
-
-```python
-from qtpy.QtWidgets import QWidget
-from napari_plugin_engine import napari_hook_implementation
-
-
-class AnimationWizard(QWidget):
-    def __init__(self, viewer: "napari.viewer.Viewer", parent=None):
-        super().__init__(parent)
-        ...
-
-
-@magic_factory
-def widget_factory(
-    image: "napari.types.ImageData", threshold: int
-) -> "napari.types.LabelsData":
-    """Generate thresholded image.
-
-    This pattern uses magicgui.magic_factory directly to turn a function
-    into a callable that returns a widget.
-    """
-    return (image > threshold).astype(int)
-
-
-def threshold(
-    image: "napari.types.ImageData", threshold: int
-) -> "napari.types.LabelsData":
-    """Generate thresholded image.
-
-    This function will be turned into a widget using `autogenerate: true`.
-    """
-    return (image > threshold).astype(int)
-
-
-# in the first generation plugin engine, these widgets were declared
-# using special `napari_hook_implementation`-decorated functions.
-
-@napari_hook_implementation
-def napari_experimental_provide_dock_widget():
-    return [AnimationWizard, widget_factory]
-
-
-@napari_hook_implementation
-def napari_experimental_provide_function():
-    return [threshold]
-```
-:::
-::::
