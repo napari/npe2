@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from npe2 import PluginManager
+from npe2._inspection._from_npe1 import manifest_from_npe1
 from npe2.manifest import _npe1_adapter, utils
 from npe2.manifest.contributions import SampleDataGenerator
 from npe2.manifest.schema import _from_dist
@@ -42,10 +43,9 @@ def test_npe1_adapter(uses_npe1_plugin, mock_cache: Path):
     assert not mf._cache_path().exists()
     assert not list(mock_cache.iterdir())
 
-    with patch.object(
-        _npe1_adapter,
-        "manifest_from_npe1",
-        wraps=_npe1_adapter.manifest_from_npe1,  # type: ignore
+    with patch(
+        "npe2._inspection._from_npe1.manifest_from_npe1",
+        wraps=manifest_from_npe1,
     ) as mock:
         pm.index_npe1_adapters()
         # the adapter has been cleared by the indexing
@@ -72,10 +72,9 @@ def test_npe1_adapter_cache(uses_npe1_plugin, mock_cache: Path):
     pm = PluginManager()
     pm.discover(include_npe1=True)
 
-    with patch.object(
-        _npe1_adapter,
-        "manifest_from_npe1",
-        wraps=_npe1_adapter.manifest_from_npe1,  # type: ignore
+    with patch(
+        "npe2._inspection._from_npe1.manifest_from_npe1",
+        wraps=manifest_from_npe1,
     ) as mock:
         # if we clear the cache, it should import again
         mf = pm.get_manifest("npe1-plugin")
@@ -168,11 +167,11 @@ def test_adapter_error_on_import():
 
     adapter = _npe1_adapter.NPE1Adapter(FakeDist())
 
-    def err():
-        raise ImportError("No package found.")
-
     with pytest.warns(UserWarning) as record:
-        with patch.object(_npe1_adapter, "manifest_from_npe1", wraps=err):
+        with patch(
+            "npe2._inspection._from_npe1.manifest_from_npe1",
+            side_effect=ImportError("No package found."),
+        ):
             _ = adapter.contributions
     assert "Error importing contributions for" in str(record[0])
 

@@ -10,7 +10,6 @@ from shutil import rmtree
 
 from platformdirs import user_cache_dir
 
-from npe2._inspection._from_npe1 import manifest_from_npe1
 from npe2.manifest import PackageMetadata
 
 from .schema import PluginManifest, discovery_blocked
@@ -100,6 +99,8 @@ class NPE1Adapter(PluginManifest):
 
         with discovery_blocked():
             try:
+                from npe2._inspection._from_npe1 import manifest_from_npe1
+
                 mf = manifest_from_npe1(self._dist, adapter=True)
             except Exception as e:
                 warnings.warn(
