@@ -6,8 +6,14 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, PrivateAttr
 
+# Prefer the libyaml-accelerated CSafeLoader when available
+try:
+    from yaml import CSafeLoader as _BaseLoader
+except (ImportError, AttributeError):
+    from yaml import SafeLoader as _BaseLoader  # type: ignore[assignment]
 
-class _UniqueKeyYamlLoader(yaml.SafeLoader):
+
+class _UniqueKeyYamlLoader(_BaseLoader):
     """YAML loader that raises on duplicate keys within a single mapping.
 
     PyYAML (like the stdlib `json` module) silently keeps the *last* value
