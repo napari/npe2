@@ -19,11 +19,11 @@ from psygnal import Signal, SignalGroup
 
 from ._command_registry import CommandRegistry
 from .manifest import PluginManifest
-from .manifest._npe1_adapter import NPE1Adapter
 from .manifest.contributions import LayerType, WriterContribution
 from .types import PathLike, PythonName
 
 if TYPE_CHECKING:
+    from .manifest._npe1_adapter import NPE1Adapter
     from .manifest.contributions import (
         CommandContribution,
         MenuCommand,
@@ -277,7 +277,9 @@ class PluginManager:
                 if (
                     result.manifest
                     and result.manifest.name not in self._manifests
-                    and (include_npe1 or not isinstance(result.manifest, NPE1Adapter))
+                    and (
+                        include_npe1 or type(result.manifest).__name__ != "NPE1Adapter"
+                    )
                 ):
                     self.register(result.manifest, warn_disabled=False)
                     count += 1
@@ -331,7 +333,7 @@ class PluginManager:
                     "be indexed. Use `warn_disabled=False` to suppress this message.",
                     stacklevel=2,
                 )
-        elif isinstance(manifest, NPE1Adapter):
+        elif type(manifest).__name__ == "NPE1Adapter":
             self._npe1_adapters.append(manifest)
         else:
             self._contrib.index_contributions(manifest)
